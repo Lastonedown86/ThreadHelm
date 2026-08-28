@@ -19,6 +19,7 @@ import {
 export {
   approveFolder,
   cleanupUserData,
+  electronExe,
   launchApp,
   launchFixtureSession,
   waitFor,

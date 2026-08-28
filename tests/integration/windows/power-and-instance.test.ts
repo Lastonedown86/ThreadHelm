@@ -11,6 +11,7 @@ import { afterEach, beforeEach, expect, it } from 'vitest';
 import type { PowerEvent } from '@threadhelm/contracts';
 import {
   cleanupUserData,
+  electronExe,
   events,
   isPidAlive,
   launchApp,
@@ -83,7 +84,7 @@ it('a second launch with the same user data exits without becoming a controller'
 
   const desktop = resolve(process.cwd(), 'apps/desktop');
   const second = spawn(
-    resolve(desktop, 'node_modules/electron/dist/electron.exe'),
+    electronExe,
     [resolve(desktop, 'out/main/index.cjs'), `--user-data-dir=${app.userData}`],
     { cwd: desktop, stdio: 'ignore', windowsHide: true },
   );

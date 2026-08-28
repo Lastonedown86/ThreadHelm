@@ -9,6 +9,7 @@
 
 import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
 import { mkdtempSync, rmSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +19,8 @@ import type { FakeAgentMode } from '@threadhelm/test-fixtures';
 export const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 export const desktopDir = resolve(repoRoot, 'apps/desktop');
 export const mainEntry = resolve(desktopDir, 'out/main/index.cjs');
+/** Electron's own executable, wherever pnpm placed the package for apps/desktop. */
+export const electronExe: string = createRequire(join(desktopDir, 'package.json'))('electron');
 
 type Envelope<T = unknown> =
   | { ok: true; value: T }

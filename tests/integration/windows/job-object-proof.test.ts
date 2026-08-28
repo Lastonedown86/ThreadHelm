@@ -14,10 +14,10 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { FAKE_AGENT_PATH } from '@threadhelm/test-fixtures';
 import { describe, expect, it } from 'vitest';
+import { electronExe as electron } from '../../e2e/helpers/app.js';
 
 const root = resolve(__dirname, '../../..');
 const desktop = resolve(root, 'apps/desktop');
-const electron = resolve(desktop, 'node_modules/electron/dist/electron.exe');
 const entry = resolve(desktop, 'out/main/index.cjs');
 
 interface ProofResult {

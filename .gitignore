@@ -1,0 +1,55 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.*
+secrets.*
+
+# Dependencies and generated output
+node_modules/
+dist/
+build/
+coverage/
+.next/
+out/
+release/
+artifacts/
+
+# Logs and runtime state
+*.log
+logs/
+tmp/
+temp/
+*.pid
+*.sqlite
+*.sqlite3
+
+# Editors and operating systems
+.idea/
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Local agent state
+.claude/
+.codex/
+.cursor/
+.windsurf/
+
+# Signing and packaging material
+*.cer
+*.crt
+*.p7b
+*.p7c
+*.jks
+*.keystore
+*.msixupload
+*.appxupload

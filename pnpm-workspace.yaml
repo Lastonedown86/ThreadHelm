@@ -5,10 +5,13 @@ packages:
 
 # Postinstall scripts allowed to run. esbuild fetches/verifies its platform
 # binary; Electron downloads its runtime. Everything else stays blocked.
+# better-sqlite3 ships prebuilds/<platform>-<arch>.node in the tarball and
+# loads it ahead of build/Release; allowing it makes pnpm run an implicit
+# `node-gyp rebuild` (it ignores "gypfile": false) that needs Visual Studio.
 allowBuilds:
   esbuild: true
   electron: true
-  better-sqlite3: true
+  better-sqlite3: false
   node-pty: true
   electron-winstaller: true
 

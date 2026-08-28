@@ -13,6 +13,7 @@
     { "path": "../../packages/contracts" },
     { "path": "../../packages/domain" },
     { "path": "../../packages/persistence" },
-    { "path": "../../packages/providers" }
+    { "path": "../../packages/providers" },
+    { "path": "../../packages/test-fixtures" }
   ]
 }

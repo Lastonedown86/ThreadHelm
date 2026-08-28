@@ -1,0 +1,6 @@
+# Rust gates (T007). Warnings are errors everywhere cargo runs from this repo.
+[target.'cfg(windows)']
+rustflags = ["-D", "warnings"]
+
+[alias]
+gate = "clippy --manifest-path native/windows-supervisor/Cargo.toml --all-targets -- -D warnings -D clippy::undocumented_unsafe_blocks"

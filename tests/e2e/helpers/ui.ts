@@ -1,0 +1,97 @@
+/**
+ * UI-driven journeys on top of the hook harness. Hooks answer the picker and
+ * swap providers for fixtures; everything else is real buttons and dialogs.
+ */
+
+import { expect, type Locator, type Page } from '@playwright/test';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import type { ProviderId } from '@threadhelm/contracts';
+import type { FakeAgentMode } from '@threadhelm/test-fixtures';
+import { cleanupUserData, launchApp, type LaunchedApp } from './app.js';
+
+export const PROVIDER_NAME: Record<ProviderId, string> = {
+  'codex-cli': 'Codex CLI',
+  'claude-code': 'Claude Code',
+};
+
+export function tempWorkspace(tag = 'thm ünï 空間'): string {
+  return mkdtempSync(join(tmpdir(), `${tag}-`));
+}
+
+/** Launches the app with fixture providers and the readiness panel refreshed. */
+export async function launchWithFixtures(
+  modes: Partial<Record<ProviderId, FakeAgentMode>>,
+  userData?: string,
+): Promise<LaunchedApp> {
+  const app = await launchApp(userData ? { userData } : {});
+  await app.useFixtureAdapters(modes);
+  // Readiness is fetched once at startup; re-probing emits readinessChanged
+  // events that the renderer applies, so no reload is needed.
+  await app.call('providers.listReadiness');
+  await expect(app.page.getByText('Available').first()).toBeVisible();
+  return app;
+}
+
+export function terminalRows(page: Page): Locator {
+  return page.locator('.terminal-host .xterm-rows');
+}
+
+export function sessionOptions(page: Page): Locator {
+  return page.getByRole('listbox', { name: 'Sessions' }).getByRole('option');
+}
+
+/** Choose folder… → Approve folder, returning the workspace's display path. */
+export async function approveViaUi(app: LaunchedApp, dir: string): Promise<string> {
+  await app.setPickerPath(dir);
+  await app.page.getByRole('button', { name: 'Choose folder…' }).click();
+  const dialog = app.page.getByRole('dialog', { name: 'Approve this folder?' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText('Effective folder')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Approve folder' }).click();
+  await expect(dialog).toBeHidden();
+  const workspaces =
+    await app.call<{ selectedPath: string; displayPath: string }[]>('workspaces.list');
+  return workspaces.find((w) => w.selectedPath === dir)!.displayPath;
+}
+
+/** Selects the "Launch in" workspace, opens the disclosure, confirms, launches. */
+export async function launchViaUi(
+  app: LaunchedApp,
+  providerId: ProviderId,
+  workspaceDisplayPath: string,
+): Promise<string> {
+  const page = app.page;
+  await page.getByLabel('Launch in').selectOption({ label: workspaceDisplayPath });
+  await page
+    .getByRole('button', { name: `Launch ${PROVIDER_NAME[providerId]} in ${workspaceDisplayPath}` })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Review this launch' });
+  await expect(dialog).toBeVisible();
+  const checkbox = dialog.getByRole('checkbox');
+  await expect(checkbox).not.toBeChecked();
+  await checkbox.check();
+  await dialog.getByRole('button', { name: 'Launch session' }).click();
+  await expect(dialog).toBeHidden({ timeout: 30_000 });
+  const live = await app.liveSessions();
+  return live[live.length - 1]!.id;
+}
+
+export function sessionOption(page: Page, sessionId: string): Locator {
+  return page.locator(`#session-${sessionId}`);
+}
+
+export async function stopViaUi(app: LaunchedApp, sessionId: string): Promise<void> {
+  await sessionOption(app.page, sessionId).click();
+  await app.page.getByRole('button', { name: 'Stop…', exact: true }).click();
+  const dialog = app.page.getByRole('dialog', { name: 'Stop this session?' });
+  await dialog.getByRole('button', { name: 'Stop session' }).click();
+  await expect(sessionOption(app.page, sessionId)).toContainText('Stopped', { timeout: 30_000 });
+}
+
+export async function teardown(app: LaunchedApp, ...dirs: string[]): Promise<void> {
+  await app.close();
+  cleanupUserData(app.userData);
+  for (const dir of dirs) cleanupUserData(dir);
+}

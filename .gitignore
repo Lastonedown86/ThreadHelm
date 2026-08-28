@@ -53,3 +53,10 @@ Desktop.ini
 *.keystore
 *.msixupload
 *.appxupload
+
+# Rust and native build output
+target/
+*.node
+.tsbuild/
+*.tsbuildinfo
+test-results/

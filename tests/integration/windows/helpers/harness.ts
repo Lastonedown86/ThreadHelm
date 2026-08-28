@@ -139,7 +139,7 @@ export interface ProcInfo {
 
 /** Every process whose command line mentions `needle` (e.g. the userData path). */
 export function processesMatching(needle: string): ProcInfo[] {
-  const script = `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*${needle.replace(/'/g, "''")}*' } | ForEach-Object { $_.ProcessId.ToString() + '|' + $_.Name + '|' + $_.WorkingSetSize + '|' + (($_.KernelModeTime + $_.UserModeTime) / 10000) + '|' + $_.CommandLine }`;
+  const script = `Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*${needle.replace(/'/g, "''")}*' } | ForEach-Object { $_.ProcessId.ToString() + '|' + $_.Name + '|' + $_.WorkingSetSize + '|' + (($_.KernelModeTime + $_.UserModeTime) / 10000) + '|' + $_.CommandLine }`;
   const out = execFileSync(
     'powershell.exe',
     ['-NoProfile', '-NonInteractive', '-Command', script],

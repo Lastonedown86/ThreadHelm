@@ -1,0 +1,20 @@
+packages:
+  - apps/*
+  - packages/*
+  - native/*
+
+# Postinstall scripts allowed to run. esbuild fetches/verifies its platform
+# binary; Electron downloads its runtime. Everything else stays blocked.
+allowBuilds:
+  esbuild: true
+  electron: true
+  better-sqlite3: true
+  node-pty: true
+  electron-winstaller: true
+
+# @electron-forge/shared-types -> @electron/rebuild pulls @electron/node-gyp
+# from git. Required by Forge 7; scoped to the Electron org.
+blockExoticSubdeps: false
+
+# Electron Forge requires a hoisted layout to package the app.
+nodeLinker: hoisted

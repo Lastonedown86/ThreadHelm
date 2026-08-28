@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/contracts" },
+    { "path": "packages/domain" },
+    { "path": "packages/persistence" },
+    { "path": "packages/providers" },
+    { "path": "packages/test-fixtures" },
+    { "path": "apps/desktop" },
+    { "path": "tests" }
+  ]
+}

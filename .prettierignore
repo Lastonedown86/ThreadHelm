@@ -1,0 +1,14 @@
+node_modules/
+dist/
+out/
+.tsbuild/
+coverage/
+target/
+*.node
+pnpm-lock.yaml
+native/windows-supervisor/index.js
+native/windows-supervisor/index.d.ts
+specs/
+.specify/
+.agents/
+.claude/

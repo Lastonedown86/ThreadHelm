@@ -10,14 +10,16 @@
 
 import { app, powerMonitor, type BrowserWindow } from 'electron';
 import { appendFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { ThreadHelmError } from '@threadhelm/contracts';
 import { ControllerLeases } from '@threadhelm/domain';
 import { openStorage, type Storage } from '@threadhelm/persistence';
 import { builtInAdapters } from '@threadhelm/providers';
 import * as native from '@threadhelm/windows-supervisor';
 import type { Context } from './context.js';
-import { createHandlers } from './coordinator.js';
+import { createHandlers, stopCoordination } from './coordinator.js';
+import { BridgeSessionManager } from './coordination/bridge.js';
+import { reconcileCoordinationAtStartup } from './coordination/recovery.js';
 import { electronChannels, electronHostSpawner, electronPicker } from './electron-adapters.js';
 import { bindRouter, createRendererEvents } from './ipc/electron-binding.js';
 import { createRouter } from './ipc/router.js';
@@ -42,6 +44,11 @@ export interface BootstrapPaths {
   hostEntry: string;
   preload: string;
   html: string;
+}
+
+function coordinationBridgePath(hostEntry: string): string {
+  const adjacent = join(dirname(hostEntry), 'threadhelm-coordination-bridge.exe');
+  return adjacent.replace(`${join('app.asar', 'out')}`, `${join('app.asar.unpacked', 'out')}`);
 }
 
 function fileSink(path: string): LogSink {
@@ -139,6 +146,17 @@ export function bootstrap(paths: BootstrapPaths): void {
       selection: { selectedSessionId: null },
       adapters: builtInAdapters,
       probes: createProbeRunner(),
+      ...(storage
+        ? {
+            coordinationBridge: new BridgeSessionManager({
+              repo: storage.repositories.coordination,
+              clock: () => new Date(),
+              configRoot: join(userData, 'coordination-sessions'),
+              bridgeExecutablePath: coordinationBridgePath(paths.hostEntry),
+              onEvent: (payload) => events.emit('coordination.bridgeChanged', payload),
+            }),
+          }
+        : {}),
       appInfo: {
         version: app.getVersion(),
         electronVersion: process.versions.electron,
@@ -154,6 +172,7 @@ export function bootstrap(paths: BootstrapPaths): void {
     if (storage) {
       try {
         reconcileAtStartup(ctx);
+        reconcileCoordinationAtStartup(ctx);
       } catch (error) {
         log.error('recovery.reconcile_failed', {
           code: error instanceof ThreadHelmError ? error.code : 'UNKNOWN',
@@ -197,6 +216,8 @@ export function bootstrap(paths: BootstrapPaths): void {
     app.on('before-quit', () => {
       cancelClose();
       quitting = true;
+      stopCoordination(ctx);
+      ctx.coordinationBridge?.revokeAll();
       // Closing every retained handle kills any surviving scope.
       ctx.jobs.closeAll();
       storage?.db.close();

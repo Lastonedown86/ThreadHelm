@@ -4,7 +4,7 @@
  * Deterministic fake terminal agent (T023). Plain CommonJS, no dependencies,
  * so it runs under any Node/Electron runtime without a build step.
  *
- *   node fake-agent.cjs --mode <echo|burst|control|ignore-interrupt|spawn-children> [--lines N]
+ *   node fake-agent.cjs --mode <echo|burst|control|ignore-interrupt|spawn-children|spawn-bridge> [--lines N]
  *
  * Under ConPTY stdin is raw: 0x03 is Ctrl+C, '\r' or '\n' ends a line.
  */
@@ -28,6 +28,9 @@ const flag = (name, fallback) => {
 const mode = flag('mode', 'echo');
 const lines = Number(flag('lines', '200000'));
 const readyFile = flag('ready-file', '');
+const bridgePath = flag('bridge-path', '');
+const sessionConfig = flag('session-config', '');
+const descendantPidFile = flag('descendant-pid-file', '');
 
 // Serialized writer: never drops data, respects backpressure via drain.
 const queue = [];
@@ -154,7 +157,27 @@ switch (mode) {
       stdio: ['pipe', 'ignore', 'ignore'],
       windowsHide: true,
     });
+    if (descendantPidFile) writeFileSync(descendantPidFile, String(child.pid), 'utf8');
     write(`FAKE_AGENT_READY\nCHILD_PID:${child.pid}\n`);
+    break;
+  }
+  case 'spawn-bridge': {
+    ignoreInterrupt = true;
+    if (!bridgePath || !sessionConfig) {
+      write('BRIDGE_CONFIG_MISSING\n');
+      process.exit(2);
+      break;
+    }
+    // This models a provider CLI spawning its configured MCP stdio child.
+    // The provider fixture is already contained, so the bridge must inherit
+    // the same non-breakaway Job Object.
+    const child = spawn(bridgePath, ['--session-config', sessionConfig], {
+      stdio: ['pipe', 'ignore', 'ignore'],
+      windowsHide: true,
+    });
+    if (descendantPidFile) writeFileSync(descendantPidFile, String(child.pid), 'utf8');
+    child.once('error', () => write('BRIDGE_SPAWN_FAILED\n'));
+    write(`FAKE_AGENT_READY\nBRIDGE_PID:${child.pid}\n`);
     break;
   }
   default:

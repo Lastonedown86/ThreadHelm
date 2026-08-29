@@ -197,31 +197,48 @@ export const CONTROL_ACK_TIMEOUT_MS = 5_000;
 
 /**
  * Allocates the next control sequence, sends the message, and resolves true
- * when the host acknowledges it (false on timeout). Ordering is guaranteed by
- * the strictly increasing sequence and the host's single queue.
+ * when the host acknowledges it (false on timeout, send failure, or session
+ * teardown). Ordering is guaranteed by the strictly increasing sequence and
+ * the host's single queue.
  */
 export function sendControl(
   ctx: Context,
   live: LiveSession,
   build: (controlSequence: number) => MainToHostMessage,
   timeoutMs = CONTROL_ACK_TIMEOUT_MS,
-): { controlSequence: number; applied: Promise<boolean> } {
+  beforeSubmit?: (controlSequence: number) => void,
+): { controlSequence: number; applied: Promise<boolean>; submitted: boolean } {
   const controlSequence = ++live.controlSequence;
+  let settle: (applied: boolean) => void = () => undefined;
   const applied = new Promise<boolean>((resolve) => {
+    let settled = false;
     const timer = setTimeout(() => {
       live.pendingControls.delete(controlSequence);
-      resolve(false);
+      settle(false);
     }, timeoutMs);
-    live.pendingControls.set(controlSequence, () => {
+    settle = (value) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
-      resolve(true);
-    });
+      resolve(value);
+    };
+    live.pendingControls.set(controlSequence, settle);
   });
+  try {
+    beforeSubmit?.(controlSequence);
+  } catch (error) {
+    live.pendingControls.delete(controlSequence);
+    settle(false);
+    throw error;
+  }
+  let submitted = true;
   try {
     live.host.postMessage(build(controlSequence));
   } catch {
+    submitted = false;
     live.pendingControls.delete(controlSequence);
+    settle(false);
     ctx.log.warn('session.control_send_failed', { sessionId: live.id, controlSequence });
   }
-  return { controlSequence, applied };
+  return { controlSequence, applied, submitted };
 }

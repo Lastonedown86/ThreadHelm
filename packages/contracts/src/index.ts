@@ -106,6 +106,90 @@ export type InterruptOutcome = z.infer<typeof InterruptOutcome>;
 export const PowerEvent = z.enum(['lock', 'suspend', 'resume', 'unlock']);
 export type PowerEvent = z.infer<typeof PowerEvent>;
 
+// Coordination state vocabularies are deliberately provider-neutral. They are
+// shared here so the database, main process, bridge, and renderer cannot drift.
+export const ConversationState = z.enum(['open', 'paused', 'resolved', 'closed']);
+export type ConversationState = z.infer<typeof ConversationState>;
+
+export const HandoffKind = z.enum([
+  'request',
+  'query',
+  'proposal',
+  'inform',
+  'response',
+  'completion',
+  'refusal',
+  'failure',
+]);
+export type HandoffKind = z.infer<typeof HandoffKind>;
+
+export const HandoffOrigin = z.enum(['user', 'provider_bridge', 'threadhelm']);
+export type HandoffOrigin = z.infer<typeof HandoffOrigin>;
+
+export const DeliveryState = z.enum([
+  'queued',
+  'held',
+  'manual_actionable',
+  'presenting',
+  'delivered',
+  'acknowledged',
+  'failed',
+  'cancelled',
+]);
+export type DeliveryState = z.infer<typeof DeliveryState>;
+
+export const DeliveryAttemptState = z.enum([
+  'prepared',
+  'dispatching',
+  'applied',
+  'failed_before_write',
+  'unknown',
+]);
+export type DeliveryAttemptState = z.infer<typeof DeliveryAttemptState>;
+
+export const WorkOutcome = z.enum([
+  'pending',
+  'completed',
+  'refused',
+  'failed',
+  'cancelled',
+  'escalated',
+]);
+export type WorkOutcome = z.infer<typeof WorkOutcome>;
+
+export const EscalationKind = z.enum([
+  'reply_depth',
+  'equivalent_message_loop',
+  'repeated_delivery_failure',
+  'conflicting_instruction',
+  'authority_required',
+  'target_ambiguous',
+  'storage_limit',
+  'unknown_delivery',
+]);
+export type EscalationKind = z.infer<typeof EscalationKind>;
+
+export const EscalationState = z.enum(['open', 'continued', 'redirected', 'closed']);
+export type EscalationState = z.infer<typeof EscalationState>;
+
+export const CoordinationEventKind = z.enum([
+  'created',
+  'queued',
+  'held',
+  'presentation_requested',
+  'dispatching',
+  'delivered',
+  'acknowledged',
+  'outcome_recorded',
+  'paused',
+  'resumed',
+  'retargeted',
+  'cancelled',
+  'content_deleted',
+  'recovered',
+]);
+export type CoordinationEventKind = z.infer<typeof CoordinationEventKind>;
+
 // ---------------------------------------------------------------------------
 // Error codes and the one error type that crosses process boundaries
 // ---------------------------------------------------------------------------
@@ -143,6 +227,21 @@ export const ErrorCode = z.enum([
   'RECORD_NOT_FOUND',
   'STORAGE_UNAVAILABLE',
   'STORAGE_DEGRADED',
+  // coordination
+  'CONVERSATION_NOT_FOUND',
+  'HANDOFF_NOT_FOUND',
+  'ESCALATION_NOT_FOUND',
+  'COORDINATION_CONTENT_INVALID',
+  'COORDINATION_LIMIT_REACHED',
+  'COORDINATION_CAUSALITY_INVALID',
+  'COORDINATION_TARGET_CHANGED',
+  'COORDINATION_TARGET_NOT_SELECTED',
+  'COORDINATION_NOT_ELIGIBLE',
+  'COORDINATION_ATTEMPT_ACTIVE',
+  'COORDINATION_DELIVERY_UNKNOWN',
+  'COORDINATION_BRIDGE_UNAVAILABLE',
+  'COORDINATION_AUTHORITY_REQUIRED',
+  'COORDINATION_CLOSED',
   // application and boundary
   'ACTIVE_SESSIONS',
   'INVALID_REQUEST',
@@ -188,6 +287,14 @@ export function serializeError(error: unknown): SerializedError {
 // ---------------------------------------------------------------------------
 
 export const Uuid = z.uuid();
+export const ConversationId = z.uuid().brand<'ConversationId'>();
+export type ConversationId = z.infer<typeof ConversationId>;
+export const HandoffId = z.uuid().brand<'HandoffId'>();
+export type HandoffId = z.infer<typeof HandoffId>;
+export const DeliveryAttemptId = z.uuid().brand<'DeliveryAttemptId'>();
+export type DeliveryAttemptId = z.infer<typeof DeliveryAttemptId>;
+export const CoordinationEventId = z.uuid().brand<'CoordinationEventId'>();
+export type CoordinationEventId = z.infer<typeof CoordinationEventId>;
 /** Plain `Uint8Array` (any buffer kind) — structured-clone safe across IPC. */
 export const Bytes = z.custom<Uint8Array>((value) => value instanceof Uint8Array, 'expected bytes');
 export const Timestamp = z.iso.datetime();
@@ -197,6 +304,269 @@ export const ReasonCode = z
   .string()
   .regex(/^[A-Z][A-Z0-9_]{2,63}$/)
   .nullable();
+
+/** Build an object schema that fails closed on fields absent from its contract. */
+export function strictObject<const Shape extends z.ZodRawShape>(shape: Shape) {
+  return z.strictObject(shape);
+}
+
+/** Per-process reasoning controls. `null` means preserve the provider CLI default. */
+export const LaunchEffort = z.enum(['low', 'medium', 'high', 'xhigh', 'max']);
+export type LaunchEffort = z.infer<typeof LaunchEffort>;
+
+export const LaunchRuntimeSelection = strictObject({
+  model: z
+    .string()
+    .min(1)
+    .max(128)
+    .regex(/^[A-Za-z0-9][A-Za-z0-9._:/-]*$/, 'invalid provider model identifier')
+    .nullable(),
+  effort: LaunchEffort.nullable(),
+});
+export type LaunchRuntimeSelection = z.infer<typeof LaunchRuntimeSelection>;
+
+export const CoordinationCursorToken = z.string().min(1).max(512);
+export type CoordinationCursorToken = z.infer<typeof CoordinationCursorToken>;
+
+/** Decoded keyset cursor. Encoding/verification remains a main-process concern. */
+export const BoundedCoordinationCursor = strictObject({
+  occurredAt: Timestamp,
+  id: Uuid,
+  sequence: z.number().int().min(1),
+});
+export type BoundedCoordinationCursor = z.infer<typeof BoundedCoordinationCursor>;
+
+export function boundedPageRequest(maximum: number) {
+  if (!Number.isInteger(maximum) || maximum < 1) {
+    throw new RangeError('maximum must be a positive integer');
+  }
+  return strictObject({
+    cursor: CoordinationCursorToken.optional(),
+    limit: z.number().int().min(1).max(maximum),
+  });
+}
+
+export const CoordinationErrorCode = z.enum([
+  'CONVERSATION_NOT_FOUND',
+  'HANDOFF_NOT_FOUND',
+  'ESCALATION_NOT_FOUND',
+  'COORDINATION_CONTENT_INVALID',
+  'COORDINATION_LIMIT_REACHED',
+  'COORDINATION_CAUSALITY_INVALID',
+  'COORDINATION_TARGET_CHANGED',
+  'COORDINATION_TARGET_NOT_SELECTED',
+  'COORDINATION_NOT_ELIGIBLE',
+  'COORDINATION_ATTEMPT_ACTIVE',
+  'COORDINATION_DELIVERY_UNKNOWN',
+  'COORDINATION_BRIDGE_UNAVAILABLE',
+  'COORDINATION_AUTHORITY_REQUIRED',
+  'COORDINATION_CLOSED',
+]);
+export type CoordinationErrorCode = z.infer<typeof CoordinationErrorCode>;
+
+export const CoordinationSafeError = strictObject({
+  code: CoordinationErrorCode,
+  message: z.string().min(1).max(300),
+  reasonCode: ReasonCode,
+});
+export type CoordinationSafeError = z.infer<typeof CoordinationSafeError>;
+
+/** Content-free main-to-renderer event shared by the coordination views. */
+export const CoordinationEventEnvelope = strictObject({
+  type: z.literal('coordination.handoffChanged'),
+  eventId: CoordinationEventId,
+  conversationId: ConversationId,
+  handoffId: HandoffId.nullable(),
+  sequence: z.number().int().min(1),
+  kind: CoordinationEventKind,
+  reasonCode: ReasonCode,
+  safeSummary: z.string().min(1).max(300),
+  occurredAt: Timestamp,
+});
+export type CoordinationEventEnvelope = z.infer<typeof CoordinationEventEnvelope>;
+
+// US1 named schemas. These remain independent of Electron so both the router
+// and provider-neutral tests validate the same exact addressed-handoff shape.
+export const PreviewHandoffRequest = strictObject({
+  sourceSessionId: Uuid,
+  recipientSessionId: Uuid,
+  kind: HandoffKind,
+  purpose: z.string().min(1).max(320),
+  body: z.string().min(1).max(16_384),
+  responseExpected: z.boolean(),
+  conversationId: ConversationId.optional(),
+  inReplyToId: HandoffId.optional(),
+}).refine((value) => value.sourceSessionId !== value.recipientSessionId, {
+  message: 'sender and recipient must differ',
+  path: ['recipientSessionId'],
+});
+export type PreviewHandoffRequest = z.infer<typeof PreviewHandoffRequest>;
+
+export const ConfirmHandoffRequest = strictObject({
+  previewToken: OpaqueToken,
+  persistenceConfirmation: z.literal(true),
+});
+export type ConfirmHandoffRequest = z.infer<typeof ConfirmHandoffRequest>;
+
+export const CancelHandoffRequest = strictObject({ handoffId: HandoffId });
+export type CancelHandoffRequest = z.infer<typeof CancelHandoffRequest>;
+
+export const PreviewRetargetRequest = strictObject({
+  handoffId: HandoffId,
+  recipientSessionId: Uuid,
+});
+export type PreviewRetargetRequest = z.infer<typeof PreviewRetargetRequest>;
+
+export const ConfirmRetargetRequest = strictObject({
+  retargetToken: OpaqueToken,
+  retargetConfirmation: z.literal(true),
+});
+export type ConfirmRetargetRequest = z.infer<typeof ConfirmRetargetRequest>;
+
+export const ConfirmPresentationRequest = strictObject({
+  presentationToken: OpaqueToken,
+  submitConfirmation: z.literal(true),
+});
+export type ConfirmPresentationRequest = z.infer<typeof ConfirmPresentationRequest>;
+
+export const HandoffPreviewView = strictObject({
+  previewToken: OpaqueToken,
+  sourceSessionId: Uuid,
+  recipientSessionId: Uuid,
+  sourceWorkspaceId: Uuid,
+  recipientWorkspaceId: Uuid,
+  kind: HandoffKind,
+  normalizedPurpose: z.string().min(1).max(320),
+  normalizedBody: z.string().min(1).max(16_384),
+  responseExpected: z.boolean(),
+  retainedContentBytes: z
+    .number()
+    .int()
+    .min(0)
+    .max(64 * 1024 * 1024),
+  persistenceDisclosure: z.string().min(1).max(500),
+  expiresAt: Timestamp,
+});
+export type HandoffPreviewView = z.infer<typeof HandoffPreviewView>;
+
+export const PresentationDisclosureView = strictObject({
+  presentationToken: OpaqueToken,
+  handoffId: HandoffId,
+  recipientSessionId: Uuid,
+  recipientWorkspaceId: Uuid,
+  selectedSessionId: Uuid,
+  lifecycleState: LifecycleState,
+  activityState: ActivityState,
+  activityEvidenceKind: z.string().min(1).max(100),
+  activityObservedAt: Timestamp.nullable(),
+  terminalEnvelope: z.string().min(1).max(MAX_INPUT_BYTES),
+  manualRisk: z.string().min(1).max(500),
+  expiresAt: Timestamp,
+});
+export type PresentationDisclosureView = z.infer<typeof PresentationDisclosureView>;
+
+export const HandoffView = strictObject({
+  id: HandoffId,
+  conversationId: ConversationId,
+  inReplyToId: HandoffId.nullable(),
+  senderSessionId: Uuid,
+  recipientSessionId: Uuid,
+  origin: HandoffOrigin,
+  kind: HandoffKind,
+  responseExpected: z.boolean(),
+  deliveryState: DeliveryState,
+  workOutcome: WorkOutcome,
+  holdReasonCode: ReasonCode,
+  purpose: z.string().nullable().optional(),
+  body: z.string().nullable().optional(),
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+  deliveredAt: Timestamp.nullable(),
+  acknowledgedAt: Timestamp.nullable(),
+});
+export type HandoffView = z.infer<typeof HandoffView>;
+
+/** Bounded US1 mailbox surface. Rich conversation pagination begins in US2. */
+export const HandoffSummaryView = HandoffView.omit({ purpose: true, body: true });
+export type HandoffSummaryView = z.infer<typeof HandoffSummaryView>;
+
+export const HandoffListView = strictObject({
+  handoffs: z.array(HandoffSummaryView).max(100),
+  storageDegraded: z.boolean(),
+});
+export type HandoffListView = z.infer<typeof HandoffListView>;
+
+export const DeliveryAttemptView = strictObject({
+  id: DeliveryAttemptId,
+  handoffId: HandoffId,
+  attemptNumber: z.number().int().min(1),
+  recipientSessionId: Uuid,
+  state: DeliveryAttemptState,
+  evidenceKind: z.string().min(1).max(100),
+  reasonCode: ReasonCode,
+  controlSequence: z.number().int().min(1).nullable(),
+  createdAt: Timestamp,
+  submittedAt: Timestamp.nullable(),
+  completedAt: Timestamp.nullable(),
+});
+export type DeliveryAttemptView = z.infer<typeof DeliveryAttemptView>;
+
+export const RetargetDisclosureView = strictObject({
+  retargetToken: OpaqueToken,
+  handoffId: HandoffId,
+  currentRecipientSessionId: Uuid,
+  recipientSessionId: Uuid,
+  recipientWorkspaceId: Uuid,
+  expiresAt: Timestamp,
+});
+export type RetargetDisclosureView = z.infer<typeof RetargetDisclosureView>;
+
+export const ConversationSummaryView = strictObject({
+  id: ConversationId,
+  state: ConversationState,
+  rootHandoffId: HandoffId.nullable(),
+  participantSessionIds: z.array(Uuid).min(1).max(2),
+  handoffCount: z.number().int().min(0),
+  unresolvedCount: z.number().int().min(0),
+  autoContinueEnabled: z.boolean(),
+  pauseReasonCode: ReasonCode.nullable(),
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+  resolvedAt: Timestamp.nullable(),
+  closedAt: Timestamp.nullable(),
+  contentDeletedAt: Timestamp.nullable(),
+});
+export type ConversationSummaryView = z.infer<typeof ConversationSummaryView>;
+
+export const ConversationListView = strictObject({
+  conversations: z.array(ConversationSummaryView).max(100),
+  nextCursor: z.string().nullable(),
+  storageDegraded: z.boolean(),
+});
+export type ConversationListView = z.infer<typeof ConversationListView>;
+
+export const ConversationDetailView = strictObject({
+  summary: ConversationSummaryView,
+  handoffs: z.array(HandoffView).max(128),
+  events: z.array(CoordinationEventEnvelope).max(256),
+  nextCursor: z.string().nullable(),
+});
+export type ConversationDetailView = z.infer<typeof ConversationDetailView>;
+
+export const DeleteContentDisclosureView = strictObject({
+  deletionToken: OpaqueToken,
+  conversationId: ConversationId,
+  handoffCount: z.number().int().min(0),
+  retainedContentBytes: z.number().int().min(0),
+  expiresAt: Timestamp,
+});
+export type DeleteContentDisclosureView = z.infer<typeof DeleteContentDisclosureView>;
+
+export const ConfirmDeleteContentRequest = strictObject({
+  deletionToken: OpaqueToken,
+  deletionConfirmation: z.literal(true),
+});
+export type ConfirmDeleteContentRequest = z.infer<typeof ConfirmDeleteContentRequest>;
 
 export const TerminalSize = z.object({
   columns: z.number().int().min(1).max(MAX_COLUMNS),
@@ -266,6 +636,19 @@ export const LaunchPreviewView = z.object({
   /** Fixed disclosure: ThreadHelm cannot confine the provider to the folder. */
   boundaryWarning: z.string(),
   terminal: TerminalSize,
+  /** Exact per-process choices bound into this one-time preview. */
+  runtimeSelection: LaunchRuntimeSelection,
+  coordinationBridge: strictObject({
+    enabled: z.boolean(),
+    tools: z.tuple([
+      z.literal('list pending'),
+      z.literal('acknowledge'),
+      z.literal('reply'),
+      z.literal('report outcome'),
+    ]),
+    durableContent: z.literal(true),
+    failureBehavior: z.literal('manual_only'),
+  }).nullable(),
   expiresAt: Timestamp,
 });
 export type LaunchPreviewView = z.infer<typeof LaunchPreviewView>;
@@ -397,7 +780,12 @@ export const operations = {
   },
   'providers.listReadiness': { request: none, response: z.array(ReadinessView) },
   'sessions.previewLaunch': {
-    request: z.object({ workspaceId: Uuid, providerId: ProviderId, terminal: TerminalSize }),
+    request: strictObject({
+      workspaceId: Uuid,
+      providerId: ProviderId,
+      terminal: TerminalSize,
+      runtimeSelection: LaunchRuntimeSelection.default({ model: null, effort: null }),
+    }),
     response: LaunchPreviewView,
   },
   'sessions.launch': {
@@ -450,6 +838,66 @@ export const operations = {
     request: z.object({ recordId: Uuid, resolution: RecoveryResolution }),
     response: RecoveryRecordView,
   },
+  'coordination.previewHandoff': {
+    request: PreviewHandoffRequest,
+    response: HandoffPreviewView,
+  },
+  'coordination.listHandoffs': {
+    request: strictObject({ limit: z.number().int().min(1).max(100).optional() }).optional(),
+    response: HandoffListView,
+  },
+  'coordination.confirmHandoff': {
+    request: ConfirmHandoffRequest,
+    response: HandoffView,
+  },
+  'coordination.requestPresentation': {
+    request: strictObject({ handoffId: HandoffId }),
+    response: PresentationDisclosureView,
+  },
+  'coordination.confirmPresentation': {
+    request: ConfirmPresentationRequest,
+    response: DeliveryAttemptView,
+  },
+  'coordination.cancelHandoff': {
+    request: CancelHandoffRequest,
+    response: HandoffView,
+  },
+  'coordination.previewRetarget': {
+    request: PreviewRetargetRequest,
+    response: RetargetDisclosureView,
+  },
+  'coordination.confirmRetarget': {
+    request: ConfirmRetargetRequest,
+    response: HandoffView,
+  },
+  'coordination.listConversations': {
+    request: strictObject({
+      state: ConversationState.optional(),
+      cursor: z.string().max(512).optional(),
+      limit: z.number().int().min(1).max(100).optional(),
+    }).optional(),
+    response: ConversationListView,
+  },
+  'coordination.getConversation': {
+    request: strictObject({
+      conversationId: ConversationId,
+      cursor: z.string().max(512).optional(),
+      limit: z.number().int().min(1).max(128).optional(),
+    }),
+    response: ConversationDetailView,
+  },
+  'coordination.pauseConversation': {
+    request: strictObject({ conversationId: ConversationId }),
+    response: ConversationSummaryView,
+  },
+  'coordination.requestContentDeletion': {
+    request: strictObject({ conversationId: ConversationId }),
+    response: DeleteContentDisclosureView,
+  },
+  'coordination.confirmContentDeletion': {
+    request: ConfirmDeleteContentRequest,
+    response: ConversationSummaryView,
+  },
   'application.requestClose': { request: none, response: CloseResultView },
   'application.stopAllAndClose': { request: none, response: CloseResultView },
   'application.getInfo': { request: none, response: ApplicationInfoView },
@@ -490,6 +938,14 @@ export const events = {
   }),
   'application.storageHealth': z.object({ degraded: z.boolean(), reasonCode: ReasonCode }),
   'application.closeBlocked': CloseResultView,
+  'coordination.handoffChanged': CoordinationEventEnvelope,
+  'coordination.conversationChanged': ConversationSummaryView,
+  'coordination.bridgeChanged': strictObject({
+    sessionId: Uuid,
+    capability: z.string(),
+    connected: z.boolean(),
+    reasonCode: ReasonCode.nullable(),
+  }),
 } as const;
 
 export type EventName = keyof typeof events;

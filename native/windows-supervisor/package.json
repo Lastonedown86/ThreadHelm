@@ -12,8 +12,8 @@
     ]
   },
   "scripts": {
-    "build": "napi build --platform --release",
-    "build:debug": "napi build --platform"
+    "build": "napi build --platform --release && cargo build --release --bin threadhelm-coordination-bridge",
+    "build:debug": "napi build --platform && cargo build --bin threadhelm-coordination-bridge"
   },
   "devDependencies": {
     "@napi-rs/cli": "^3.8.6"

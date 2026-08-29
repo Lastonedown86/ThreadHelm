@@ -117,6 +117,9 @@ describeInstalled('installed artifact acceptance', () => {
     expect(existsSync(join(resources, 'app.asar'))).toBe(true);
     const unpacked = join(resources, 'app.asar.unpacked');
     expect(existsSync(unpacked)).toBe(true);
+    expect(existsSync(join(unpacked, 'out', 'main', 'threadhelm-coordination-bridge.exe'))).toBe(
+      true,
+    );
     scenarios.asar = 'present with app.asar.unpacked';
   });
 
@@ -129,7 +132,7 @@ describeInstalled('installed artifact acceptance', () => {
     const logFile = join(userData, 'logs', 'threadhelm.log');
     const first = spawn(exe, [`--user-data-dir=${userData}`], {
       stdio: 'ignore',
-      windowsHide: false,
+      windowsHide: true,
       detached: false,
     });
     try {

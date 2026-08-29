@@ -57,6 +57,7 @@ Desktop.ini
 # Rust and native build output
 target/
 *.node
+*.retired.tmp.*
 .tsbuild/
 *.tsbuildinfo
 test-results/

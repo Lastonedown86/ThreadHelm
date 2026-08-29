@@ -8,7 +8,8 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export type FakeAgentMode = 'echo' | 'burst' | 'control' | 'ignore-interrupt' | 'spawn-children';
+export type FakeAgentMode =
+  'echo' | 'burst' | 'control' | 'ignore-interrupt' | 'spawn-children' | 'spawn-bridge';
 
 export const FAKE_AGENT_PATH = join(dirname(fileURLToPath(import.meta.url)), 'fake-agent.cjs');
 
@@ -22,6 +23,35 @@ export function fakeAgentLaunch(
 }
 
 export { fixtureAdapter, type FixtureAdapterOptions } from './fixture-adapter.js';
+export {
+  COORDINATION_FIXTURE_IDS,
+  COORDINATION_PARTICIPANTS,
+  coordinationEventFixture,
+  createCoordinationClock,
+  createCoordinationUuidFactory,
+  type CoordinationEventFixture,
+  type CoordinationParticipantFixture,
+} from './coordination.js';
+export {
+  bridgeAcknowledgeRequest,
+  bridgeListPendingRequest,
+  bridgeMemoryGetRequest,
+  bridgeMemoryProposeRevisionRequest,
+  bridgeMemorySearchRequest,
+  bridgeMissionEscalateRequest,
+  bridgeMissionInspectRequest,
+  bridgeReplyRequest,
+  bridgeReportOutcomeRequest,
+  bridgeWorkAssignRequest,
+  bridgeWorkDecomposeRequest,
+  contentFreeBridgeEventFixture,
+  providerLifecycleFixture,
+  type BridgeMethod,
+  type BridgeRequest,
+  type BridgeResponse,
+  type ContentFreeBridgeEvent,
+  type ProviderLifecycleFixture,
+} from './coordination-bridge.js';
 
 /**
  * A console-subsystem runtime for the fixture. Electron's own executable is a

@@ -226,6 +226,7 @@ describe.each(cases)('$adapter.id adapter', ({ adapter, native, shim, version, a
       executableKind: 'native',
       terminal: { columns: 120, rows: 40 },
       version: '1.0.0',
+      runtimeSelection: { model: null, effort: null },
     });
     expect(d).toEqual({
       executable: native,
@@ -242,9 +243,31 @@ describe.each(cases)('$adapter.id adapter', ({ adapter, native, shim, version, a
       executableKind: 'cmd_shim',
       terminal: { columns: 80, rows: 24 },
       version: '1.0.0',
+      runtimeSelection: { model: null, effort: null },
     });
     expect(viaShim.executable).toBe('C:\\Windows\\System32\\cmd.exe');
     expect(viaShim.cwd).toBe(cwd);
+  });
+
+  it('maps an explicit model and effort to provider-owned per-process arguments', () => {
+    const runtimeSelection = {
+      model: adapter.id === 'codex-cli' ? 'gpt-5.6-luna' : 'fable',
+      effort: 'low' as const,
+    };
+    const descriptor = adapter.buildLaunch({
+      sessionId: 's',
+      canonicalWorkspacePath: 'C:\\projects\\alpha',
+      resolvedExecutable: native,
+      executableKind: 'native',
+      terminal: { columns: 100, rows: 30 },
+      version: '1.0.0',
+      runtimeSelection,
+    });
+    expect(descriptor.args).toEqual(
+      adapter.id === 'codex-cli'
+        ? ['--model', 'gpt-5.6-luna', '--config', 'model_reasoning_effort=low']
+        : ['--model', 'fable', '--effort', 'low'],
+    );
   });
 
   it('owns a bounded clean stop', () => {

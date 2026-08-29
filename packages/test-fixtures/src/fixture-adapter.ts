@@ -28,7 +28,10 @@ export interface FixtureAdapterOptions {
 
 export function fixtureAdapter(options: FixtureAdapterOptions): ProviderAdapter {
   const displayName = options.id === 'codex-cli' ? 'Codex CLI' : 'Claude Code';
-  const ignoresCleanStop = options.mode === 'ignore-interrupt' || options.mode === 'spawn-children';
+  const ignoresCleanStop =
+    options.mode === 'ignore-interrupt' ||
+    options.mode === 'spawn-children' ||
+    options.mode === 'spawn-bridge';
   return {
     id: options.id,
     displayName,

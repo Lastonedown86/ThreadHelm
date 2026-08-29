@@ -16,6 +16,8 @@ import {
 import type {
   ApplicationInfoView,
   ApprovedWorkspaceView,
+  CoordinationEventEnvelope,
+  HandoffSummaryView,
   InterruptOutcome,
   ProviderId,
   ReadinessView,
@@ -40,6 +42,9 @@ export interface State {
   sessions: Record<string, SessionView>;
   sessionOrder: string[];
   recoveryRecords: RecoveryRecordView[];
+  coordinationHandoffs: Record<string, HandoffSummaryView>;
+  coordinationOrder: string[];
+  coordinationNotice: string | null;
   selectedSessionId: string | null;
   unread: Record<string, boolean>;
   truncation: TruncationState;
@@ -60,6 +65,9 @@ const initial: State = {
   sessions: {},
   sessionOrder: [],
   recoveryRecords: [],
+  coordinationHandoffs: {},
+  coordinationOrder: [],
+  coordinationNotice: null,
   selectedSessionId: null,
   unread: {},
   truncation: {},
@@ -83,6 +91,7 @@ type Action =
       recoveryRecords: RecoveryRecordView[];
       storageDegraded: boolean;
       appInfo: ApplicationInfoView;
+      handoffs: HandoffSummaryView[];
     }
   | { type: 'workspace'; workspace: ApprovedWorkspaceView }
   | { type: 'readiness'; readiness: ReadinessView }
@@ -105,7 +114,10 @@ type Action =
   | { type: 'streamFailed'; sessionId: string; reason: string }
   | { type: 'inputNotice'; sessionId: string; notice: string | null }
   | { type: 'launchRequest'; request: LaunchRequest | null }
-  | { type: 'notice'; notice: string | null };
+  | { type: 'notice'; notice: string | null }
+  | { type: 'handoff'; handoff: HandoffSummaryView }
+  | { type: 'coordinationLoaded'; handoffs: HandoffSummaryView[] }
+  | { type: 'coordinationEvent'; event: CoordinationEventEnvelope };
 
 function upsertSession(state: State, session: SessionView): State {
   const known = session.id in state.sessions;
@@ -114,6 +126,16 @@ function upsertSession(state: State, session: SessionView): State {
     sessions: { ...state.sessions, [session.id]: session },
     sessionOrder: known ? state.sessionOrder : [session.id, ...state.sessionOrder],
   };
+}
+
+function withoutHandoffContent(handoff: HandoffSummaryView): HandoffSummaryView {
+  const summary = { ...handoff } as HandoffSummaryView & {
+    purpose?: unknown;
+    body?: unknown;
+  };
+  delete summary.purpose;
+  delete summary.body;
+  return summary;
 }
 
 function upsertBy<T>(list: T[], item: T, key: (value: T) => string): T[] {
@@ -136,6 +158,10 @@ function reduce(state: State, action: Action): State {
         sessions,
         sessionOrder: action.sessions.map((session) => session.id),
         recoveryRecords: action.recoveryRecords,
+        coordinationHandoffs: Object.fromEntries(
+          action.handoffs.map((handoff) => [handoff.id, handoff]),
+        ),
+        coordinationOrder: action.handoffs.map((handoff) => handoff.id),
         storageDegraded: action.storageDegraded,
         appInfo: action.appInfo,
       };
@@ -204,6 +230,30 @@ function reduce(state: State, action: Action): State {
       return { ...state, launchRequest: action.request };
     case 'notice':
       return { ...state, notice: action.notice };
+    case 'handoff': {
+      const known = action.handoff.id in state.coordinationHandoffs;
+      const summary = withoutHandoffContent(action.handoff);
+      return {
+        ...state,
+        coordinationHandoffs: {
+          ...state.coordinationHandoffs,
+          [action.handoff.id]: summary,
+        },
+        coordinationOrder: known
+          ? state.coordinationOrder
+          : [action.handoff.id, ...state.coordinationOrder],
+      };
+    }
+    case 'coordinationLoaded':
+      return {
+        ...state,
+        coordinationHandoffs: Object.fromEntries(
+          action.handoffs.map((handoff) => [handoff.id, handoff]),
+        ),
+        coordinationOrder: action.handoffs.map((handoff) => handoff.id),
+      };
+    case 'coordinationEvent':
+      return { ...state, coordinationNotice: action.event.safeSummary };
   }
 }
 
@@ -216,6 +266,8 @@ export interface Actions {
   sessionAdded(session: SessionView): void;
   recoveryChanged(record: RecoveryRecordView): void;
   workspaceChanged(workspace: ApprovedWorkspaceView): void;
+  handoffChanged(handoff: HandoffSummaryView): void;
+  refreshCoordination(): Promise<void>;
 }
 
 const StoreContext = createContext<{ state: State; actions: Actions } | null>(null);
@@ -234,11 +286,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const [workspaces, readiness, list, appInfo] = await Promise.all([
+      const [workspaces, readiness, list, appInfo, coordination] = await Promise.all([
         call(api.workspaces.list(undefined)),
         call(api.providers.listReadiness(undefined)),
         call(api.sessions.list(undefined)),
         call(api.application.getInfo(undefined)),
+        call(api.coordination.listHandoffs(undefined)).catch(() => ({
+          handoffs: [] as HandoffSummaryView[],
+          storageDegraded: true,
+        })),
       ]);
       dispatch({
         type: 'loaded',
@@ -248,10 +304,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         recoveryRecords: list.recoveryRecords,
         storageDegraded: list.storageDegraded || appInfo.storageDegraded,
         appInfo,
+        handoffs: coordination.handoffs,
       });
       for (const session of list.sessions) {
         if (LIVE.has(session.lifecycleState)) subscribeOutput(session.id);
       }
+    } catch (error) {
+      dispatch({ type: 'notice', notice: describeError(error) });
+    }
+  }, []);
+
+  const refreshCoordination = useCallback(async () => {
+    try {
+      const result = await call(api.coordination.listHandoffs(undefined));
+      dispatch({ type: 'coordinationLoaded', handoffs: result.handoffs });
     } catch (error) {
       dispatch({ type: 'notice', notice: describeError(error) });
     }
@@ -314,6 +380,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       api.on('application.closeBlocked', ({ activeSessions }) =>
         dispatch({ type: 'closeBlocked', sessions: activeSessions }),
       ),
+      api.on('coordination.handoffChanged', (event) => {
+        dispatch({ type: 'coordinationEvent', event });
+        void refreshCoordination();
+      }),
+      api.on('coordination.bridgeChanged', ({ sessionId, connected, reasonCode }) => {
+        if (!connected && reasonCode !== 'REVOKED') {
+          dispatch({
+            type: 'notice',
+            notice: `Local coordination is unavailable for session ${sessionId.slice(0, 8)}. Manual handoff presentation remains available.`,
+          });
+        }
+      }),
     ];
     void refresh();
     return () => {
@@ -321,7 +399,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       uninstall();
     };
     // selectedRef is a plain object updated on every render; hooks read it live.
-  }, [refresh]);
+  }, [refresh, refreshCoordination]);
 
   const actions = useMemo<Actions>(
     () => ({
@@ -339,8 +417,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       recoveryChanged: (record) => dispatch({ type: 'recovery', record }),
       workspaceChanged: (workspace) => dispatch({ type: 'workspace', workspace }),
+      handoffChanged: (handoff) => dispatch({ type: 'handoff', handoff }),
+      refreshCoordination,
     }),
-    [refresh],
+    [refresh, refreshCoordination],
   );
 
   const value = useMemo(() => ({ state, actions }), [state, actions]);

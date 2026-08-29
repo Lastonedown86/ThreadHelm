@@ -46,6 +46,14 @@ export interface LaunchedApp {
   simulatePower(event: PowerEvent): Promise<void>;
   /** Test-only: hold the next host-ready message so `starting` is observable. */
   delayNextHostReady(ms: number): Promise<void>;
+  delayNextControlApplied(ms: number): Promise<void>;
+  failNextHostInput(): Promise<void>;
+  failSession(sessionId: string): Promise<void>;
+  reportProviderOutcome(
+    sessionId: string,
+    handoffId: string,
+    outcome: 'completed' | 'refused' | 'failed',
+  ): Promise<{ handoffId: string; workOutcome: string }>;
   /** Hard-kills the coordinator with no cleanup; resolves once the process is gone. */
   crashCoordinator(): Promise<void>;
   close(): Promise<void>;
@@ -126,6 +134,15 @@ export async function launchApp(options: LaunchOptions = {}): Promise<LaunchedAp
     jobSnapshot: (sessionId) => hooks('hooks.jobSnapshot(arg)', sessionId),
     simulatePower: (event) => hooks('hooks.simulatePower(arg)', event),
     delayNextHostReady: (ms) => hooks('hooks.delayNextHostReady(arg)', ms),
+    delayNextControlApplied: (ms) => hooks('hooks.delayNextControlApplied(arg)', ms),
+    failNextHostInput: () => hooks('hooks.failNextHostInput()'),
+    failSession: (sessionId) => hooks('hooks.failSession(arg)', sessionId),
+    reportProviderOutcome: (sessionId, handoffId, outcome) =>
+      hooks('hooks.reportProviderOutcome(arg.sessionId, arg.handoffId, arg.outcome)', {
+        sessionId,
+        handoffId,
+        outcome,
+      }),
     async crashCoordinator() {
       // app.process() is Playwright's cli wrapper; the coordinator is the browser process.
       const pid = await app.evaluate(() => process.pid);

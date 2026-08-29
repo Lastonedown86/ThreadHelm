@@ -172,6 +172,9 @@ importers:
       '@threadhelm/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@threadhelm/domain':
+        specifier: workspace:*
+        version: link:../domain
       better-sqlite3:
         specifier: ^13.0.3
         version: 13.0.3

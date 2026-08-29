@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
@@ -34,6 +34,21 @@ const copyFixtureAgent = {
     );
   },
 };
+
+const copyCoordinationBridge = {
+  name: 'threadhelm-copy-coordination-bridge',
+  closeBundle() {
+    const candidates = [
+      resolve(root, 'native/windows-supervisor/target/release/threadhelm-coordination-bridge.exe'),
+      resolve(root, 'native/windows-supervisor/target/debug/threadhelm-coordination-bridge.exe'),
+    ];
+    const source = candidates.find((candidate) => existsSync(candidate));
+    if (!source) return;
+    const outDir = resolve(__dirname, 'out/main');
+    mkdirSync(outDir, { recursive: true });
+    copyFileSync(source, resolve(outDir, 'threadhelm-coordination-bridge.exe'));
+  },
+};
 // Never bundle these: Electron is a runtime builtin, and the native addons load
 // their .node binaries relative to their own package directory.
 const external = [
@@ -49,7 +64,11 @@ export default defineConfig({
     // The native addons must NOT be bundled: a .node file rewritten into a
     // Rollup chunk loses its resolution path at runtime. Keep real dependencies
     // external and let Node load them from node_modules.
-    plugins: [externalizeDepsPlugin({ exclude: bundled }), copyFixtureAgent],
+    plugins: [
+      externalizeDepsPlugin({ exclude: bundled }),
+      copyFixtureAgent,
+      copyCoordinationBridge,
+    ],
     resolve: { alias: workspaceAliases },
     build: {
       rollupOptions: {

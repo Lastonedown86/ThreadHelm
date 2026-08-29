@@ -61,7 +61,8 @@ h2 {
 
 button,
 select,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -216,11 +217,87 @@ button:disabled {
   margin: 0.5rem 0;
 }
 
-.field select {
+.field select,
+.field input,
+.field textarea {
   display: block;
   width: 100%;
   margin-top: 0.25rem;
   min-height: 2rem;
+}
+
+.field input,
+.field textarea {
+  padding: 0.375rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.launch-settings {
+  margin: 0 0 0.75rem;
+  padding: 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+}
+
+.launch-settings legend {
+  padding: 0 0.25rem;
+  font-weight: 600;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.panel-heading h2 {
+  margin-bottom: 0;
+}
+
+.handoffs > li {
+  overflow-wrap: anywhere;
+}
+
+.handoff-content {
+  margin: 0.75rem 0;
+}
+
+.handoff-content h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+}
+
+.handoff-content pre {
+  max-height: 14rem;
+  overflow: auto;
+  margin: 0;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--panel);
+}
+
+.badge.delivery-manual_actionable,
+.badge.delivery-failed,
+.badge.delivery-held {
+  border-color: var(--warning-text);
+  color: var(--warning-text);
+}
+
+.badge.delivery-delivered,
+.badge.delivery-acknowledged {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .workspace-main {

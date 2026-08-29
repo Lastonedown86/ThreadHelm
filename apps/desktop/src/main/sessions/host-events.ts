@@ -40,7 +40,7 @@ export function attachHost(ctx: Context, live: LiveSession, waiters: LaunchWaite
       case 'host.controlApplied': {
         const resolve = live.pendingControls.get(message.controlSequence);
         live.pendingControls.delete(message.controlSequence);
-        resolve?.();
+        resolve?.(true);
         return;
       }
       case 'host.outputTruncated':

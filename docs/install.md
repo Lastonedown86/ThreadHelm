@@ -5,7 +5,8 @@
 Windows 11 client releases within Microsoft's support lifecycle, x64 and ARM64. Windows 10,
 Windows Server, and 32-bit systems are outside the acceptance matrix. A release may claim only the
 architectures and Windows releases its acceptance run actually exercised (see the acceptance report
-that ships with each release).
+that ships with each release; the MVP run is recorded in
+`specs/001-local-agent-workspace/validation-report.md`).
 
 ## Getting the installer
 

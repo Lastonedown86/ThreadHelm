@@ -198,10 +198,10 @@ pnpm workspace per plan.md "Project Structure": `apps/desktop/`, `packages/*`, `
 - [X] T088 Build the installed-artifact acceptance suite validating signing, fuses, ASAR integrity, native module loading, and displayed version on clean Windows systems in tests/acceptance/installed-app.test.ts
 - [X] T089 [P] Build the separate non-recording credentialed provider smoke suite in tests/acceptance/provider-smoke.test.ts
 - [X] T090 [P] Add accessibility gates for keyboard-only operation, focus visibility, text scaling, WCAG 2.2 AA contrast, and reduced motion in tests/e2e/accessibility.spec.ts
-- [ ] T091 [P] Add performance gates for recovery view within 5s, 95% of output within 1s, input acknowledged within 100ms, idle median CPU at or below 1% over 60s, and four-session memory in tests/integration/windows/performance.test.ts
+- [X] T091 [P] Add performance gates for recovery view within 5s, 95% of output within 1s, input acknowledged within 100ms, idle median CPU at or below 1% over 60s, and four-session memory in tests/integration/windows/performance.test.ts
 - [X] T092 [P] Document install, launch, and the safety model in README.md and docs/
-- [ ] T093 Run the full quickstart.md validation path against a packaged build
-- [ ] T094 Review the implementation against the trust boundary table in plan.md and record the Windows release and workflow actually tested
+- [X] T093 Run the full quickstart.md validation path against a packaged build
+- [X] T094 Review the implementation against the trust boundary table in plan.md and record the Windows release and workflow actually tested
 
 ---
 

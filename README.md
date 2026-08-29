@@ -1,15 +1,31 @@
-# ThreadHelm
+<p align="center">
+  <img src="docs/assets/threadhelm-logo.svg" alt="ThreadHelm" width="720" />
+</p>
 
-ThreadHelm is a Windows-first, local-first desktop application for directing multiple
-terminal-based AI agents (Codex CLI and Claude Code) from one calm workspace: approve a folder,
-launch a real interactive agent process in it, supervise several sessions side by side, interrupt
-or stop them safely, and get an honest picture of what happened after a restart.
+<p align="center"><strong>A calm command center for local AI agents.</strong></p>
 
-The project takes inspiration from the functional core of Munder Difflin — real local agent
-processes, coordination, terminal access, and centralized user control — without the animated
-office, characters, pixel art, or game-like presentation.
+ThreadHelm is a Windows-first, local-first desktop workspace for directing Codex CLI and Claude
+Code without losing sight of what each process can access or do. Approve a folder, launch real
+interactive sessions, supervise them side by side, and stop or recover them safely—all from one
+focused workspace.
 
-## What the MVP does
+ThreadHelm is operator tooling, not a simulation. Agent processes run locally, access boundaries
+are disclosed before launch, and recovery reports only what the application can prove. The
+interface favors clear state and deliberate control over characters, simulated activity, or
+game-like presentation.
+
+## Design principles
+
+- **Local by default.** ThreadHelm launches the agent tools already installed on your machine and
+  keeps their terminal sessions on your machine.
+- **Explicit boundaries.** Every launch identifies the selected workspace, provider, version, and
+  effective executable before the process starts.
+- **Calm supervision.** Concurrent sessions remain visually separate, with input and controls
+  scoped to the session you selected.
+- **Honest recovery.** After a crash or restart, ThreadHelm never invents continuity, relaunches an
+  agent, or replays input on your behalf.
+
+## What the current MVP does
 
 - **Approve a workspace** through the native folder picker. Identity is taken from the opened
   directory handle (volume serial + file id), so aliases, junctions, and different spellings of the

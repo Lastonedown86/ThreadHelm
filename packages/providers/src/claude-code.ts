@@ -9,7 +9,15 @@ import {
   type ProviderAdapter,
 } from './adapter.js';
 
-const CLAUDE_ARGS: readonly string[] = [];
+function launchArgs(ctx: LaunchContext): string[] {
+  const args: string[] = [];
+  if (ctx.runtimeSelection.model) args.push('--model', ctx.runtimeSelection.model);
+  if (ctx.runtimeSelection.effort) args.push('--effort', ctx.runtimeSelection.effort);
+  if (ctx.bridgeConfig?.providerConfigPath) {
+    args.push('--mcp-config', ctx.bridgeConfig.providerConfigPath);
+  }
+  return args;
+}
 
 export const claudeCodeAdapter: ProviderAdapter = {
   id: 'claude-code',
@@ -19,6 +27,12 @@ export const claudeCodeAdapter: ProviderAdapter = {
     interactivePty: true,
     structuredActivity: false,
     cleanStopStrategy: 'slash_exit',
+    bridgeConfiguration: 'session_scoped_stdio_mcp',
+    safePointEvidence: 'none',
+    automaticPresentation: 'manual_only',
+    memoryTools: 'unsupported',
+    supervisorTools: 'unsupported',
+    configurationFailureBehavior: 'manual_only',
   },
   executableCandidates: [
     { relativeTo: 'LOCALAPPDATA', subpath: 'Programs\\claude\\claude.exe', kind: 'native' },
@@ -35,7 +49,7 @@ export const claudeCodeAdapter: ProviderAdapter = {
     });
   },
   buildLaunch(ctx: LaunchContext): LaunchDescriptor {
-    return interactiveLaunch(ctx, CLAUDE_ARGS);
+    return interactiveLaunch(ctx, launchArgs(ctx));
   },
   buildCleanStop(): CleanStopAction {
     return { writes: ['/exit\r'], graceMs: 10_000 };

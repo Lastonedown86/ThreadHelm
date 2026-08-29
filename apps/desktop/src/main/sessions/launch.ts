@@ -25,6 +25,7 @@ import {
   type SessionView,
 } from '@threadhelm/contracts';
 import { safeTemplate } from '@threadhelm/persistence';
+import type { SessionBridgeConfig } from '@threadhelm/providers';
 import { now, type Context, type LiveSession } from '../context.js';
 import { failSession } from './failure.js';
 import { attachHost } from './host-events.js';
@@ -200,6 +201,24 @@ export async function launchSession(
     ctx.log.info('session.host_contained', { sessionId, hostPid: live.hostPid });
 
     // 8. adapter-owned descriptor, validated, cwd pinned to the canonical path
+    let bridgeConfig: SessionBridgeConfig | undefined;
+    if (
+      adapter.capabilities.bridgeConfiguration === 'session_scoped_stdio_mcp' &&
+      ctx.coordinationBridge
+    ) {
+      try {
+        bridgeConfig = await ctx.coordinationBridge.prepareSession(
+          sessionId,
+          adapter.id,
+          readiness.version,
+        );
+      } catch {
+        ctx.log.warn('coordination.bridge_unavailable', {
+          sessionId,
+          reasonCode: 'COORDINATION_BRIDGE_UNAVAILABLE',
+        });
+      }
+    }
     const descriptor = LaunchDescriptor.parse(
       adapter.buildLaunch({
         sessionId,
@@ -210,6 +229,8 @@ export async function launchSession(
         executableKind: result.executableKind,
         terminal: preview.terminal,
         version: readiness.version,
+        runtimeSelection: preview.runtimeSelection,
+        ...(bridgeConfig ? { bridgeConfig } : {}),
       }),
     );
     if (descriptor.cwd !== workspace.displayPath) throw new Error('DESCRIPTOR_CWD_MISMATCH');

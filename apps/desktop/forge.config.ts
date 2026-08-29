@@ -73,6 +73,10 @@ function copyRuntimePackages(buildPath: string): void {
       },
     });
   }
+  const bridge = join(buildPath, 'out', 'main', 'threadhelm-coordination-bridge.exe');
+  if (!existsSync(bridge)) {
+    throw new Error('coordination bridge binary is missing; run the native release build first');
+  }
 }
 
 const config: ForgeConfig = {
@@ -85,8 +89,8 @@ const config: ForgeConfig = {
     // Dependencies are copied by the packageAfterCopy hook below.
     prune: false,
     asar: {
-      // Native addons must stay real files on disk.
-      unpack: '**/*.node',
+      // Native addons and coordination bridge binary must stay real files on disk.
+      unpack: '{**/*.node,**/threadhelm-coordination-bridge.exe}',
     },
     name: 'ThreadHelm',
     executableName: 'ThreadHelm',

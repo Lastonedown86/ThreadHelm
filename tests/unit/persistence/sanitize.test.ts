@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { ThreadHelmError } from '@threadhelm/contracts';
 import {
   assertNoRawContent,
+  coordinationSafeSummary,
+  normalizeCoordinationContent,
   safeTemplate,
+  sanitizeCoordinationBody,
+  sanitizeCoordinationPurpose,
   sanitizeSummary,
   SUMMARY_TEMPLATE_IDS,
 } from '@threadhelm/persistence';
@@ -108,5 +112,63 @@ describe('safeTemplate', () => {
     expect(reason(() => safeTemplate('launched', { provider: 'x' }))).toBe(
       'MISSING_TEMPLATE_VALUE',
     );
+  });
+});
+
+describe('coordination content sanitization', () => {
+  it('normalizes line endings and trailing horizontal whitespace deterministically', () => {
+    expect(normalizeCoordinationContent('alpha  \r\nbeta\t\rcharlie')).toBe('alpha\nbeta\ncharlie');
+    expect(normalizeCoordinationContent('Unicode stays: 🧵 café')).toBe('Unicode stays: 🧵 café');
+  });
+
+  it('counts Unicode scalars for purpose and UTF-8 bytes for body after normalization', () => {
+    const purpose = sanitizeCoordinationPurpose('🧵'.repeat(160));
+    expect(purpose.scalarCount).toBe(160);
+    expect(purpose.utf8Bytes).toBe(640);
+    expect(purpose.normalized).toBe('🧵'.repeat(160));
+
+    const body = sanitizeCoordinationBody(`line  \r\n${'é'.repeat(8_185)}`);
+    expect(body.normalized.startsWith('line\n')).toBe(true);
+    expect(body.utf8Bytes).toBe(16_375);
+  });
+
+  it('enforces non-empty purpose/body and their distinct fixed bounds', () => {
+    for (const value of ['', 'x'.repeat(161)]) {
+      expect(() => sanitizeCoordinationPurpose(value)).toThrowError(ThreadHelmError);
+    }
+    expect(() => sanitizeCoordinationBody('')).toThrowError(ThreadHelmError);
+    expect(() => sanitizeCoordinationBody('é'.repeat(8_193))).toThrowError(ThreadHelmError);
+  });
+
+  it.each([
+    ['nul', 'a\0b'],
+    ['escape', 'a\x1bb'],
+    ['bell', 'a\x07b'],
+    ['delete', 'a\x7fb'],
+    ['unpaired surrogate', 'a\ud800b'],
+    ['OpenAI credential', 'sk-abcdefghijklmnop'],
+    ['Anthropic credential', 'sk-ant-api03-secret'],
+    ['GitHub credential', 'ghp_abcdefghijklmnop'],
+    ['environment credential', 'API_TOKEN=secret'],
+  ])('rejects %s from durable coordination content', (_label, value) => {
+    let caught: unknown;
+    try {
+      sanitizeCoordinationBody(value);
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(ThreadHelmError);
+    expect((caught as ThreadHelmError).code).toBe('COORDINATION_CONTENT_INVALID');
+  });
+
+  it('creates fixed content-free summaries and rejects unsafe values', () => {
+    expect(coordinationSafeSummary('handoff_queued')).toBe('Handoff queued');
+    expect(coordinationSafeSummary('delivery_changed', { state: 'unknown' })).toBe(
+      'Delivery changed to unknown',
+    );
+    expect(() =>
+      coordinationSafeSummary('delivery_changed', { state: 'sk-abcdefghijklmnop' }),
+    ).toThrowError(ThreadHelmError);
+    expect(() => coordinationSafeSummary('missing' as never)).toThrowError(ThreadHelmError);
   });
 });

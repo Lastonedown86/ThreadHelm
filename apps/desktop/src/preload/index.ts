@@ -1,7 +1,8 @@
 /**
  * Renderer bridge (T025).
  *
- * One named method per approved operation, generated from the contract's
+ * One named method per approved operation, including the coordination
+ * namespace, generated from the contract's
  * operation table so nothing unlisted can be reached. No `ipcRenderer`,
  * channel name, filesystem, environment, shell, or executable access crosses
  * into the renderer. Results travel as `{ ok, value | error }` envelopes so

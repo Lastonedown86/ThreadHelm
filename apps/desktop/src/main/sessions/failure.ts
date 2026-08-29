@@ -27,6 +27,7 @@ export interface FinalizeInput {
 }
 
 function teardown(ctx: Context, live: LiveSession): void {
+  ctx.coordinationBridge?.revoke(live.id);
   try {
     live.host.postMessage({ type: 'host.shutdown', sessionId: live.id, protocolVersion: 1 });
   } catch {
@@ -40,7 +41,9 @@ function teardown(ctx: Context, live: LiveSession): void {
     }
     live.rendererPort = null;
   }
-  for (const resolve of live.pendingControls.values()) resolve();
+  // Ending the session abandons outstanding controls. Only a matching
+  // host.controlApplied message may resolve a waiter as applied.
+  for (const resolve of live.pendingControls.values()) resolve(false);
   live.pendingControls.clear();
   ctx.jobs.close(live.id);
   releaseLease(ctx, live.id);

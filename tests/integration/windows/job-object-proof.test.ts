@@ -10,8 +10,9 @@
  */
 
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { FAKE_AGENT_PATH } from '@threadhelm/test-fixtures';
 import { describe, expect, it } from 'vitest';
 import { electronExe as electron } from '../../e2e/helpers/app.js';
@@ -26,19 +27,33 @@ interface ProofResult {
   failure?: string;
 }
 
-export function runProof(
+export async function runProof(
   extraArgs: string[] = [],
 ): Promise<{ result: ProofResult | null; stdout: string; stderr: string; code: number | null }> {
+  const tempRoot = mkdtempSync(join(tmpdir(), 'threadhelm-descendant-proof-'));
+  try {
+    return await runProofArgs([
+      FAKE_AGENT_PATH,
+      '--mode',
+      'spawn-children',
+      '--descendant-pid-file',
+      join(tempRoot, 'descendant.pid'),
+      ...extraArgs,
+    ]);
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+function runProofArgs(
+  fixtureArgs: string[],
+): Promise<{ result: ProofResult | null; stdout: string; stderr: string; code: number | null }> {
   return new Promise((resolvePromise) => {
-    const child = spawn(
-      electron,
-      [entry, '--threadhelm-proof', FAKE_AGENT_PATH, '--mode', 'spawn-children', ...extraArgs],
-      {
-        stdio: ['ignore', 'pipe', 'pipe'],
-        windowsHide: true,
-        env: { ...process.env, ELECTRON_ENABLE_LOGGING: '0' },
-      },
-    );
+    const child = spawn(electron, [entry, '--threadhelm-proof', ...fixtureArgs], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+      env: { ...process.env, ELECTRON_ENABLE_LOGGING: '0' },
+    });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (chunk: Buffer) => (stdout += chunk.toString('utf8')));
@@ -51,6 +66,16 @@ export function runProof(
       resolvePromise({ result, stdout, stderr, code });
     });
   });
+}
+
+function actualBridgePath(): string {
+  const candidates = [
+    resolve(root, 'native/windows-supervisor/target/release/threadhelm-coordination-bridge.exe'),
+    resolve(root, 'native/windows-supervisor/target/debug/threadhelm-coordination-bridge.exe'),
+  ];
+  const bridge = candidates.find((candidate) => existsSync(candidate));
+  if (!bridge) throw new Error('Build the native coordination bridge before running this proof.');
+  return bridge;
 }
 
 describe('architecture proof gate (T014)', () => {
@@ -71,10 +96,59 @@ describe('architecture proof gate (T014)', () => {
     expect(steps.jobHoldsOnlyHost, 'nothing may be launched before containment').toBe(true);
     expect(steps.rootVerifiedInJob, 'provider root must inherit job membership').toBe(true);
     expect(steps.descendantsContained, 'grandchildren must be inside the same job').toBe(true);
+    expect(steps.descendantVerifiedInJob, 'the exact child pid must be verified in the job').toBe(
+      true,
+    );
     expect(steps.scopeEmptyAfterTerminate, 'TerminateJobObject must empty the scope').toBe(true);
     expect(steps.rootDiesOnHandleClose, 'closing the handle must kill the root').toBe(true);
     expect(steps.hostDiesOnHandleClose, 'closing the handle must kill the host').toBe(true);
     expect(result!.passed, result!.failure).toBe(true);
     expect(code).toBe(0);
+  }, 120_000);
+
+  it('contains the real native coordination bridge spawned by the provider fixture', async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), 'threadhelm-bridge-proof-'));
+    const sessionConfig = join(tempRoot, 'bridge-session.json');
+    const descendantPidFile = join(tempRoot, 'bridge.pid');
+    writeFileSync(
+      sessionConfig,
+      JSON.stringify({
+        version: 1,
+        pipeName: `\\\\.\\pipe\\threadhelm-proof-${process.pid}-${Date.now()}`,
+        sessionId: '20000000-0000-4000-8000-000000000002',
+        credential: 'proof-only-credential-proof-only-credential-0001',
+      }),
+      { mode: 0o600 },
+    );
+
+    try {
+      const bridgePath = actualBridgePath();
+      const { result, stderr, code } = await runProofArgs([
+        FAKE_AGENT_PATH,
+        '--mode',
+        'spawn-bridge',
+        '--bridge-path',
+        bridgePath,
+        '--session-config',
+        sessionConfig,
+        '--descendant-pid-file',
+        descendantPidFile,
+      ]);
+      expect(
+        result,
+        `no proof output; exit ${code}; stderr: ${stderr.slice(0, 2000)}`,
+      ).not.toBeNull();
+      expect(result!.steps.processCountWithDescendants).toBeGreaterThanOrEqual(3);
+      expect(result!.steps.descendantPid).toBeTypeOf('number');
+      expect(
+        result!.steps.descendantVerifiedInJob,
+        'the exact native bridge pid must inherit the session job',
+      ).toBe(true);
+      expect(result!.steps.scopeEmptyAfterTerminate).toBe(true);
+      expect(result!.passed, result!.failure).toBe(true);
+      expect(code).toBe(0);
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
   }, 120_000);
 });

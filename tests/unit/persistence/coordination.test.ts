@@ -1,0 +1,410 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  createRepositories,
+  MAX_RETAINED_COORDINATION_BYTES,
+  migrate,
+  openDatabase,
+  readSchemaVersion,
+  type Db,
+} from '@threadhelm/persistence';
+
+const IDS = {
+  senderWorkspace: '00000000-0000-4000-8000-000000000011',
+  recipientWorkspace: '00000000-0000-4000-8000-000000000012',
+  thirdWorkspace: '00000000-0000-4000-8000-000000000013',
+  sender: '00000000-0000-4000-8000-000000000001',
+  recipient: '00000000-0000-4000-8000-000000000002',
+  thirdSession: '00000000-0000-4000-8000-000000000003',
+  conversation: '00000000-0000-4000-8000-000000000021',
+  secondConversation: '00000000-0000-4000-8000-000000000023',
+  handoff: '00000000-0000-4000-8000-000000000022',
+  secondHandoff: '00000000-0000-4000-8000-000000000024',
+};
+
+let db: Db;
+afterEach(() => db?.close());
+
+function openMigrated(): Db {
+  db = openDatabase(':memory:');
+  migrate(db);
+  return db;
+}
+
+function tables(database: Db): string[] {
+  return (
+    database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as {
+      name: string;
+    }[]
+  ).map(({ name }) => name);
+}
+
+const AT = '2026-01-01T00:00:00.000Z';
+
+function seedSessions(database: Db): void {
+  const workspace = database.prepare(`INSERT INTO approved_workspaces
+    (id, selected_path, display_path, canonical_path, volume_serial, file_id, drive_type, approved_at, last_validated_at)
+    VALUES (?, ?, ?, ?, ?, ?, 'fixed_local', ?, ?)`);
+  workspace.run(
+    IDS.senderWorkspace,
+    'C:\\sender',
+    'C:\\sender',
+    '\\\\?\\C:\\sender',
+    '0000000000000001',
+    '00000000000000000000000000000001',
+    AT,
+    AT,
+  );
+  workspace.run(
+    IDS.recipientWorkspace,
+    'C:\\recipient',
+    'C:\\recipient',
+    '\\\\?\\C:\\recipient',
+    '0000000000000002',
+    '00000000000000000000000000000002',
+    AT,
+    AT,
+  );
+  workspace.run(
+    IDS.thirdWorkspace,
+    'C:\\third',
+    'C:\\third',
+    '\\\\?\\C:\\third',
+    '0000000000000003',
+    '00000000000000000000000000000003',
+    AT,
+    AT,
+  );
+  const definition = database.prepare(`INSERT INTO agent_definitions
+    (id, display_name, provider_kind, executable_candidates, tested_version_range, capabilities)
+    VALUES (?, ?, ?, '[]', 'fixture', '{}')`);
+  definition.run('codex-cli', 'Codex CLI', 'codex-cli');
+  definition.run('claude-code', 'Claude Code', 'claude-code');
+  const readiness = database.prepare(`INSERT INTO agent_readiness_snapshots
+    (id, provider_id, resolved_executable, version, availability, authentication, probed_at, reason_code, safe_summary)
+    VALUES (?, ?, 'C:\\fixture.exe', '1.0.0', 'available', 'authenticated', ?, NULL, 'Fixture available')`);
+  readiness.run('00000000-0000-4000-8000-000000000041', 'codex-cli', AT);
+  readiness.run('00000000-0000-4000-8000-000000000042', 'claude-code', AT);
+  const session = database.prepare(`INSERT INTO agent_sessions
+    (id, workspace_id, definition_id, readiness_snapshot_id, access_mode, lifecycle_state,
+     activity_state, activity_evidence_kind, columns, rows, started_at, created_at, updated_at)
+    VALUES (?, ?, ?, ?, 'write_capable', 'running', 'unknown', 'none', 100, 30, ?, ?, ?)`);
+  session.run(
+    IDS.sender,
+    IDS.senderWorkspace,
+    'codex-cli',
+    '00000000-0000-4000-8000-000000000041',
+    AT,
+    AT,
+    AT,
+  );
+  session.run(
+    IDS.recipient,
+    IDS.recipientWorkspace,
+    'claude-code',
+    '00000000-0000-4000-8000-000000000042',
+    AT,
+    AT,
+    AT,
+  );
+  session.run(
+    IDS.thirdSession,
+    IDS.thirdWorkspace,
+    'codex-cli',
+    '00000000-0000-4000-8000-000000000041',
+    AT,
+    AT,
+    AT,
+  );
+}
+
+function seedConversationAndHandoff(database: Db, contentBytes = 4, sessionsSeeded = false): void {
+  if (!sessionsSeeded) seedSessions(database);
+  database
+    .prepare(
+      `INSERT INTO coordination_conversations
+    (id, state, auto_continue_enabled, auto_reply_depth_limit, consecutive_delivery_failures, created_at, updated_at)
+    VALUES (?, 'open', 0, 8, 0, ?, ?)`,
+    )
+    .run(IDS.conversation, AT, AT);
+  database
+    .prepare(
+      `INSERT INTO coordination_handoffs
+    (id, conversation_id, sender_session_id, recipient_session_id,
+     sender_workspace_id_at_create, recipient_workspace_id_at_create, origin, kind, requires_reply,
+     purpose, body, content_bytes, content_fingerprint, delivery_state, work_outcome, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, 'user', 'request', 1, 'test', 'body', ?, zeroblob(32), 'presenting', 'pending', ?, ?)`,
+    )
+    .run(
+      IDS.handoff,
+      IDS.conversation,
+      IDS.sender,
+      IDS.recipient,
+      IDS.senderWorkspace,
+      IDS.recipientWorkspace,
+      contentBytes,
+      AT,
+      AT,
+    );
+}
+
+function handoffInput(overrides: Record<string, unknown> = {}) {
+  return {
+    id: IDS.secondHandoff,
+    conversationId: IDS.secondConversation,
+    senderSessionId: IDS.sender,
+    recipientSessionId: IDS.recipient,
+    senderWorkspaceIdAtCreate: IDS.senderWorkspace,
+    recipientWorkspaceIdAtCreate: IDS.recipientWorkspace,
+    origin: 'user' as const,
+    kind: 'request' as const,
+    requiresReply: true,
+    purpose: 'Fixture request',
+    body: 'Fixture body',
+    createdAt: AT,
+    ...overrides,
+  };
+}
+
+describe('coordination migration v2', () => {
+  it('upgrades v1 transactionally and creates the coordination tables', () => {
+    const database = openMigrated();
+    expect(readSchemaVersion(database)).toBe(2);
+    expect(tables(database)).toEqual(
+      expect.arrayContaining([
+        'coordination_conversations',
+        'coordination_handoffs',
+        'coordination_delivery_attempts',
+        'coordination_events',
+      ]),
+    );
+  });
+
+  it('keeps the existing v1 session/recovery data when v2 applies', () => {
+    const database = openMigrated();
+    expect(database.prepare('SELECT COUNT(*) AS n FROM agent_sessions').get()).toEqual({ n: 0 });
+    expect(database.prepare('SELECT COUNT(*) AS n FROM recovery_records').get()).toEqual({ n: 0 });
+  });
+});
+
+describe('coordination repository invariants', () => {
+  it('lists durable handoffs newest first with a strict US1 bound', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+    const first = coordination.createHandoff(handoffInput());
+    const second = coordination.createHandoff(
+      handoffInput({
+        id: IDS.handoff,
+        conversationId: IDS.conversation,
+        createdAt: '2026-01-01T00:00:01.000Z',
+      }),
+    );
+
+    expect(coordination.listHandoffs(1).map(({ id }) => id)).toEqual([second.id]);
+    expect(coordination.listHandoffs(2).map(({ id }) => id)).toEqual([second.id, first.id]);
+    expect(() => coordination.listHandoffs(101)).toThrow();
+  });
+
+  it('creates one addressed handoff and one content-free event atomically', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+
+    const created = coordination.createHandoff(handoffInput());
+
+    expect(created).toMatchObject({
+      conversationId: IDS.secondConversation,
+      senderSessionId: IDS.sender,
+      recipientSessionId: IDS.recipient,
+      deliveryState: 'queued',
+      workOutcome: 'pending',
+    });
+    expect(database.prepare('SELECT COUNT(*) AS n FROM coordination_conversations').get()).toEqual({
+      n: 1,
+    });
+    expect(database.prepare('SELECT COUNT(*) AS n FROM coordination_events').get()).toEqual({
+      n: 1,
+    });
+    const event = database.prepare('SELECT * FROM coordination_events').get() as Record<
+      string,
+      unknown
+    >;
+    expect(event).not.toHaveProperty('body');
+    expect(event).not.toHaveProperty('purpose');
+  });
+
+  it('enforces one prepared/dispatching and one applied attempt per handoff', () => {
+    const database = openMigrated();
+    seedConversationAndHandoff(database);
+    const insert = database.prepare(`INSERT INTO coordination_delivery_attempts
+      (id, handoff_id, attempt_number, recipient_session_id, recipient_workspace_id_at_review,
+       lifecycle_state_at_review, activity_state_at_review, activity_evidence_kind_at_review,
+       state, evidence_kind, created_at, submitted_at, completed_at)
+      VALUES (?, ?, ?, ?, ?, 'running', 'unknown', 'none', ?, 'fixture', ?, ?, ?)`);
+    const run = (id: string, number: number, state: string, at: string) =>
+      insert.run(
+        id,
+        IDS.handoff,
+        number,
+        IDS.recipient,
+        IDS.recipientWorkspace,
+        state,
+        at,
+        state === 'dispatching' ? at : null,
+        state === 'applied' ? at : null,
+      );
+    run('00000000-0000-4000-8000-000000000031', 1, 'prepared', AT);
+    expect(() =>
+      run('00000000-0000-4000-8000-000000000032', 2, 'dispatching', '2026-01-01T00:00:01.000Z'),
+    ).toThrow();
+    expect(() =>
+      run('00000000-0000-4000-8000-000000000033', 3, 'applied', '2026-01-01T00:00:02.000Z'),
+    ).not.toThrow();
+    expect(() =>
+      run('00000000-0000-4000-8000-000000000034', 4, 'applied', '2026-01-01T00:00:03.000Z'),
+    ).toThrow();
+  });
+
+  it('rolls back a failed handoff write and exposes unknown-attempt recovery', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+    database.exec(`CREATE TRIGGER fixture_fail_handoff BEFORE INSERT ON coordination_handoffs
+      BEGIN SELECT RAISE(ABORT, 'fixture rollback'); END;`);
+    expect(() => coordination.createHandoff(handoffInput())).toThrow();
+    expect(database.prepare('SELECT COUNT(*) AS n FROM coordination_conversations').get()).toEqual({
+      n: 0,
+    });
+    expect(database.prepare('SELECT COUNT(*) AS n FROM coordination_handoffs').get()).toEqual({
+      n: 0,
+    });
+    expect(database.prepare('SELECT COUNT(*) AS n FROM coordination_events').get()).toEqual({
+      n: 0,
+    });
+    database.exec('DROP TRIGGER fixture_fail_handoff');
+
+    seedConversationAndHandoff(database, 4, true);
+    database
+      .prepare(
+        `INSERT INTO coordination_delivery_attempts
+      (id, handoff_id, attempt_number, recipient_session_id, recipient_workspace_id_at_review,
+       lifecycle_state_at_review, activity_state_at_review, activity_evidence_kind_at_review,
+       state, evidence_kind, reason_code, created_at, completed_at)
+      VALUES (?, ?, 1, ?, ?, 'running', 'unknown', 'none', 'unknown', 'recovery',
+        'OUTCOME_UNCERTAIN', ?, ?)`,
+      )
+      .run(
+        '00000000-0000-4000-8000-000000000035',
+        IDS.handoff,
+        IDS.recipient,
+        IDS.recipientWorkspace,
+        AT,
+        AT,
+      );
+    expect(coordination.listUnknownAttempts()).toEqual([
+      expect.objectContaining({ id: '00000000-0000-4000-8000-000000000035', state: 'unknown' }),
+    ]);
+  });
+
+  it('rejects a handoff that would exceed retained-content quota', () => {
+    const database = openMigrated();
+    seedConversationAndHandoff(database, MAX_RETAINED_COORDINATION_BYTES);
+    const coordination = createRepositories(database).coordination;
+    expect(() => coordination.createHandoff(handoffInput())).toThrowError(
+      expect.objectContaining({ code: 'COORDINATION_LIMIT_REACHED' }),
+    );
+  });
+
+  it('prepares, dispatches, and applies exactly one delivery attempt', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+    const handoff = coordination.createHandoff(handoffInput());
+    const prepared = coordination.prepareAttempt({
+      id: '00000000-0000-4000-8000-000000000031',
+      handoffId: handoff.id,
+      recipientSessionId: IDS.recipient,
+      recipientWorkspaceIdAtReview: IDS.recipientWorkspace,
+      lifecycleStateAtReview: 'running',
+      activityStateAtReview: 'unknown',
+      activityEvidenceKindAtReview: 'none',
+      createdAt: AT,
+    });
+    expect(prepared.state).toBe('prepared');
+    expect(() =>
+      coordination.prepareAttempt({
+        ...prepared,
+        id: '00000000-0000-4000-8000-000000000032',
+        recipientWorkspaceIdAtReview: IDS.recipientWorkspace,
+        lifecycleStateAtReview: 'running',
+        activityStateAtReview: 'unknown',
+        activityEvidenceKindAtReview: 'none',
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'COORDINATION_ATTEMPT_ACTIVE' }));
+    expect(coordination.markAttemptDispatching(prepared.id, 7, AT)).toMatchObject({
+      state: 'dispatching',
+      controlSequence: 7,
+    });
+    expect(coordination.markAttemptApplied(prepared.id, AT).state).toBe('applied');
+    expect(coordination.findHandoffById(handoff.id)?.deliveryState).toBe('delivered');
+    expect(coordination.markAttemptApplied(prepared.id, AT).state).toBe('applied');
+  });
+
+  it('keeps known failure retry, retarget, and cancellation explicit', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+    const first = coordination.createHandoff(handoffInput());
+    const attempt = coordination.prepareAttempt({
+      handoffId: first.id,
+      recipientSessionId: IDS.recipient,
+      recipientWorkspaceIdAtReview: IDS.recipientWorkspace,
+      lifecycleStateAtReview: 'running',
+      activityStateAtReview: 'unknown',
+      activityEvidenceKindAtReview: 'none',
+      createdAt: AT,
+    });
+    coordination.markAttemptFailedBeforeWrite(attempt.id, 'KNOWN_NO_WRITE', AT);
+    expect(coordination.findHandoffById(first.id)?.deliveryState).toBe('manual_actionable');
+
+    const retargeted = coordination.retargetHandoff(
+      first.id,
+      IDS.thirdSession,
+      IDS.thirdWorkspace,
+      AT,
+    );
+    expect(retargeted).toMatchObject({
+      recipientSessionId: IDS.thirdSession,
+      recipientWorkspaceIdAtCreate: IDS.thirdWorkspace,
+      deliveryState: 'queued',
+    });
+    expect(coordination.cancelHandoff(first.id, AT)).toMatchObject({
+      deliveryState: 'cancelled',
+      workOutcome: 'cancelled',
+    });
+  });
+
+  it('rejects direct presentation or cancellation from the failed delivery state', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+    const failed = coordination.createHandoff(
+      handoffInput({ deliveryState: 'failed', holdReasonCode: 'KNOWN_NO_WRITE' }),
+    );
+
+    expect(() =>
+      coordination.prepareAttempt({
+        handoffId: failed.id,
+        recipientSessionId: IDS.recipient,
+        recipientWorkspaceIdAtReview: IDS.recipientWorkspace,
+        lifecycleStateAtReview: 'running',
+        activityStateAtReview: 'unknown',
+        activityEvidenceKindAtReview: 'none',
+        createdAt: AT,
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'INVALID_STATE' }));
+    expect(() => coordination.cancelHandoff(failed.id, AT)).toThrowError(
+      expect.objectContaining({ code: 'COORDINATION_DELIVERY_UNKNOWN' }),
+    );
+  });
+});

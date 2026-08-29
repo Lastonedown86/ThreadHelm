@@ -13,6 +13,7 @@ import type {
   Availability,
   CleanStopAction,
   LaunchDescriptor,
+  LaunchRuntimeSelection,
   ProviderId,
   TerminalSize,
 } from '@threadhelm/contracts';
@@ -60,6 +61,23 @@ export interface ReadinessResult {
   safeSummary: string;
 }
 
+export type BridgeConfigurationCapability = 'unsupported' | 'session_scoped_stdio_mcp';
+export type AutomaticPresentationCapability = 'manual_only' | 'structured_safe_point';
+export type MemoryToolsCapability = 'unsupported' | 'scoped_revisioned_memory';
+export type SupervisorToolsCapability = 'unsupported' | 'worker_only' | 'bound_supervisor';
+
+export interface SessionBridgeConfig {
+  bridgeExecutablePath: string;
+  pipeName: string;
+  sessionId: string;
+  /** Main-owned file read only by the bridge child; contains the session credential. */
+  sessionConfigPath: string;
+  /** Provider-specific ephemeral MCP configuration, when the CLI accepts a file. */
+  providerConfigPath?: string;
+  /** Exact per-process overrides for providers that expose no config-file option. */
+  codexConfigOverrides?: readonly string[];
+}
+
 export interface LaunchContext {
   sessionId: string;
   canonicalWorkspacePath: string;
@@ -67,6 +85,10 @@ export interface LaunchContext {
   executableKind: ExecutableKind;
   terminal: TerminalSize;
   version: string;
+  /** Exact per-process override; null fields preserve the CLI's local default. */
+  runtimeSelection: LaunchRuntimeSelection;
+  /** Ephemeral session bridge configuration if supported */
+  bridgeConfig?: SessionBridgeConfig | null;
 }
 
 export interface StopContext {
@@ -86,6 +108,12 @@ export interface ProviderAdapter {
     interactivePty: true;
     structuredActivity: false;
     cleanStopStrategy: 'slash_exit' | 'ctrl_d';
+    bridgeConfiguration?: BridgeConfigurationCapability;
+    safePointEvidence?: 'none' | 'turn_completed';
+    automaticPresentation?: AutomaticPresentationCapability;
+    memoryTools?: MemoryToolsCapability;
+    supervisorTools?: SupervisorToolsCapability;
+    configurationFailureBehavior?: 'manual_only';
   };
   readonly executableCandidates: readonly ExecutableCandidate[];
   probe(ctx: ProbeContext): Promise<ReadinessResult>;

@@ -27,7 +27,7 @@
     "desktop:build": "pnpm --filter @threadhelm/desktop build",
     "dev": "pnpm --filter @threadhelm/desktop dev",
     "proof:windows-supervision": "pnpm desktop:build && vitest run --project integration tests/integration/windows/job-object-proof.test.ts",
-    "package:win": "pnpm desktop:build && pnpm --filter @threadhelm/desktop make",
+    "package:win": "pnpm native:build && pnpm desktop:build && pnpm --filter @threadhelm/desktop make",
     "native:build:debug": "pnpm --filter @threadhelm/windows-supervisor build:debug"
   },
   "devDependencies": {

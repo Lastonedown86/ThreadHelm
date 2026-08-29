@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@threadhelm/contracts": "workspace:*",
+    "@threadhelm/domain": "workspace:*",
     "better-sqlite3": "^13.0.3"
   }
 }

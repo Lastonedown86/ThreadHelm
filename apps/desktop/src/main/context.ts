@@ -7,6 +7,7 @@
 import type { MessagePortMain } from 'electron';
 import type {
   LifecycleState,
+  LaunchRuntimeSelection,
   MainToHostMessage,
   ProviderId,
   ReadinessView,
@@ -21,6 +22,8 @@ import type { Logger } from './logging.js';
 import type { TokenStore } from './tokens.js';
 import type { JobRegistry } from './native/job-registry.js';
 import type { StorageHealth } from './storage-health.js';
+import type { CoordinationService } from './coordination/service.js';
+import type { BridgeSessionManager } from './coordination/bridge.js';
 
 // --- native boundary (contracts/windows-supervisor.md) ----------------------
 
@@ -103,8 +106,8 @@ export interface LiveSession {
   state: LifecycleState;
   forceStopAvailable: boolean;
   controlSequence: number;
-  /** Resolvers waiting for `host.controlApplied`. */
-  pendingControls: Map<number, () => void>;
+  /** Waiters resolved `true` only by matching `host.controlApplied`; teardown resolves `false`. */
+  pendingControls: Map<number, (applied: boolean) => void>;
   rendererPort: MessagePortMain | null;
   exit: { exitCode: number | null } | null;
   /** Set while an interrupt is being observed. */
@@ -139,6 +142,7 @@ export interface PreviewPayload {
   providerId: ProviderId;
   readiness: ReadinessView;
   terminal: TerminalSize;
+  runtimeSelection: LaunchRuntimeSelection;
 }
 
 export interface ControlTokenPayload {
@@ -170,6 +174,10 @@ export interface Context {
   selection: Selection;
   adapters: readonly ProviderAdapter[];
   probes: ProbeRunner;
+  /** Main-owned coordination seam; absent until coordination startup is composed. */
+  coordination?: CoordinationService;
+  /** Session-scoped provider bridge authority; absent in degraded/test compositions. */
+  coordinationBridge?: BridgeSessionManager;
   appInfo: AppInfo;
   /** Quit the application once every session is stopped. */
   quit: () => void;

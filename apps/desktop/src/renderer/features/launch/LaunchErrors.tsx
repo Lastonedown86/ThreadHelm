@@ -44,6 +44,29 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   STORAGE_UNAVAILABLE: 'ThreadHelm’s local storage is unavailable. Restart the application.',
   STORAGE_DEGRADED:
     'Local storage is in a degraded state; new launches and durable changes are blocked until it recovers.',
+  CONVERSATION_NOT_FOUND: 'That coordination conversation no longer exists.',
+  HANDOFF_NOT_FOUND: 'That handoff no longer exists.',
+  ESCALATION_NOT_FOUND: 'That coordination escalation no longer exists.',
+  COORDINATION_CONTENT_INVALID:
+    'The handoff content did not meet the coordination safety and size rules.',
+  COORDINATION_LIMIT_REACHED:
+    'The coordination limit was reached. Resolve or remove inactive work before continuing.',
+  COORDINATION_CAUSALITY_INVALID:
+    'That reply does not belong to the reviewed coordination conversation.',
+  COORDINATION_TARGET_CHANGED:
+    'The coordination target changed since review. Review the handoff again.',
+  COORDINATION_TARGET_NOT_SELECTED:
+    'Select the reviewed recipient session before presenting this handoff.',
+  COORDINATION_NOT_ELIGIBLE:
+    'The selected session is not currently eligible for this coordination action.',
+  COORDINATION_ATTEMPT_ACTIVE: 'A delivery attempt is already active for this handoff.',
+  COORDINATION_DELIVERY_UNKNOWN:
+    'ThreadHelm cannot prove whether this handoff was delivered. It will not retry automatically.',
+  COORDINATION_BRIDGE_UNAVAILABLE:
+    'Structured coordination is unavailable for this session; use the reviewed manual path.',
+  COORDINATION_AUTHORITY_REQUIRED:
+    'This action requires explicit user authority before coordination can continue.',
+  COORDINATION_CLOSED: 'That coordination conversation is closed.',
   ACTIVE_SESSIONS: 'Sessions are still active. Cancel closing or stop all sessions first.',
   INVALID_REQUEST: 'The request was rejected as invalid.',
   UNAUTHORIZED_SENDER: 'The request came from an unauthorized source.',

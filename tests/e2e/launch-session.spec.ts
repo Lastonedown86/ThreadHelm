@@ -35,7 +35,7 @@ test('approve → disclose → launch journey', async () => {
     ).toBeVisible();
     await expect(page.getByText('Available').first()).toBeVisible();
 
-    // Disclosure: effective path, agent, version, boundary warning; Launch gated on the checkbox.
+    // Disclosure: effective path, agent, model, effort, version, and boundary warning.
     await page
       .getByRole('button', { name: `Launch ${PROVIDER_NAME['codex-cli']} in ${displayPath}` })
       .click();
@@ -43,11 +43,29 @@ test('approve → disclose → launch journey', async () => {
     await expect(dialog).toBeVisible();
     await expect(dialog).toContainText(displayPath);
     await expect(dialog).toContainText('Codex CLI 1.0.0');
-    await expect(dialog).toContainText(BOUNDARY_WARNING);
+    const model = dialog.getByRole('combobox', { name: 'Model', exact: true });
+    const effort = dialog.getByRole('combobox', { name: 'Effort', exact: true });
+    await expect(model).toHaveValue('');
+    await expect(model.getByRole('option', { name: 'CLI default' })).toBeAttached();
+    await expect(model.getByRole('option', { name: 'GPT-5.6 Luna' })).toBeAttached();
+    await expect(model.getByRole('option', { name: 'Custom model…' })).toBeAttached();
+    await expect(effort).toHaveValue('');
+    await expect(dialog).toContainText('CLI default');
     const launch = dialog.getByRole('button', { name: 'Launch session' });
+    const boundary = dialog.getByRole('checkbox');
     await expect(launch).toBeDisabled();
-    await dialog.getByRole('checkbox').check();
+    await boundary.check();
     await expect(launch).toBeEnabled();
+
+    // Model/effort are direct choices: they refresh the preview without a second gate.
+    await model.selectOption('gpt-5.6-luna');
+    await effort.selectOption('low');
+    await expect(dialog.getByRole('button', { name: 'Review model and effort' })).toHaveCount(0);
+    await expect(boundary).toBeChecked();
+    await expect(dialog.locator('.facts')).toContainText('gpt-5.6-luna');
+    await expect(dialog.locator('.facts')).toContainText('Low');
+    await expect(launch).toBeEnabled();
+    await expect(dialog).toContainText(BOUNDARY_WARNING);
     await launch.click();
     await expect(dialog).toBeHidden({ timeout: 30_000 });
 

@@ -1,7 +1,11 @@
 /** T033 — sessions.previewLaunch / sessions.launch token flow and stale-preflight failures. */
 
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { BOUNDARY_WARNING, LaunchPreviewView, SessionView } from '@threadhelm/contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { BridgeSessionManager } from '../../apps/desktop/src/main/coordination/bridge.js';
 import {
   createWorld,
   errorCode,
@@ -28,6 +32,7 @@ const preview = (providerId = 'codex-cli') =>
     workspaceId,
     providerId,
     terminal: TERMINAL,
+    runtimeSelection: { model: 'gpt-5.6-luna', effort: 'low' },
   });
 
 describe('sessions.previewLaunch', () => {
@@ -40,7 +45,35 @@ describe('sessions.previewLaunch', () => {
     expect(view.readiness.availability).toBe('available');
     expect(view.readiness.resolvedExecutable).toBe(READY.resolvedExecutable);
     expect(view.terminal).toEqual(TERMINAL);
+    expect(view.runtimeSelection).toEqual({ model: 'gpt-5.6-luna', effort: 'low' });
     expect(view.previewToken.length).toBeGreaterThanOrEqual(16);
+  });
+
+  it('binds CLI-default model and effort choices explicitly in the preview', async () => {
+    const view = await world.ok<LaunchPreviewView>('sessions.previewLaunch', {
+      workspaceId,
+      providerId: 'claude-code',
+      terminal: TERMINAL,
+      runtimeSelection: { model: null, effort: null },
+    });
+    expect(view.coordinationBridge).toEqual({
+      enabled: true,
+      tools: ['list pending', 'acknowledge', 'reply', 'report outcome'],
+      durableContent: true,
+      failureBehavior: 'manual_only',
+    });
+    expect(view.runtimeSelection).toEqual({ model: null, effort: null });
+  });
+
+  it('rejects model identifiers that could become command syntax', async () => {
+    const result = await world.call('sessions.previewLaunch', {
+      workspaceId,
+      providerId: 'codex-cli',
+      terminal: TERMINAL,
+      runtimeSelection: { model: 'gpt-5.6-luna --danger', effort: 'low' },
+    });
+    expect(errorCode(result)).toBe('INVALID_REQUEST');
+    expect(world.hosts).toHaveLength(0);
   });
 
   it.each([
@@ -80,6 +113,62 @@ describe('sessions.previewLaunch', () => {
 });
 
 describe('sessions.launch', () => {
+  it('injects one ephemeral provider bridge config into the exact launched session', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'threadhelm-launch-bridge-'));
+    const bridgeExecutablePath = join(root, 'threadhelm-coordination-bridge.exe');
+    writeFileSync(bridgeExecutablePath, 'fixture');
+    world.ctx.coordinationBridge = new BridgeSessionManager({
+      repo: world.ctx.storage!.repositories.coordination,
+      configRoot: root,
+      bridgeExecutablePath,
+    });
+    try {
+      const view = await world.ok<LaunchPreviewView>('sessions.previewLaunch', {
+        workspaceId,
+        providerId: 'claude-code',
+        terminal: TERMINAL,
+        runtimeSelection: { model: null, effort: null },
+      });
+      const launchResult = await world.call<SessionView>('sessions.launch', {
+        previewToken: view.previewToken,
+        boundaryConfirmation: true,
+      });
+      expect(
+        launchResult.ok,
+        launchResult.ok ? undefined : JSON.stringify(launchResult.error),
+      ).toBe(true);
+      if (!launchResult.ok) throw new Error(launchResult.error.code);
+      const session = launchResult.value;
+      const launch = world.hosts[0]!.received.find((message) => message.type === 'host.launch');
+      expect(launch?.type).toBe('host.launch');
+      if (launch?.type !== 'host.launch') throw new Error('launch descriptor missing');
+      expect(launch.descriptor.args).toContain('--mcp-config');
+      expect(launch.descriptor.args.join(' ')).toContain(session.id);
+      world.ctx.coordinationBridge.revoke(session.id);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('passes the preview-bound model and effort to the provider adapter', async () => {
+    const view = await world.ok<LaunchPreviewView>('sessions.previewLaunch', {
+      workspaceId,
+      providerId: 'claude-code',
+      terminal: TERMINAL,
+      runtimeSelection: { model: 'fable', effort: 'medium' },
+    });
+    await world.ok('sessions.launch', {
+      previewToken: view.previewToken,
+      boundaryConfirmation: true,
+    });
+    const host = world.hosts[0]!;
+    const launch = host.received.find((message) => message.type === 'host.launch') as Extract<
+      (typeof host.received)[number],
+      { type: 'host.launch' }
+    >;
+    expect(launch.descriptor.args).toEqual(['--fake', '--model', 'fable', '--effort', 'medium']);
+  });
+
   it('PREVIEW_EXPIRED for unknown, expired, or reused tokens', async () => {
     expect(
       errorCode(

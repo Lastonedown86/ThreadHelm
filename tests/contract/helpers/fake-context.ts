@@ -283,6 +283,8 @@ export function fakeAdapter(
       interactivePty: true as const,
       structuredActivity: false as const,
       cleanStopStrategy: 'slash_exit' as const,
+      bridgeConfiguration: 'session_scoped_stdio_mcp' as const,
+      configurationFailureBehavior: 'manual_only' as const,
     },
     executableCandidates: [],
     readiness,
@@ -302,7 +304,16 @@ export function fakeAdapter(
     buildLaunch(ctx) {
       return {
         executable: ctx.resolvedExecutable,
-        args: ['--fake'],
+        args: [
+          '--fake',
+          ...(ctx.runtimeSelection.model ? ['--model', ctx.runtimeSelection.model] : []),
+          ...(ctx.runtimeSelection.effort ? ['--effort', ctx.runtimeSelection.effort] : []),
+          ...(ctx.bridgeConfig?.providerConfigPath
+            ? ['--mcp-config', ctx.bridgeConfig.providerConfigPath]
+            : []),
+          ...(ctx.bridgeConfig?.codexConfigOverrides?.flatMap((value) => ['--config', value]) ??
+            []),
+        ],
         cwd: ctx.canonicalWorkspacePath,
         environmentPolicy: 'inherit-sanitized' as const,
         terminal: ctx.terminal,

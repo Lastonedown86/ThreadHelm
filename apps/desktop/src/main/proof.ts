@@ -5,8 +5,15 @@
  * contained → terminate → scope empty → handle closure kills survivors.
  */
 
-import { app, MessageChannelMain, utilityProcess, type UtilityProcess } from 'electron';
+import {
+  app,
+  MessageChannelMain,
+  utilityProcess,
+  type MessagePortMain,
+  type UtilityProcess,
+} from 'electron';
 import { randomBytes, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import {
   PROTOCOL_VERSION,
   type HostToMainMessage,
@@ -65,7 +72,14 @@ async function withScope(
   hostEntry: string,
   descriptor: LaunchDescriptor,
   steps: Record<string, unknown>,
-): Promise<{ token: number; host: UtilityProcess; hostPid: number; rootPid: number }> {
+): Promise<{
+  token: number;
+  host: UtilityProcess;
+  hostPid: number;
+  rootPid: number;
+  outputPort: MessagePortMain;
+  output: () => string;
+}> {
   const sessionId = randomUUID();
   const token = native.createKillOnCloseJob();
   const host = utilityProcess.fork(hostEntry, [], { stdio: 'ignore' });
@@ -86,9 +100,17 @@ async function withScope(
     throw new Error('CONTAINMENT_NOT_PROVEN');
 
   const channel = new MessageChannelMain();
+  let output = '';
   channel.port2.start();
-  channel.port2.on('message', () => {
-    /* output frames are irrelevant to the proof; acks are not needed */
+  channel.port2.on('message', (event) => {
+    const frame = event.data as { kind?: unknown; bytes?: unknown };
+    if (frame.kind !== 'output') return;
+    const bytes = frame.bytes;
+    if (ArrayBuffer.isView(bytes)) {
+      output += Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString('utf8');
+    } else if (bytes instanceof ArrayBuffer) {
+      output += Buffer.from(bytes).toString('utf8');
+    }
   });
   const launched = waitFor(host, 'host.launched');
   host.postMessage(
@@ -103,7 +125,7 @@ async function withScope(
   );
   const { rootPid } = await launched;
   steps.rootVerifiedInJob = native.verifyProcessInJob(token, rootPid);
-  return { token, host, hostPid, rootPid };
+  return { token, host, hostPid, rootPid, outputPort: channel.port2, output: () => output };
 }
 
 export async function runProof(hostEntry: string, fixtureArgs: string[]): Promise<ProofResult> {
@@ -128,14 +150,35 @@ export async function runProof(hostEntry: string, fixtureArgs: string[]): Promis
     }
     steps.processCountWithDescendants = snapshot.activeProcessCount;
     steps.descendantsContained = snapshot.activeProcessCount >= 3; // host + root + grandchild
+    const pidFileFlag = fixtureArgs.indexOf('--descendant-pid-file');
+    const descendantPidFile = pidFileFlag >= 0 ? fixtureArgs[pidFileFlag + 1] : undefined;
+    let descendantPid: number | null = null;
+    while (descendantPid === null && Date.now() < deadline) {
+      const match = /\b(?:CHILD|BRIDGE)_PID:(\d+)/.exec(a.output());
+      descendantPid = match ? Number(match[1]) : null;
+      if (descendantPid === null && descendantPidFile) {
+        try {
+          const value = Number(readFileSync(descendantPidFile, 'utf8').trim());
+          descendantPid = Number.isSafeInteger(value) && value > 0 ? value : null;
+        } catch {
+          // The contained provider has not published its child pid yet.
+        }
+      }
+      if (descendantPid === null) await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    steps.descendantPid = descendantPid;
+    steps.descendantVerifiedInJob =
+      descendantPid !== null && native.verifyProcessInJob(a.token, descendantPid);
     const terminated = native.terminateJob(a.token, 1);
     steps.scopeEmptyAfterTerminate = terminated.activeProcessCount === 0;
+    a.outputPort.close();
     native.closeJob(a.token);
     tokens.pop();
 
     // Scope B: closing the handle alone (coordinator death) kills the tree
     const b = await withScope(hostEntry, descriptor, steps);
     tokens.push(b.token);
+    b.outputPort.close();
     native.closeJob(b.token);
     tokens.pop();
     steps.rootDiesOnHandleClose = await waitForExit(b.rootPid, TIMEOUT_MS);
@@ -147,6 +190,7 @@ export async function runProof(hostEntry: string, fixtureArgs: string[]): Promis
       steps.jobHoldsOnlyHost === true &&
       steps.rootVerifiedInJob === true &&
       steps.descendantsContained === true &&
+      steps.descendantVerifiedInJob === true &&
       steps.scopeEmptyAfterTerminate === true &&
       steps.rootDiesOnHandleClose === true &&
       steps.hostDiesOnHandleClose === true;

@@ -10,6 +10,7 @@ import {
   BOUNDARY_WARNING,
   ThreadHelmError,
   type LaunchPreviewView,
+  type LaunchRuntimeSelection,
   type ProviderId,
   type ReadinessView,
   type TerminalSize,
@@ -37,6 +38,7 @@ export async function previewLaunch(
   workspaceId: string,
   providerId: ProviderId,
   terminal: TerminalSize,
+  runtimeSelection: LaunchRuntimeSelection,
 ): Promise<LaunchPreviewView> {
   const workspace = findWorkspace(ctx, workspaceId);
   if (workspace.revokedAt) {
@@ -60,8 +62,19 @@ export async function previewLaunch(
     providerId,
     readiness,
     terminal,
+    runtimeSelection,
   };
   const { token, expiresAt } = ctx.tokens.previews.issue(payload);
+  const adapter = ctx.adapters.find((candidate) => candidate.id === providerId);
+  const coordinationBridge: LaunchPreviewView['coordinationBridge'] =
+    adapter?.capabilities.bridgeConfiguration === 'session_scoped_stdio_mcp'
+      ? {
+          enabled: true as const,
+          tools: ['list pending', 'acknowledge', 'reply', 'report outcome'],
+          durableContent: true as const,
+          failureBehavior: 'manual_only' as const,
+        }
+      : null;
   ctx.log.info('session.preview_issued', { workspaceId, providerId });
   return {
     previewToken: token,
@@ -69,6 +82,8 @@ export async function previewLaunch(
     readiness,
     boundaryWarning: BOUNDARY_WARNING,
     terminal,
+    runtimeSelection,
+    coordinationBridge,
     expiresAt,
   };
 }

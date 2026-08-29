@@ -28,7 +28,13 @@ export const claudeCodeAdapter: ProviderAdapter = {
     structuredActivity: false,
     cleanStopStrategy: 'slash_exit',
     bridgeConfiguration: 'session_scoped_stdio_mcp',
-    safePointEvidence: 'none',
+    safePointEvidence: {
+      mode: 'none',
+      exactVersions: [],
+      eventKinds: [],
+      maxAgeMs: 30_000,
+      inputSafety: 'unknown',
+    },
     automaticPresentation: 'manual_only',
     memoryTools: 'unsupported',
     supervisorTools: 'unsupported',
@@ -53,5 +59,12 @@ export const claudeCodeAdapter: ProviderAdapter = {
   },
   buildCleanStop(): CleanStopAction {
     return { writes: ['/exit\r'], graceMs: 10_000 };
+  },
+  parseLifecycleEvidence() {
+    // Exact Claude Code 2.1.251 proof observed a structured Stop hook, but its
+    // payload exposes no pending terminal draft or editor state. Returning null
+    // is the sanitized manual-only result; raw transcript/message fields never
+    // cross the adapter boundary and cannot authorize terminal input.
+    return null;
   },
 };

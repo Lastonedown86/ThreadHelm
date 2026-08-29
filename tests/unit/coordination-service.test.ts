@@ -159,6 +159,63 @@ describe('US1 coordination service orchestration', () => {
     ).rejects.toMatchObject({ code: 'CONFIRMATION_EXPIRED' });
   });
 
+  it('labels handoffs manual when automatic evidence is unsupported or bridge startup is unavailable', async () => {
+    const world = createWorld();
+    world.addDir('C:\\manual-source', identity(21));
+    world.addDir('C:\\manual-recipient', identity(22));
+    const source = await world.launch((await world.approve('C:\\manual-source')).id, 'codex-cli');
+    const recipient = await world.launch(
+      (await world.approve('C:\\manual-recipient')).id,
+      'claude-code',
+    );
+    const service = world.ctx.coordination!;
+    const preview = service.previewHandoff({
+      sourceSessionId: source.id,
+      recipientSessionId: recipient.id,
+      kind: 'request',
+      purpose: 'Manual provider path',
+      body: 'Do not imply an automatic safe point exists.',
+      responseExpected: true,
+    });
+
+    const handoff = service.confirmHandoff({
+      previewToken: preview.previewToken,
+      persistenceConfirmation: true,
+    });
+
+    expect(handoff).toMatchObject({
+      deliveryState: 'manual_actionable',
+      holdReasonCode: 'AUTOMATIC_PRESENTATION_UNAVAILABLE',
+    });
+
+    const recipientLive = world.ctx.live.get(recipient.id)!;
+    recipientLive.adapter.capabilities.automaticPresentation = 'structured_safe_point';
+    recipientLive.adapter.capabilities.safePointEvidence = {
+      mode: 'structured_event',
+      exactVersions: [recipientLive.readiness.version!],
+      eventKinds: ['safe_point'],
+      maxAgeMs: 30_000,
+      inputSafety: 'proved_no_pending_draft',
+    };
+    const secondPreview = service.previewHandoff({
+      sourceSessionId: source.id,
+      recipientSessionId: recipient.id,
+      kind: 'inform',
+      purpose: 'Missing bridge startup',
+      body: 'Capability alone must not imply that the session bridge was prepared.',
+      responseExpected: false,
+    });
+    expect(
+      service.confirmHandoff({
+        previewToken: secondPreview.previewToken,
+        persistenceConfirmation: true,
+      }),
+    ).toMatchObject({
+      deliveryState: 'manual_actionable',
+      holdReasonCode: 'COORDINATION_BRIDGE_UNAVAILABLE',
+    });
+  });
+
   it('cancels or retargets only before a possible delivery', async () => {
     const world = createWorld();
     for (const [path, n] of [
@@ -192,8 +249,12 @@ describe('US1 coordination service orchestration', () => {
       service.confirmRetarget({
         retargetToken: retarget.retargetToken,
         retargetConfirmation: true,
-      }).recipientSessionId,
-    ).toBe(third.id);
+      }),
+    ).toMatchObject({
+      recipientSessionId: third.id,
+      deliveryState: 'manual_actionable',
+      holdReasonCode: 'AUTOMATIC_PRESENTATION_UNAVAILABLE',
+    });
     expect(service.cancelHandoff({ handoffId: handoff.id }).deliveryState).toBe('cancelled');
   });
 });

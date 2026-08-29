@@ -15,6 +15,9 @@ import type {
   LaunchDescriptor,
   LaunchRuntimeSelection,
   ProviderId,
+  ProviderLifecycleEventKind,
+  ProviderLifecycleEvidence,
+  ProviderInputSafety,
   TerminalSize,
 } from '@threadhelm/contracts';
 import { ThreadHelmError } from '@threadhelm/contracts';
@@ -66,6 +69,15 @@ export type AutomaticPresentationCapability = 'manual_only' | 'structured_safe_p
 export type MemoryToolsCapability = 'unsupported' | 'scoped_revisioned_memory';
 export type SupervisorToolsCapability = 'unsupported' | 'worker_only' | 'bound_supervisor';
 
+export interface SafePointEvidenceCapability {
+  readonly mode: 'none' | 'structured_event';
+  /** Automatic presentation is approved only for these exact proved versions. */
+  readonly exactVersions: readonly string[];
+  readonly eventKinds: readonly ProviderLifecycleEventKind[];
+  readonly maxAgeMs: number;
+  readonly inputSafety: ProviderInputSafety;
+}
+
 export interface SessionBridgeConfig {
   bridgeExecutablePath: string;
   pipeName: string;
@@ -106,10 +118,10 @@ export interface ProviderAdapter {
   readonly testedVersionRange: VersionRange;
   readonly capabilities: {
     interactivePty: true;
-    structuredActivity: false;
+    structuredActivity: boolean;
     cleanStopStrategy: 'slash_exit' | 'ctrl_d';
     bridgeConfiguration?: BridgeConfigurationCapability;
-    safePointEvidence?: 'none' | 'turn_completed';
+    safePointEvidence?: SafePointEvidenceCapability;
     automaticPresentation?: AutomaticPresentationCapability;
     memoryTools?: MemoryToolsCapability;
     supervisorTools?: SupervisorToolsCapability;
@@ -120,6 +132,8 @@ export interface ProviderAdapter {
   buildLaunch(ctx: LaunchContext): LaunchDescriptor;
   buildCleanStop(ctx: StopContext): CleanStopAction;
   parseStructuredActivity?(event: Uint8Array): ActivityEvidence | null;
+  /** Raw provider payloads are reduced or rejected inside the adapter. */
+  parseLifecycleEvidence?(event: unknown): ProviderLifecycleEvidence | null;
 }
 
 // ---------------------------------------------------------------------------

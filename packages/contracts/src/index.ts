@@ -336,6 +336,39 @@ export const BoundedCoordinationCursor = strictObject({
 });
 export type BoundedCoordinationCursor = z.infer<typeof BoundedCoordinationCursor>;
 
+/**
+ * Provider lifecycle evidence is deliberately content-free. Raw hook input,
+ * transcript paths, assistant text, tool payloads, and provider errors are not
+ * part of this strict schema and therefore fail closed at the main boundary.
+ */
+export const ProviderLifecycleEventKind = z.enum(['turn_completed', 'safe_point', 'session_ended']);
+export type ProviderLifecycleEventKind = z.infer<typeof ProviderLifecycleEventKind>;
+
+export const ProviderInputSafety = z.enum(['unknown', 'proved_no_pending_draft']);
+export type ProviderInputSafety = z.infer<typeof ProviderInputSafety>;
+
+export const ProviderLifecycleEvidence = strictObject({
+  sessionId: Uuid,
+  providerId: ProviderId,
+  providerVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
+  eventKind: ProviderLifecycleEventKind,
+  providerEventId: z
+    .string()
+    .min(1)
+    .max(160)
+    .regex(/^[A-Za-z0-9._:-]+$/),
+  turnId: z
+    .string()
+    .min(1)
+    .max(160)
+    .regex(/^[A-Za-z0-9._:-]+$/)
+    .nullable(),
+  occurredAt: Timestamp,
+  safePoint: z.boolean(),
+  inputSafety: ProviderInputSafety,
+});
+export type ProviderLifecycleEvidence = z.infer<typeof ProviderLifecycleEvidence>;
+
 export function boundedPageRequest(maximum: number) {
   if (!Number.isInteger(maximum) || maximum < 1) {
     throw new RangeError('maximum must be a positive integer');

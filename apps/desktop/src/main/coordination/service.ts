@@ -49,6 +49,7 @@ export interface CoordinationDependencies {
   readonly adapters?: readonly ProviderAdapter[];
   readonly isSessionWorkspaceApproved?: (sessionId: string, workspaceId: string) => boolean;
   readonly submitDelivery?: (snapshot: PresentationSnapshot) => Promise<DeliveryAttemptRecord>;
+  readonly isBridgeHealthy?: (sessionId: string) => boolean;
 }
 
 export interface CoordinationService {
@@ -142,6 +143,7 @@ class CoordinationServiceContainer implements CoordinationService {
   confirmHandoff(request: ConfirmHandoffRequest): HandoffView {
     this.#requireStarted();
     const snapshot = this.#disclosureService().takeHandoffPreview(request.previewToken);
+    const initialDelivery = this.#initialDelivery(snapshot.recipientSessionId);
     const handoff = this.#repository().createHandoff({
       id: snapshot.handoffId,
       conversationId: snapshot.conversationId,
@@ -155,6 +157,7 @@ class CoordinationServiceContainer implements CoordinationService {
       requiresReply: snapshot.responseExpected,
       purpose: snapshot.normalizedPurpose,
       body: snapshot.normalizedBody,
+      ...initialDelivery,
       createdAt: snapshot.createdAt,
     });
     this.#publishLatest(handoff.id);
@@ -202,11 +205,14 @@ class CoordinationServiceContainer implements CoordinationService {
   confirmRetarget(request: ConfirmRetargetRequest): HandoffView {
     this.#requireStarted();
     const snapshot = this.#disclosureService().takeRetarget(request.retargetToken);
+    const initialDelivery = this.#initialDelivery(snapshot.recipientSessionId);
     const handoff = this.#repository().retargetHandoff(
       snapshot.handoffId,
       snapshot.recipientSessionId,
       snapshot.recipientWorkspaceId,
       this.dependencies.clock().toISOString(),
+      initialDelivery.deliveryState,
+      initialDelivery.holdReasonCode,
     );
     this.#publishLatest(handoff.id);
     return toHandoffView(handoff);
@@ -309,6 +315,33 @@ class CoordinationServiceContainer implements CoordinationService {
 
   #requireStarted(): void {
     if (!this.#started) throw new ThreadHelmError('INVALID_STATE', 'Coordination is not running.');
+  }
+
+  #initialDelivery(recipientSessionId: string): {
+    deliveryState: 'queued' | 'manual_actionable';
+    holdReasonCode: string | null;
+  } {
+    const live = this.dependencies.sessions.get(recipientSessionId);
+    const capability = live?.adapter.capabilities.safePointEvidence;
+    const version = live?.readiness.version;
+    const automaticEligible =
+      live?.state === 'running' &&
+      live.adapter.capabilities.automaticPresentation === 'structured_safe_point' &&
+      capability?.mode === 'structured_event' &&
+      capability.inputSafety === 'proved_no_pending_draft' &&
+      Boolean(version && capability.exactVersions.includes(version));
+    if (!automaticEligible) {
+      return {
+        deliveryState: 'manual_actionable',
+        holdReasonCode: 'AUTOMATIC_PRESENTATION_UNAVAILABLE',
+      };
+    }
+    return this.dependencies.isBridgeHealthy?.(recipientSessionId)
+      ? { deliveryState: 'queued', holdReasonCode: null }
+      : {
+          deliveryState: 'manual_actionable',
+          holdReasonCode: 'COORDINATION_BRIDGE_UNAVAILABLE',
+        };
   }
 
   #publishLatest(handoffId: string): void {

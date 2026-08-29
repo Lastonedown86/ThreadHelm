@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import {
   HandoffId,
   HandoffKind,
+  ProviderLifecycleEvidence,
   ReasonCode,
   ThreadHelmError,
   WorkOutcome,
@@ -18,7 +19,8 @@ import {
   type CoordinationRepository,
 } from '@threadhelm/persistence';
 import type { ProviderId } from '@threadhelm/contracts';
-import type { SessionBridgeConfig } from '@threadhelm/providers';
+import type { ProviderLifecycleEvidence as ProviderLifecycleEvidenceValue } from '@threadhelm/contracts';
+import type { ProviderAdapter, SessionBridgeConfig } from '@threadhelm/providers';
 
 export interface BridgeSessionInfo {
   sessionId: string;
@@ -55,7 +57,26 @@ export interface BridgeDispatchContext {
   onEvent?: (payload: EventPayload<'coordination.bridgeChanged'>) => void;
   configRoot?: string;
   bridgeExecutablePath?: string;
+  adapters?: readonly ProviderAdapter[];
+  onLifecycleEvidence?: (
+    evidence: ProviderLifecycleEvidenceValue,
+  ) => Promise<LifecyclePresentationResult> | LifecyclePresentationResult;
+  onHandoffChanged?: (handoffId: string) => void;
 }
+
+export interface LifecyclePresentationResult {
+  presented: boolean;
+  reasonCode: string | null;
+}
+
+export interface LifecycleIngestionResult {
+  status: 'accepted' | 'duplicate' | 'manual_only' | 'rejected';
+  safePoint: boolean;
+  reasonCode: string | null;
+  presentation: LifecyclePresentationResult | null;
+}
+
+const MAX_LIFECYCLE_DEDUPE_KEYS = 4_096;
 
 export const MAX_FRAME_BYTES = 32 * 1024;
 export const MAX_MUTATIONS_PER_MINUTE = 20;
@@ -71,6 +92,15 @@ export class BridgeSessionManager {
   readonly #onEvent: ((payload: EventPayload<'coordination.bridgeChanged'>) => void) | undefined;
   readonly #configRoot: string | undefined;
   readonly #bridgeExecutablePath: string | undefined;
+  readonly #seenLifecycleEvents = new Map<string, Map<string, number>>();
+  readonly #lifecycleNotBefore = new Map<string, number>();
+  #adapters: readonly ProviderAdapter[];
+  readonly #onLifecycleEvidence:
+    | ((
+        evidence: ProviderLifecycleEvidenceValue,
+      ) => Promise<LifecyclePresentationResult> | LifecyclePresentationResult)
+    | undefined;
+  readonly #onHandoffChanged: ((handoffId: string) => void) | undefined;
 
   constructor(options: BridgeDispatchContext = {}) {
     this.#repo = options.repo;
@@ -78,6 +108,13 @@ export class BridgeSessionManager {
     this.#onEvent = options.onEvent;
     this.#configRoot = options.configRoot;
     this.#bridgeExecutablePath = options.bridgeExecutablePath;
+    this.#adapters = options.adapters ?? [];
+    this.#onLifecycleEvidence = options.onLifecycleEvidence;
+    this.#onHandoffChanged = options.onHandoffChanged;
+  }
+
+  setAdapters(adapters: readonly ProviderAdapter[]): void {
+    this.#adapters = adapters;
   }
 
   async prepareSession(
@@ -217,6 +254,8 @@ export class BridgeSessionManager {
       this.#sessions.delete(sessionId);
       this.#rateLimits.delete(sessionId);
       this.#inFlightMutations.delete(sessionId);
+      this.#seenLifecycleEvents.delete(sessionId);
+      this.#lifecycleNotBefore.delete(sessionId);
       this.#onEvent?.({
         sessionId,
         capability: 'session_scoped_stdio_mcp',
@@ -234,18 +273,25 @@ export class BridgeSessionManager {
     socket.setEncoding('utf8');
     let buffer = '';
     let inFlight = false;
+    let exchangeCompleted = false;
+    let disconnected = false;
+    const disconnect = (reasonCode: string) => {
+      if (disconnected) return;
+      disconnected = true;
+      this.handleDisconnect(sessionId, reasonCode);
+    };
     socket.on('data', (chunk: string) => {
       buffer += chunk;
       if (Buffer.byteLength(buffer, 'utf8') > MAX_FRAME_BYTES) {
         socket.destroy();
-        this.handleDisconnect(sessionId, 'FRAME_TOO_LARGE');
+        disconnect('FRAME_TOO_LARGE');
         return;
       }
       const newline = buffer.indexOf('\n');
       if (newline < 0) return;
       if (inFlight || buffer.indexOf('\n', newline + 1) >= 0) {
         socket.destroy();
-        this.handleDisconnect(sessionId, 'MULTIPLE_IN_FLIGHT');
+        disconnect('MULTIPLE_IN_FLIGHT');
         return;
       }
       const line = buffer.slice(0, newline);
@@ -253,15 +299,28 @@ export class BridgeSessionManager {
       inFlight = true;
       void this.#dispatchPipeEnvelope(sessionId, line)
         .then((response) => {
-          socket.write(`${JSON.stringify(response)}\n`);
-          inFlight = false;
+          socket.write(`${JSON.stringify(response)}\n`, (error) => {
+            if (error) {
+              disconnect('PIPE_DISCONNECTED');
+              return;
+            }
+            exchangeCompleted = true;
+            inFlight = false;
+          });
         })
         .catch(() => {
           socket.destroy();
-          this.handleDisconnect(sessionId, 'PIPE_PROTOCOL_REJECTED');
+          disconnect('PIPE_PROTOCOL_REJECTED');
         });
     });
-    socket.on('error', () => this.handleDisconnect(sessionId, 'PIPE_DISCONNECTED'));
+    const incompleteExchange = () => !exchangeCompleted || inFlight || buffer.length > 0;
+    socket.on('end', () => {
+      if (incompleteExchange()) disconnect('PIPE_DISCONNECTED');
+    });
+    socket.on('close', (hadError) => {
+      if (hadError || incompleteExchange()) disconnect('PIPE_DISCONNECTED');
+    });
+    socket.on('error', () => disconnect('PIPE_DISCONNECTED'));
   }
 
   async #dispatchPipeEnvelope(sessionId: string, line: string): Promise<BridgeResponse> {
@@ -322,11 +381,23 @@ export class BridgeSessionManager {
     return Boolean(info?.connected);
   }
 
+  hasValidCredential(sessionId: string): boolean {
+    return this.#sessions.get(sessionId)?.credentialValid === true;
+  }
+
   handleDisconnect(sessionId: string, reasonCode?: string): void {
     const info = this.#sessions.get(sessionId);
-    if (info) {
+    if (info?.credentialValid) {
       info.connected = false;
       info.credentialValid = false;
+      this.invalidateLifecycleEvidence(sessionId);
+      const handoffs = this.#repo?.markAllQueuedManualActionable({
+        recipientSessionId: sessionId,
+        reasonCode: 'COORDINATION_BRIDGE_UNAVAILABLE',
+        actor: 'threadhelm',
+        at: this.#clock().toISOString(),
+      });
+      for (const handoff of handoffs ?? []) this.#onHandoffChanged?.(handoff.id);
       this.#onEvent?.({
         sessionId,
         capability: 'session_scoped_stdio_mcp',
@@ -334,6 +405,165 @@ export class BridgeSessionManager {
         reasonCode: reasonCode ?? 'PIPE_DISCONNECTED',
       });
     }
+  }
+
+  invalidateLifecycleEvidence(sessionId: string): void {
+    this.#lifecycleNotBefore.set(sessionId, this.#clock().getTime());
+  }
+
+  /** Test-hooks-only access; never exposed through renderer IPC or the bridge. */
+  testCredential(sessionId: string): string | null {
+    return this.#sessions.get(sessionId)?.token ?? null;
+  }
+
+  /** Test-hooks-only access; exercises the real named-pipe transport. */
+  testPipeName(sessionId: string): string | null {
+    return this.#sessions.get(sessionId)?.pipeName ?? null;
+  }
+
+  async ingestLifecycleEvidence(
+    sessionId: string,
+    token: string,
+    rawEvidence: unknown,
+  ): Promise<LifecycleIngestionResult> {
+    const session = this.authenticate(sessionId, token);
+    if (!session) {
+      throw new ThreadHelmError(
+        'UNAUTHORIZED_SENDER',
+        'Invalid, expired, or disconnected session credential.',
+      );
+    }
+
+    const parsed = ProviderLifecycleEvidence.safeParse(rawEvidence);
+    if (!parsed.success) {
+      return {
+        status: 'rejected',
+        safePoint: false,
+        reasonCode: 'LIFECYCLE_EVIDENCE_INVALID',
+        presentation: null,
+      };
+    }
+    const evidence = parsed.data;
+    if (evidence.sessionId !== sessionId) {
+      return {
+        status: 'rejected',
+        safePoint: false,
+        reasonCode: 'LIFECYCLE_SESSION_MISMATCH',
+        presentation: null,
+      };
+    }
+    if (evidence.providerId !== session.providerId) {
+      return {
+        status: 'rejected',
+        safePoint: false,
+        reasonCode: 'LIFECYCLE_PROVIDER_MISMATCH',
+        presentation: null,
+      };
+    }
+    if (evidence.providerVersion !== session.providerVersion) {
+      this.#markOldestQueuedManualActionable(sessionId, 'LIFECYCLE_VERSION_UNPROVED');
+      return {
+        status: 'manual_only',
+        safePoint: false,
+        reasonCode: 'LIFECYCLE_VERSION_UNPROVED',
+        presentation: null,
+      };
+    }
+
+    const adapter = this.#adapters.find((candidate) => candidate.id === evidence.providerId);
+    const capability = adapter?.capabilities.safePointEvidence;
+    if (
+      !adapter ||
+      !capability ||
+      capability.mode !== 'structured_event' ||
+      !capability.exactVersions.includes(evidence.providerVersion) ||
+      !capability.eventKinds.includes(evidence.eventKind)
+    ) {
+      this.#markOldestQueuedManualActionable(sessionId, 'LIFECYCLE_VERSION_UNPROVED');
+      return {
+        status: 'manual_only',
+        safePoint: false,
+        reasonCode: 'LIFECYCLE_VERSION_UNPROVED',
+        presentation: null,
+      };
+    }
+
+    const occurredAt = Date.parse(evidence.occurredAt);
+    const now = this.#clock().getTime();
+    const notBefore = this.#lifecycleNotBefore.get(sessionId) ?? Number.NEGATIVE_INFINITY;
+    if (
+      Number.isNaN(occurredAt) ||
+      now - occurredAt > capability.maxAgeMs ||
+      occurredAt > now ||
+      occurredAt <= notBefore
+    ) {
+      return {
+        status: 'rejected',
+        safePoint: false,
+        reasonCode: 'LIFECYCLE_EVIDENCE_STALE',
+        presentation: null,
+      };
+    }
+
+    const seen = this.#seenLifecycleEvents.get(sessionId) ?? new Map<string, number>();
+    const dedupeKeys = [
+      `event:${evidence.providerEventId}`,
+      ...(evidence.turnId ? [`turn:${evidence.turnId}`] : []),
+    ];
+    if (dedupeKeys.some((key) => seen.has(key))) {
+      return {
+        status: 'duplicate',
+        safePoint: false,
+        reasonCode: 'LIFECYCLE_EVIDENCE_DUPLICATE',
+        presentation: null,
+      };
+    }
+    if (seen.size + dedupeKeys.length > MAX_LIFECYCLE_DEDUPE_KEYS) {
+      this.#markOldestQueuedManualActionable(sessionId, 'LIFECYCLE_EVIDENCE_LIMIT');
+      return {
+        status: 'manual_only',
+        safePoint: false,
+        reasonCode: 'LIFECYCLE_EVIDENCE_LIMIT',
+        presentation: null,
+      };
+    }
+    for (const key of dedupeKeys) seen.set(key, occurredAt);
+    this.#seenLifecycleEvents.set(sessionId, seen);
+
+    if (
+      !evidence.safePoint ||
+      evidence.inputSafety !== 'proved_no_pending_draft' ||
+      capability.inputSafety !== 'proved_no_pending_draft' ||
+      adapter.capabilities.automaticPresentation !== 'structured_safe_point'
+    ) {
+      this.#markOldestQueuedManualActionable(sessionId, 'PENDING_DRAFT_UNPROVED');
+      return {
+        status: 'manual_only',
+        safePoint: false,
+        reasonCode: 'PENDING_DRAFT_UNPROVED',
+        presentation: null,
+      };
+    }
+
+    const presentation = this.#onLifecycleEvidence
+      ? await this.#onLifecycleEvidence(evidence)
+      : { presented: false, reasonCode: 'NO_LIFECYCLE_HANDLER' };
+    return {
+      status: 'accepted',
+      safePoint: true,
+      reasonCode: presentation.reasonCode,
+      presentation,
+    };
+  }
+
+  #markOldestQueuedManualActionable(sessionId: string, reasonCode: string): void {
+    const handoff = this.#repo?.markOldestQueuedManualActionable({
+      recipientSessionId: sessionId,
+      reasonCode,
+      actor: 'provider',
+      at: this.#clock().toISOString(),
+    });
+    if (handoff) this.#onHandoffChanged?.(handoff.id);
   }
 
   async dispatch(

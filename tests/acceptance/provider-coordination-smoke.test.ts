@@ -21,6 +21,7 @@ import {
   bridgeReplyRequest,
   bridgeReportOutcomeRequest,
   createCoordinationClock,
+  fixtureAdapter,
 } from '@threadhelm/test-fixtures';
 
 function resultOf(response: BridgeResponse): Record<string, unknown> {
@@ -137,4 +138,102 @@ describe('Provider coordination acceptance smoke (T047)', () => {
     manager.revoke(SESSION_1);
     expect(manager.authenticate(SESSION_1, cred.token)).toBeNull();
   });
+});
+
+describe('Provider lifecycle acceptance smoke (T059)', () => {
+  const SESSION_1 = COORDINATION_FIXTURE_IDS.senderSession;
+  const cases = [
+    { providerId: 'codex-cli' as const, adapter: codexAdapter },
+    { providerId: 'claude-code' as const, adapter: claudeCodeAdapter },
+  ];
+
+  it.each(cases)(
+    'keeps the built-in $providerId adapter manual until exact installed proof is recorded',
+    ({ adapter }) => {
+      expect(adapter.capabilities.safePointEvidence).toMatchObject({
+        mode: 'none',
+        exactVersions: [],
+        inputSafety: 'unknown',
+      });
+      expect(adapter.capabilities.automaticPresentation).toBe('manual_only');
+      expect(
+        adapter.parseLifecycleEvidence?.({
+          transcriptPath: 'must-not-cross.jsonl',
+          lastAssistantMessage: 'must not persist',
+        }),
+      ).toBeNull();
+    },
+  );
+
+  it.each(cases)(
+    'isolates exact fixture safe points, pending drafts, power invalidation, and cleanup for $providerId',
+    async ({ providerId }) => {
+      const clock = createCoordinationClock();
+      const presentations: string[] = [];
+      const adapter = fixtureAdapter({
+        id: providerId,
+        mode: 'echo',
+        executable: process.execPath,
+        structuredSafePoint: true,
+      });
+      const manager = new BridgeSessionManager({
+        clock: clock.now,
+        adapters: [adapter],
+        onLifecycleEvidence: (evidence) => {
+          presentations.push(evidence.providerEventId);
+          return { presented: true, reasonCode: null };
+        },
+      });
+      const credential = manager.issueCredential(SESSION_1, providerId, '1.0.0');
+      const base = {
+        sessionId: SESSION_1,
+        providerId,
+        providerVersion: '1.0.0',
+        eventKind: 'safe_point' as const,
+        turnId: 'acceptance-turn-1',
+        occurredAt: clock.iso(),
+        safePoint: true,
+      };
+
+      await expect(
+        manager.ingestLifecycleEvidence(SESSION_1, credential.token, {
+          ...base,
+          providerEventId: 'acceptance-safe-point-1',
+          inputSafety: 'proved_no_pending_draft',
+        }),
+      ).resolves.toMatchObject({ status: 'accepted', safePoint: true });
+      await expect(
+        manager.ingestLifecycleEvidence(SESSION_1, credential.token, {
+          ...base,
+          providerEventId: 'acceptance-safe-point-2',
+          turnId: 'acceptance-turn-2',
+          inputSafety: 'unknown',
+        }),
+      ).resolves.toMatchObject({ status: 'manual_only', safePoint: false });
+
+      clock.advance(1);
+      manager.invalidateLifecycleEvidence(SESSION_1);
+      await expect(
+        manager.ingestLifecycleEvidence(SESSION_1, credential.token, {
+          ...base,
+          providerEventId: 'acceptance-pre-power-event',
+          inputSafety: 'proved_no_pending_draft',
+        }),
+      ).resolves.toMatchObject({
+        status: 'rejected',
+        reasonCode: 'LIFECYCLE_EVIDENCE_STALE',
+      });
+      expect(presentations).toEqual(['acceptance-safe-point-1']);
+
+      manager.revoke(SESSION_1);
+      expect(manager.authenticate(SESSION_1, credential.token)).toBeNull();
+      await expect(
+        manager.ingestLifecycleEvidence(SESSION_1, credential.token, {
+          ...base,
+          providerEventId: 'acceptance-after-cleanup',
+          inputSafety: 'proved_no_pending_draft',
+        }),
+      ).rejects.toThrow();
+    },
+  );
 });

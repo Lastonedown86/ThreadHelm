@@ -19,6 +19,7 @@ import * as native from '@threadhelm/windows-supervisor';
 import type { Context } from './context.js';
 import { createHandlers, stopCoordination } from './coordinator.js';
 import { BridgeSessionManager } from './coordination/bridge.js';
+import { presentNextAtSafePoint, publishLatest } from './coordination/delivery.js';
 import { reconcileCoordinationAtStartup } from './coordination/recovery.js';
 import { electronChannels, electronHostSpawner, electronPicker } from './electron-adapters.js';
 import { bindRouter, createRendererEvents } from './ipc/electron-binding.js';
@@ -146,17 +147,6 @@ export function bootstrap(paths: BootstrapPaths): void {
       selection: { selectedSessionId: null },
       adapters: builtInAdapters,
       probes: createProbeRunner(),
-      ...(storage
-        ? {
-            coordinationBridge: new BridgeSessionManager({
-              repo: storage.repositories.coordination,
-              clock: () => new Date(),
-              configRoot: join(userData, 'coordination-sessions'),
-              bridgeExecutablePath: coordinationBridgePath(paths.hostEntry),
-              onEvent: (payload) => events.emit('coordination.bridgeChanged', payload),
-            }),
-          }
-        : {}),
       appInfo: {
         version: app.getVersion(),
         electronVersion: process.versions.electron,
@@ -167,6 +157,18 @@ export function bootstrap(paths: BootstrapPaths): void {
         app.quit();
       },
     };
+    if (storage) {
+      ctx.coordinationBridge = new BridgeSessionManager({
+        repo: storage.repositories.coordination,
+        clock: ctx.clock,
+        configRoot: join(userData, 'coordination-sessions'),
+        bridgeExecutablePath: coordinationBridgePath(paths.hostEntry),
+        adapters: ctx.adapters,
+        onEvent: (payload) => events.emit('coordination.bridgeChanged', payload),
+        onLifecycleEvidence: (evidence) => presentNextAtSafePoint(ctx, evidence),
+        onHandoffChanged: (handoffId) => publishLatest(ctx, handoffId),
+      });
+    }
 
     // 3. honest state for every session left behind by the previous run
     if (storage) {

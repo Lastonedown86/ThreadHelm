@@ -335,8 +335,9 @@ versioned, non-executable scaffolds and completion never launches or authorizes 
 complete, and escalate routine mission work within a confirmed envelope enforced by Electron main.
 
 **Independent Test**: Confirm a mission for one supervisor profile revision and three worker profile
-revisions, complete a routine DAG, inject a known-safe failure, lease conflict, unknown attempt, loop,
-budget limit, supervisor loss, and scope-changing request, and verify bounded autonomy and recovery.
+revisions with one exact offline-worker automatic-start binding, complete a routine DAG, inject launch
+drift, a known-safe failure, lease conflict, unknown attempt, loop, budget limit, supervisor loss, and
+scope-changing request, and verify bounded autonomy and recovery.
 
 ### Model gate for User Story 8
 
@@ -344,31 +345,31 @@ budget limit, supervisor loss, and scope-changing request, and verify bounded au
 
 ### Tests for User Story 8
 
-- [ ] T127 [P] [US8] Write failing mission, work-DAG, profile-revision, dependency, lease, attempt, decision-loop, budget, authority, and recovery state tests in `tests/unit/domain/supervisor.test.ts`
-- [ ] T128 [P] [US8] Write failing mission/version, profile pin, work-item/decision/attempt, lease uniqueness, rollback, unknown recovery, and content-deletion tests in `tests/unit/persistence/supervisor.test.ts`
-- [ ] T129 [P] [US8] Write failing mission disclosure, supervisor-role registry, persona self-appointment, envelope escape, worker denial, idempotency, bounds, and consequential-action tests in `tests/contract/supervisor.test.ts`
-- [ ] T130 [P] [US8] Write failing three-worker mission, known-safe reassignment, write-lease conflict, unknown attempt, crash, loop, budget, power, and recovery cases in `tests/integration/windows/supervisor-mission.test.ts`
+- [ ] T127 [P] [US8] Write failing mission, work-DAG, profile-revision, exact automatic-start binding, dependency, lease, attempt, decision-loop, budget, authority, and recovery state tests in `tests/unit/domain/supervisor.test.ts`
+- [ ] T128 [P] [US8] Write failing mission/version, profile pin, automatic-start binding, work-item/decision/attempt/start disposition, reserved-to-active lease uniqueness, result return link, rollback, unknown recovery, and content-deletion tests in `tests/unit/persistence/supervisor.test.ts`
+- [ ] T129 [P] [US8] Write failing mission disclosure, exact worker automatic-start authorization, launch drift/substitution denial, supervisor-role registry, persona self-appointment, envelope escape, worker denial, idempotency, bounds, and consequential-action tests in `tests/contract/supervisor.test.ts`
+- [ ] T130 [P] [US8] Write failing three-worker mission, pre-authorized offline-worker start, start failure/drift, known-safe reassignment, write-lease conflict, unknown attempt, crash, loop, budget, power, and no-recovery-autostart cases in `tests/integration/windows/supervisor-mission.test.ts`
 - [ ] T131 [P] [US8] Write failing keyboard mission creation/detail/pause/resume/cancel/escalation and minimal-status UI journeys in `tests/e2e/supervisor-mission.spec.ts`
 
 ### Implementation for User Story 8
 
 - [ ] T132 [US8] Implement mission envelope, pinned-profile revision, work-DAG, decision, attempt, lease, bound, and consequential-authority state policy in `packages/domain/src/supervisor.ts` and export it from `packages/domain/src/index.ts`
-- [ ] T133 [US8] Extend migration v3 with mission, profile-revision eligibility, work-item, dependency, supervisor-decision, work-attempt, worker-lease, event-sequence, and partial-unique indexes in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
-- [ ] T134 [US8] Implement transactional mission/version, profile pins, DAG, decision, attempt, lease, event, budget, and recovery repositories in `packages/persistence/src/repositories/supervisor.ts` and export them from `packages/persistence/src/repositories/index.ts`
-- [ ] T135 [US8] Implement exact mission-envelope preview/confirmation and envelope-revision disclosures using one-time target-bound tokens in `apps/desktop/src/main/coordination/disclosures.ts`
-- [ ] T136 [US8] Implement mission lifecycle, supervisor binding, typed decision validation, task decomposition, assignment, completion, cancellation, and escalation in `apps/desktop/src/main/coordination/supervisor.ts`
+- [ ] T133 [US8] Extend migration v3 with mission automatic-start bindings, profile-revision eligibility, work-item, dependency, supervisor-decision, work-attempt/start/result links, reservable worker leases, event-sequence, and partial-unique indexes in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
+- [ ] T134 [US8] Implement transactional mission/version, profile pins/start bindings, DAG, decision, attempt/start/result links, reserved-to-active lease, event, budget, and recovery repositories in `packages/persistence/src/repositories/supervisor.ts` and export them from `packages/persistence/src/repositories/index.ts`
+- [ ] T135 [US8] Implement exact mission-envelope preview/confirmation, per-worker profile-revision/runtime/workspace automatic-start bindings, and envelope-revision disclosures using one-time target-bound tokens in `apps/desktop/src/main/coordination/disclosures.ts`
+- [ ] T136 [US8] Implement mission lifecycle, supervisor binding, typed decision validation, task decomposition, assignment, envelope-bound idempotent worker startup, completion, cancellation, and escalation in `apps/desktop/src/main/coordination/supervisor.ts`
 - [ ] T137 [US8] Implement acyclic dependency evaluation, 64-item/depth-eight limits, completion evidence, and blocked-to-ready transitions in `apps/desktop/src/main/coordination/supervisor.ts` and `packages/domain/src/supervisor.ts`
 - [ ] T138 [US8] Implement main-owned read/write worker leases, exact workspace/profile-revision eligibility, conflicting-write denial, expiry, release, and unknown-lease holds in `apps/desktop/src/main/sessions/lease.ts` and `apps/desktop/src/main/coordination/supervisor.ts`
 - [ ] T139 [US8] Implement the event-driven supervisor wake loop, three-attempt known-safe retry/reassignment, three-of-eight decision-loop stop, elapsed/resource bounds, and no-unknown-replay policy in `apps/desktop/src/main/coordination/supervisor.ts`
 - [ ] T140 [US8] Implement mission recovery that preserves work/memory/decisions/profile pins, moves unsafe missions/leases to recovery-required/unknown, and launches or resumes nothing in `apps/desktop/src/main/coordination/recovery.ts`
 - [ ] T141 [US8] Add versioned supervisor-only mission/work bridge methods and reject every worker or cross-mission invocation in `apps/desktop/src/main/coordination/bridge.ts` and `native/windows-supervisor/src/bin/threadhelm-coordination-bridge.rs`
 - [ ] T142 [US8] Add supervisor/worker role capability generation to per-session Codex and Claude configurations without trusting persona fields, persisting mission content, or editing global/project settings in `packages/providers/src/adapter.ts`, `packages/providers/src/codex.ts`, and `packages/providers/src/claude-code.ts`
-- [ ] T143 [US8] Add strict mission/work/lease/decision views, named IPC operations/events, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
+- [ ] T143 [US8] Add strict mission/work/lease/decision/start/result-return views, named IPC operations/events, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
 - [ ] T144 [P] [US8] Build the compact keyboard-accessible mission list, bound/status badges, filters, and recovery states in `apps/desktop/src/renderer/features/coordination/MissionList.tsx`
-- [ ] T145 [P] [US8] Build mission-envelope confirmation, pinned roster, work DAG table, decision/attempt history, lease state, and exact escalation controls in `apps/desktop/src/renderer/features/coordination/MissionDetail.tsx`
+- [ ] T145 [P] [US8] Build mission-envelope confirmation with exact worker automatic-start disclosures, pinned roster, work DAG table, decision/attempt/start history, lease state, and exact escalation controls in `apps/desktop/src/renderer/features/coordination/MissionDetail.tsx`
 - [ ] T146 [US8] Integrate content-free mission events and explicit details into `apps/desktop/src/renderer/store.tsx`, `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`, and `apps/desktop/src/renderer/App.tsx`
-- [ ] T147 [US8] Add deterministic supervisor/worker fixture behaviors for valid DAGs, failures, refusals, loops, persona self-appointment, envelope escape, and consequential requests in `packages/test-fixtures/src/supervisor.ts` and export them from `packages/test-fixtures/src/index.ts`
-- [ ] T148 [US8] Extend installed provider proof with worker-versus-supervisor registries, pinned profile revisions, one bounded mission, known-safe reassignment, envelope denial, human escalation, crash recovery, and cleanup in `tests/acceptance/provider-coordination-smoke.test.ts`
+- [ ] T147 [US8] Add deterministic supervisor/worker fixture behaviors for valid DAGs, offline start, launch drift, structured result return, failures, refusals, loops, persona self-appointment, envelope escape, and consequential requests in `packages/test-fixtures/src/supervisor.ts` and export them from `packages/test-fixtures/src/index.ts`
+- [ ] T148 [US8] Extend installed provider proof with worker-versus-supervisor registries, pinned profile revisions, one bounded mission, one pre-authorized offline-worker start, launch-substitution denial, known-safe reassignment, envelope denial, human escalation, crash recovery, and cleanup in `tests/acceptance/provider-coordination-smoke.test.ts`
 - [ ] T149 [US8] Run the US8 domain, persistence, contract, Windows, E2E, and provider-proof slices; capture final exits, OpenAI implementation evidence, Claude/Antigravity adversarial reviews, and explicit human acceptance in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 **Checkpoint**: US8 provides genuine routine autonomy inside an enforceable mission envelope; the

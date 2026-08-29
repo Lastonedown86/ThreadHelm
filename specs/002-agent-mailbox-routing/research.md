@@ -424,10 +424,14 @@ avoid creating a second prompt/tool authority channel.
 **Decision**: Model the supervisor as an ordinary provider session with a replaceable role, not as
 Electron main and not as a privileged identity. The user first confirms a mission envelope containing
 the objective, approved workspaces, eligible provider/profile set, worker/concurrency limits,
-task/decomposition/retry/time/resource bounds, permitted routine actions, and escalation/stop rules.
+task/decomposition/retry/time/resource bounds, permitted routine actions, exact per-worker
+automatic-start bindings, and escalation/stop rules.
 The supervisor can then propose structured decompositions, assignments, retries, reassignments,
 memory publications, completion, and escalation through the session-scoped bridge. Main validates
-every operation, owns work leases/state, and performs only actions allowed by the envelope.
+every operation, reserves and binds work leases, owns any pre-authorized process start, and performs
+only actions allowed by the envelope. Every worker result returns through main to the bound
+supervisor's mission inbox for synthesis; workers cannot choose an arbitrary peer or alternate return
+recipient.
 
 The loop is driven by durable state changes and provider safe-point evidence, never by idle UI
 polling. Destructive, privileged, external, spending, credential, permission, workspace-expanding,
@@ -446,6 +450,8 @@ Claude, or Antigravity execution model; safety and recovery do not depend on its
 - Embedding supervisor reasoning inside Electron main couples model behavior to the authority layer
   and makes replacement/testing harder.
 - Fully manual approval for every assignment is safe but does not satisfy autonomous supervision.
+- A prompt-authorized or silently substituted worker launch was rejected because only the reviewed
+  mission envelope can authorize an exact profile-revision/runtime/workspace binding.
 
 **Sources**:
 

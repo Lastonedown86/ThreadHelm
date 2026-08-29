@@ -200,13 +200,21 @@ authority source.
 ### Autonomous supervisor loop
 
 1. The user previews and confirms a mission envelope bound to exact objective, scopes, eligible
-   profiles, limits, routine actions, stop rules, and supervisor session/profile.
+   profiles, limits, routine actions, stop rules, supervisor session/profile, and any per-worker
+   automatic-start bindings. Each binding includes the exact pinned profile revision, workspace,
+   provider/model/effort, effective isolation/resource limits, and folder-access boundary.
 2. Main starts or binds one ordinary supervisor session and exposes only supervisor-role tools for
    that mission. The supervisor inspects structured mission, roster, mailbox, outcome, and memory views.
 3. The supervisor proposes a bounded work DAG. Main validates depth/count/dependencies/scope and
    records each accepted decision before making work assignable.
-4. Assignment acquires a main-owned worker/workspace lease, then routes one addressed handoff. A
-   worker can accept, report outcome, publish memory, or escalate but cannot mutate the mission ledger.
+4. Assignment reserves a main-owned worker/workspace lease, then routes one addressed handoff. If no
+   matching worker session is active, the supervisor may request startup only for an exact binding
+   pre-authorized by the mission envelope. Main revalidates the launch tuple, owns an idempotent
+   process start, and binds the reservation to the resulting session before delivery; drift, failure,
+   or unavailable capacity holds the branch with no substitution. A worker can accept, report outcome,
+   publish memory, or escalate but cannot mutate the mission ledger or select a return recipient. Main
+   persists each structured outcome and deliberate artifact/evidence reference and routes it to the
+   bound supervisor's mission inbox for synthesis.
 5. Durable events wake the supervisor at proved safe points. Main permits known-safe retry or
    reassignment only within attempt/budget bounds and never replays an unknown external action.
 6. Invalid output, equivalent decisions, lease conflict, budget exhaustion, supervisor loss, or a
@@ -256,14 +264,18 @@ authority source.
   session.
 - A coordination message is context, not authority. Existing provider permission and ThreadHelm
   process/workspace controls remain authoritative. Automatic routing cannot alter workspace approval,
-  launch another process, change provider permissions, or execute a consequential operation.
+  change provider permissions, or execute a consequential operation. P8 alone may ask main to start
+  an exact worker binding already confirmed in the mission envelope; no message or persona text grants
+  that permission.
 - A hire manifest is also context, not authority. Its name, goal, capabilities, provider/model,
   isolation request, and token cap cannot grant tools, expand workspace/mission scope, select a role,
   or raise a product budget. Source paths and goal text never enter broad logs or renderer events.
 - A mission envelope is the supervisor's maximum authority, not a suggestion. Supervisor prose,
   memory content, model confidence, or a worker request cannot expand it. Main may start an approved
-  worker profile during an active mission only when the envelope permits it and must expose the exact
-  target/state; startup recovery never launches or resumes work automatically.
+  worker during an active mission only from its exact pre-authorized profile-revision/runtime/workspace
+  binding, after current-state revalidation, and must expose the target and resulting state. There is
+  no model/runtime/workspace substitution, and startup recovery never launches or resumes work
+  automatically.
 
 ### Fixed planning bounds
 

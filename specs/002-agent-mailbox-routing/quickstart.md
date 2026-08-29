@@ -267,8 +267,13 @@ pnpm exec playwright test tests/e2e/supervisor-mission.spec.ts
 Expected:
 
 - The user confirms exact mission objective, scopes, eligible profiles, concurrency, retry/time/resource
-  limits, routine actions, and escalation rules before autonomy starts.
+  limits, routine actions, escalation rules, and any exact per-worker automatic-start bindings before
+  autonomy starts.
 - One ordinary supervisor decomposes and assigns only valid DAG work to approved worker/workspace pairs.
+- With a confirmed binding, main can reserve the work/workspace, start an offline ordinary worker,
+  bind the resulting session, and deliver without a second prompt; launch drift or substitution holds.
+- Every worker's structured result and deliberate artifact/evidence references return through main to
+  the bound supervisor mission inbox; transcripts and implicit workspace contents do not.
 - Conflicting write leases, 65th work item, depth nine, fourth attempt, third equivalent decision,
   exhausted budget, invalid output, and supervisor loss pause safely.
 - Known-safe failures may be reassigned inside bounds; unknown attempts are never replayed automatically.

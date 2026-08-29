@@ -426,6 +426,7 @@ Stable identity and scope for one evolving unit of shared knowledge.
 | `supervisorSessionId` | UUID nullable | One ordinary eligible session while running. |
 | `approvedWorkspaceIds` | bounded JSON | Exact approved workspace set. |
 | `eligibleProfiles` | bounded JSON | Provider/profile identifiers approved by the user. |
+| `autoStartWorkerBindings` | bounded JSON | Exact pinned profile-revision/workspace/runtime tuples the user authorized main to start during this mission; empty means active sessions only. |
 | `maxWorkers`, `maxWorkItems`, `maxDepth`, `maxAttempts` | integers | Fixed by confirmed envelope and product maxima. |
 | `deadlineAt`, `resourceBudget` | bounded values | Required stop conditions; never model-interpreted. |
 | `permittedRoutineActions` | bounded enum set | Cannot include consequential authority classes. |
@@ -467,9 +468,10 @@ Stable identity and scope for one evolving unit of shared knowledge.
 | Field | Type | Rules |
 |---|---|---|
 | `id` | UUID | Primary key. |
-| `missionId`, `workItemId`, `sessionId`, `workspaceId` | UUID | Exact assignment identity. |
+| `missionId`, `workItemId`, `workspaceId`, `profileRevisionId` | UUID | Exact assignment and pre-authorized worker identity. |
+| `sessionId` | UUID nullable | Bound only after an active worker is selected or a reserved automatic start succeeds. |
 | `mode` | `read` or `write` | Write leases conflict for the same effective workspace. |
-| `state` | `active`, `released`, `expired`, or `unknown` | Unknown blocks automatic reassignment to conflicting scope. |
+| `state` | `reserved`, `active`, `released`, `expired`, or `unknown` | Reserved blocks conflicting launch/assignment; unknown blocks automatic reassignment to conflicting scope. |
 | `acquiredAt`, `expiresAt`, `releasedAt` | timestamps nullable | Main-owned lifecycle. |
 
 ### WorkAttempt
@@ -477,10 +479,13 @@ Stable identity and scope for one evolving unit of shared knowledge.
 | Field | Type | Rules |
 |---|---|---|
 | `id` | UUID | Primary key. |
-| `workItemId`, `sessionId`, `decisionId`, `leaseId` | UUID | Exact attempt and authority chain. |
+| `workItemId`, `decisionId`, `leaseId` | UUID | Exact attempt and authority chain. |
+| `sessionId` | UUID nullable | Assigned only after an active worker is selected or a pre-authorized start succeeds. |
 | `attemptNumber` | integer | Unique and monotonic per work item. |
 | `state` | WorkAttemptState | Unknown is terminal for automatic replay. |
+| `workerStartDisposition` | `not_needed`, `started`, `held`, or `failed` | Main-owned result for the envelope-bound start request; never implies work delivery. |
 | `handoffId` | UUID nullable | Addressed assignment handoff when created. |
+| `resultHandoffId` | UUID nullable | Structured worker result routed by main to the bound supervisor mission inbox. |
 | `reasonCode` | safe code nullable | Required for failure/unknown. |
 | `createdAt`, `completedAt` | timestamps nullable | UTC ISO-8601. |
 

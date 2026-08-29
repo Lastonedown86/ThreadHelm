@@ -1,6 +1,8 @@
 <p align="center">
-  <img src="docs/assets/threadhelm-logo.svg" alt="ThreadHelm" width="720" />
+  <img src="docs/assets/threadhelm-monogram.png" alt="ThreadHelm monogram" width="320" />
 </p>
+
+<h1 align="center">ThreadHelm</h1>
 
 <p align="center"><strong>A calm command center for local AI agents.</strong></p>
 

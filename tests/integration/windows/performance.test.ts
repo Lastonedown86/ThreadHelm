@@ -1,7 +1,8 @@
 /**
  * T091 — measurable budgets from plan.md / quickstart.md on this machine.
  * Numbers are printed so a release run can record them; the idle CPU window
- * is 20 s here (the plan's budget is stated over 60 s) to keep CI fast.
+ * is 20 s by default (the plan's budget is stated over 60 s) to keep CI fast
+ * and the full 60 s when THREADHELM_ENFORCE_BUDGETS=1.
  */
 
 import { rmSync } from 'node:fs';
@@ -19,6 +20,13 @@ import {
   waitForPidExit,
   type LaunchedApp,
 } from './helpers/harness.js';
+import {
+  approveViaUi,
+  launchViaUi,
+  launchWithFixtures,
+  sessionOption,
+  terminalRows,
+} from '../../e2e/helpers/ui.js';
 
 const MiB = 1024 * 1024;
 let app: LaunchedApp | undefined;
@@ -61,6 +69,7 @@ function appWorkingSetMiB(needle: string): number {
 // above them, so they are recorded on every run and enforced only with
 // THREADHELM_ENFORCE_BUDGETS=1 (release runs). Latency gates stay hard.
 const enforceBudgets = process.env.THREADHELM_ENFORCE_BUDGETS === '1';
+const idleWindows = enforceBudgets ? 12 : 4; // × 5 s = 60 s release, 20 s CI
 function budget(label: string, value: number, max: number, unit: string) {
   const verdict = value <= max ? 'within budget' : 'OVER BUDGET';
   console.log(
@@ -113,16 +122,66 @@ describe('performance budgets', () => {
     expect(p95).toBeLessThanOrEqual(100);
   }, 60_000);
 
-  it.todo(
-    '95% of output visible within 1 s — renderer-side measurement (xterm write completion), not observable from main-process hooks',
-  );
+  it('95% of normal output is visible in the terminal within 1 s', async () => {
+    // Frames never pass through main (stream.ts), so visibility is measured in
+    // the renderer: a MutationObserver on the xterm DOM rows resolves when the
+    // echoed marker is on screen. The sample includes PTY, host, MessagePort,
+    // xterm write, and DOM paint.
+    app = await launchWithFixtures({ 'codex-cli': 'echo' });
+    userData = app.userData;
+    const page = app.page;
+    const displayPath = await approveViaUi(app, ws('output'));
+    const sessionId = await launchViaUi(app, 'codex-cli', displayPath);
+    await sessionOption(page, sessionId).click();
+    await terminalRows(page).filter({ hasText: 'FAKE_AGENT_READY' }).waitFor({ timeout: 30_000 });
 
-  it('idle with no sessions: median CPU at or below 1% of one core over 20 s', async () => {
+    const samples: number[] = [];
+    for (let i = 0; i < 40; i += 1) {
+      const marker = `ECHO:out${i}<`;
+      const visible = page.evaluate(
+        ({ marker, timeoutMs }) =>
+          new Promise<boolean>((resolve) => {
+            const rows = document.querySelector('.terminal-host .xterm-rows');
+            if (!rows) return resolve(false);
+            const has = () => (rows.textContent ?? '').includes(marker);
+            if (has()) return resolve(true);
+            const observer = new MutationObserver(() => {
+              if (!has()) return;
+              observer.disconnect();
+              resolve(true);
+            });
+            observer.observe(rows, { childList: true, subtree: true, characterData: true });
+            setTimeout(() => {
+              observer.disconnect();
+              resolve(has());
+            }, timeoutMs);
+          }),
+        { marker, timeoutMs: 5_000 },
+      );
+      const t0 = performance.now();
+      const sent = await sendInput(
+        app,
+        sessionId,
+        `out${i}<
+`,
+      );
+      expect(sent.ok).toBe(true);
+      expect(await visible, marker).toBe(true);
+      samples.push(performance.now() - t0);
+    }
+    samples.sort((x, y) => x - y);
+    const p95 = samples[Math.floor(samples.length * 0.95) - 1]!;
+    const median = samples[Math.floor(samples.length / 2)]!;
+    console.log(`output visible: median ${median.toFixed(0)} ms, p95 ${p95.toFixed(0)} ms`);
+    expect(p95).toBeLessThanOrEqual(1_000);
+  }, 120_000);
+
+  it(`idle with no sessions: median CPU at or below 1% of one core over ${idleWindows * 5} s`, async () => {
     app = await launchApp();
     userData = app.userData;
     await sleep(3_000); // let startup work settle
     const windows: number[] = [];
-    for (let i = 0; i < 4; i += 1) {
+    for (let i = 0; i < idleWindows; i += 1) {
       const before = processesMatching(userData).reduce((sum, p) => sum + p.cpuMs, 0);
       const t0 = performance.now();
       await sleep(5_000);
@@ -130,10 +189,10 @@ describe('performance budgets', () => {
       windows.push(((after - before) / (performance.now() - t0)) * 100);
     }
     windows.sort((x, y) => x - y);
-    const median = (windows[1]! + windows[2]!) / 2;
+    const median = (windows[windows.length / 2 - 1]! + windows[windows.length / 2]!) / 2;
     console.log(`idle CPU windows (% of one core): ${windows.map((w) => w.toFixed(2)).join(', ')}`);
     budget('idle CPU median', median, 1, '%');
-  }, 60_000);
+  }, 120_000);
 
   it('working set: ≤ 250 MiB with no sessions, ≤ 700 MiB with four idle sessions', async () => {
     app = await launchApp();

@@ -407,4 +407,324 @@ describe('coordination repository invariants', () => {
       expect.objectContaining({ code: 'COORDINATION_DELIVERY_UNKNOWN' }),
     );
   });
+
+  it('persists opt-in and atomically holds an authority reply with one open escalation', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+    const root = coordination.createHandoff(handoffInput());
+    const attempt = coordination.prepareAttempt({
+      handoffId: root.id,
+      recipientSessionId: IDS.recipient,
+      recipientWorkspaceIdAtReview: IDS.recipientWorkspace,
+      lifecycleStateAtReview: 'running',
+      activityStateAtReview: 'unknown',
+      activityEvidenceKindAtReview: 'none',
+      createdAt: AT,
+    });
+    coordination.markAttemptDispatching(attempt.id, 1, AT);
+    coordination.markAttemptApplied(attempt.id, AT);
+    expect(
+      coordination.setAutoContinueEnabled(root.conversationId, true, AT).autoContinueEnabled,
+    ).toBe(true);
+
+    database.exec(`CREATE TRIGGER fixture_fail_escalation BEFORE INSERT ON coordination_escalations
+      BEGIN SELECT RAISE(ABORT, 'fixture escalation rollback'); END;`);
+    expect(() =>
+      coordination.createBridgeReply({
+        inReplyToId: root.id,
+        senderSessionId: IDS.recipient,
+        kind: 'response',
+        purpose: 'Authority request',
+        body: 'Expand the approved workspace scope.',
+        authorityRequired: true,
+        createdAt: AT,
+      }),
+    ).toThrow();
+    expect(database.prepare('SELECT COUNT(*) AS n FROM coordination_handoffs').get()).toEqual({
+      n: 1,
+    });
+    database.exec('DROP TRIGGER fixture_fail_escalation');
+
+    const queuedSibling = coordination.createBridgeReply({
+      inReplyToId: root.id,
+      senderSessionId: IDS.recipient,
+      kind: 'inform',
+      purpose: 'Queued before pause',
+      body: 'This sibling must not present after another reply pauses the conversation.',
+      createdAt: AT,
+    });
+    expect(queuedSibling.deliveryState).toBe('queued');
+
+    const held = coordination.createBridgeReply({
+      inReplyToId: root.id,
+      senderSessionId: IDS.recipient,
+      kind: 'response',
+      purpose: 'Authority request',
+      body: 'Expand the approved workspace scope.',
+      authorityRequired: true,
+      createdAt: AT,
+    });
+    expect(held).toMatchObject({
+      deliveryState: 'held',
+      holdReasonCode: 'AUTHORITY_REQUIRED',
+    });
+    expect(coordination.getConversationSummary(root.conversationId)).toMatchObject({
+      state: 'paused',
+      pauseReasonCode: 'AUTHORITY_REQUIRED',
+      autoContinueEnabled: true,
+    });
+    expect(coordination.getOpenEscalation(root.conversationId)).toMatchObject({
+      handoffId: held.id,
+      kind: 'authority_required',
+      state: 'open',
+      reasonCode: 'AUTHORITY_REQUIRED',
+    });
+    expect(coordination.findHandoffById(queuedSibling.id)).toMatchObject({
+      deliveryState: 'held',
+      holdReasonCode: 'CONVERSATION_PAUSED',
+    });
+
+    const late = coordination.createBridgeReply({
+      inReplyToId: root.id,
+      senderSessionId: IDS.recipient,
+      kind: 'inform',
+      purpose: 'Late information',
+      body: 'Retain this while the conversation remains paused.',
+      createdAt: '2026-01-01T00:00:01.000Z',
+    });
+    expect(late).toMatchObject({
+      deliveryState: 'held',
+      holdReasonCode: 'CONVERSATION_PAUSED',
+    });
+    expect(
+      database
+        .prepare("SELECT COUNT(*) AS n FROM coordination_escalations WHERE state = 'open'")
+        .get(),
+    ).toEqual({ n: 1 });
+  });
+
+  it('pauses transactionally on the third consecutive delivery failure', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+
+    for (let index = 0; index < 3; index += 1) {
+      const handoff = coordination.createHandoff(
+        handoffInput({
+          id: `00000000-0000-4000-8000-00000000005${index}`,
+          conversationId: IDS.conversation,
+          createdAt: `2026-01-01T00:00:0${index}.000Z`,
+        }),
+      );
+      const attempt = coordination.prepareAttempt({
+        handoffId: handoff.id,
+        recipientSessionId: IDS.recipient,
+        recipientWorkspaceIdAtReview: IDS.recipientWorkspace,
+        lifecycleStateAtReview: 'running',
+        activityStateAtReview: 'unknown',
+        activityEvidenceKindAtReview: 'none',
+        createdAt: `2026-01-01T00:00:0${index}.000Z`,
+      });
+      coordination.markAttemptFailedBeforeWrite(
+        attempt.id,
+        'KNOWN_NO_WRITE',
+        `2026-01-01T00:00:0${index}.500Z`,
+      );
+      expect(coordination.getConversationSummary(IDS.conversation)?.state).toBe(
+        index < 2 ? 'open' : 'paused',
+      );
+    }
+
+    expect(coordination.getConversationSummary(IDS.conversation)).toMatchObject({
+      state: 'paused',
+      pauseReasonCode: 'REPEATED_DELIVERY_FAILURE',
+    });
+    expect(coordination.getOpenEscalation(IDS.conversation)).toMatchObject({
+      kind: 'repeated_delivery_failure',
+      state: 'open',
+    });
+    expect(
+      database
+        .prepare(
+          'SELECT consecutive_delivery_failures AS n FROM coordination_conversations WHERE id = ?',
+        )
+        .get(IDS.conversation),
+    ).toEqual({ n: 3 });
+  });
+
+  it('resets the consecutive failure counter after a confirmed delivery', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+    const failOrApply = (index: number, applied: boolean) => {
+      const handoff = coordination.createHandoff(
+        handoffInput({
+          id: `00000000-0000-4000-8000-00000000006${index}`,
+          conversationId: IDS.conversation,
+          createdAt: `2026-01-01T00:00:1${index}.000Z`,
+        }),
+      );
+      const attempt = coordination.prepareAttempt({
+        handoffId: handoff.id,
+        recipientSessionId: IDS.recipient,
+        recipientWorkspaceIdAtReview: IDS.recipientWorkspace,
+        lifecycleStateAtReview: 'running',
+        activityStateAtReview: 'unknown',
+        activityEvidenceKindAtReview: 'none',
+        createdAt: `2026-01-01T00:00:1${index}.000Z`,
+      });
+      if (applied) {
+        coordination.markAttemptDispatching(attempt.id, index + 1, AT);
+        coordination.markAttemptApplied(attempt.id, AT);
+      } else {
+        coordination.markAttemptFailedBeforeWrite(attempt.id, 'KNOWN_NO_WRITE', AT);
+      }
+    };
+    failOrApply(0, false);
+    failOrApply(1, false);
+    failOrApply(2, true);
+    failOrApply(3, false);
+
+    expect(coordination.getConversationSummary(IDS.conversation)?.state).toBe('open');
+    expect(
+      database
+        .prepare(
+          'SELECT consecutive_delivery_failures AS n FROM coordination_conversations WHERE id = ?',
+        )
+        .get(IDS.conversation),
+    ).toEqual({ n: 1 });
+  });
+
+  it('never opens a failure escalation or reopens after the conversation is closed', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+    const handoff = coordination.createHandoff(
+      handoffInput({
+        id: '00000000-0000-4000-8000-000000000070',
+        conversationId: IDS.conversation,
+        createdAt: '2026-01-01T00:00:20.000Z',
+      }),
+    );
+    coordination.updateConversationState(IDS.conversation, 'closed', 'USER_CLOSED', AT);
+    expect(() =>
+      coordination.prepareAttempt({
+        handoffId: handoff.id,
+        recipientSessionId: IDS.recipient,
+        recipientWorkspaceIdAtReview: IDS.recipientWorkspace,
+        lifecycleStateAtReview: 'running',
+        activityStateAtReview: 'unknown',
+        activityEvidenceKindAtReview: 'none',
+        createdAt: AT,
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'INVALID_STATE' }));
+    expect(coordination.getConversationSummary(IDS.conversation)?.state).toBe('closed');
+    expect(coordination.getOpenEscalation(IDS.conversation)).toBeNull();
+  });
+
+  it('applies an exact escalation disposition once and keeps closed-conversation arrivals held', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+    const root = coordination.createHandoff(handoffInput());
+    const attempt = coordination.prepareAttempt({
+      handoffId: root.id,
+      recipientSessionId: IDS.recipient,
+      recipientWorkspaceIdAtReview: IDS.recipientWorkspace,
+      lifecycleStateAtReview: 'running',
+      activityStateAtReview: 'unknown',
+      activityEvidenceKindAtReview: 'none',
+      createdAt: AT,
+    });
+    coordination.markAttemptDispatching(attempt.id, 1, AT);
+    coordination.markAttemptApplied(attempt.id, AT);
+    coordination.setAutoContinueEnabled(root.conversationId, true, AT);
+    coordination.createBridgeReply({
+      inReplyToId: root.id,
+      senderSessionId: IDS.recipient,
+      kind: 'response',
+      purpose: 'Authority request',
+      body: 'Request exact user direction.',
+      authorityRequired: true,
+      createdAt: AT,
+    });
+    const escalation = coordination.getOpenEscalation(root.conversationId)!;
+
+    expect(() =>
+      coordination.resolveEscalation({
+        escalationId: escalation.id,
+        disposition: 'redirect',
+        recipientSessionId: IDS.recipient,
+        recipientWorkspaceId: IDS.recipientWorkspace,
+        at: '2026-01-01T00:00:00.500Z',
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'COORDINATION_NOT_ELIGIBLE' }));
+
+    const resolved = coordination.resolveEscalation({
+      escalationId: escalation.id,
+      disposition: 'close',
+      at: '2026-01-01T00:00:01.000Z',
+    });
+    expect(resolved).toMatchObject({ state: 'closed', resolution: 'close' });
+    expect(coordination.getConversationSummary(root.conversationId)?.state).toBe('closed');
+    expect(() =>
+      coordination.resolveEscalation({
+        escalationId: escalation.id,
+        disposition: 'continue',
+        at: '2026-01-01T00:00:02.000Z',
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'INVALID_STATE' }));
+
+    const late = coordination.createBridgeReply({
+      inReplyToId: root.id,
+      senderSessionId: IDS.recipient,
+      kind: 'inform',
+      purpose: 'Late after close',
+      body: 'This must be retained without reopening the conversation.',
+      createdAt: '2026-01-01T00:00:03.000Z',
+    });
+    expect(late).toMatchObject({
+      deliveryState: 'held',
+      holdReasonCode: 'CONVERSATION_CLOSED',
+    });
+    expect(coordination.getConversationSummary(root.conversationId)?.state).toBe('closed');
+  });
+
+  it('keeps content deleted when a late provider arrival is retained after close', () => {
+    const database = openMigrated();
+    seedSessions(database);
+    const coordination = createRepositories(database).coordination;
+    const root = coordination.createHandoff(handoffInput());
+    const attempt = coordination.prepareAttempt({
+      handoffId: root.id,
+      recipientSessionId: IDS.recipient,
+      recipientWorkspaceIdAtReview: IDS.recipientWorkspace,
+      lifecycleStateAtReview: 'running',
+      activityStateAtReview: 'unknown',
+      activityEvidenceKindAtReview: 'none',
+      createdAt: AT,
+    });
+    coordination.markAttemptDispatching(attempt.id, 1, AT);
+    coordination.markAttemptApplied(attempt.id, AT);
+    coordination.updateConversationState(root.conversationId, 'closed', 'USER_CLOSED', AT);
+    coordination.deleteConversationContent(root.conversationId, AT);
+
+    const late = coordination.createBridgeReply({
+      inReplyToId: root.id,
+      senderSessionId: IDS.recipient,
+      kind: 'inform',
+      purpose: 'Late deleted purpose',
+      body: 'Late deleted body',
+      createdAt: AT,
+    });
+    expect(late).toMatchObject({
+      deliveryState: 'held',
+      holdReasonCode: 'CONVERSATION_CLOSED',
+      purpose: null,
+      body: null,
+      contentBytes: null,
+    });
+    expect(coordination.getConversationSummary(root.conversationId)?.contentDeletedAt).toBe(AT);
+  });
 });

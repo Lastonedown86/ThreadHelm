@@ -347,12 +347,34 @@ export class BridgeSessionManager {
     if (typeof payload.params.name !== 'string' || !isRecord(payload.params.arguments)) {
       throw new ThreadHelmError('INVALID_REQUEST', 'MCP tool call parameters are invalid.');
     }
-    const response = await this.dispatch(sessionId, decoded.credential, {
-      jsonrpc: '2.0',
-      id: payload.id,
-      method: payload.params.name,
-      params: payload.params.arguments,
-    });
+    if (!this.authenticate(sessionId, decoded.credential)) {
+      throw new ThreadHelmError('UNAUTHORIZED_SENDER', 'Bridge credential was rejected.');
+    }
+    let response: BridgeResponse;
+    try {
+      response = await this.dispatch(sessionId, decoded.credential, {
+        jsonrpc: '2.0',
+        id: payload.id,
+        method: payload.params.name,
+        params: payload.params.arguments,
+      });
+    } catch (error) {
+      const code = error instanceof ThreadHelmError ? error.code : 'INTERNAL';
+      return {
+        jsonrpc: '2.0',
+        id: payload.id,
+        result: {
+          content: [
+            {
+              type: 'text',
+              text: `ThreadHelm rejected the coordination request (${code}).`,
+            },
+          ],
+          structuredContent: { code },
+          isError: true,
+        },
+      };
+    }
     if (response.error) return response;
     const success: BridgeResponse = {
       jsonrpc: '2.0',
@@ -693,6 +715,7 @@ export class BridgeSessionManager {
             'body',
             'responseExpectation',
             'authorityRequired',
+            'conflictingInstruction',
           ]);
           const inReplyTo = HandoffId.parse(params.inReplyTo);
           const kind = HandoffKind.parse(params.kind);
@@ -708,6 +731,9 @@ export class BridgeSessionManager {
           if (typeof params.authorityRequired !== 'boolean') {
             throw new ThreadHelmError('INVALID_REQUEST', 'authorityRequired must be boolean.');
           }
+          if (typeof params.conflictingInstruction !== 'boolean') {
+            throw new ThreadHelmError('INVALID_REQUEST', 'conflictingInstruction must be boolean.');
+          }
           if (
             params.responseExpectation !== 'none' &&
             params.responseExpectation !== 'response_required'
@@ -717,7 +743,18 @@ export class BridgeSessionManager {
           const purpose = sanitizeCoordinationPurpose(params.purpose).normalized;
           const body = sanitizeCoordinationBody(params.body).normalized;
           const authorityRequired = params.authorityRequired;
+          const conflictingInstruction = params.conflictingInstruction;
           const responseExpected = params.responseExpectation === 'response_required';
+          if (
+            (kind === 'query' && !responseExpected) ||
+            ((kind === 'completion' || kind === 'refusal' || kind === 'failure') &&
+              responseExpected)
+          ) {
+            throw new ThreadHelmError(
+              'INVALID_REQUEST',
+              'Reply kind and responseExpectation are inconsistent.',
+            );
+          }
 
           if (this.#repo) {
             const handoff = this.#repo.createBridgeReply(
@@ -729,10 +766,12 @@ export class BridgeSessionManager {
                 body,
                 responseExpected,
                 authorityRequired,
+                conflictingInstruction,
                 createdAt: new Date(now).toISOString(),
               },
               new Date(now).toISOString(),
             );
+            this.#onHandoffChanged?.(handoff.id);
             return {
               jsonrpc: '2.0',
               id: request.id,
@@ -755,8 +794,12 @@ export class BridgeSessionManager {
               inReplyToId: inReplyTo,
               senderSessionId: sessionId,
               recipientSessionId: '00000000-0000-4000-8000-000000000001',
-              deliveryState: authorityRequired ? 'held' : 'queued',
-              holdReasonCode: authorityRequired ? 'AUTHORITY_REQUIRED' : null,
+              deliveryState: authorityRequired || conflictingInstruction ? 'held' : 'queued',
+              holdReasonCode: authorityRequired
+                ? 'AUTHORITY_REQUIRED'
+                : conflictingInstruction
+                  ? 'CONFLICTING_INSTRUCTION'
+                  : null,
             },
           };
         }

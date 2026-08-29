@@ -63,6 +63,62 @@ async function createHandoffByKeyboard(
   return page.locator(`[data-handoff-id="${handoffId}"]`);
 }
 
+async function createDeliveredConversation(
+  app: LaunchedApp,
+  sourceSessionId: string,
+  recipientSessionId: string,
+) {
+  const preview = await app.call<{ previewToken: string }>('coordination.previewHandoff', {
+    sourceSessionId,
+    recipientSessionId,
+    kind: 'request',
+    purpose: 'Bounded continuation root',
+    body: 'Reply through the reviewed bounded conversation.',
+    responseExpected: true,
+  });
+  const handoff = await app.call<{ id: string; conversationId: string }>(
+    'coordination.confirmHandoff',
+    { previewToken: preview.previewToken, persistenceConfirmation: true },
+  );
+  await app.call('sessions.select', { sessionId: recipientSessionId });
+  const presentation = await app.call<{ presentationToken: string }>(
+    'coordination.requestPresentation',
+    { handoffId: handoff.id },
+  );
+  await app.call('coordination.confirmPresentation', {
+    presentationToken: presentation.presentationToken,
+    submitConfirmation: true,
+  });
+  return handoff;
+}
+
+async function replyFromProvider(
+  app: LaunchedApp,
+  input: {
+    sessionId: string;
+    inReplyToId: string;
+    kind: 'response' | 'inform' | 'completion' | 'refusal' | 'failure';
+    purpose: string;
+    body: string;
+    authorityRequired: boolean;
+  },
+): Promise<{ id: string; deliveryState: string; holdReasonCode: string | null }> {
+  return app.app.evaluate((_electron, value) => {
+    const hooks = (
+      globalThis as unknown as {
+        __threadhelmTest: {
+          replyFromProvider(input: Record<string, unknown>): {
+            id: string;
+            deliveryState: string;
+            holdReasonCode: string | null;
+          };
+        };
+      }
+    ).__threadhelmTest;
+    return hooks.replyFromProvider(value);
+  }, input);
+}
+
 test('keyboard-only user flow creates and manually presents one exact handoff', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' });
   const { dirs } = await launchThree(app);
@@ -334,6 +390,125 @@ test('safe lifecycle presents once while unproved evidence keeps the visible man
     expect(result.status).toBe('manual_only');
     await expect(second).toContainText('Manual action required');
     await expect(second.getByRole('button', { name: 'Present…' })).toBeVisible();
+  } finally {
+    await teardown(app, ...dirs);
+  }
+});
+
+test('bounded coordination requires disclosure before one eligible provider reply continues', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' });
+  const { dirs, sessions } = await launchThree(app);
+  const page = app.page;
+  try {
+    const root = await createDeliveredConversation(app, sessions[0]!.id, sessions[1]!.id);
+    const conversations = page.getByRole('region', { name: 'Agent conversations' });
+    await press(conversations.getByRole('button', { name: 'Refresh' }));
+    await press(conversations.getByRole('listitem').first());
+    const detail = page.getByRole('region', { name: 'Conversation detail' });
+
+    await press(detail.getByRole('button', { name: 'Enable automatic continuation…' }));
+    const disclosure = page.getByRole('dialog', { name: 'Enable bounded continuation' });
+    await expect(disclosure).toContainText('Reply depth: 8');
+    await expect(disclosure).toContainText('Equivalent repeat: 3 within 8');
+    await expect(disclosure).toContainText('Delivery failures: 3');
+    await expect(disclosure).toContainText('cannot grant destructive');
+    await press(disclosure.getByRole('checkbox'), 'Space');
+    await press(disclosure.getByRole('button', { name: 'Enable bounded continuation' }));
+    await expect(disclosure).toBeHidden();
+    await expect(detail).toContainText('Automatic continuation enabled');
+
+    const reply = await replyFromProvider(app, {
+      sessionId: sessions[1]!.id,
+      inReplyToId: root.id,
+      kind: 'response',
+      purpose: 'Bounded reply',
+      body: 'This reply is eligible only inside the reviewed bounds.',
+      authorityRequired: false,
+    });
+    expect(reply.deliveryState).toBe('queued');
+
+    await app.app.evaluate((_electron, sessionId) => {
+      const hooks = (
+        globalThis as unknown as {
+          __threadhelmTest: {
+            emitProviderLifecycle(evidence: Record<string, unknown>): Promise<unknown>;
+          };
+        }
+      ).__threadhelmTest;
+      return hooks.emitProviderLifecycle({
+        sessionId,
+        providerId: 'codex-cli',
+        providerVersion: '1.0.0',
+        eventKind: 'safe_point',
+        providerEventId: 'us4-e2e-safe-point',
+        turnId: 'us4-e2e-turn',
+        occurredAt: new Date().toISOString(),
+        safePoint: true,
+        inputSafety: 'proved_no_pending_draft',
+      });
+    }, sessions[0]!.id);
+
+    await press(conversations.getByRole('button', { name: 'Refresh' }));
+    await press(conversations.getByRole('listitem').first());
+    await expect(detail).toContainText('This reply is eligible only inside the reviewed bounds.');
+    await expect(detail.locator(`[data-handoff-id="${reply.id}"]`)).toContainText('Delivered');
+  } finally {
+    await teardown(app, ...dirs);
+  }
+});
+
+test('authority escalation can close a conversation and later provider messages remain held', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' });
+  const { dirs, sessions } = await launchThree(app);
+  const page = app.page;
+  try {
+    const root = await createDeliveredConversation(app, sessions[0]!.id, sessions[1]!.id);
+    const autoPreview = await app.call<{ autoContinueToken: string }>(
+      'coordination.previewAutoContinue',
+      { conversationId: root.conversationId, enabled: true },
+    );
+    await app.call('coordination.confirmAutoContinue', {
+      autoContinueToken: autoPreview.autoContinueToken,
+      autoContinueConfirmation: true,
+    });
+
+    const held = await replyFromProvider(app, {
+      sessionId: sessions[1]!.id,
+      inReplyToId: root.id,
+      kind: 'response',
+      purpose: 'Expand authority',
+      body: 'Request a materially scope-changing action.',
+      authorityRequired: true,
+    });
+    expect(held.deliveryState).toBe('held');
+    expect(held.holdReasonCode).toBe('AUTHORITY_REQUIRED');
+
+    const conversations = page.getByRole('region', { name: 'Agent conversations' });
+    await press(conversations.getByRole('button', { name: 'Refresh' }));
+    await press(conversations.getByRole('listitem').first());
+    const detail = page.getByRole('region', { name: 'Conversation detail' });
+    const escalation = page.getByRole('region', { name: 'Coordination escalation' });
+    await expect(escalation).toContainText('Authority required');
+    await press(escalation.getByRole('button', { name: 'Close conversation' }));
+    await expect(detail).toContainText('closed');
+
+    const late = await replyFromProvider(app, {
+      sessionId: sessions[1]!.id,
+      inReplyToId: root.id,
+      kind: 'inform',
+      purpose: 'Late arrival',
+      body: 'This arrived after the conversation was closed.',
+      authorityRequired: false,
+    });
+    expect(late.deliveryState).toBe('held');
+    expect(late.holdReasonCode).toBe('CONVERSATION_CLOSED');
+
+    await press(conversations.getByRole('button', { name: 'Refresh' }));
+    await press(conversations.getByRole('listitem').first());
+    await expect(detail).toContainText('This arrived after the conversation was closed.');
+    await expect(detail.locator(`[data-handoff-id="${late.id}"]`)).toContainText(
+      'Hold: CONVERSATION_CLOSED',
+    );
   } finally {
     await teardown(app, ...dirs);
   }

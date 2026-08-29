@@ -11,9 +11,79 @@ import {
   type ConversationState,
   type DeliveryAttemptState,
   type DeliveryState,
+  type EscalationKind,
   type EscalationState,
+  type HandoffKind,
   type WorkOutcome,
 } from '@threadhelm/contracts';
+
+export interface AutomaticContinuationInput {
+  autoContinueEnabled: boolean;
+  conversationState: ConversationState;
+  kind: HandoffKind;
+  replyDepth: number;
+  candidateFingerprint: string;
+  recentEquivalentFingerprints: readonly string[];
+  consecutiveDeliveryFailures: number;
+  conflictingInstruction: boolean;
+  authorityRequired: boolean;
+}
+
+export interface AutomaticContinuationDecision {
+  action: 'present' | 'hold';
+  reasonCode: string | null;
+  escalationKind: EscalationKind | null;
+  pauseConversation: boolean;
+}
+
+const PRESENT: AutomaticContinuationDecision = {
+  action: 'present',
+  reasonCode: null,
+  escalationKind: null,
+  pauseConversation: false,
+};
+
+function hold(
+  reasonCode: string,
+  escalationKind: EscalationKind | null = null,
+  pauseConversation = false,
+): AutomaticContinuationDecision {
+  return { action: 'hold', reasonCode, escalationKind, pauseConversation };
+}
+
+/**
+ * Deterministic US4 policy. Inputs are durable facts already derived by main
+ * and persistence; no provider prose, timing, or model judgment is consulted.
+ */
+export function evaluateAutomaticContinuation(
+  input: AutomaticContinuationInput,
+): AutomaticContinuationDecision {
+  if (input.conversationState === 'paused') return hold('CONVERSATION_PAUSED');
+  if (input.conversationState === 'closed') return hold('CONVERSATION_CLOSED');
+  if (input.conversationState === 'resolved') return hold('CONVERSATION_RESOLVED');
+  if (input.authorityRequired) return hold('AUTHORITY_REQUIRED', 'authority_required', true);
+  if (input.conflictingInstruction) {
+    return hold('CONFLICTING_INSTRUCTION', 'conflicting_instruction', true);
+  }
+  if (input.replyDepth > 8) return hold('REPLY_DEPTH_LIMIT', 'reply_depth', true);
+  if (input.consecutiveDeliveryFailures >= 3) {
+    return hold('REPEATED_DELIVERY_FAILURE', 'repeated_delivery_failure', true);
+  }
+
+  // Persistence supplies newest-first prior fingerprints; the candidate is
+  // the eighth item in the bounded window, so only the first seven are prior.
+  const priorMatches = input.recentEquivalentFingerprints
+    .slice(0, 7)
+    .filter((fingerprint) => fingerprint === input.candidateFingerprint).length;
+  if (priorMatches + 1 >= 3) {
+    return hold('EQUIVALENT_MESSAGE_LOOP', 'equivalent_message_loop', true);
+  }
+  if (!input.autoContinueEnabled) return hold('AUTO_CONTINUE_DISABLED');
+  if (input.kind === 'request' || input.kind === 'query' || input.kind === 'proposal') {
+    return hold('KIND_HELD');
+  }
+  return PRESENT;
+}
 
 export const CONVERSATION_TRANSITIONS: Readonly<
   Record<ConversationState, readonly ConversationState[]>
@@ -29,7 +99,7 @@ export const DELIVERY_TRANSITIONS: Readonly<Record<DeliveryState, readonly Deliv
   held: ['queued', 'manual_actionable', 'cancelled'],
   // A fresh exact-target retarget disclosure may requeue an uncertain/manual
   // item for a different eligible recipient; it never replays the old attempt.
-  manual_actionable: ['queued', 'presenting', 'cancelled'],
+  manual_actionable: ['queued', 'held', 'presenting', 'cancelled'],
   presenting: ['delivered', 'manual_actionable'],
   delivered: ['acknowledged'],
   acknowledged: [],

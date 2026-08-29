@@ -2,6 +2,7 @@
 
 import {
   CoordinationEventEnvelope,
+  EscalationView,
   MAX_INPUT_BYTES,
   ThreadHelmError,
   type ProviderLifecycleEvidence,
@@ -25,6 +26,12 @@ export async function deliverHandoff(
   const handoff = repository.findHandoffById(snapshot.handoffId);
   const live = ctx.live.get(snapshot.recipientSessionId);
   if (!handoff) throw new ThreadHelmError('HANDOFF_NOT_FOUND', 'Handoff not found.');
+  if (repository.getConversationSummary(handoff.conversationId)?.state !== 'open') {
+    throw new ThreadHelmError(
+      'INVALID_STATE',
+      'A handoff can be presented only while its conversation is open.',
+    );
+  }
   if (
     handoff.recipientSessionId !== snapshot.recipientSessionId ||
     handoff.recipientWorkspaceIdAtCreate !== snapshot.recipientWorkspaceId ||
@@ -173,6 +180,18 @@ export function publishLatest(ctx: Context, handoffId: string): void {
       occurredAt: event.occurredAt,
     }),
   );
+  const handoff = ctx.storage.repositories.coordination.findHandoffById(handoffId);
+  if (!handoff) return;
+  const summary = ctx.storage.repositories.coordination.getConversationSummary(
+    handoff.conversationId,
+  );
+  if (summary) ctx.events.emit('coordination.conversationChanged', summary);
+  const escalation = ctx.storage.repositories.coordination.getOpenEscalation(
+    handoff.conversationId,
+  );
+  if (escalation) {
+    ctx.events.emit('coordination.escalationChanged', EscalationView.parse(escalation));
+  }
 }
 
 /**
@@ -221,6 +240,9 @@ export async function presentNextAtSafePoint(
   const handoff = repository.findOldestQueuedHandoffForSession(evidence.sessionId);
   if (!handoff) {
     return { presented: false, reasonCode: 'NO_PENDING_HANDOFF' };
+  }
+  if (repository.getConversationSummary(handoff.conversationId)?.state !== 'open') {
+    return { presented: false, reasonCode: 'CONVERSATION_PAUSED' };
   }
   if (
     handoff.origin === 'provider_bridge' &&

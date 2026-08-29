@@ -13,6 +13,9 @@ import { app } from 'electron';
 import { createConnection } from 'node:net';
 import {
   ProviderLifecycleEvidence,
+  CoordinationEventEnvelope,
+  EscalationView,
+  type HandoffKind,
   type PowerEvent,
   type ProviderId,
   type WorkOutcome,
@@ -46,6 +49,14 @@ export interface TestHooks {
     handoffId: string,
     outcome: WorkOutcome,
   ): { handoffId: string; workOutcome: WorkOutcome };
+  replyFromProvider(input: {
+    sessionId: string;
+    inReplyToId: string;
+    kind: HandoffKind;
+    purpose: string;
+    body: string;
+    authorityRequired: boolean;
+  }): { id: string; deliveryState: string; holdReasonCode: string | null };
   emitProviderLifecycle(evidence: unknown): Promise<LifecycleIngestionResult>;
   dropProviderPipe(sessionId: string): Promise<void>;
   storagePath(): string;
@@ -166,6 +177,45 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
         ctx.clock().toISOString(),
       );
       return { handoffId: handoff.id, workOutcome: handoff.workOutcome };
+    },
+    replyFromProvider: (input) => {
+      if (!ctx.live.has(input.sessionId)) throw new Error('TEST_SESSION_NOT_LIVE');
+      const repository = ctx.storage?.repositories.coordination;
+      if (!repository) throw new Error('TEST_STORAGE_UNAVAILABLE');
+      const handoff = repository.createBridgeReply({
+        inReplyToId: input.inReplyToId,
+        senderSessionId: input.sessionId,
+        kind: input.kind,
+        purpose: input.purpose,
+        body: input.body,
+        authorityRequired: input.authorityRequired,
+        createdAt: ctx.clock().toISOString(),
+      });
+      const event = repository.latestEventForHandoff(handoff.id);
+      if (event && ctx.coordination) {
+        ctx.coordination.publish(
+          CoordinationEventEnvelope.parse({
+            type: 'coordination.handoffChanged',
+            eventId: event.id,
+            conversationId: event.conversationId,
+            handoffId: event.handoffId,
+            sequence: event.sequence,
+            kind: event.kind,
+            reasonCode: event.reasonCode,
+            safeSummary: event.safeSummary,
+            occurredAt: event.occurredAt,
+          }),
+        );
+      }
+      const escalation = repository.getOpenEscalation(handoff.conversationId);
+      if (escalation) {
+        ctx.events.emit('coordination.escalationChanged', EscalationView.parse(escalation));
+      }
+      return {
+        id: handoff.id,
+        deliveryState: handoff.deliveryState,
+        holdReasonCode: handoff.holdReasonCode,
+      };
     },
     emitProviderLifecycle: async (rawEvidence) => {
       const evidence = ProviderLifecycleEvidence.parse(rawEvidence);

@@ -582,6 +582,7 @@ export const ConversationDetailView = strictObject({
   summary: ConversationSummaryView,
   handoffs: z.array(HandoffView).max(128),
   events: z.array(CoordinationEventEnvelope).max(256),
+  openEscalation: z.lazy(() => EscalationView).nullable(),
   nextCursor: z.string().nullable(),
 });
 export type ConversationDetailView = z.infer<typeof ConversationDetailView>;
@@ -600,6 +601,62 @@ export const ConfirmDeleteContentRequest = strictObject({
   deletionConfirmation: z.literal(true),
 });
 export type ConfirmDeleteContentRequest = z.infer<typeof ConfirmDeleteContentRequest>;
+
+export const EscalationDisposition = z.enum(['continue', 'redirect', 'close']);
+export type EscalationDisposition = z.infer<typeof EscalationDisposition>;
+
+export const PreviewAutoContinueRequest = strictObject({
+  conversationId: ConversationId,
+  enabled: z.boolean(),
+});
+export type PreviewAutoContinueRequest = z.infer<typeof PreviewAutoContinueRequest>;
+
+export const ConfirmAutoContinueRequest = strictObject({
+  autoContinueToken: OpaqueToken,
+  autoContinueConfirmation: z.literal(true),
+});
+export type ConfirmAutoContinueRequest = z.infer<typeof ConfirmAutoContinueRequest>;
+
+export const AutoContinueDisclosureView = strictObject({
+  autoContinueToken: OpaqueToken,
+  conversationId: ConversationId,
+  participantSessionIds: z.tuple([Uuid, Uuid]),
+  currentEnabled: z.boolean(),
+  requestedEnabled: z.boolean(),
+  replyDepthLimit: z.literal(8),
+  equivalentRepeatThreshold: z.literal(3),
+  equivalentRepeatWindow: z.literal(8),
+  deliveryFailureThreshold: z.literal(3),
+  heldKinds: z.tuple([z.literal('request'), z.literal('query'), z.literal('proposal')]),
+  authorityDisclosure: z.string().min(1).max(500),
+  expiresAt: Timestamp,
+});
+export type AutoContinueDisclosureView = z.infer<typeof AutoContinueDisclosureView>;
+
+export const EscalationView = strictObject({
+  id: Uuid,
+  conversationId: ConversationId,
+  handoffId: HandoffId.nullable(),
+  kind: EscalationKind,
+  state: EscalationState,
+  reasonCode: ReasonCode.unwrap(),
+  safeSummary: SafeSummary,
+  openedAt: Timestamp,
+  resolvedAt: Timestamp.nullable(),
+  resolution: EscalationDisposition.nullable(),
+});
+export type EscalationView = z.infer<typeof EscalationView>;
+
+export const ResolveEscalationRequest = z.discriminatedUnion('disposition', [
+  strictObject({ escalationId: Uuid, disposition: z.literal('continue') }),
+  strictObject({
+    escalationId: Uuid,
+    disposition: z.literal('redirect'),
+    recipientSessionId: Uuid,
+  }),
+  strictObject({ escalationId: Uuid, disposition: z.literal('close') }),
+]);
+export type ResolveEscalationRequest = z.infer<typeof ResolveEscalationRequest>;
 
 export const TerminalSize = z.object({
   columns: z.number().int().min(1).max(MAX_COLUMNS),
@@ -923,6 +980,18 @@ export const operations = {
     request: strictObject({ conversationId: ConversationId }),
     response: ConversationSummaryView,
   },
+  'coordination.previewAutoContinue': {
+    request: PreviewAutoContinueRequest,
+    response: AutoContinueDisclosureView,
+  },
+  'coordination.confirmAutoContinue': {
+    request: ConfirmAutoContinueRequest,
+    response: ConversationSummaryView,
+  },
+  'coordination.resolveEscalation': {
+    request: ResolveEscalationRequest,
+    response: EscalationView,
+  },
   'coordination.requestContentDeletion': {
     request: strictObject({ conversationId: ConversationId }),
     response: DeleteContentDisclosureView,
@@ -973,6 +1042,7 @@ export const events = {
   'application.closeBlocked': CloseResultView,
   'coordination.handoffChanged': CoordinationEventEnvelope,
   'coordination.conversationChanged': ConversationSummaryView,
+  'coordination.escalationChanged': EscalationView,
   'coordination.bridgeChanged': strictObject({
     sessionId: Uuid,
     capability: z.string(),

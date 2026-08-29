@@ -227,14 +227,15 @@ pub fn handle_mcp_message(input: &str) -> Result<String, &'static str> {
     "description": "Send a causally linked reply to a delivered coordination handoff",
     "inputSchema": {
       "type": "object",
-      "required": ["inReplyTo", "kind", "purpose", "body", "authorityRequired"],
+      "required": ["inReplyTo", "kind", "purpose", "body", "responseExpectation", "authorityRequired", "conflictingInstruction"],
       "properties": {
         "inReplyTo": { "type": "string" },
         "kind": { "type": "string", "enum": ["response", "inform", "query", "proposal", "completion", "refusal", "failure"] },
         "purpose": { "type": "string", "maxLength": 160 },
         "body": { "type": "string", "maxLength": 16384 },
         "responseExpectation": { "type": "string", "enum": ["none", "response_required"] },
-        "authorityRequired": { "type": "boolean" }
+        "authorityRequired": { "type": "boolean" },
+        "conflictingInstruction": { "type": "boolean" }
       }
     }
   },

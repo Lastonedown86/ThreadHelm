@@ -1,4 +1,6 @@
 import {
+  AutoContinueDisclosureView,
+  ConfirmAutoContinueRequest,
   BoundedCoordinationCursor,
   ConversationId,
   ConversationState,
@@ -12,16 +14,20 @@ import {
   DeliveryAttemptState,
   DeliveryState,
   ErrorCode,
+  EscalationDisposition,
+  EscalationView,
   HandoffId,
   HandoffKind,
   HandoffListView,
   HandoffSummaryView,
   HandoffOrigin,
   HandoffPreviewView,
+  PreviewAutoContinueRequest,
   PresentationDisclosureView,
   PreviewHandoffRequest,
   PreviewRetargetRequest,
   ConfirmRetargetRequest,
+  ResolveEscalationRequest,
   WorkOutcome,
   boundedPageRequest,
   operationNames,
@@ -280,5 +286,96 @@ describe('US1 directed-handoff contracts', () => {
 describe('US2 outcome authority boundary', () => {
   it('does not expose provider work-outcome mutation to the renderer IPC surface', () => {
     expect(operationNames).not.toContain('coordination.reportOutcome');
+  });
+});
+
+describe('US4 bounded-continuation contracts', () => {
+  it('binds automatic continuation to an exact reviewed conversation disclosure', () => {
+    expect(PreviewAutoContinueRequest.parse({ conversationId: ID_A, enabled: true })).toEqual({
+      conversationId: ID_A,
+      enabled: true,
+    });
+    expect(() =>
+      PreviewAutoContinueRequest.parse({ conversationId: ID_A, enabled: true, inferred: true }),
+    ).toThrow();
+
+    const disclosure = {
+      autoContinueToken: 'a'.repeat(24),
+      conversationId: ID_A,
+      participantSessionIds: [ID_A, ID_B],
+      currentEnabled: false,
+      requestedEnabled: true,
+      replyDepthLimit: 8,
+      equivalentRepeatThreshold: 3,
+      equivalentRepeatWindow: 8,
+      deliveryFailureThreshold: 3,
+      heldKinds: ['request', 'query', 'proposal'],
+      authorityDisclosure:
+        'Automatic continuation cannot grant destructive, privileged, external, or expanded authority.',
+      expiresAt: AT,
+    };
+    expect(AutoContinueDisclosureView.parse(disclosure)).toEqual(disclosure);
+    expect(() =>
+      AutoContinueDisclosureView.parse({ ...disclosure, body: 'must not leak' }),
+    ).toThrow();
+
+    expect(
+      ConfirmAutoContinueRequest.parse({
+        autoContinueToken: 'a'.repeat(24),
+        autoContinueConfirmation: true,
+      }),
+    ).toEqual({ autoContinueToken: 'a'.repeat(24), autoContinueConfirmation: true });
+    expect(() =>
+      ConfirmAutoContinueRequest.parse({
+        autoContinueToken: 'a'.repeat(24),
+        autoContinueConfirmation: false,
+      }),
+    ).toThrow();
+  });
+
+  it('exposes one content-free escalation and requires an exact one-use disposition', () => {
+    const escalation = {
+      id: ID_A,
+      conversationId: ID_B,
+      handoffId: ID_A,
+      kind: 'authority_required' as const,
+      state: 'open' as const,
+      reasonCode: 'AUTHORITY_REQUIRED',
+      safeSummary: 'User direction required',
+      openedAt: AT,
+      resolvedAt: null,
+      resolution: null,
+    };
+    expect(EscalationView.parse(escalation)).toEqual(escalation);
+    expect(() => EscalationView.parse({ ...escalation, body: 'secret request' })).toThrow();
+    expect(EscalationDisposition.options).toEqual(['continue', 'redirect', 'close']);
+
+    expect(ResolveEscalationRequest.parse({ escalationId: ID_A, disposition: 'continue' })).toEqual(
+      { escalationId: ID_A, disposition: 'continue' },
+    );
+    expect(
+      ResolveEscalationRequest.parse({
+        escalationId: ID_A,
+        disposition: 'redirect',
+        recipientSessionId: ID_B,
+      }),
+    ).toEqual({ escalationId: ID_A, disposition: 'redirect', recipientSessionId: ID_B });
+    expect(() =>
+      ResolveEscalationRequest.parse({ escalationId: ID_A, disposition: 'redirect' }),
+    ).toThrow();
+    expect(() =>
+      ResolveEscalationRequest.parse({
+        escalationId: ID_A,
+        disposition: 'close',
+        recipientSessionId: ID_B,
+      }),
+    ).toThrow();
+  });
+
+  it('registers only the named preview, confirm, and escalation operations', () => {
+    expect(operationNames).toContain('coordination.previewAutoContinue');
+    expect(operationNames).toContain('coordination.confirmAutoContinue');
+    expect(operationNames).toContain('coordination.resolveEscalation');
+    expect(operationNames).not.toContain('coordination.setAutoContinueUnchecked');
   });
 });

@@ -53,9 +53,14 @@ async function createHandoffByKeyboard(
   await press(review.getByRole('button', { name: 'Save handoff' }));
   await expect(review).toBeHidden();
 
-  const item = page.getByRole('list', { name: 'Directed handoffs' }).getByRole('listitem').first();
-  await expect(item).toContainText('Queued — not delivered');
-  return item;
+  const newest = page
+    .getByRole('list', { name: 'Directed handoffs' })
+    .getByRole('listitem')
+    .first();
+  await expect(newest).toContainText('Queued — not delivered');
+  const handoffId = await newest.getAttribute('data-handoff-id');
+  if (!handoffId) throw new Error('new handoff did not expose its stable id');
+  return page.locator(`[data-handoff-id="${handoffId}"]`);
 }
 
 test('keyboard-only user flow creates and manually presents one exact handoff', async () => {
@@ -263,6 +268,72 @@ test('inactive conversation content deletion purges message body while preservin
 
     // Verify content is purged but lifecycle entry remains
     await expect(detail).toContainText('Content deleted');
+  } finally {
+    await teardown(app, ...dirs);
+  }
+});
+
+test('safe lifecycle presents once while unproved evidence keeps the visible manual path', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' });
+  const { dirs, sessions } = await launchThree(app);
+  const page = app.page;
+  try {
+    const first = await createHandoffByKeyboard(
+      page,
+      'Safe lifecycle delivery',
+      'Present this only at a proved safe point.',
+    );
+    const second = await createHandoffByKeyboard(
+      page,
+      'Manual fallback delivery',
+      'Keep this visible when draft safety is unknown.',
+    );
+
+    await app.app.evaluate((_electron, sessionId) => {
+      const hooks = (
+        globalThis as unknown as {
+          __threadhelmTest: {
+            emitProviderLifecycle(evidence: Record<string, unknown>): Promise<unknown>;
+          };
+        }
+      ).__threadhelmTest;
+      return hooks.emitProviderLifecycle({
+        sessionId,
+        providerId: 'claude-code',
+        providerVersion: '1.0.0',
+        eventKind: 'safe_point',
+        providerEventId: 'e2e-safe-point-1',
+        turnId: 'e2e-turn-1',
+        occurredAt: new Date().toISOString(),
+        safePoint: true,
+        inputSafety: 'proved_no_pending_draft',
+      });
+    }, sessions[1]!.id);
+    await expect(first).toContainText('Delivered — outcome pending', { timeout: 30_000 });
+
+    const result = await app.app.evaluate((_electron, sessionId) => {
+      const hooks = (
+        globalThis as unknown as {
+          __threadhelmTest: {
+            emitProviderLifecycle(evidence: Record<string, unknown>): Promise<unknown>;
+          };
+        }
+      ).__threadhelmTest;
+      return hooks.emitProviderLifecycle({
+        sessionId,
+        providerId: 'claude-code',
+        providerVersion: '1.0.0',
+        eventKind: 'safe_point',
+        providerEventId: 'e2e-safe-point-2',
+        turnId: 'e2e-turn-2',
+        occurredAt: new Date().toISOString(),
+        safePoint: true,
+        inputSafety: 'unknown',
+      }) as Promise<{ status: string }>;
+    }, sessions[1]!.id);
+    expect(result.status).toBe('manual_only');
+    await expect(second).toContainText('Manual action required');
+    await expect(second.getByRole('button', { name: 'Present…' })).toBeVisible();
   } finally {
     await teardown(app, ...dirs);
   }

@@ -137,7 +137,7 @@ export interface CreateHandoffInput {
   requiresReply: boolean;
   purpose: string;
   body: string;
-  deliveryState?: Extract<DeliveryState, 'queued' | 'held'>;
+  deliveryState?: Extract<DeliveryState, 'queued' | 'held' | 'manual_actionable'>;
   holdReasonCode?: string | null;
   createdAt: string;
 }
@@ -215,7 +215,23 @@ export interface PrepareAttemptInput {
   lifecycleStateAtReview: LifecycleState;
   activityStateAtReview: ActivityState;
   activityEvidenceKindAtReview: string;
+  evidenceKind?: string;
+  presentationActor?: 'user' | 'threadhelm' | 'provider';
   createdAt: string;
+}
+
+export interface MarkOldestQueuedManualActionableInput {
+  recipientSessionId: string;
+  reasonCode: string;
+  actor: 'threadhelm' | 'provider';
+  at: string;
+}
+
+export interface MarkQueuedManualActionableInput {
+  recipientSessionId: string;
+  reasonCode: string;
+  actor: 'threadhelm' | 'provider';
+  at: string;
 }
 
 export interface CoordinationEventRecord {
@@ -294,8 +310,11 @@ export class CoordinationRepository {
     if (input.senderSessionId === input.recipientSessionId) {
       throw new ThreadHelmError('COORDINATION_NOT_ELIGIBLE', 'Sender and recipient must differ.');
     }
-    if (deliveryState === 'held' && !holdReasonCode) {
-      throw new ThreadHelmError('INVALID_REQUEST', 'A held handoff requires a reason code.');
+    if ((deliveryState === 'held' || deliveryState === 'manual_actionable') && !holdReasonCode) {
+      throw new ThreadHelmError(
+        'INVALID_REQUEST',
+        'A held or manual-actionable handoff requires a reason code.',
+      );
     }
 
     const existing = this.findHandoffById(id);
@@ -437,15 +456,21 @@ export class CoordinationRepository {
           'UPDATE coordination_conversations SET root_handoff_id = COALESCE(root_handoff_id, ?) WHERE id = ?',
         )
         .run(id, conversationId);
+      const eventKind =
+        deliveryState === 'held'
+          ? 'held'
+          : deliveryState === 'manual_actionable'
+            ? 'recovered'
+            : 'queued';
       this.#appendEvent(
         conversationId,
         id,
-        deliveryState === 'held' ? 'held' : 'queued',
+        eventKind,
         'user',
         holdReasonCode,
         coordinationSafeSummary(
-          deliveryState === 'held' ? 'conversation_changed' : 'handoff_queued',
-          deliveryState === 'held' ? { state: 'held' } : {},
+          deliveryState === 'queued' ? 'handoff_queued' : 'delivery_changed',
+          deliveryState === 'queued' ? {} : { state: deliveryState },
         ),
         input.createdAt,
       );
@@ -455,6 +480,8 @@ export class CoordinationRepository {
 
   prepareAttempt(input: PrepareAttemptInput): DeliveryAttemptRecord {
     const id = input.id ?? randomUUID();
+    const evidenceKind = input.evidenceKind ?? 'user_confirmation';
+    const presentationActor = input.presentationActor ?? 'user';
     this.#db.transaction(() => {
       const handoff = this.findHandoffById(input.handoffId);
       if (!handoff) throw new ThreadHelmError('HANDOFF_NOT_FOUND', 'Handoff not found.');
@@ -491,7 +518,7 @@ export class CoordinationRepository {
               recipient_workspace_id_at_review, lifecycle_state_at_review,
               activity_state_at_review, activity_evidence_kind_at_review, state,
               evidence_kind, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'prepared', 'user_confirmation', ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'prepared', ?, ?)`,
         )
         .run(
           id,
@@ -502,6 +529,7 @@ export class CoordinationRepository {
           input.lifecycleStateAtReview,
           input.activityStateAtReview,
           input.activityEvidenceKindAtReview,
+          evidenceKind,
           input.createdAt,
         );
       this.#db
@@ -513,7 +541,7 @@ export class CoordinationRepository {
         handoff.conversationId,
         handoff.id,
         'presentation_requested',
-        'user',
+        presentationActor,
         null,
         'Presentation requested',
         input.createdAt,
@@ -648,6 +676,8 @@ export class CoordinationRepository {
     recipientSessionId: string,
     recipientWorkspaceId: string,
     at: string,
+    deliveryState: Extract<DeliveryState, 'queued' | 'manual_actionable'> = 'queued',
+    holdReasonCode: string | null = null,
   ): CoordinationHandoffRecord {
     const current = this.findHandoffById(id);
     if (!current) throw new ThreadHelmError('HANDOFF_NOT_FOUND', 'Handoff not found.');
@@ -655,11 +685,22 @@ export class CoordinationRepository {
     try {
       // Retargeting a queued item changes its exact recipient while preserving
       // the queued state; advanceDeliveryState treats that replay as a no-op.
-      nextDeliveryState = advanceDeliveryState(current.deliveryState, 'queued');
+      const queuedState = advanceDeliveryState(current.deliveryState, 'queued');
+      nextDeliveryState =
+        deliveryState === 'manual_actionable'
+          ? advanceDeliveryState(queuedState, 'manual_actionable')
+          : queuedState;
     } catch {
       throw new ThreadHelmError(
         'COORDINATION_DELIVERY_UNKNOWN',
         'Handoff can no longer be retargeted.',
+      );
+    }
+    ReasonCode.parse(holdReasonCode);
+    if (deliveryState === 'manual_actionable' && !holdReasonCode) {
+      throw new ThreadHelmError(
+        'INVALID_REQUEST',
+        'A manual-actionable retarget requires a reason code.',
       );
     }
     if (recipientSessionId === current.senderSessionId) {
@@ -697,17 +738,25 @@ export class CoordinationRepository {
         .prepare(
           `UPDATE coordination_handoffs
            SET recipient_session_id = ?, recipient_workspace_id_at_create = ?,
-               content_fingerprint = ?, delivery_state = ?, hold_reason_code = NULL,
+               content_fingerprint = ?, delivery_state = ?, hold_reason_code = ?,
                updated_at = ?
            WHERE id = ?`,
         )
-        .run(recipientSessionId, recipientWorkspaceId, fingerprint, nextDeliveryState, at, id);
+        .run(
+          recipientSessionId,
+          recipientWorkspaceId,
+          fingerprint,
+          nextDeliveryState,
+          holdReasonCode,
+          at,
+          id,
+        );
       this.#appendEvent(
         current.conversationId,
         id,
         'retargeted',
         'user',
-        'USER_RETARGETED',
+        holdReasonCode ?? 'USER_RETARGETED',
         'Handoff retargeted',
         at,
       );
@@ -1256,6 +1305,80 @@ export class CoordinationRepository {
         )
         .all(recipientSessionId, bound) as HandoffRow[]
     ).map(toHandoff);
+  }
+
+  findOldestQueuedHandoffForSession(recipientSessionId: string): CoordinationHandoffRecord | null {
+    const row = this.#db
+      .prepare(
+        `SELECT * FROM coordination_handoffs
+         WHERE recipient_session_id = ? AND delivery_state = 'queued'
+         ORDER BY created_at ASC, id ASC LIMIT 1`,
+      )
+      .get(recipientSessionId) as HandoffRow | undefined;
+    return row ? toHandoff(row) : null;
+  }
+
+  markOldestQueuedManualActionable(
+    input: MarkOldestQueuedManualActionableInput,
+  ): CoordinationHandoffRecord | null {
+    ReasonCode.parse(input.reasonCode);
+    return this.#db.transaction(() => {
+      const handoff = this.findOldestQueuedHandoffForSession(input.recipientSessionId);
+      if (!handoff) return null;
+      const nextState = advanceDeliveryState(handoff.deliveryState, 'manual_actionable');
+      this.#db
+        .prepare(
+          `UPDATE coordination_handoffs
+           SET delivery_state = ?, hold_reason_code = ?, updated_at = ? WHERE id = ?`,
+        )
+        .run(nextState, input.reasonCode, input.at, handoff.id);
+      this.#appendEvent(
+        handoff.conversationId,
+        handoff.id,
+        'recovered',
+        input.actor,
+        input.reasonCode,
+        coordinationSafeSummary('delivery_changed', { state: 'manual_actionable' }),
+        input.at,
+      );
+      return this.findHandoffById(handoff.id)!;
+    })();
+  }
+
+  markAllQueuedManualActionable(
+    input: MarkQueuedManualActionableInput,
+  ): CoordinationHandoffRecord[] {
+    ReasonCode.parse(input.reasonCode);
+    return this.#db.transaction(() => {
+      const handoffs = (
+        this.#db
+          .prepare(
+            `SELECT * FROM coordination_handoffs
+             WHERE recipient_session_id = ? AND delivery_state = 'queued'
+             ORDER BY created_at ASC, id ASC`,
+          )
+          .all(input.recipientSessionId) as HandoffRow[]
+      ).map(toHandoff);
+      for (const handoff of handoffs) {
+        const nextState = advanceDeliveryState(handoff.deliveryState, 'manual_actionable');
+        this.#db
+          .prepare(
+            `UPDATE coordination_handoffs
+             SET delivery_state = ?, hold_reason_code = ?, updated_at = ? WHERE id = ?`,
+          )
+          .run(nextState, input.reasonCode, input.at, handoff.id);
+        this.#appendEvent(
+          handoff.conversationId,
+          handoff.id,
+          'recovered',
+          input.actor,
+          input.reasonCode,
+          coordinationSafeSummary('delivery_changed', { state: 'manual_actionable' }),
+          input.at,
+        );
+      }
+      return handoffs.map((handoff) => this.findHandoffById(handoff.id)!);
+    })();
   }
 }
 

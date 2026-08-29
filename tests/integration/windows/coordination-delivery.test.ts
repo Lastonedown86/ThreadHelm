@@ -75,6 +75,41 @@ async function preview(sender: LaunchedFixture, recipient: LaunchedFixture) {
   return { ...reviewed, handoffId: persisted.id, recipientSessionId: persisted.recipientSessionId };
 }
 
+async function emitSafePoint(
+  target: LaunchedFixture,
+  overrides: Record<string, unknown> = {},
+): Promise<{ status: string; safePoint: boolean; reasonCode: string | null }> {
+  return app.app.evaluate(
+    (_electron, arg) => {
+      const hooks = (
+        globalThis as unknown as {
+          __threadhelmTest: {
+            emitProviderLifecycle(evidence: Record<string, unknown>): Promise<unknown>;
+          };
+        }
+      ).__threadhelmTest;
+      return hooks.emitProviderLifecycle({
+        sessionId: arg.sessionId,
+        providerId: arg.providerId,
+        providerVersion: '1.0.0',
+        eventKind: 'safe_point',
+        providerEventId: arg.providerEventId,
+        turnId: arg.providerEventId,
+        occurredAt: new Date().toISOString(),
+        safePoint: true,
+        inputSafety: 'proved_no_pending_draft',
+        ...arg.overrides,
+      }) as Promise<{ status: string; safePoint: boolean; reasonCode: string | null }>;
+    },
+    {
+      sessionId: target.session.id,
+      providerId: target.session.providerId,
+      providerEventId: `safe-point-${target.session.id}`,
+      overrides,
+    },
+  );
+}
+
 describe('coordination delivery safety', () => {
   it('delivers only to the selected recipient terminal', async () => {
     const sender = await fixture('codex-cli', 'sender');
@@ -311,5 +346,229 @@ describe('coordination delivery safety', () => {
 
     expect(failed.state).toBe('failed_before_write');
     expect(await sessionOf(app, unrelated.session.id)).toEqual(before);
+  });
+
+  it('presents only one queued handoff from one exact fresh safe point', async () => {
+    const sender = await fixture('codex-cli', 'safe-point-sender');
+    const recipient = await fixture('claude-code', 'safe-point-recipient');
+    const first = await preview(sender, recipient);
+    const second = await preview(sender, recipient);
+
+    await expect(emitSafePoint(recipient)).resolves.toMatchObject({
+      status: 'accepted',
+      safePoint: true,
+    });
+
+    const database = new Database(join(app.userData, 'threadhelm.sqlite'), {
+      readonly: true,
+      fileMustExist: true,
+    });
+    try {
+      expect(
+        database
+          .prepare('SELECT delivery_state FROM coordination_handoffs WHERE id = ?')
+          .get(first.handoffId),
+      ).toEqual({ delivery_state: 'delivered' });
+      expect(
+        database
+          .prepare(
+            'SELECT evidence_kind, activity_evidence_kind_at_review FROM coordination_delivery_attempts WHERE handoff_id = ?',
+          )
+          .get(first.handoffId),
+      ).toEqual({
+        evidence_kind: 'provider_lifecycle',
+        activity_evidence_kind_at_review: 'claude-code.safe_point@1.0.0',
+      });
+      expect(
+        database
+          .prepare(
+            "SELECT actor FROM coordination_events WHERE handoff_id = ? AND kind = 'presentation_requested'",
+          )
+          .get(first.handoffId),
+      ).toEqual({ actor: 'provider' });
+      expect(
+        database
+          .prepare('SELECT delivery_state FROM coordination_handoffs WHERE id = ?')
+          .get(second.handoffId),
+      ).toEqual({ delivery_state: 'queued' });
+    } finally {
+      database.close();
+    }
+  });
+
+  it('does not leave temporary activity evidence behind when no handoff is queued', async () => {
+    const recipient = await fixture('claude-code', 'empty-safe-point-recipient');
+    const before = await sessionOf(app, recipient.session.id);
+
+    await expect(
+      emitSafePoint(recipient, { providerEventId: 'empty-safe-point' }),
+    ).resolves.toMatchObject({ status: 'accepted', reasonCode: 'NO_PENDING_HANDOFF' });
+
+    expect((await sessionOf(app, recipient.session.id)).activityState).toBe(before.activityState);
+  });
+
+  it('finds the oldest queued handoff even after twenty older delivered items', async () => {
+    const sender = await fixture('codex-cli', 'queued-window-sender');
+    const recipient = await fixture('claude-code', 'queued-window-recipient');
+    const handoffs = [];
+    for (let index = 0; index < 21; index += 1) handoffs.push(await preview(sender, recipient));
+
+    const databasePath = join(app.userData, 'threadhelm.sqlite');
+    const writable = new Database(databasePath);
+    try {
+      for (const handoff of handoffs.slice(0, 20)) {
+        writable
+          .prepare(
+            "UPDATE coordination_handoffs SET delivery_state = 'delivered', delivered_at = ?, created_at = ? WHERE id = ?",
+          )
+          .run('2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', handoff.handoffId);
+      }
+    } finally {
+      writable.close();
+    }
+
+    await expect(
+      emitSafePoint(recipient, { providerEventId: 'queued-after-delivered-window' }),
+    ).resolves.toMatchObject({ status: 'accepted', safePoint: true });
+
+    const readonly = new Database(databasePath, { readonly: true, fileMustExist: true });
+    try {
+      expect(
+        readonly
+          .prepare('SELECT delivery_state FROM coordination_handoffs WHERE id = ?')
+          .get(handoffs[20]!.handoffId),
+      ).toEqual({ delivery_state: 'delivered' });
+    } finally {
+      readonly.close();
+    }
+  });
+
+  it('keeps provider-authored replies manual until P4 conversation opt-in is enabled', async () => {
+    const sender = await fixture('codex-cli', 'provider-origin-sender');
+    const recipient = await fixture('claude-code', 'provider-origin-recipient');
+    const handoff = await preview(sender, recipient);
+    const databasePath = join(app.userData, 'threadhelm.sqlite');
+    const writable = new Database(databasePath);
+    try {
+      writable
+        .prepare("UPDATE coordination_handoffs SET origin = 'provider_bridge' WHERE id = ?")
+        .run(handoff.handoffId);
+    } finally {
+      writable.close();
+    }
+
+    await expect(
+      emitSafePoint(recipient, { providerEventId: 'provider-origin-without-opt-in' }),
+    ).resolves.toMatchObject({
+      status: 'accepted',
+      safePoint: true,
+      reasonCode: 'AUTO_CONTINUE_NOT_ENABLED',
+    });
+
+    const readonly = new Database(databasePath, { readonly: true, fileMustExist: true });
+    try {
+      expect(
+        readonly
+          .prepare(
+            'SELECT delivery_state, hold_reason_code FROM coordination_handoffs WHERE id = ?',
+          )
+          .get(handoff.handoffId),
+      ).toEqual({
+        delivery_state: 'manual_actionable',
+        hold_reason_code: 'AUTO_CONTINUE_NOT_ENABLED',
+      });
+      expect(
+        readonly.prepare('SELECT COUNT(*) AS count FROM coordination_delivery_attempts').get(),
+      ).toEqual({ count: 0 });
+    } finally {
+      readonly.close();
+    }
+  });
+
+  it('downgrades only the disconnected bridge session and keeps subsequent work manual', async () => {
+    const sender = await fixture('codex-cli', 'disconnect-sender');
+    const recipient = await fixture('claude-code', 'disconnect-recipient');
+    const unrelated = await fixture('claude-code', 'disconnect-unrelated');
+    const affected = await preview(sender, recipient);
+    const untouched = await preview(sender, unrelated);
+
+    await app.app.evaluate((_electron, sessionId) => {
+      const hooks = (
+        globalThis as unknown as {
+          __threadhelmTest: { dropProviderPipe(sessionId: string): Promise<void> };
+        }
+      ).__threadhelmTest;
+      return hooks.dropProviderPipe(sessionId);
+    }, recipient.session.id);
+
+    const later = await preview(sender, recipient);
+    const database = new Database(join(app.userData, 'threadhelm.sqlite'), {
+      readonly: true,
+      fileMustExist: true,
+    });
+    try {
+      const state = database.prepare(
+        'SELECT delivery_state, hold_reason_code FROM coordination_handoffs WHERE id = ?',
+      );
+      expect(state.get(affected.handoffId)).toEqual({
+        delivery_state: 'manual_actionable',
+        hold_reason_code: 'COORDINATION_BRIDGE_UNAVAILABLE',
+      });
+      expect(state.get(later.handoffId)).toEqual({
+        delivery_state: 'manual_actionable',
+        hold_reason_code: 'COORDINATION_BRIDGE_UNAVAILABLE',
+      });
+      expect(state.get(untouched.handoffId)).toEqual({
+        delivery_state: 'queued',
+        hold_reason_code: null,
+      });
+    } finally {
+      database.close();
+    }
+  });
+
+  it('keeps stale, pending-draft, power-transition, and failed-provider evidence manual', async () => {
+    const sender = await fixture('codex-cli', 'manual-fallback-sender');
+    const recipient = await fixture('claude-code', 'manual-fallback-recipient');
+    const handoff = await preview(sender, recipient);
+
+    await expect(
+      emitSafePoint(recipient, {
+        occurredAt: '2020-01-01T00:00:00.000Z',
+        providerEventId: 'stale-event',
+      }),
+    ).resolves.toMatchObject({ status: 'rejected' });
+    await expect(
+      emitSafePoint(recipient, {
+        inputSafety: 'unknown',
+        providerEventId: 'draft-unknown-event',
+      }),
+    ).resolves.toMatchObject({ status: 'manual_only' });
+
+    await coordination.lockBoundary();
+    await coordination.suspendBoundary();
+    await coordination.resumeBoundary();
+    await coordination.unlockBoundary();
+    await app.failSession(recipient.session.id);
+    await expect(
+      emitSafePoint(recipient, { providerEventId: 'failed-session-event' }),
+    ).rejects.toThrow();
+
+    const database = new Database(join(app.userData, 'threadhelm.sqlite'), {
+      readonly: true,
+      fileMustExist: true,
+    });
+    try {
+      expect(
+        database
+          .prepare('SELECT delivery_state FROM coordination_handoffs WHERE id = ?')
+          .get(handoff.handoffId),
+      ).toEqual({ delivery_state: 'manual_actionable' });
+      expect(
+        database.prepare('SELECT COUNT(*) AS count FROM coordination_delivery_attempts').get(),
+      ).toEqual({ count: 0 });
+    } finally {
+      database.close();
+    }
   });
 });

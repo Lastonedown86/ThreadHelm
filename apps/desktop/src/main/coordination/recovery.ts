@@ -7,6 +7,15 @@ export interface CoordinationRecoveryResult {
   recoveredUnknown: number;
 }
 
+/**
+ * A runtime boundary invalidates only the named session's volatile lifecycle
+ * proof. It never launches, resumes, replays, resends, or mutates another
+ * session or durable handoff.
+ */
+export function invalidateAutomaticPresentationEvidence(ctx: Context, sessionId: string): void {
+  ctx.coordinationBridge?.invalidateLifecycleEvidence(sessionId);
+}
+
 export function reconcileCoordinationAtStartup(ctx: Context): CoordinationRecoveryResult {
   if (!ctx.storage || ctx.health.degraded) return { recoveredUnknown: 0 };
   const repository = ctx.storage.repositories.coordination;

@@ -35,7 +35,7 @@ yet; it is not a failure or permission to substitute another ecosystem.
 |---|---|---|---|---|---|
 | US1 Directed handoffs | OpenAI `gpt-5.6-sol` / `high` | `gpt-5.6-terra` / `xhigh` | Claude `claude-opus-5` / `high` | AUTH VERIFIED IN NORMAL CLI MODE 2026-08-29 | APPROVED FOR US1 MVP |
 | US2 Auditable conversations | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | VERIFIED 2026-08-29 | APPROVED FOR US2 |
-| US3 Lifecycle-aware delivery | Claude `claude-opus-5` / `high` | `claude-sonnet-5` / `xhigh` | OpenAI `gpt-5.6-sol` / `max` | UNVERIFIED | PENDING |
+| US3 Lifecycle-aware delivery | Claude `claude-opus-5` / `high` | `claude-sonnet-5` / `xhigh` | OpenAI `gpt-5.6-sol` / `max` | VERIFIED 2026-08-29 | APPROVED FOR US3 |
 | US4 Bounded coordination | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human | UNVERIFIED | PENDING |
 | US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | UNVERIFIED | PENDING |
 | US6 Reviewed agent roster | Claude `claude-sonnet-5` / `high` | `claude-opus-5` / `high` | OpenAI `gpt-5.6-sol` / `high` | UNVERIFIED | PENDING |
@@ -120,6 +120,26 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | 2026-08-29 | Post-rebase checkpoint gates | Full Vitest; Playwright; format/lint/typecheck; Rust format/clippy/tests; package; provider smoke; installed acceptance | 0 | Rebased onto `origin/main` `01e54ce`. Full Vitest passed 38 files with 2 skipped and 309 tests with 10 skipped; Playwright passed 14/14; Rust passed 17 supervisor and 8 bridge tests; provider smoke passed 3/3; installed acceptance passed 5/5. | PASS |
 | 2026-08-29 | T046–T048 rebuilt package | Native release build; Electron Forge x64 make; packaged-provider smoke; installed-app acceptance | 0 | Rebuilt after review and scope remediation. Provider smoke passed 3/3 and installed-app acceptance passed 5/5 against `release/ThreadHelm-win32-x64/ThreadHelm.exe`; the packaged bridge is present under ASAR-unpacked resources. Artifact remains unsigned and is not public-release ready. | LOCAL PACKAGE PASS — UNSIGNED |
 | 2026-08-29 | T048 Claude re-review continuation | Resumed read-only `claude-sonnet-5` / `high` session `5be3d1f7-ad20-491c-8a29-ac153ec623c8` | 1 (USD guards) | The USD 1.50 inspection continuation and USD 0.60 zero-tool conclusion wrapper both hit prompt-cache budget guards before printing their generated text. The retained local session record contained Claude's completed review: all three findings fixed, no new P0–P2 issues, verdict `APPROVED FOR US2`. No further inference call was made. | PASS — APPROVED FOR US2 |
+| 2026-08-29 | T049 US3 model gate, bare probe | `claude auth status`; bare exact `claude-opus-5` / `high` minimal probe | 1 | Authentication status was valid, but bare mode returned `Not logged in` before inference with zero tokens and zero cost. This mode mismatch was not treated as a model result. | FAIL — RETRIED IN PROVEN NORMAL MODE |
+| 2026-08-29 | T049 US3 model gate, normal probe | `claude --print --model claude-opus-5 --effort high --tools '' --max-turns 1 --max-budget-usd 0.75 ...` | 0 | Claude Code 2.1.251 resolved canonical `claude-opus-5` and returned exactly `AVAILABLE`; 2 input, 9 output, and 38,763 one-hour cache-creation tokens were reported at USD 0.387865. | PASS — PRIMARY AVAILABLE |
+| 2026-08-29 | US3 Opus read-only implementation brief | Bounded normal-mode `claude-opus-5` / `high`, plan permission, read/grep/glob tools only | 130 | The process emitted no conclusion within the bounded wait and was terminated. It made no repository edits and produced no accepted implementation or review evidence. | INTERRUPTED — NO RESULT USED |
+| 2026-08-29 | T050 provider lifecycle contract red | `pnpm exec vitest run --project contract tests/contract/provider-coordination.test.ts` | 1 | Three intended failures: legacy scalar capability, absent lifecycle ingestion, and absent strict evidence schema; seven US2 bridge tests remained green. | EXPECTED RED |
+| 2026-08-29 | T050/T053/T056 provider lifecycle contract green | Focused provider-coordination contract | 0 | 10/10 passed: built-in manual fallback, fixture exact-version capability, strict content-free schema, auth, fresh acceptance, dedupe, stale/cross-session/version/pending-draft rejection. | PASS |
+| 2026-08-29 | T051 Windows lifecycle red | Focused serialized coordination-delivery integration | 1 | Two intended failures at the absent test-only authenticated lifecycle hook; seven existing delivery tests passed. | EXPECTED RED |
+| 2026-08-29 | T051/T057/T058 Windows lifecycle green | Focused serialized coordination-delivery integration | 0 | 9/9 passed: one safe point presents one oldest queued handoff; stale/draft-unknown/power/provider-failure paths create no attempt; prior manual, crash, duplicate, ordering, and isolation cases remain green. | PASS |
+| 2026-08-29 | T052 lifecycle E2E red/green | Focused `safe lifecycle` Playwright journey | 1 then 0 | Failed first at the absent hook, then passed with stable handoff-ID targeting: proved fixture evidence delivers once and unknown draft safety visibly changes the handoff to `manual_actionable`. | RED/GREEN PASS |
+| 2026-08-29 | T059 deterministic provider lifecycle acceptance | Provider-coordination acceptance smoke | 0 | 6 passed, 1 packaged-only skip. Codex and Claude built-ins remain manual; exact fixture versions separately prove safe point, pending-draft downgrade, power invalidation, isolation, and credential cleanup. | PASS — DETERMINISTIC ONLY |
+| 2026-08-29 | US3 local regression | Lint; typecheck; full unit; full contract; focused Windows delivery; full coordination E2E; scoped Prettier; diff check | 0 | Lint/typecheck passed; unit 120/120, contract 148/148, Windows delivery 9/9, coordination E2E 6/6, formatting and whitespace checks passed. | PASS — LIVE PROVIDER PROOF/REVIEW OPEN |
+| 2026-08-29 | T060 OpenAI Sol fault-review attempt | Read-only `gpt-5.6-sol` / `max` review of the current US3 diff | interrupted | The reviewer returned no findings or verdict after repeated bounded waits and was stopped. No review evidence was accepted. | OPEN — REVIEW NOT COMPLETE |
+| 2026-08-29 | US3 final current-tree verification | Fresh lint; typecheck; full unit; full contract; desktop build; focused Windows delivery; full coordination E2E; provider-coordination acceptance; scoped formatting and diff audit | 0 | Lint/typecheck passed; unit 120/120, contract 148/148, desktop main/preload/renderer built, Windows delivery 9/9, coordination E2E 6/6, provider acceptance 6 passed with 1 packaged-only skip, and final formatting/whitespace checks passed. | PASS — T054/T055/T060 REMAIN OPEN |
+| 2026-08-29 | US3 branch refresh | `git fetch --prune origin`; `git rebase --autostash origin/main` | 0 | Rebased the dirty US3 branch onto `origin/main` `e9d2d7c`; Git reapplied all 17 intended files without conflict. | PASS |
+| 2026-08-29 | T054 exact Claude lifecycle proof | Claude Code 2.1.251 authenticated; restricted tool-free `claude-opus-5` / `high` turns with an invocation-only `Stop` hook and sanitized key inspection; official 2.1.251 hook schema | 0 final | The live `Stop` hook fired after `end_turn`. Its sanitized fields were `background_tasks`, `cwd`, `effort`, `hook_event_name`, `last_assistant_message`, `permission_mode`, `prompt_id`, `session_crons`, `session_id`, `stop_hook_active`, and `transcript_path`; no pending-draft/editor/queued-input field exists. The successful and diagnostic inference calls reported USD 0.0446575 total. Raw message/transcript values were not persisted. | PASS — EXACT 2.1.251 MANUAL-ONLY FALLBACK |
+| 2026-08-29 | T055 exact Codex lifecycle proof | Codex CLI 0.150.1 authenticated; stable hooks inventory; exact tagged 0.150.1 `Stop` schema; locally generated experimental app-server schema; ephemeral isolated `codex exec` turn with an invocation-only vetted hook | 0 | The exact `Stop` schema exposes session ID, turn ID, event name, model, permission mode, stop state, transcript path, and last message, while app-server exposes `turn/completed` and thread status. Neither surface exposes the open TUI's pending draft/editor/queued-input state. The live Luna/low probe completed with 16,464 input, 8,960 cached input, 11 output, and no repository tool call. | PASS — EXACT 0.150.1 MANUAL-ONLY FALLBACK |
+| 2026-08-29 | T060 independent fault review, first pass | Read-only OpenAI `gpt-5.6-sol` / `max` review of the rebased US3 tree | changes required | The reviewer found future-skew/replay acceptance, incorrect automatic-attempt attribution, windowed oldest-queued selection, absent P4 opt-in protection for provider replies, incomplete manual-state transitions, and stale renderer state. Regression tests were added before remediation. | FINDINGS — REMEDIATED |
+| 2026-08-29 | T060 fault remediation | Provider contract, service/persistence unit, real Windows named-pipe delivery, and visible E2E slices | 0 | Future timestamps now fail closed; event/turn IDs remain deduplicated for the credential lifetime with a bounded fail-closed ceiling; automatic attempts use provider lifecycle evidence/actor; oldest queued selection is direct; provider replies remain manual before P4 opt-in; known manual-only or bridge-unhealthy recipients initialize/retarget manual; all affected work downgrades and publishes on bridge loss. | PASS |
+| 2026-08-29 | T060 transport re-review | Real named-pipe EOF before a completed exchange, normal completed ephemeral close, recipient isolation, and subsequent-work checks | 0 | Incomplete pipe `end`/`close`/`error` uses one idempotent disconnect path, invalidates only that credential, changes only that recipient's queued handoffs to `manual_actionable`, publishes each change, and keeps later work manual. A completed request close remains healthy. | PASS |
+| 2026-08-29 | T060 OpenAI Sol final review | Independent read-only `gpt-5.6-sol` / `max` fault re-review of branch `codex/002-provider-coordination-us3` at base `e9d2d7c` | 0 | No P0–P3 findings remain. Approval is limited to US3: one oldest user-origin item per proved safe point; provider replies still require T066/P4 opt-in; built-in Claude 2.1.251 and Codex 0.150.1 remain manual-only. | PASS — APPROVED FOR US3 |
+| 2026-08-29 | T060 final current-tree verification | Lint; typecheck; full unit; full contract; desktop build; focused Windows delivery; full coordination E2E; provider acceptance; scoped formatting and whitespace audit | 0 | Lint/typecheck passed; unit 121/121, contract 150/150, desktop main/preload/renderer built, Windows delivery 13/13, coordination E2E 6/6, provider acceptance 6 passed with 1 packaged-only skip, scoped Prettier passed, and `git diff --check` passed. | PASS — US3 COMPLETE |
 
 ## Cost-aware implementation delegation
 
@@ -168,13 +188,30 @@ gates and independent review rather than routine scaffolding.
   recipient behavior, acknowledgement-versus-outcome separation, restart continuity, inactive-content
   deletion, bridge isolation, and keyboard-only conversation flows after deterministic gates pass.
 
+### US3 model gate decision
+
+- Claude Code 2.1.251 is authenticated through the first-party service. A normal-mode, tool-free,
+  one-turn probe resolved canonical `claude-opus-5` at `high` and returned `AVAILABLE`; the primary
+  may own the provider-evidence contract and lifecycle race analysis for this safety-critical slice.
+- The first `--bare` probe did not inherit the authenticated session and returned `Not logged in`
+  before inference. It consumed zero tokens and is recorded as a probe-mode failure, not as provider
+  or model unavailability.
+- The approved `claude-sonnet-5` / `xhigh` fallback was not invoked because the primary succeeded.
+  This avoids another large prompt-cache charge; it remains the only same-ecosystem fallback and
+  must be re-probed if Opus becomes unavailable before work is assigned.
+- The current Codex host inventory exposes `gpt-5.6-sol` with `max`, reserved for the independent
+  T060 fault-injection review. It must verify stale, duplicate, cross-session, power-transition,
+  pending-draft, provider-failure, and no-replay behavior after deterministic tests pass.
+- Opus/maximum effort is restricted to lifecycle semantics and review. Deterministic fixture tests
+  remain the acceptance authority; no model statement can establish safe-point support by itself.
+
 ## Story checkpoints
 
 | Story | Unit/domain | Persistence | Contract | Windows integration | E2E | Provider/installed proof | Independent review | Human gate | Overall |
 |---|---|---|---|---|---|---|---|---|---|
 | US1 | PASS | PASS | PASS | PASS | PASS | N/A — FIXTURES | PASS — CLAUDE OPUS APPROVED | N/A | MVP PASS |
 | US2 | PASS | PASS | PASS | PASS | PASS | PASS — LOCAL/PACKAGED, NO LIVE PROVIDER CALL | PASS — CLAUDE SONNET APPROVED | N/A | US2 PASS |
-| US3 | PENDING | N/A | PENDING | PENDING | PENDING | PENDING | PENDING | N/A | NOT READY |
+| US3 | PASS — SERVICE POLICY | PASS | PASS | PASS | PASS | PASS — EXACT CODEX/CLAUDE MANUAL-ONLY PROOFS | PASS — OPENAI SOL APPROVED | N/A | US3 PASS |
 | US4 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | NOT READY |
 | US5 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | N/A | NOT READY |
 | US6 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | CONFIRM IMPORT | NOT READY |
@@ -185,19 +222,19 @@ gates and independent review rather than routine scaffolding.
 
 | Gate | Local status | Hosted/external status | Evidence or blocker |
 |---|---|---|---|
-| Formatting | PASS | N/A | Full `pnpm format` after US2 remediation. |
-| Lint | PASS | N/A | Full `pnpm lint`. |
+| Formatting | PASS | N/A | Scoped US3 Prettier check plus prior full `pnpm format`. |
+| Lint | PASS | N/A | Full `pnpm lint` after US3 lifecycle changes. |
 | Rust format/check/test | PASS | N/A | Format, clippy with warnings denied, 17 supervisor tests, and 8 bridge tests passed. |
-| Typecheck | PASS | N/A | Full `pnpm typecheck` after US2 review remediation. |
-| Unit tests | PASS | N/A | Full suite: 17 files, 120 tests after excluding the unrelated session-host test. |
-| Contract tests | PASS | N/A | Full suite: 8 files, 145 tests; focused final review slice: 2 files, 21 tests. |
+| Typecheck | PASS | N/A | Full `pnpm typecheck` after US3 lifecycle changes. |
+| Unit tests | PASS | N/A | Full suite: 17 files, 121 tests. |
+| Contract tests | PASS | N/A | Full suite: 8 files, 150 tests; focused US3 provider lifecycle after transport remediation 12/12. |
 | Desktop build | PASS | N/A | Main, preload, and renderer built. |
 | Windows supervision proof | PASS — LOCAL X64 | N/A | Exact real native bridge PID containment proof passes; full serialized integration: 12 files, 42 passed, 1 intentional skip. |
-| Windows integration | US1 + US2 SLICES PASS | N/A | 13 focused coordination delivery/recovery tests; full integration also passed. |
-| E2E | US1 + US2 + LAUNCH-POLICY SLICES PASS | N/A | 5 coordination journeys plus the prior model/effort launch journey. |
+| Windows integration | US1 + US2 + US3 FIXTURE SLICES PASS | N/A | Focused coordination delivery 13/13, including exact-version fixture safe points, real named-pipe EOF degradation, recipient isolation, and fail-closed power/provider paths. |
+| E2E | US1 + US2 + US3 + LAUNCH-POLICY SLICES PASS | N/A | Full coordination file 6/6 plus the prior model/effort launch journey. |
 | Packaged installed artifact | PASS — LOCAL X64, UNSIGNED | N/A | Provider smoke 3/3 and installed-app acceptance 5/5; bridge present in ASAR-unpacked signed-path location, but no signing certificate was configured. |
-| Codex live provider | PENDING | N/A | Credentialed/version-specific. |
-| Claude live provider | PENDING | N/A | Credentialed/version-specific. |
+| Codex live provider | PASS — MANUAL-ONLY | N/A | Authenticated exact Codex CLI 0.150.1 proof found no pending-draft/editor safety field; automatic presentation remains disabled. |
+| Claude live provider | PASS — MANUAL-ONLY | N/A | Authenticated exact Claude Code 2.1.251 Stop-hook proof found no pending-draft/editor safety field; automatic presentation remains disabled. |
 | Hosted CI | NOT RUN | NOT RUN | Local evidence does not imply hosted status. |
 | Owner release approval | PENDING | PENDING | Requires exact artifact/commit and all required gates. |
 
@@ -253,6 +290,35 @@ verification. Never record secrets, terminal transcripts, hidden prompts, or raw
   - Proved the exact real bridge PID inherits the provider session Job Object and is terminated with that scope; Windows architecture proof passes 3/3.
 - **T047 Acceptance Smoke Proof** (`tests/acceptance/provider-coordination-smoke.test.ts`):
   - Verified GREEN (3/3 tests passing): bridge discovery, isolated launch configs, full structured lifecycle (credential, pending list, ack, reply, outcome, disconnect, revoke).
+
+### User Story 3 Local Implementation & Test Evidence (T050–T059 partial)
+
+- **T050/T053 provider-neutral contract**: strict content-free lifecycle evidence includes only
+  authenticated session/provider/version, bounded event/turn IDs, event category, timestamp,
+  safe-point boolean, and explicit pending-draft safety. Unknown fields and raw hook/transcript data
+  are rejected. Capabilities name exact proved versions instead of inheriting the broad CLI probe range.
+- **T054/T055 built-in provider status**: exact installed proofs ran independently for Claude Code
+  2.1.251 and Codex CLI 0.150.1. Both expose structured completion events but neither exposes the
+  interactive TUI's pending-draft/editor state. Both therefore retain empty automatic-version sets,
+  `inputSafety: unknown`, null parsers, and `manual_only`; raw message/transcript fields are rejected.
+- **T056 bridge evidence boundary**: the session credential authenticates evidence; main rejects
+  cross-session/provider/version drift, stale/future/pre-power events, duplicate event IDs, unsupported
+  categories, and unproved draft safety. Only the content-free activity category/timestamp reaches
+  session persistence/events.
+- **T057 one-item presentation**: one accepted deterministic fixture safe point may submit only the
+  oldest queued handoff through the existing ordered host-control path. It revalidates live session,
+  workspace identity, exact adapter/version, body bounds, and attempt invariants; it resets activity
+  afterward and cannot infer readiness from output, silence, timers, CPU, process, or connection state.
+- **T058 runtime recovery**: lock, suspend, resume, unlock, bridge disconnect, provider failure, and
+  restart invalidate volatile lifecycle evidence without launching, replaying, resending, or changing
+  another session. Existing ambiguous-dispatch recovery remains `unknown`/`manual_actionable`.
+- **T059 deterministic acceptance**: separate Codex/Claude fixture cases prove exact-version isolation,
+  one safe point, pending-draft downgrade, power invalidation, and credential cleanup. These fixtures
+  complement rather than substitute for the exact installed-provider proofs recorded by T054/T055.
+- **T060 completed gate**: exact installed Codex and Claude proofs keep both providers explicitly
+  manual-only; deterministic provider/Windows/E2E slices pass; and the independent OpenAI Sol fault
+  review reports no remaining P0–P3 findings. Approval is limited to US3 and does not include the P4
+  automatic-continuation/opt-in work beginning at T061.
 
 ## Rollback and recovery notes
 

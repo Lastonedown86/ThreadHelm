@@ -148,24 +148,24 @@ recovery-required fixtures and prove that only a version-proved safe point advan
 
 ### Model gate for User Story 3
 
-- [ ] T049 [US3] Verify Claude `claude-opus-5` at `high`, fallback `claude-sonnet-5` at `xhigh`, and OpenAI `gpt-5.6-sol` at `max` reviewer availability; record versions, usage tradeoff, fallback result, and verifier responsibility in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T049 [US3] Verify Claude `claude-opus-5` at `high`, fallback `claude-sonnet-5` at `xhigh`, and OpenAI `gpt-5.6-sol` at `max` reviewer availability; record versions, usage tradeoff, fallback result, and verifier responsibility in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 ### Tests for User Story 3
 
-- [ ] T050 [P] [US3] Write failing exact-version capability, structured-safe-point, stale/duplicate/cross-session evidence, and manual-degradation tests in `tests/contract/provider-coordination.test.ts`
-- [ ] T051 [P] [US3] Write failing safe-point, unknown activity, provider failure, lock/suspend/resume, crash, and no-input-replay cases in `tests/integration/windows/coordination-delivery.test.ts`
-- [ ] T052 [P] [US3] Write failing safe-lifecycle and visible manual-fallback journeys in `tests/e2e/coordination.spec.ts`
+- [X] T050 [P] [US3] Write failing exact-version capability, structured-safe-point, stale/duplicate/cross-session evidence, and manual-degradation tests in `tests/contract/provider-coordination.test.ts`
+- [X] T051 [P] [US3] Write failing safe-point, unknown activity, provider failure, lock/suspend/resume, crash, and no-input-replay cases in `tests/integration/windows/coordination-delivery.test.ts`
+- [X] T052 [P] [US3] Write failing safe-lifecycle and visible manual-fallback journeys in `tests/e2e/coordination.spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T053 [US3] Extend provider capability contracts with exact tested versions, structured evidence types, and fail-safe degradation in `packages/providers/src/adapter.ts` and `packages/contracts/src/index.ts`
-- [ ] T054 [P] [US3] Implement and sanitize the proved Claude lifecycle evidence adapter with manual-only fallback in `packages/providers/src/claude-code.ts`
-- [ ] T055 [P] [US3] Implement and sanitize the proved Codex lifecycle evidence adapter with manual-only fallback in `packages/providers/src/codex.ts`
-- [ ] T056 [US3] Authenticate, deduplicate, reject stale evidence, and persist only content-free lifecycle categories in `apps/desktop/src/main/coordination/bridge.ts`
-- [ ] T057 [US3] Implement one-item safe-point presentation and provider-specific manual downgrade without inferring readiness from output, silence, timers, CPU, process, or connection state in `apps/desktop/src/main/coordination/delivery.ts`
-- [ ] T058 [US3] Reconcile power/provider/session transitions without launch, replay, resend, or cross-session state change in `apps/desktop/src/main/coordination/recovery.ts` and `apps/desktop/src/main/recovery/power-events.ts`
-- [ ] T059 [US3] Add exact-version Codex and Claude lifecycle, pending-draft, manual-fallback, power, and cleanup proof scenarios in `tests/acceptance/provider-coordination-smoke.test.ts`
-- [ ] T060 [US3] Run US3 provider contract, Windows fault, E2E, and separate Codex/Claude proof slices; capture final exits and OpenAI fault-review findings in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T053 [US3] Extend provider capability contracts with exact tested versions, structured evidence types, and fail-safe degradation in `packages/providers/src/adapter.ts` and `packages/contracts/src/index.ts`
+- [X] T054 [P] [US3] Implement and sanitize the proved Claude lifecycle evidence adapter with manual-only fallback in `packages/providers/src/claude-code.ts`
+- [X] T055 [P] [US3] Implement and sanitize the proved Codex lifecycle evidence adapter with manual-only fallback in `packages/providers/src/codex.ts`
+- [X] T056 [US3] Authenticate, deduplicate, reject stale evidence, and persist only content-free lifecycle categories in `apps/desktop/src/main/coordination/bridge.ts`
+- [X] T057 [US3] Implement one-item safe-point presentation and provider-specific manual downgrade without inferring readiness from output, silence, timers, CPU, process, or connection state in `apps/desktop/src/main/coordination/delivery.ts`
+- [X] T058 [US3] Reconcile power/provider/session transitions without launch, replay, resend, or cross-session state change in `apps/desktop/src/main/coordination/recovery.ts` and `apps/desktop/src/main/recovery/power-events.ts`
+- [X] T059 [US3] Add exact-version Codex and Claude lifecycle, pending-draft, manual-fallback, power, and cleanup proof scenarios in `tests/acceptance/provider-coordination-smoke.test.ts`
+- [X] T060 [US3] Run US3 provider contract, Windows fault, E2E, and separate Codex/Claude proof slices; capture final exits and OpenAI fault-review findings in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 **Checkpoint**: US3 makes safe automation capability-specific and evidence-backed; unsupported or
 ambiguous sessions remain manual without affecting another provider.

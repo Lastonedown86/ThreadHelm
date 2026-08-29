@@ -24,6 +24,8 @@ export interface FixtureAdapterOptions {
   lines?: number;
   /** Force a readiness outcome instead of "available" (readiness tests). */
   readiness?: Partial<ReadinessResult>;
+  /** Deterministic test-only lifecycle seam; never used by built-in adapters. */
+  structuredSafePoint?: boolean;
 }
 
 export function fixtureAdapter(options: FixtureAdapterOptions): ProviderAdapter {
@@ -38,8 +40,26 @@ export function fixtureAdapter(options: FixtureAdapterOptions): ProviderAdapter 
     testedVersionRange: { min: '0.0.0', maxExclusive: '999.0.0' },
     capabilities: {
       interactivePty: true,
-      structuredActivity: false,
+      structuredActivity: options.structuredSafePoint ?? false,
       cleanStopStrategy: 'slash_exit',
+      bridgeConfiguration: options.structuredSafePoint ? 'session_scoped_stdio_mcp' : 'unsupported',
+      safePointEvidence: options.structuredSafePoint
+        ? {
+            mode: 'structured_event',
+            exactVersions: ['1.0.0'],
+            eventKinds: ['safe_point'],
+            maxAgeMs: 30_000,
+            inputSafety: 'proved_no_pending_draft',
+          }
+        : {
+            mode: 'none',
+            exactVersions: [],
+            eventKinds: [],
+            maxAgeMs: 30_000,
+            inputSafety: 'unknown',
+          },
+      automaticPresentation: options.structuredSafePoint ? 'structured_safe_point' : 'manual_only',
+      configurationFailureBehavior: 'manual_only',
     },
     executableCandidates: [],
     async probe(_ctx: ProbeContext): Promise<ReadinessResult> {

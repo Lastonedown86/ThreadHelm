@@ -30,7 +30,13 @@ export const codexAdapter: ProviderAdapter = {
     structuredActivity: false,
     cleanStopStrategy: 'slash_exit',
     bridgeConfiguration: 'session_scoped_stdio_mcp',
-    safePointEvidence: 'none',
+    safePointEvidence: {
+      mode: 'none',
+      exactVersions: [],
+      eventKinds: [],
+      maxAgeMs: 30_000,
+      inputSafety: 'unknown',
+    },
     automaticPresentation: 'manual_only',
     memoryTools: 'unsupported',
     supervisorTools: 'unsupported',
@@ -55,5 +61,12 @@ export const codexAdapter: ProviderAdapter = {
   },
   buildCleanStop(): CleanStopAction {
     return { writes: ['/quit\r'], graceMs: 10_000 };
+  },
+  parseLifecycleEvidence() {
+    // Exact Codex CLI 0.150.1 Stop/app-server schemas expose completed turns,
+    // but not the interactive TUI's pending draft or editor state. Returning
+    // null is the sanitized manual-only result; completion/idle notifications
+    // cannot authorize terminal input into an independently owned TUI.
+    return null;
   },
 };

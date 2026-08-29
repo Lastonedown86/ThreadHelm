@@ -10,7 +10,10 @@ import {
   bridgeReplyRequest,
   bridgeReportOutcomeRequest,
   createCoordinationClock,
+  fixtureAdapter,
 } from '@threadhelm/test-fixtures';
+import { ProviderLifecycleEvidence } from '@threadhelm/contracts';
+import { claudeCodeAdapter, codexAdapter } from '@threadhelm/providers';
 import {
   BridgeSessionManager,
   type BridgeRequest,
@@ -37,6 +40,15 @@ function requestOverPipe(pipeName: string, envelope: unknown): Promise<Record<st
       resolve(JSON.parse(response.slice(0, newline)) as Record<string, unknown>);
     });
     socket.once('connect', () => socket.write(`${JSON.stringify(envelope)}\n`));
+  });
+}
+
+function closePipeWithoutRequest(pipeName: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const socket = createConnection(pipeName);
+    socket.once('error', reject);
+    socket.once('close', () => resolve());
+    socket.once('connect', () => socket.end());
   });
 }
 
@@ -74,11 +86,29 @@ describe('Provider coordination bridge contract (T033)', () => {
       expect(response.jsonrpc).toBe('2.0');
       expect(response.id).toBe(7);
       expect(response.result).toMatchObject({ isError: false });
+      expect(manager.hasValidCredential(SESSION_B)).toBe(true);
 
       manager.revoke(SESSION_B);
       expect(() => readFileSync(config.sessionConfigPath, 'utf8')).toThrow();
     } finally {
       manager.revoke(SESSION_B);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('degrades on transport EOF before an authenticated exchange completes', async () => {
+    const sessionId = '00000000-0000-4000-8000-000000000099';
+    const root = mkdtempSync(join(tmpdir(), 'threadhelm-bridge-eof-'));
+    const bridgeExecutablePath = join(root, 'threadhelm-coordination-bridge.exe');
+    writeFileSync(bridgeExecutablePath, 'fixture');
+    const manager = new BridgeSessionManager({ configRoot: root, bridgeExecutablePath });
+    try {
+      const config = await manager.prepareSession(sessionId, 'claude-code', '2.0.0');
+      await closePipeWithoutRequest(config.pipeName);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(manager.hasValidCredential(sessionId)).toBe(false);
+    } finally {
+      manager.revoke(sessionId);
       rmSync(root, { recursive: true, force: true });
     }
   });
@@ -233,5 +263,178 @@ describe('Provider coordination bridge contract (T033)', () => {
     await expect(
       manager.dispatch(SESSION_B, cred.token, bridgeListPendingRequest()),
     ).rejects.toThrow();
+  });
+});
+
+describe('Provider lifecycle evidence contract (T050)', () => {
+  const SESSION_A = COORDINATION_FIXTURE_IDS.senderSession;
+  const SESSION_B = COORDINATION_FIXTURE_IDS.recipientSession;
+
+  function evidence(overrides: Record<string, unknown> = {}) {
+    return {
+      sessionId: SESSION_B,
+      providerId: 'claude-code',
+      providerVersion: '1.0.0',
+      eventKind: 'safe_point',
+      providerEventId: 'fixture-safe-point-1',
+      turnId: 'fixture-turn-1',
+      occurredAt: '2026-01-01T00:00:00.000Z',
+      safePoint: true,
+      inputSafety: 'proved_no_pending_draft',
+      ...overrides,
+    };
+  }
+
+  it('keeps built-in providers manual until an exact version and input-safety path are proved', () => {
+    for (const adapter of [codexAdapter, claudeCodeAdapter]) {
+      expect(adapter.capabilities.safePointEvidence).toMatchObject({
+        mode: 'none',
+        exactVersions: [],
+        inputSafety: 'unknown',
+      });
+      expect(adapter.capabilities.automaticPresentation).toBe('manual_only');
+    }
+
+    const fixture = fixtureAdapter({
+      id: 'claude-code',
+      mode: 'echo',
+      executable: process.execPath,
+      structuredSafePoint: true,
+    });
+    expect(fixture.capabilities.safePointEvidence).toMatchObject({
+      mode: 'structured_event',
+      exactVersions: ['1.0.0'],
+      inputSafety: 'proved_no_pending_draft',
+    });
+    expect(fixture.capabilities.automaticPresentation).toBe('structured_safe_point');
+  });
+
+  it('accepts one exact fresh content-free event and deduplicates the provider event id', async () => {
+    const clock = createCoordinationClock();
+    const accepted: unknown[] = [];
+    const fixture = fixtureAdapter({
+      id: 'claude-code',
+      mode: 'echo',
+      executable: process.execPath,
+      structuredSafePoint: true,
+    });
+    const manager = new BridgeSessionManager({
+      clock: clock.now,
+      adapters: [fixture],
+      onLifecycleEvidence: (value) => {
+        accepted.push(value);
+        return { presented: false, reasonCode: 'NO_PENDING_HANDOFF' };
+      },
+    });
+    const credential = manager.issueCredential(SESSION_B, 'claude-code', '1.0.0');
+
+    await expect(
+      manager.ingestLifecycleEvidence(SESSION_B, credential.token, evidence()),
+    ).resolves.toMatchObject({ status: 'accepted', safePoint: true });
+    await expect(
+      manager.ingestLifecycleEvidence(SESSION_B, credential.token, evidence()),
+    ).resolves.toMatchObject({ status: 'duplicate', safePoint: false });
+    await expect(
+      manager.ingestLifecycleEvidence(
+        SESSION_B,
+        credential.token,
+        evidence({ providerEventId: 'fixture-safe-point-2' }),
+      ),
+    ).resolves.toMatchObject({ status: 'duplicate', safePoint: false });
+    expect(accepted).toHaveLength(1);
+  });
+
+  it('rejects future-dated evidence and keeps dedupe identities for the session lifetime', async () => {
+    const clock = createCoordinationClock();
+    const fixture = fixtureAdapter({
+      id: 'claude-code',
+      mode: 'echo',
+      executable: process.execPath,
+      structuredSafePoint: true,
+    });
+    const manager = new BridgeSessionManager({
+      clock: clock.now,
+      adapters: [fixture],
+      onLifecycleEvidence: () => ({ presented: false, reasonCode: 'NO_PENDING_HANDOFF' }),
+    });
+    const credential = manager.issueCredential(SESSION_B, 'claude-code', '1.0.0');
+
+    await expect(
+      manager.ingestLifecycleEvidence(
+        SESSION_B,
+        credential.token,
+        evidence({
+          providerEventId: 'future-before-power',
+          turnId: 'future-before-power-turn',
+          occurredAt: '2026-01-01T00:00:00.001Z',
+        }),
+      ),
+    ).resolves.toMatchObject({ status: 'rejected', reasonCode: 'LIFECYCLE_EVIDENCE_STALE' });
+
+    await expect(
+      manager.ingestLifecycleEvidence(
+        SESSION_B,
+        credential.token,
+        evidence({ providerEventId: 'lifetime-event', turnId: 'lifetime-turn' }),
+      ),
+    ).resolves.toMatchObject({ status: 'accepted' });
+    clock.advance(31_000);
+    manager.invalidateLifecycleEvidence(SESSION_B);
+    clock.advance(1);
+    await expect(
+      manager.ingestLifecycleEvidence(
+        SESSION_B,
+        credential.token,
+        evidence({
+          providerEventId: 'lifetime-event',
+          turnId: 'fresh-turn-id',
+          occurredAt: clock.iso(),
+        }),
+      ),
+    ).resolves.toMatchObject({ status: 'duplicate', reasonCode: 'LIFECYCLE_EVIDENCE_DUPLICATE' });
+  });
+
+  it('rejects stale, cross-session, unknown-field, version, and pending-draft evidence', async () => {
+    const clock = createCoordinationClock();
+    const fixture = fixtureAdapter({
+      id: 'claude-code',
+      mode: 'echo',
+      executable: process.execPath,
+      structuredSafePoint: true,
+    });
+    const manager = new BridgeSessionManager({ clock: clock.now, adapters: [fixture] });
+    const credential = manager.issueCredential(SESSION_B, 'claude-code', '1.0.0');
+
+    expect(
+      ProviderLifecycleEvidence.safeParse(evidence({ transcriptPath: 'secret.jsonl' })).success,
+    ).toBe(false);
+    await expect(
+      manager.ingestLifecycleEvidence(
+        SESSION_B,
+        credential.token,
+        evidence({ sessionId: SESSION_A }),
+      ),
+    ).resolves.toMatchObject({ status: 'rejected', reasonCode: 'LIFECYCLE_SESSION_MISMATCH' });
+    await expect(
+      manager.ingestLifecycleEvidence(
+        SESSION_B,
+        credential.token,
+        evidence({ providerVersion: '1.0.1' }),
+      ),
+    ).resolves.toMatchObject({ status: 'manual_only', reasonCode: 'LIFECYCLE_VERSION_UNPROVED' });
+    await expect(
+      manager.ingestLifecycleEvidence(
+        SESSION_B,
+        credential.token,
+        evidence({ occurredAt: '2025-12-31T23:58:00.000Z' }),
+      ),
+    ).resolves.toMatchObject({ status: 'rejected', reasonCode: 'LIFECYCLE_EVIDENCE_STALE' });
+    await expect(
+      manager.ingestLifecycleEvidence(
+        SESSION_B,
+        credential.token,
+        evidence({ inputSafety: 'unknown', providerEventId: 'fixture-safe-point-2' }),
+      ),
+    ).resolves.toMatchObject({ status: 'manual_only', reasonCode: 'PENDING_DRAFT_UNPROVED' });
   });
 });

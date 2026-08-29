@@ -12,6 +12,7 @@ import type { Context } from '../context.js';
 import { resetActivity } from '../sessions/activity.js';
 import { failSession } from '../sessions/failure.js';
 import { inspectScope } from '../sessions/process-scope.js';
+import { invalidateAutomaticPresentationEvidence } from '../coordination/recovery.js';
 
 export interface PowerSource {
   on(event: 'suspend' | 'resume' | 'lock-screen' | 'unlock-screen', listener: () => void): unknown;
@@ -30,6 +31,7 @@ export function reconcileLiveSessions(ctx: Context, event: PowerEvent): void {
   for (const live of [...ctx.live.values()]) {
     if (isTerminal(live.state)) continue;
     reconciled += 1;
+    invalidateAutomaticPresentationEvidence(ctx, live.id);
     resetActivity(ctx, live.id);
     const scope = inspectScope(ctx, live);
     if (!scope.hostAlive) {

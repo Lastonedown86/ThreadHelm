@@ -134,6 +134,8 @@ export function startCoordination(ctx: Context): CoordinationService {
         }
       },
       submitDelivery: (snapshot) => deliverHandoff(ctx, snapshot),
+      isBridgeHealthy: (sessionId) =>
+        ctx.coordinationBridge?.hasValidCredential(sessionId) === true,
     });
   ctx.coordination = service;
   service.start();

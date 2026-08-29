@@ -10,7 +10,13 @@
  */
 
 import { app } from 'electron';
-import type { PowerEvent, ProviderId, WorkOutcome } from '@threadhelm/contracts';
+import { createConnection } from 'node:net';
+import {
+  ProviderLifecycleEvidence,
+  type PowerEvent,
+  type ProviderId,
+  type WorkOutcome,
+} from '@threadhelm/contracts';
 import {
   fixtureAdapter,
   resolveFixtureRuntime,
@@ -18,6 +24,7 @@ import {
 } from '@threadhelm/test-fixtures';
 import type { Context, HostHandle } from './context.js';
 import type { Envelope, Router } from './ipc/router.js';
+import type { LifecycleIngestionResult } from './coordination/bridge.js';
 import { reconcileLiveSessions } from './recovery/power-events.js';
 import { failSession } from './sessions/failure.js';
 
@@ -39,6 +46,8 @@ export interface TestHooks {
     handoffId: string,
     outcome: WorkOutcome,
   ): { handoffId: string; workOutcome: WorkOutcome };
+  emitProviderLifecycle(evidence: unknown): Promise<LifecycleIngestionResult>;
+  dropProviderPipe(sessionId: string): Promise<void>;
   storagePath(): string;
   breakStorage(): void;
   version(): string;
@@ -108,8 +117,10 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
           mode,
           executable: resolveFixtureRuntime() ?? process.execPath,
           ...(lines !== undefined ? { lines } : {}),
+          structuredSafePoint: true,
         });
       });
+      ctx.coordinationBridge?.setAdapters(ctx.adapters);
     },
     liveSessions: () =>
       [...ctx.live.values()].map((live) => ({
@@ -155,6 +166,26 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
         ctx.clock().toISOString(),
       );
       return { handoffId: handoff.id, workOutcome: handoff.workOutcome };
+    },
+    emitProviderLifecycle: async (rawEvidence) => {
+      const evidence = ProviderLifecycleEvidence.parse(rawEvidence);
+      if (!ctx.live.has(evidence.sessionId)) throw new Error('TEST_SESSION_NOT_LIVE');
+      const manager = ctx.coordinationBridge;
+      const token = manager?.testCredential(evidence.sessionId);
+      if (!manager || !token) throw new Error('TEST_BRIDGE_NOT_AVAILABLE');
+      return manager.ingestLifecycleEvidence(evidence.sessionId, token, evidence);
+    },
+    dropProviderPipe: async (sessionId) => {
+      if (!ctx.live.has(sessionId)) throw new Error('TEST_SESSION_NOT_LIVE');
+      const pipeName = ctx.coordinationBridge?.testPipeName(sessionId);
+      if (!pipeName) throw new Error('TEST_BRIDGE_NOT_AVAILABLE');
+      await new Promise<void>((resolve, reject) => {
+        const socket = createConnection(pipeName);
+        socket.once('error', reject);
+        socket.once('close', () => resolve());
+        socket.once('connect', () => socket.end());
+      });
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
     },
     storagePath: () => ctx.storage?.db.name ?? '',
     breakStorage: () => {

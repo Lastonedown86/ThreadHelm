@@ -21,3 +21,8 @@ blockExoticSubdeps: false
 
 # Electron Forge requires a hoisted layout to package the app.
 nodeLinker: hoisted
+
+# Dependabot: transitive dev-tooling deps (Electron tooling → tar, inquirer → tmp).
+overrides:
+  tar: ^7.5.22
+  tmp: ^0.2.7

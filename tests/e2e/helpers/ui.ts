@@ -26,6 +26,11 @@ export async function launchWithFixtures(
   userData?: string,
 ): Promise<LaunchedApp> {
   const app = await launchApp(userData ? { userData } : {});
+  // The renderer's initial load owns app info and the canonical readiness list.
+  // Let it commit before fixture events, otherwise a fixture can make "Available"
+  // visible while the startup load is still able to reorder providers and update
+  // the footer during an idle-rendering assertion.
+  await expect(app.page.locator('.status-bar')).toContainText('ThreadHelm v');
   await app.useFixtureAdapters(modes);
   // Readiness is fetched once at startup; re-probing emits readinessChanged
   // events that the renderer applies, so no reload is needed.

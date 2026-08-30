@@ -7,11 +7,14 @@
 import type { MessagePortMain } from 'electron';
 import type {
   LifecycleState,
+  LaunchPermissionResolution,
+  LaunchPermissionSelection,
   LaunchRuntimeSelection,
   MainToHostMessage,
   ProviderId,
   ReadinessView,
   TerminalSize,
+  ProviderExecutionBounds,
   WorkspaceIdentity,
 } from '@threadhelm/contracts';
 import type { ControllerLeases } from '@threadhelm/domain';
@@ -149,6 +152,9 @@ export interface PreviewPayload {
   readiness: ReadinessView;
   terminal: TerminalSize;
   runtimeSelection: LaunchRuntimeSelection;
+  permissionSelection: LaunchPermissionSelection;
+  permissionResolution: LaunchPermissionResolution;
+  executionBounds: ProviderExecutionBounds;
 }
 
 export interface ControlTokenPayload {

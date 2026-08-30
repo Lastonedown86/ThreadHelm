@@ -8,7 +8,9 @@
 
 import {
   BOUNDARY_WARNING,
+  ProviderExecutionBounds,
   ThreadHelmError,
+  type LaunchPermissionSelection,
   type LaunchPreviewView,
   type LaunchRuntimeSelection,
   type ProviderId,
@@ -21,6 +23,11 @@ import { probeProvider } from '../providers/readiness.js';
 import { findWorkspace } from '../workspaces/service.js';
 import { revalidateWorkspace, type ResolvedWorkspace } from '../workspaces/identity.js';
 import { assertLeaseFree } from './lease.js';
+import {
+  DEFAULT_PROVIDER_EXECUTION_BOUNDS,
+  resolveLaunchPermission,
+  samePermissionCapability,
+} from './launch-policy.js';
 
 export function assertReady(view: ReadinessView): void {
   if (view.availability !== 'available' || view.authentication === 'unauthenticated') {
@@ -39,6 +46,8 @@ export async function previewLaunch(
   providerId: ProviderId,
   terminal: TerminalSize,
   runtimeSelection: LaunchRuntimeSelection,
+  permissionSelection: LaunchPermissionSelection = { policy: null, boundedAllowlist: [] },
+  executionBounds: ProviderExecutionBounds = DEFAULT_PROVIDER_EXECUTION_BOUNDS,
 ): Promise<LaunchPreviewView> {
   const workspace = findWorkspace(ctx, workspaceId);
   if (workspace.revokedAt) {
@@ -54,6 +63,31 @@ export async function previewLaunch(
   ctx.health.bestEffort(() =>
     ctx.storage?.repositories.workspaces.markValidated(workspaceId, readiness.probedAt),
   );
+  const adapter = ctx.adapters.find((candidate) => candidate.id === providerId);
+  if (!adapter || !readiness.version) {
+    throw new ThreadHelmError('PROVIDER_UNAVAILABLE', 'The provider is not ready to launch.');
+  }
+  const observedAt = ctx.clock().toISOString();
+  const capabilityEvidence =
+    adapter.permissionCapabilityEvidence?.({
+      providerVersion: readiness.version,
+      model: runtimeSelection.model,
+      observedAt,
+    }) ?? null;
+  const permissionResolution = resolveLaunchPermission({
+    providerId,
+    providerVersion: readiness.version,
+    model: runtimeSelection.model,
+    invocation: 'direct',
+    oneRunSelection: permissionSelection,
+    taskPolicy: null,
+    projectPolicy: null,
+    providerDefault: 'manual',
+    capabilityEvidence,
+    breakGlassProof: null,
+    now: observedAt,
+  });
+  const boundedExecution = ProviderExecutionBounds.parse(executionBounds);
 
   const payload: PreviewPayload = {
     workspaceId,
@@ -63,9 +97,11 @@ export async function previewLaunch(
     readiness,
     terminal,
     runtimeSelection,
+    permissionSelection,
+    permissionResolution,
+    executionBounds: boundedExecution,
   };
   const { token, expiresAt } = ctx.tokens.previews.issue(payload);
-  const adapter = ctx.adapters.find((candidate) => candidate.id === providerId);
   const coordinationBridge: LaunchPreviewView['coordinationBridge'] =
     adapter?.capabilities.bridgeConfiguration === 'session_scoped_stdio_mcp'
       ? {
@@ -83,6 +119,8 @@ export async function previewLaunch(
     boundaryWarning: BOUNDARY_WARNING,
     terminal,
     runtimeSelection,
+    permissionResolution,
+    executionBounds: boundedExecution,
     coordinationBridge,
     expiresAt,
   };
@@ -136,6 +174,46 @@ export async function revalidatePreview(
       'PROVIDER_UNAVAILABLE',
       'The provider changed since the preview. Review the updated readiness and try again.',
       { providerId: preview.providerId, reason: 'STALE_PREFLIGHT', drift },
+    );
+  }
+  const adapter = ctx.adapters.find((candidate) => candidate.id === preview.providerId);
+  if (!adapter || !readiness.version) {
+    throw new ThreadHelmError('PROVIDER_UNAVAILABLE', 'The provider is not ready to launch.');
+  }
+  const observedAt = ctx.clock().toISOString();
+  const currentPermission = resolveLaunchPermission({
+    providerId: preview.providerId,
+    providerVersion: readiness.version,
+    model: preview.runtimeSelection.model,
+    invocation: 'direct',
+    oneRunSelection: preview.permissionSelection,
+    taskPolicy: null,
+    projectPolicy: null,
+    providerDefault: 'manual',
+    capabilityEvidence:
+      adapter.permissionCapabilityEvidence?.({
+        providerVersion: readiness.version,
+        model: preview.runtimeSelection.model,
+        observedAt,
+      }) ?? null,
+    breakGlassProof: null,
+    now: observedAt,
+  });
+  if (!samePermissionCapability(currentPermission, preview.permissionResolution)) {
+    throw new ThreadHelmError(
+      'PROVIDER_UNAVAILABLE',
+      'The runtime permission capability changed since preview. Review the updated policy.',
+      { providerId: preview.providerId, reason: 'PERMISSION_CAPABILITY_CHANGED' },
+    );
+  }
+  if (currentPermission.disposition !== 'ready') {
+    throw new ThreadHelmError(
+      'PROVIDER_UNAVAILABLE',
+      'The selected runtime permission policy is held for a safer action.',
+      {
+        providerId: preview.providerId,
+        reason: currentPermission.reasonCode ?? 'PERMISSION_POLICY_HELD',
+      },
     );
   }
   return { workspace, readiness, result };

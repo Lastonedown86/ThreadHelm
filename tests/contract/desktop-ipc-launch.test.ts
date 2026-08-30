@@ -63,6 +63,74 @@ describe('sessions.previewLaunch', () => {
       failureBehavior: 'manual_only',
     });
     expect(view.runtimeSelection).toEqual({ model: null, effort: null });
+    expect(view.permissionResolution).toMatchObject({
+      policy: 'manual',
+      source: 'provider_default',
+      disposition: 'ready',
+      providerMapping: 'claude_manual',
+    });
+    expect(view.executionBounds).toMatchObject({
+      maxElapsedMs: expect.any(Number),
+      maxTurns: expect.any(Number),
+      maxNoProgressMs: expect.any(Number),
+      maxOutputBytes: expect.any(Number),
+    });
+  });
+
+  it('binds exact Claude auto capability evidence and fails closed when it drifts', async () => {
+    world.clock.now = Date.parse('2026-08-30T12:00:00.000Z');
+    world.adapters['claude-code'].permissionEvidence = {
+      providerId: 'claude-code',
+      providerVersion: READY.version!,
+      model: 'claude-sonnet-5',
+      providerSurface: 'claude-code',
+      organizationPolicy: 'allowed',
+      supportedPolicies: ['manual', 'auto'],
+      observedAt: '2026-08-30T11:59:00.000Z',
+      expiresAt: '2026-08-30T12:04:00.000Z',
+    };
+    const view = await world.ok<LaunchPreviewView>('sessions.previewLaunch', {
+      workspaceId,
+      providerId: 'claude-code',
+      terminal: TERMINAL,
+      runtimeSelection: { model: 'claude-sonnet-5', effort: 'medium' },
+      permissionSelection: { policy: 'auto', boundedAllowlist: [] },
+    });
+    expect(view.permissionResolution).toMatchObject({
+      policy: 'auto',
+      source: 'one_run',
+      disposition: 'ready',
+      providerMapping: 'claude_auto',
+      capabilityEvidence: { providerVersion: READY.version },
+    });
+    world.adapters['claude-code'].permissionEvidence = null;
+    const result = await world.call('sessions.launch', {
+      previewToken: view.previewToken,
+      boundaryConfirmation: true,
+    });
+    expect(errorCode(result)).toBe('PROVIDER_UNAVAILABLE');
+    expect(result.ok ? null : result.error.details.reason).toBe('PERMISSION_CAPABILITY_CHANGED');
+    expect(world.hosts).toHaveLength(0);
+  });
+
+  it('holds unavailable auto and offers no bypass fallback', async () => {
+    const view = await world.ok<LaunchPreviewView>('sessions.previewLaunch', {
+      workspaceId,
+      providerId: 'claude-code',
+      terminal: TERMINAL,
+      permissionSelection: { policy: 'auto', boundedAllowlist: [] },
+    });
+    expect(view.permissionResolution).toMatchObject({
+      disposition: 'held',
+      fallbackActions: ['manual', 'bounded_allowlist'],
+    });
+    expect(JSON.stringify(view.permissionResolution)).not.toContain('bypass');
+    const result = await world.call('sessions.launch', {
+      previewToken: view.previewToken,
+      boundaryConfirmation: true,
+    });
+    expect(errorCode(result)).toBe('PROVIDER_UNAVAILABLE');
+    expect(world.hosts).toHaveLength(0);
   });
 
   it('rejects model identifiers that could become command syntax', async () => {

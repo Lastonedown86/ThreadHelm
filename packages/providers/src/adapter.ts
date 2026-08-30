@@ -13,14 +13,18 @@ import type {
   Availability,
   CleanStopAction,
   LaunchDescriptor,
+  LaunchPermissionResolution,
   LaunchRuntimeSelection,
+  PermissionCapabilityEvidence,
+  ProviderAttemptOutcomeKind,
+  ProviderExecutionBounds,
   ProviderId,
   ProviderLifecycleEventKind,
   ProviderLifecycleEvidence,
   ProviderInputSafety,
   TerminalSize,
 } from '@threadhelm/contracts';
-import { ThreadHelmError } from '@threadhelm/contracts';
+import { ProviderAttemptOutcome, ThreadHelmError } from '@threadhelm/contracts';
 
 export type ExecutableRoot = 'LOCALAPPDATA' | 'APPDATA' | 'PROGRAMFILES' | 'USERPROFILE';
 export type ExecutableKind = 'native' | 'cmd_shim';
@@ -99,6 +103,9 @@ export interface LaunchContext {
   version: string;
   /** Exact per-process override; null fields preserve the CLI's local default. */
   runtimeSelection: LaunchRuntimeSelection;
+  /** Exact main-owned resolution bound by the launch preview. */
+  permissionResolution?: LaunchPermissionResolution;
+  executionBounds?: ProviderExecutionBounds;
   /** Ephemeral session bridge configuration if supported */
   bridgeConfig?: SessionBridgeConfig | null;
   /** Exact reviewed profile and main-owned effective authority for this launch. */
@@ -161,6 +168,8 @@ export interface ProviderAdapter {
     memoryTools?: MemoryToolsCapability;
     supervisorTools?: SupervisorToolsCapability;
     configurationFailureBehavior?: 'manual_only';
+    supervisorConfigurationFailureBehavior?: 'held';
+    permissionPolicies?: readonly LaunchPermissionResolution['policy'][];
   };
   readonly executableCandidates: readonly ExecutableCandidate[];
   probe(ctx: ProbeContext): Promise<ReadinessResult>;
@@ -170,6 +179,36 @@ export interface ProviderAdapter {
   parseStructuredActivity?(event: Uint8Array): ActivityEvidence | null;
   /** Raw provider payloads are reduced or rejected inside the adapter. */
   parseLifecycleEvidence?(event: unknown): ProviderLifecycleEvidence | null;
+  /** Returns only externally proved, exact, unexpired capability evidence. */
+  permissionCapabilityEvidence?(input: {
+    providerVersion: string;
+    model: string | null;
+    observedAt: string;
+  }): PermissionCapabilityEvidence | null;
+}
+
+export interface CreateProviderOutcomeInput {
+  attemptId: string;
+  sessionId: string;
+  kind: ProviderAttemptOutcomeKind;
+  occurredAt: string;
+  reasonCode?: string | null;
+}
+
+/** Reduce provider-specific terminal states to the closed main-owned outcome vocabulary. */
+export function createProviderOutcome(input: CreateProviderOutcomeInput): ProviderAttemptOutcome {
+  const retryDisposition =
+    input.kind === 'unknown' || input.kind === 'completed' || input.kind === 'refused'
+      ? 'prohibited'
+      : 'user_action_required';
+  return ProviderAttemptOutcome.parse({
+    attemptId: input.attemptId,
+    sessionId: input.sessionId,
+    kind: input.kind,
+    retryDisposition,
+    reasonCode: input.reasonCode ?? null,
+    occurredAt: input.occurredAt,
+  });
 }
 
 /**

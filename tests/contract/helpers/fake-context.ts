@@ -12,6 +12,7 @@ import {
   HostToMainMessage,
   type Availability,
   type HostFailureCode,
+  type PermissionCapabilityEvidence,
   type Authentication,
   type MainToHostMessage,
 } from '@threadhelm/contracts';
@@ -279,7 +280,10 @@ export interface FakeReadiness {
 export function fakeAdapter(
   id: ProviderAdapter['id'],
   readiness: FakeReadiness,
-): ProviderAdapter & { readiness: FakeReadiness } {
+): ProviderAdapter & {
+  readiness: FakeReadiness;
+  permissionEvidence: PermissionCapabilityEvidence | null;
+} {
   const adapter = {
     id,
     displayName: id === 'codex-cli' ? 'Codex CLI' : 'Claude Code',
@@ -290,11 +294,14 @@ export function fakeAdapter(
       cleanStopStrategy: 'slash_exit' as const,
       bridgeConfiguration: 'session_scoped_stdio_mcp' as const,
       configurationFailureBehavior: 'manual_only' as const,
+      supervisorConfigurationFailureBehavior: 'held' as const,
+      permissionPolicies: ['manual', 'auto', 'bounded_allowlist', 'break_glass_bypass'] as const,
     },
     executableCandidates: [],
     readiness,
+    permissionEvidence: null as PermissionCapabilityEvidence | null,
     async probe(_ctx: ProbeContext): Promise<ReadinessResult> {
-      const r = adapter.readiness;
+      const r = readiness;
       return {
         providerId: id,
         resolvedExecutable: r.resolvedExecutable,
@@ -303,7 +310,7 @@ export function fakeAdapter(
         availability: r.availability,
         authentication: r.authentication,
         reasonCode: r.availability === 'available' ? null : 'FAKE_REASON',
-        safeSummary: `${adapter.displayName} is ${r.availability}`,
+        safeSummary: `${id === 'codex-cli' ? 'Codex CLI' : 'Claude Code'} is ${r.availability}`,
       };
     },
     buildLaunch(ctx) {
@@ -330,7 +337,13 @@ export function fakeAdapter(
     buildCleanStop() {
       return { writes: ['/exit\r'], graceMs: 3000 };
     },
-  } satisfies ProviderAdapter & { readiness: FakeReadiness };
+    permissionCapabilityEvidence() {
+      return this.permissionEvidence;
+    },
+  } satisfies ProviderAdapter & {
+    readiness: FakeReadiness;
+    permissionEvidence: PermissionCapabilityEvidence | null;
+  };
   return adapter;
 }
 

@@ -5,8 +5,11 @@
 
 import {
   CancelHandoffRequest,
+  ConfirmAutoContinueRequest,
   PreviewHandoffRequest,
+  PreviewAutoContinueRequest,
   PreviewRetargetRequest,
+  ResolveEscalationRequest,
   type ConversationState,
   type CoordinationEventEnvelope,
 } from '@threadhelm/contracts';
@@ -98,6 +101,12 @@ export function createHandlers(ctx: Context): Handlers {
     },
     'coordination.pauseConversation': ({ conversationId }) =>
       coordination.pauseConversation(conversationId),
+    'coordination.previewAutoContinue': (request) =>
+      coordination.previewAutoContinue(PreviewAutoContinueRequest.parse(request)),
+    'coordination.confirmAutoContinue': (request) =>
+      coordination.confirmAutoContinue(ConfirmAutoContinueRequest.parse(request)),
+    'coordination.resolveEscalation': (request) =>
+      coordination.resolveEscalation(ResolveEscalationRequest.parse(request)),
     'coordination.requestContentDeletion': ({ conversationId }) =>
       coordination.requestContentDeletion(conversationId),
     'coordination.confirmContentDeletion': (request) =>

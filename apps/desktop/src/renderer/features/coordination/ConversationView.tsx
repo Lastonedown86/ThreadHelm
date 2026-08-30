@@ -9,6 +9,7 @@ import type {
 import { api, call } from '../../api.js';
 import { useStore } from '../../store.js';
 import { DeleteConversationDialog } from './HandoffDisclosures.js';
+import { AutoContinueDialog, EscalationPanel } from './EscalationPanel.js';
 
 const TRANSPORT_LABEL: Record<DeliveryState, string> = {
   queued: 'Transport: Queued',
@@ -43,6 +44,7 @@ export function ConversationView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [autoContinueDialogOpen, setAutoContinueDialogOpen] = useState(false);
 
   const fetchList = async () => {
     setLoading(true);
@@ -85,6 +87,23 @@ export function ConversationView() {
     }
   }, [selectedConversationId]);
 
+  useEffect(() => {
+    const refreshSelected = (conversationId: string) => {
+      void fetchList();
+      if (selectedConversationId === conversationId) void fetchDetail(conversationId);
+    };
+    const offConversation = api.on('coordination.conversationChanged', (summary) =>
+      refreshSelected(summary.id),
+    );
+    const offEscalation = api.on('coordination.escalationChanged', (escalation) =>
+      refreshSelected(escalation.conversationId),
+    );
+    return () => {
+      offConversation();
+      offEscalation();
+    };
+  }, [selectedConversationId]);
+
   const pause = async () => {
     if (!selectedConversationId) return;
     try {
@@ -94,6 +113,11 @@ export function ConversationView() {
     } catch (err) {
       setError(errorMessage(err, 'Failed to pause conversation.'));
     }
+  };
+
+  const selectConversation = (conversationId: string) => {
+    setSelectedConversationId(conversationId);
+    void fetchDetail(conversationId);
   };
 
   return (
@@ -134,11 +158,11 @@ export function ConversationView() {
                 <li
                   key={c.id}
                   className={`conversation-item ${isSelected ? 'selected' : ''}`}
-                  onClick={() => setSelectedConversationId(c.id)}
+                  onClick={() => selectConversation(c.id)}
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
-                      setSelectedConversationId(c.id);
+                      selectConversation(c.id);
                     }
                   }}
                 >
@@ -162,6 +186,17 @@ export function ConversationView() {
               <div className="detail-header">
                 <h3>Conversation {detail.summary.id.slice(0, 8)}</h3>
                 <div className="header-actions">
+                  {detail.summary.state === 'open' ? (
+                    <button
+                      type="button"
+                      className="small"
+                      onClick={() => setAutoContinueDialogOpen(true)}
+                    >
+                      {detail.summary.autoContinueEnabled
+                        ? 'Disable automatic continuation…'
+                        : 'Enable automatic continuation…'}
+                    </button>
+                  ) : null}
                   {detail.summary.state === 'open' ? (
                     <button type="button" className="small warning" onClick={() => void pause()}>
                       Pause conversation
@@ -201,6 +236,24 @@ export function ConversationView() {
                   </>
                 ) : null}
               </dl>
+
+              <p className="hint">
+                {detail.summary.autoContinueEnabled
+                  ? 'Automatic continuation enabled'
+                  : 'Automatic continuation disabled'}
+              </p>
+
+              {detail.openEscalation ? (
+                <EscalationPanel
+                  escalation={detail.openEscalation}
+                  sessions={state.sessions}
+                  participantSessionIds={detail.summary.participantSessionIds}
+                  onResolved={() => {
+                    void fetchList();
+                    void fetchDetail(detail.summary.id);
+                  }}
+                />
+              ) : null}
 
               <h4>Attributed message timeline ({detail.handoffs.length})</h4>
               <ul className="timeline-list" aria-label="Conversation message timeline">
@@ -262,6 +315,17 @@ export function ConversationView() {
             void fetchDetail(selectedConversationId);
           }}
           onCancel={() => setDeleteDialogOpen(false)}
+        />
+      ) : null}
+      {autoContinueDialogOpen && detail ? (
+        <AutoContinueDialog
+          summary={detail.summary}
+          onComplete={() => {
+            setAutoContinueDialogOpen(false);
+            void fetchList();
+            void fetchDetail(detail.summary.id);
+          }}
+          onCancel={() => setAutoContinueDialogOpen(false)}
         />
       ) : null}
     </section>

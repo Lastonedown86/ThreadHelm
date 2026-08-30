@@ -74,6 +74,7 @@ export const bridgeReplyRequest = (): BridgeRequest<'threadhelm_reply'> =>
     body: 'Fixture response body',
     responseExpectation: 'none',
     authorityRequired: false,
+    conflictingInstruction: false,
   });
 
 export const bridgeReportOutcomeRequest = (): BridgeRequest<'threadhelm_report_outcome'> =>

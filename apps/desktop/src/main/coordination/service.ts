@@ -6,12 +6,15 @@ import { randomBytes } from 'node:crypto';
 import type { RendererEvents } from '../ipc/electron-binding.js';
 import type { LiveSession, Selection } from '../context.js';
 import {
+  AutoContinueDisclosureView,
   CoordinationEventEnvelope,
   DeleteContentDisclosureView,
   HandoffSummaryView,
   HandoffView,
+  EscalationView,
   ThreadHelmError,
   type CancelHandoffRequest,
+  type ConfirmAutoContinueRequest,
   type ConfirmDeleteContentRequest,
   type ConfirmHandoffRequest,
   type ConfirmPresentationRequest,
@@ -24,7 +27,9 @@ import {
   type HandoffPreviewView,
   type PresentationDisclosureView,
   type PreviewHandoffRequest,
+  type PreviewAutoContinueRequest,
   type PreviewRetargetRequest,
+  type ResolveEscalationRequest,
 } from '@threadhelm/contracts';
 import type {
   CoordinationHandoffRecord,
@@ -35,6 +40,7 @@ import type { ProviderAdapter } from '@threadhelm/providers';
 import type { StorageHealth } from '../storage-health.js';
 import {
   CoordinationDisclosures,
+  CoordinationDisclosureStore,
   type PresentationSnapshot,
   type RetargetDisclosure,
 } from './disclosures.js';
@@ -81,16 +87,31 @@ export interface CoordinationService {
   pauseConversation(conversationId: string): ConversationSummaryView;
   requestContentDeletion(conversationId: string): DeleteContentDisclosureView;
   confirmContentDeletion(request: ConfirmDeleteContentRequest): ConversationSummaryView;
+  previewAutoContinue(request: PreviewAutoContinueRequest): AutoContinueDisclosureView;
+  confirmAutoContinue(request: ConfirmAutoContinueRequest): ConversationSummaryView;
+  resolveEscalation(request: ResolveEscalationRequest): EscalationView;
+}
+
+interface AutoContinueSnapshot {
+  conversationId: string;
+  participantSessionIds: [string, string];
+  currentEnabled: boolean;
+  requestedEnabled: boolean;
+  conversationState: 'open';
 }
 
 class CoordinationServiceContainer implements CoordinationService {
   readonly dependencies: CoordinationDependencies;
   #started = false;
   readonly #disclosures: CoordinationDisclosures | null;
+  readonly #autoContinueTokens: CoordinationDisclosureStore<AutoContinueSnapshot>;
   readonly #deletionTokens = new Map<string, { conversationId: string; expiresAt: number }>();
 
   constructor(dependencies: CoordinationDependencies) {
     this.dependencies = dependencies;
+    this.#autoContinueTokens = new CoordinationDisclosureStore(() =>
+      dependencies.clock().getTime(),
+    );
     this.#disclosures =
       dependencies.health && dependencies.selection && dependencies.adapters
         ? new CoordinationDisclosures({
@@ -168,6 +189,12 @@ class CoordinationServiceContainer implements CoordinationService {
     this.#requireStarted();
     const handoff = this.#repository().findHandoffById(handoffId);
     if (!handoff) throw new ThreadHelmError('HANDOFF_NOT_FOUND', 'Handoff not found.');
+    if (this.#repository().getConversationSummary(handoff.conversationId)?.state !== 'open') {
+      throw new ThreadHelmError(
+        'INVALID_STATE',
+        'A handoff can be presented only while its conversation is open.',
+      );
+    }
     return this.#disclosureService().requestPresentation(handoff);
   }
 
@@ -297,6 +324,107 @@ class CoordinationServiceContainer implements CoordinationService {
     const summary = this.#repository().getConversationSummary(snapshot.conversationId)!;
     this.dependencies.events.emit('coordination.conversationChanged', summary);
     return summary;
+  }
+
+  previewAutoContinue(request: PreviewAutoContinueRequest): AutoContinueDisclosureView {
+    this.#requireStarted();
+    const summary = this.#repository().getConversationSummary(request.conversationId);
+    if (!summary) throw new ThreadHelmError('CONVERSATION_NOT_FOUND', 'Conversation not found.');
+    if (summary.state !== 'open') {
+      throw new ThreadHelmError(
+        'INVALID_STATE',
+        'Automatic continuation can change only for an open conversation.',
+      );
+    }
+    if (summary.participantSessionIds.length !== 2) {
+      throw new ThreadHelmError('INVALID_STATE', 'Conversation participants are incomplete.');
+    }
+    const snapshot: AutoContinueSnapshot = {
+      conversationId: summary.id,
+      participantSessionIds: [summary.participantSessionIds[0]!, summary.participantSessionIds[1]!],
+      currentEnabled: summary.autoContinueEnabled,
+      requestedEnabled: request.enabled,
+      conversationState: summary.state,
+    };
+    const disclosure = this.#autoContinueTokens.issue('coordination.autoContinue', snapshot);
+    return AutoContinueDisclosureView.parse({
+      autoContinueToken: disclosure.token,
+      conversationId: snapshot.conversationId,
+      participantSessionIds: snapshot.participantSessionIds,
+      currentEnabled: snapshot.currentEnabled,
+      requestedEnabled: snapshot.requestedEnabled,
+      replyDepthLimit: 8,
+      equivalentRepeatThreshold: 3,
+      equivalentRepeatWindow: 8,
+      deliveryFailureThreshold: 3,
+      heldKinds: ['request', 'query', 'proposal'],
+      authorityDisclosure:
+        'Automatic continuation cannot grant destructive, privileged, external, or expanded authority.',
+      expiresAt: disclosure.expiresAt,
+    });
+  }
+
+  confirmAutoContinue(request: ConfirmAutoContinueRequest): ConversationSummaryView {
+    this.#requireStarted();
+    const snapshot = this.#autoContinueTokens.takeBound(
+      request.autoContinueToken,
+      'coordination.autoContinue',
+      (candidate) => {
+        const current = this.#repository().getConversationSummary(candidate.conversationId);
+        return Boolean(
+          current &&
+          current.autoContinueEnabled === candidate.currentEnabled &&
+          current.state === candidate.conversationState &&
+          current.participantSessionIds.length === 2 &&
+          current.participantSessionIds.every(
+            (sessionId, index) => sessionId === candidate.participantSessionIds[index],
+          ),
+        );
+      },
+    );
+    if (!snapshot) {
+      throw new ThreadHelmError(
+        'CONFIRMATION_EXPIRED',
+        'Automatic-continuation disclosure expired or changed.',
+      );
+    }
+    const summary = this.#repository().setAutoContinueEnabled(
+      snapshot.conversationId,
+      snapshot.requestedEnabled,
+      this.dependencies.clock().toISOString(),
+    );
+    this.dependencies.events.emit('coordination.conversationChanged', summary);
+    return summary;
+  }
+
+  resolveEscalation(request: ResolveEscalationRequest): EscalationView {
+    this.#requireStarted();
+    const repository = this.#repository();
+    let recipientWorkspaceId: string | undefined;
+    if (request.disposition === 'redirect') {
+      const session = this.dependencies.storage!.repositories.sessions.findById(
+        request.recipientSessionId,
+      );
+      if (!session) throw new ThreadHelmError('SESSION_NOT_FOUND', 'Recipient session not found.');
+      recipientWorkspaceId = session.workspaceId;
+    }
+    const escalation = repository.resolveEscalation({
+      escalationId: request.escalationId,
+      disposition: request.disposition,
+      ...(request.disposition === 'redirect'
+        ? {
+            recipientSessionId: request.recipientSessionId,
+            recipientWorkspaceId: recipientWorkspaceId!,
+          }
+        : {}),
+      at: this.dependencies.clock().toISOString(),
+    });
+    const view = EscalationView.parse(escalation);
+    this.dependencies.events.emit('coordination.escalationChanged', view);
+    const summary = repository.getConversationSummary(escalation.conversationId);
+    if (summary) this.dependencies.events.emit('coordination.conversationChanged', summary);
+    if (escalation.handoffId) this.#publishLatest(escalation.handoffId);
+    return view;
   }
 
   #repository() {

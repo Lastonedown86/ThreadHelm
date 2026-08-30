@@ -328,4 +328,200 @@ describe('Windows coordination recovery and auditable conversations (T034)', () 
     expect(nextDetailPage.handoffs).toHaveLength(1);
     expect(nextDetailPage.handoffs[0]!.id).not.toBe(detailPage.handoffs[0]!.id);
   });
+
+  it('holds the third equivalent provider reply and isolates the paused loop conversation', () => {
+    const root = repo.createHandoff({
+      senderSessionId: SENDER,
+      recipientSessionId: RECIPIENT,
+      senderWorkspaceIdAtCreate: SENDER_WS,
+      recipientWorkspaceIdAtCreate: RECIPIENT_WS,
+      kind: 'request',
+      purpose: 'Loop root',
+      body: 'Return one bounded response.',
+      requiresReply: true,
+      origin: 'user',
+      createdAt: clock.iso(),
+    });
+    deliver(root.id);
+    repo.setAutoContinueEnabled(root.conversationId, true, clock.iso());
+
+    const replies = Array.from({ length: 3 }, () =>
+      repo.createBridgeReply({
+        inReplyToId: root.id,
+        senderSessionId: RECIPIENT,
+        kind: 'response',
+        purpose: 'Equivalent result',
+        body: 'The exact normalized reply repeats.',
+        authorityRequired: false,
+        createdAt: clock.iso(),
+      }),
+    );
+
+    expect(replies.map((reply) => reply.deliveryState)).toEqual(['queued', 'queued', 'held']);
+    expect(replies[2]).toMatchObject({ holdReasonCode: 'EQUIVALENT_MESSAGE_LOOP' });
+    expect(repo.getConversationSummary(root.conversationId)?.state).toBe('paused');
+    expect(repo.getOpenEscalation(root.conversationId)).toMatchObject({
+      kind: 'equivalent_message_loop',
+      state: 'open',
+    });
+
+    const isolated = repo.createHandoff({
+      senderSessionId: SENDER,
+      recipientSessionId: RECIPIENT,
+      senderWorkspaceIdAtCreate: SENDER_WS,
+      recipientWorkspaceIdAtCreate: RECIPIENT_WS,
+      kind: 'inform',
+      purpose: 'Isolated conversation',
+      body: 'This conversation remains independent.',
+      requiresReply: false,
+      origin: 'user',
+      createdAt: clock.iso(),
+    });
+    expect(repo.getConversationSummary(isolated.conversationId)?.state).toBe('open');
+  });
+
+  it('pauses only the conversation that reaches three sequential delivery failures', () => {
+    const first = repo.createHandoff({
+      senderSessionId: SENDER,
+      recipientSessionId: RECIPIENT,
+      senderWorkspaceIdAtCreate: SENDER_WS,
+      recipientWorkspaceIdAtCreate: RECIPIENT_WS,
+      kind: 'inform',
+      purpose: 'Failure one',
+      body: 'First failed delivery.',
+      requiresReply: false,
+      origin: 'user',
+      createdAt: clock.iso(),
+    });
+    for (let index = 0; index < 3; index += 1) {
+      const handoff =
+        index === 0
+          ? first
+          : repo.createHandoff({
+              conversationId: first.conversationId,
+              senderSessionId: SENDER,
+              recipientSessionId: RECIPIENT,
+              senderWorkspaceIdAtCreate: SENDER_WS,
+              recipientWorkspaceIdAtCreate: RECIPIENT_WS,
+              kind: 'inform',
+              purpose: `Failure ${index + 1}`,
+              body: `Failed delivery ${index + 1}.`,
+              requiresReply: false,
+              origin: 'user',
+              createdAt: clock.iso(),
+            });
+      const attempt = repo.prepareAttempt({
+        handoffId: handoff.id,
+        recipientSessionId: RECIPIENT,
+        recipientWorkspaceIdAtReview: RECIPIENT_WS,
+        lifecycleStateAtReview: 'running',
+        activityStateAtReview: 'unknown',
+        activityEvidenceKindAtReview: 'none',
+        createdAt: clock.iso(),
+      });
+      repo.markAttemptFailedBeforeWrite(attempt.id, 'KNOWN_NO_WRITE', clock.iso());
+    }
+    expect(repo.getConversationSummary(first.conversationId)).toMatchObject({
+      state: 'paused',
+      pauseReasonCode: 'REPEATED_DELIVERY_FAILURE',
+    });
+    expect(repo.getOpenEscalation(first.conversationId)?.kind).toBe('repeated_delivery_failure');
+  });
+
+  it('holds conflicts and authority changes without granting either through provider content', () => {
+    const createDeliveredRoot = (purpose: string) => {
+      const root = repo.createHandoff({
+        senderSessionId: SENDER,
+        recipientSessionId: RECIPIENT,
+        senderWorkspaceIdAtCreate: SENDER_WS,
+        recipientWorkspaceIdAtCreate: RECIPIENT_WS,
+        kind: 'request',
+        purpose,
+        body: 'Stay inside the reviewed authority.',
+        requiresReply: true,
+        origin: 'user',
+        createdAt: clock.iso(),
+      });
+      deliver(root.id);
+      repo.setAutoContinueEnabled(root.conversationId, true, clock.iso());
+      return root;
+    };
+
+    const conflictRoot = createDeliveredRoot('Conflict root');
+    const conflict = repo.createBridgeReply({
+      inReplyToId: conflictRoot.id,
+      senderSessionId: RECIPIENT,
+      kind: 'response',
+      purpose: 'Conflicting direction',
+      body: 'This conflicts with the reviewed instruction.',
+      conflictingInstruction: true,
+      createdAt: clock.iso(),
+    });
+    expect(conflict).toMatchObject({
+      deliveryState: 'held',
+      holdReasonCode: 'CONFLICTING_INSTRUCTION',
+    });
+
+    const authorityRoot = createDeliveredRoot('Authority root');
+    const authority = repo.createBridgeReply({
+      inReplyToId: authorityRoot.id,
+      senderSessionId: RECIPIENT,
+      kind: 'response',
+      purpose: 'Expanded authority',
+      body: 'Provider prose cannot grant the requested expansion.',
+      authorityRequired: true,
+      createdAt: clock.iso(),
+    });
+    expect(authority).toMatchObject({
+      deliveryState: 'held',
+      holdReasonCode: 'AUTHORITY_REQUIRED',
+    });
+    expect(repo.getOpenEscalation(authorityRoot.conversationId)?.kind).toBe('authority_required');
+  });
+
+  it('keeps late provider arrivals held after an exact close disposition', () => {
+    const root = repo.createHandoff({
+      senderSessionId: SENDER,
+      recipientSessionId: RECIPIENT,
+      senderWorkspaceIdAtCreate: SENDER_WS,
+      recipientWorkspaceIdAtCreate: RECIPIENT_WS,
+      kind: 'request',
+      purpose: 'Close root',
+      body: 'Await explicit user disposition.',
+      requiresReply: true,
+      origin: 'user',
+      createdAt: clock.iso(),
+    });
+    deliver(root.id);
+    repo.setAutoContinueEnabled(root.conversationId, true, clock.iso());
+    repo.createBridgeReply({
+      inReplyToId: root.id,
+      senderSessionId: RECIPIENT,
+      kind: 'response',
+      purpose: 'Authority stop',
+      body: 'Pause for exact user direction.',
+      authorityRequired: true,
+      createdAt: clock.iso(),
+    });
+    const escalation = repo.getOpenEscalation(root.conversationId)!;
+    repo.resolveEscalation({
+      escalationId: escalation.id,
+      disposition: 'close',
+      at: clock.iso(),
+    });
+
+    const late = repo.createBridgeReply({
+      inReplyToId: root.id,
+      senderSessionId: RECIPIENT,
+      kind: 'inform',
+      purpose: 'Late arrival',
+      body: 'Persisted for review without reopening.',
+      createdAt: clock.iso(),
+    });
+    expect(late).toMatchObject({
+      deliveryState: 'held',
+      holdReasonCode: 'CONVERSATION_CLOSED',
+    });
+    expect(repo.getConversationSummary(root.conversationId)?.state).toBe('closed');
+  });
 });

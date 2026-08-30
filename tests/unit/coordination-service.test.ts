@@ -77,6 +77,38 @@ describe('coordination service container', () => {
 });
 
 describe('US1 coordination service orchestration', () => {
+  it('invalidates an automatic-continuation disclosure when conversation state changes', async () => {
+    const world = createWorld();
+    world.addDir('C:\\auto-a', identity(1));
+    world.addDir('C:\\auto-b', identity(2));
+    const source = await world.launch((await world.approve('C:\\auto-a')).id, 'codex-cli');
+    const recipient = await world.launch((await world.approve('C:\\auto-b')).id, 'claude-code');
+    const service = world.ctx.coordination!;
+    const handoffPreview = service.previewHandoff({
+      sourceSessionId: source.id,
+      recipientSessionId: recipient.id,
+      kind: 'request',
+      purpose: 'Bound state disclosure',
+      body: 'The conversation must remain open through confirmation.',
+      responseExpected: true,
+    });
+    const handoff = service.confirmHandoff({
+      previewToken: handoffPreview.previewToken,
+      persistenceConfirmation: true,
+    });
+    const autoPreview = service.previewAutoContinue({
+      conversationId: handoff.conversationId,
+      enabled: true,
+    });
+    service.pauseConversation(handoff.conversationId);
+    expect(() =>
+      service.confirmAutoContinue({
+        autoContinueToken: autoPreview.autoContinueToken,
+        autoContinueConfirmation: true,
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'CONFIRMATION_EXPIRED' }));
+  });
+
   it('fails closed when a reviewed workspace identity changes before persistence', async () => {
     const world = createWorld();
     world.addDir('C:\\service-a', identity(1));

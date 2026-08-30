@@ -6,6 +6,7 @@ import {
   ReasonCode,
   ConversationSummaryView,
   CoordinationEventEnvelope,
+  EscalationView,
   HandoffView,
   type ActivityState,
   type ConversationDetailView,
@@ -13,6 +14,8 @@ import {
   type CoordinationEventKind,
   type DeliveryAttemptState,
   type DeliveryState,
+  type EscalationKind,
+  type EscalationState,
   type HandoffKind,
   type HandoffOrigin,
   type LifecycleState,
@@ -21,8 +24,11 @@ import {
 import {
   advanceDeliveryAttemptState,
   advanceDeliveryState,
+  advanceConversationState,
+  advanceEscalationState,
   advanceWorkOutcome,
   canTransitionDelivery,
+  evaluateAutomaticContinuation,
 } from '@threadhelm/domain';
 
 import type { Db } from '../migrate.js';
@@ -91,6 +97,7 @@ interface ConversationRow {
   state: ConversationState;
   root_handoff_id: string;
   auto_continue_enabled: number;
+  consecutive_delivery_failures: number;
   pause_reason_code: string | null;
   created_at: string;
   updated_at: string;
@@ -124,6 +131,26 @@ const toHandoff = (row: HandoffRow): CoordinationHandoffRecord => ({
   contentDeletedAt: row.content_deleted_at,
 });
 
+function coordinationFingerprint(input: {
+  kind: HandoffKind;
+  senderSessionId: string;
+  recipientSessionId: string;
+  purpose: string;
+  body: string;
+}): Buffer {
+  return createHash('sha256')
+    .update(
+      JSON.stringify([
+        input.kind,
+        input.senderSessionId,
+        input.recipientSessionId,
+        input.purpose,
+        input.body,
+      ]),
+    )
+    .digest();
+}
+
 export interface CreateHandoffInput {
   id?: string;
   conversationId?: string;
@@ -150,8 +177,50 @@ export interface CreateBridgeReplyInput {
   body: string;
   responseExpected?: boolean;
   authorityRequired?: boolean;
+  conflictingInstruction?: boolean;
   createdAt?: string;
 }
+
+export type EscalationDisposition = 'continue' | 'redirect' | 'close';
+
+export interface CoordinationEscalationRecord {
+  id: string;
+  conversationId: string;
+  handoffId: string | null;
+  kind: EscalationKind;
+  state: EscalationState;
+  reasonCode: string;
+  safeSummary: string;
+  openedAt: string;
+  resolvedAt: string | null;
+  resolution: EscalationDisposition | null;
+}
+
+interface EscalationRow {
+  id: string;
+  conversation_id: string;
+  handoff_id: string | null;
+  kind: EscalationKind;
+  state: EscalationState;
+  reason_code: string;
+  safe_summary: string;
+  opened_at: string;
+  resolved_at: string | null;
+  resolution: EscalationDisposition | null;
+}
+
+const toEscalation = (row: EscalationRow): CoordinationEscalationRecord => ({
+  id: row.id,
+  conversationId: row.conversation_id,
+  handoffId: row.handoff_id,
+  kind: row.kind,
+  state: row.state,
+  reasonCode: row.reason_code,
+  safeSummary: row.safe_summary,
+  openedAt: row.opened_at,
+  resolvedAt: row.resolved_at,
+  resolution: row.resolution,
+});
 
 export interface DeliveryAttemptRecord {
   id: string;
@@ -259,11 +328,6 @@ interface CoordinationEventRow {
 interface SessionTargetRow {
   id: string;
   workspace_id: string;
-}
-
-interface ConversationRow {
-  id: string;
-  state: ConversationState;
 }
 
 export class CoordinationRepository {
@@ -376,7 +440,10 @@ export class CoordinationRepository {
              VALUES (?, 'open', 0, 8, 0, ?, ?)`,
           )
           .run(conversationId, input.createdAt, input.createdAt);
-      } else if (conversation.state !== 'open') {
+      } else if (
+        conversation.state !== 'open' &&
+        !(input.origin === 'provider_bridge' && deliveryState === 'held')
+      ) {
         throw new ThreadHelmError('COORDINATION_CLOSED', 'Conversation is not open.');
       }
 
@@ -410,17 +477,13 @@ export class CoordinationRepository {
         replyDepth = parent.replyDepth + 1;
       }
 
-      const fingerprint = createHash('sha256')
-        .update(
-          JSON.stringify([
-            input.kind,
-            input.senderSessionId,
-            input.recipientSessionId,
-            purpose.normalized,
-            body.normalized,
-          ]),
-        )
-        .digest();
+      const fingerprint = coordinationFingerprint({
+        kind: input.kind,
+        senderSessionId: input.senderSessionId,
+        recipientSessionId: input.recipientSessionId,
+        purpose: purpose.normalized,
+        body: body.normalized,
+      });
       this.#db
         .prepare(
           `INSERT INTO coordination_handoffs
@@ -466,7 +529,7 @@ export class CoordinationRepository {
         conversationId,
         id,
         eventKind,
-        'user',
+        input.origin === 'provider_bridge' ? 'provider' : 'user',
         holdReasonCode,
         coordinationSafeSummary(
           deliveryState === 'queued' ? 'handoff_queued' : 'delivery_changed',
@@ -485,6 +548,13 @@ export class CoordinationRepository {
     this.#db.transaction(() => {
       const handoff = this.findHandoffById(input.handoffId);
       if (!handoff) throw new ThreadHelmError('HANDOFF_NOT_FOUND', 'Handoff not found.');
+      const conversation = this.getConversationSummary(handoff.conversationId);
+      if (!conversation || conversation.state !== 'open') {
+        throw new ThreadHelmError(
+          'INVALID_STATE',
+          'A handoff can be presented only while its conversation is open.',
+        );
+      }
       if (
         handoff.recipientSessionId !== input.recipientSessionId ||
         handoff.recipientWorkspaceIdAtCreate !== input.recipientWorkspaceIdAtReview
@@ -643,6 +713,9 @@ export class CoordinationRepository {
   cancelHandoff(id: string, at: string): CoordinationHandoffRecord {
     const current = this.findHandoffById(id);
     if (!current) throw new ThreadHelmError('HANDOFF_NOT_FOUND', 'Handoff not found.');
+    if (!current.purpose || !current.body) {
+      throw new ThreadHelmError('COORDINATION_CONTENT_INVALID', 'Handoff content was deleted.');
+    }
     if (!canTransitionDelivery(current.deliveryState, 'cancelled')) {
       throw new ThreadHelmError(
         'COORDINATION_DELIVERY_UNKNOWN',
@@ -811,6 +884,22 @@ export class CoordinationRepository {
              WHERE id = ?`,
           )
           .run(at, handoff.conversationId);
+        const failures = (
+          this.#db
+            .prepare(
+              'SELECT consecutive_delivery_failures AS n FROM coordination_conversations WHERE id = ?',
+            )
+            .get(handoff.conversationId) as { n: number }
+        ).n;
+        if (failures >= 3) {
+          this.#pauseAndEscalate(
+            handoff.conversationId,
+            handoff.id,
+            'repeated_delivery_failure',
+            'REPEATED_DELIVERY_FAILURE',
+            at,
+          );
+        }
       }
       this.#appendEvent(
         handoff.conversationId,
@@ -824,6 +913,86 @@ export class CoordinationRepository {
         at,
       );
     })();
+  }
+
+  #pauseAndEscalate(
+    conversationId: string,
+    handoffId: string | null,
+    kind: EscalationKind,
+    reasonCode: string,
+    at: string,
+  ): CoordinationEscalationRecord | null {
+    const existing = this.getOpenEscalation(conversationId);
+    if (existing) return existing;
+
+    const conversation = this.#db
+      .prepare('SELECT state FROM coordination_conversations WHERE id = ?')
+      .get(conversationId) as { state: ConversationState } | undefined;
+    if (!conversation || conversation.state !== 'open') return null;
+
+    const paused = this.#db
+      .prepare(
+        `UPDATE coordination_conversations
+         SET state = 'paused', pause_reason_code = ?, updated_at = ?
+         WHERE id = ? AND state = 'open'`,
+      )
+      .run(reasonCode, at, conversationId);
+    if (paused.changes !== 1) return null;
+    this.#holdPendingConversationHandoffs(conversationId, 'CONVERSATION_PAUSED', at);
+    const id = randomUUID();
+    this.#db
+      .prepare(
+        `INSERT INTO coordination_escalations
+           (id, conversation_id, handoff_id, kind, state, reason_code, safe_summary, opened_at)
+         VALUES (?, ?, ?, ?, 'open', ?, ?, ?)`,
+      )
+      .run(
+        id,
+        conversationId,
+        handoffId,
+        kind,
+        reasonCode,
+        'Coordination paused for explicit user review',
+        at,
+      );
+    this.#appendEvent(
+      conversationId,
+      handoffId,
+      'paused',
+      'threadhelm',
+      reasonCode,
+      'Coordination paused for explicit user review',
+      at,
+    );
+    return this.getOpenEscalation(conversationId)!;
+  }
+
+  #holdPendingConversationHandoffs(conversationId: string, reasonCode: string, at: string): void {
+    const rows = this.#db
+      .prepare(
+        `SELECT * FROM coordination_handoffs
+         WHERE conversation_id = ? AND delivery_state IN ('queued', 'manual_actionable')`,
+      )
+      .all(conversationId) as HandoffRow[];
+    for (const row of rows) {
+      const handoff = toHandoff(row);
+      const nextState = advanceDeliveryState(handoff.deliveryState, 'held');
+      this.#db
+        .prepare(
+          `UPDATE coordination_handoffs
+           SET delivery_state = ?, hold_reason_code = ?, updated_at = ? WHERE id = ?`,
+        )
+        .run(nextState, reasonCode, at, handoff.id);
+      this.#appendEvent(
+        conversationId,
+        handoff.id,
+        'held',
+        'threadhelm',
+        reasonCode,
+        'Handoff held while conversation awaits user direction',
+        at,
+      );
+    }
   }
 
   #assertSessionWorkspace(sessionId: string, workspaceId: string): void {
@@ -922,68 +1091,251 @@ export class CoordinationRepository {
     })();
   }
 
-  createBridgeReply(input: CreateBridgeReplyInput, at?: string): CoordinationHandoffRecord {
-    const timestamp = at ?? input.createdAt ?? new Date().toISOString();
-    const parent = this.findHandoffById(input.inReplyToId);
-    if (!parent) throw new ThreadHelmError('HANDOFF_NOT_FOUND', 'Parent handoff not found.');
-
-    if (parent.recipientSessionId !== input.senderSessionId) {
-      throw new ThreadHelmError(
-        'COORDINATION_CAUSALITY_INVALID',
-        'Reply sender must be parent recipient.',
-      );
-    }
-    if (parent.deliveryState !== 'delivered' && parent.deliveryState !== 'acknowledged') {
+  setAutoContinueEnabled(
+    conversationId: string,
+    enabled: boolean,
+    at?: string,
+  ): ConversationSummaryView {
+    const timestamp = at ?? new Date().toISOString();
+    const result = this.#db
+      .prepare(
+        `UPDATE coordination_conversations
+         SET auto_continue_enabled = ?, updated_at = ?
+         WHERE id = ? AND state = 'open'`,
+      )
+      .run(enabled ? 1 : 0, timestamp, conversationId);
+    if (result.changes === 0) {
+      if (!this.getConversationSummary(conversationId)) {
+        throw new ThreadHelmError('CONVERSATION_NOT_FOUND', 'Conversation not found.');
+      }
       throw new ThreadHelmError(
         'INVALID_STATE',
-        'A provider can reply only after the parent handoff is delivered.',
+        'Automatic continuation can change only for an open conversation.',
       );
     }
+    return this.getConversationSummary(conversationId)!;
+  }
 
-    const conversation = this.#db
-      .prepare('SELECT id, state FROM coordination_conversations WHERE id = ?')
-      .get(parent.conversationId) as ConversationRow | undefined;
-    if (!conversation || conversation.state !== 'open') {
-      throw new ThreadHelmError('COORDINATION_CLOSED', 'Conversation is not open.');
-    }
+  getOpenEscalation(conversationId: string): CoordinationEscalationRecord | null {
+    const row = this.#db
+      .prepare(
+        `SELECT * FROM coordination_escalations
+         WHERE conversation_id = ? AND state = 'open' LIMIT 1`,
+      )
+      .get(conversationId) as EscalationRow | undefined;
+    return row ? toEscalation(row) : null;
+  }
 
-    const recipientSessionId = parent.senderSessionId;
-    const recipientWorkspaceId = parent.senderWorkspaceIdAtCreate;
-    const senderWorkspaceId = parent.recipientWorkspaceIdAtCreate;
+  resolveEscalation(input: {
+    escalationId: string;
+    disposition: EscalationDisposition;
+    recipientSessionId?: string;
+    recipientWorkspaceId?: string;
+    at?: string;
+  }): CoordinationEscalationRecord {
+    const timestamp = input.at ?? new Date().toISOString();
+    return this.#db.transaction(() => {
+      const row = this.#db
+        .prepare('SELECT * FROM coordination_escalations WHERE id = ?')
+        .get(input.escalationId) as EscalationRow | undefined;
+      if (!row) throw new ThreadHelmError('INVALID_REQUEST', 'Escalation not found.');
+      if (row.state !== 'open') {
+        throw new ThreadHelmError('INVALID_STATE', 'Escalation was already resolved.');
+      }
 
-    let deliveryState: Extract<DeliveryState, 'queued' | 'held'> = 'queued';
-    let holdReasonCode: string | null = null;
+      const nextState = advanceEscalationState(
+        row.state,
+        input.disposition === 'continue'
+          ? 'continued'
+          : input.disposition === 'redirect'
+            ? 'redirected'
+            : 'closed',
+      );
+      const conversation = this.#db
+        .prepare('SELECT state FROM coordination_conversations WHERE id = ?')
+        .get(row.conversation_id) as { state: ConversationState } | undefined;
+      if (!conversation || conversation.state !== 'paused') {
+        throw new ThreadHelmError(
+          'INVALID_STATE',
+          'Only a paused conversation can resolve an escalation.',
+        );
+      }
+      if (input.disposition === 'redirect') {
+        if (!row.handoff_id || !input.recipientSessionId || !input.recipientWorkspaceId) {
+          throw new ThreadHelmError(
+            'INVALID_REQUEST',
+            'Redirect requires one exact recipient session and workspace.',
+          );
+        }
+        const handoff = this.findHandoffById(row.handoff_id);
+        if (!handoff) throw new ThreadHelmError('HANDOFF_NOT_FOUND', 'Handoff not found.');
+        if (input.recipientSessionId === handoff.senderSessionId) {
+          throw new ThreadHelmError(
+            'COORDINATION_NOT_ELIGIBLE',
+            'A redirected handoff cannot target its sender.',
+          );
+        }
+        const participants = this.getConversationSummary(
+          row.conversation_id,
+        )?.participantSessionIds;
+        if (!participants?.includes(input.recipientSessionId)) {
+          throw new ThreadHelmError(
+            'COORDINATION_NOT_ELIGIBLE',
+            'Redirect must stay within the reviewed conversation participants.',
+          );
+        }
+        this.#assertSessionWorkspace(input.recipientSessionId, input.recipientWorkspaceId);
+        this.#db
+          .prepare(
+            `UPDATE coordination_handoffs
+             SET recipient_session_id = ?, recipient_workspace_id_at_create = ?,
+                 delivery_state = 'queued', hold_reason_code = NULL, updated_at = ?
+             WHERE id = ? AND delivery_state IN ('held', 'manual_actionable')`,
+          )
+          .run(input.recipientSessionId, input.recipientWorkspaceId, timestamp, row.handoff_id);
+      } else if (input.disposition === 'continue' && row.handoff_id) {
+        this.#db
+          .prepare(
+            `UPDATE coordination_handoffs
+             SET delivery_state = 'queued', hold_reason_code = NULL, updated_at = ?
+             WHERE id = ? AND delivery_state IN ('held', 'manual_actionable')`,
+          )
+          .run(timestamp, row.handoff_id);
+      }
 
-    if (input.authorityRequired || input.kind === 'query' || input.kind === 'proposal') {
-      deliveryState = 'held';
-      holdReasonCode = input.authorityRequired ? 'AUTHORITY_REQUIRED' : 'KIND_HELD';
-    }
+      this.#db
+        .prepare(
+          `UPDATE coordination_escalations
+           SET state = ?, resolved_at = ?, resolution = ? WHERE id = ?`,
+        )
+        .run(nextState, timestamp, input.disposition, input.escalationId);
+      this.#db
+        .prepare(
+          `UPDATE coordination_conversations
+           SET state = ?, pause_reason_code = NULL,
+               closed_at = CASE WHEN ? = 'closed' THEN COALESCE(closed_at, ?) ELSE closed_at END,
+               updated_at = ? WHERE id = ?`,
+        )
+        .run(
+          input.disposition === 'close' ? 'closed' : 'open',
+          input.disposition === 'close' ? 'closed' : 'open',
+          timestamp,
+          timestamp,
+          row.conversation_id,
+        );
+      this.#appendEvent(
+        row.conversation_id,
+        row.handoff_id,
+        input.disposition === 'close' ? 'cancelled' : 'resumed',
+        'user',
+        `USER_${input.disposition.toUpperCase()}`,
+        `User chose ${input.disposition}`,
+        timestamp,
+      );
+      const resolved = this.#db
+        .prepare('SELECT * FROM coordination_escalations WHERE id = ?')
+        .get(input.escalationId) as EscalationRow;
+      return toEscalation(resolved);
+    })();
+  }
 
-    const replyDepth = parent.replyDepth + 1;
-    if (replyDepth > 8) {
-      deliveryState = 'held';
-      holdReasonCode = 'REPLY_DEPTH_LIMIT';
-    }
+  createBridgeReply(input: CreateBridgeReplyInput, at?: string): CoordinationHandoffRecord {
+    const timestamp = at ?? input.createdAt ?? new Date().toISOString();
+    return this.#db.transaction(() => {
+      const parent = this.findHandoffById(input.inReplyToId);
+      if (!parent) throw new ThreadHelmError('HANDOFF_NOT_FOUND', 'Parent handoff not found.');
 
-    const responseExpected =
-      input.responseExpected ?? (input.kind === 'request' || input.kind === 'query');
+      if (parent.recipientSessionId !== input.senderSessionId) {
+        throw new ThreadHelmError(
+          'COORDINATION_CAUSALITY_INVALID',
+          'Reply sender must be parent recipient.',
+        );
+      }
+      if (parent.deliveryState !== 'delivered' && parent.deliveryState !== 'acknowledged') {
+        throw new ThreadHelmError(
+          'INVALID_STATE',
+          'A provider can reply only after the parent handoff is delivered.',
+        );
+      }
 
-    return this.createHandoff({
-      conversationId: parent.conversationId,
-      inReplyToId: parent.id,
-      senderSessionId: input.senderSessionId,
-      recipientSessionId,
-      senderWorkspaceIdAtCreate: senderWorkspaceId,
-      recipientWorkspaceIdAtCreate: recipientWorkspaceId,
-      origin: 'provider_bridge',
-      kind: input.kind,
-      requiresReply: responseExpected,
-      purpose: input.purpose,
-      body: input.body,
-      deliveryState,
-      holdReasonCode,
-      createdAt: timestamp,
-    });
+      const conversation = this.#db
+        .prepare('SELECT * FROM coordination_conversations WHERE id = ?')
+        .get(parent.conversationId) as ConversationRow | undefined;
+      if (!conversation) {
+        throw new ThreadHelmError('CONVERSATION_NOT_FOUND', 'Conversation not found.');
+      }
+
+      const recipientSessionId = parent.senderSessionId;
+      const recipientWorkspaceId = parent.senderWorkspaceIdAtCreate;
+      const senderWorkspaceId = parent.recipientWorkspaceIdAtCreate;
+      const purpose = sanitizeCoordinationPurpose(input.purpose);
+      const body = sanitizeCoordinationBody(input.body);
+      const candidateFingerprint = coordinationFingerprint({
+        kind: input.kind,
+        senderSessionId: input.senderSessionId,
+        recipientSessionId,
+        purpose: purpose.normalized,
+        body: body.normalized,
+      }).toString('hex');
+      const recentFingerprints = (
+        this.#db
+          .prepare(
+            `SELECT content_fingerprint FROM coordination_handoffs
+             WHERE conversation_id = ? AND content_fingerprint IS NOT NULL
+             ORDER BY rowid DESC LIMIT 7`,
+          )
+          .all(parent.conversationId) as { content_fingerprint: Buffer }[]
+      ).map((row) => row.content_fingerprint.toString('hex'));
+      const decision = evaluateAutomaticContinuation({
+        autoContinueEnabled: conversation.auto_continue_enabled === 1,
+        conversationState: conversation.state,
+        kind: input.kind,
+        replyDepth: parent.replyDepth + 1,
+        candidateFingerprint,
+        recentEquivalentFingerprints: recentFingerprints,
+        consecutiveDeliveryFailures: conversation.consecutive_delivery_failures,
+        conflictingInstruction: input.conflictingInstruction ?? false,
+        authorityRequired: input.authorityRequired ?? false,
+      });
+      const responseExpected =
+        input.responseExpected ?? (input.kind === 'request' || input.kind === 'query');
+      let handoff = this.createHandoff({
+        conversationId: parent.conversationId,
+        inReplyToId: parent.id,
+        senderSessionId: input.senderSessionId,
+        recipientSessionId,
+        senderWorkspaceIdAtCreate: senderWorkspaceId,
+        recipientWorkspaceIdAtCreate: recipientWorkspaceId,
+        origin: 'provider_bridge',
+        kind: input.kind,
+        requiresReply: responseExpected,
+        purpose: purpose.normalized,
+        body: body.normalized,
+        deliveryState: decision.action === 'present' ? 'queued' : 'held',
+        holdReasonCode: decision.reasonCode,
+        createdAt: timestamp,
+      });
+      if (decision.pauseConversation && decision.escalationKind && decision.reasonCode) {
+        this.#pauseAndEscalate(
+          parent.conversationId,
+          handoff.id,
+          decision.escalationKind,
+          decision.reasonCode,
+          timestamp,
+        );
+      }
+      if (conversation.content_deleted_at) {
+        this.#db
+          .prepare(
+            `UPDATE coordination_handoffs
+             SET purpose = NULL, body = NULL, content_bytes = NULL, content_fingerprint = NULL,
+                 content_deleted_at = ?, updated_at = ? WHERE id = ?`,
+          )
+          .run(timestamp, timestamp, handoff.id);
+        handoff = this.findHandoffById(handoff.id)!;
+      }
+      return handoff;
+    })();
   }
 
   reportWorkOutcome(
@@ -1053,6 +1405,7 @@ export class CoordinationRepository {
       if (!conversation)
         throw new ThreadHelmError('CONVERSATION_NOT_FOUND', 'Conversation not found.');
       if (conversation.state === state) return this.getConversationSummary(conversationId)!;
+      const nextState = advanceConversationState(conversation.state, state);
 
       const resolvedAt = state === 'resolved' ? timestamp : null;
       const closedAt = state === 'closed' ? timestamp : null;
@@ -1063,15 +1416,26 @@ export class CoordinationRepository {
                closed_at = COALESCE(closed_at, ?), updated_at = ?
            WHERE id = ?`,
         )
-        .run(state, reasonCode ?? null, resolvedAt, closedAt, timestamp, conversationId);
+        .run(nextState, reasonCode ?? null, resolvedAt, closedAt, timestamp, conversationId);
+      if (nextState !== 'open') {
+        this.#holdPendingConversationHandoffs(
+          conversationId,
+          nextState === 'paused'
+            ? 'CONVERSATION_PAUSED'
+            : nextState === 'closed'
+              ? 'CONVERSATION_CLOSED'
+              : 'CONVERSATION_RESOLVED',
+          timestamp,
+        );
+      }
 
       this.#appendEvent(
         conversationId,
         null,
-        state === 'paused' ? 'paused' : state === 'resolved' ? 'resumed' : 'cancelled',
+        nextState === 'paused' ? 'paused' : nextState === 'open' ? 'resumed' : 'cancelled',
         'user',
         reasonCode ?? null,
-        coordinationSafeSummary('conversation_changed', { state }),
+        coordinationSafeSummary('conversation_changed', { state: nextState }),
         timestamp,
       );
       return this.getConversationSummary(conversationId)!;
@@ -1281,6 +1645,7 @@ export class CoordinationRepository {
       summary,
       handoffs,
       events,
+      openEscalation: EscalationView.nullable().parse(this.getOpenEscalation(conversationId)),
       nextCursor:
         hasMore && pageRows.length > 0
           ? encodeCursor(

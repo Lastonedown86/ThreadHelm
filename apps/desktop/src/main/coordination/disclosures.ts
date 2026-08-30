@@ -348,6 +348,9 @@ export class CoordinationDisclosures {
     if (!['queued', 'held', 'manual_actionable', 'failed'].includes(handoff.deliveryState)) {
       throw new ThreadHelmError('INVALID_STATE', 'Handoff is not retargetable.');
     }
+    if (!handoff.purpose || !handoff.body) {
+      throw new ThreadHelmError('COORDINATION_CONTENT_INVALID', 'Handoff content was deleted.');
+    }
     const sessions = this.#storage().repositories.sessions;
     const sender = sessions.findById(handoff.senderSessionId);
     const currentRecipient = sessions.findById(handoff.recipientSessionId);

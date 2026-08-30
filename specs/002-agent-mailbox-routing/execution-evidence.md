@@ -36,7 +36,7 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | US1 Directed handoffs | OpenAI `gpt-5.6-sol` / `high` | `gpt-5.6-terra` / `xhigh` | Claude `claude-opus-5` / `high` | AUTH VERIFIED IN NORMAL CLI MODE 2026-08-29 | APPROVED FOR US1 MVP |
 | US2 Auditable conversations | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | VERIFIED 2026-08-29 | APPROVED FOR US2 |
 | US3 Lifecycle-aware delivery | Claude `claude-opus-5` / `high` | `claude-sonnet-5` / `xhigh` | OpenAI `gpt-5.6-sol` / `max` | VERIFIED 2026-08-29 | APPROVED FOR US3 |
-| US4 Bounded coordination | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human | UNVERIFIED | PENDING |
+| US4 Bounded coordination | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human | VERIFIED 2026-08-29 | PENDING IMPLEMENTATION/REVIEW/HUMAN ACCEPTANCE |
 | US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | UNVERIFIED | PENDING |
 | US6 Reviewed agent roster | Claude `claude-sonnet-5` / `high` | `claude-opus-5` / `high` | OpenAI `gpt-5.6-sol` / `high` | UNVERIFIED | PENDING |
 | US7 Agent wizard/templates | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | UNVERIFIED | PENDING |
@@ -140,6 +140,10 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | 2026-08-29 | T060 transport re-review | Real named-pipe EOF before a completed exchange, normal completed ephemeral close, recipient isolation, and subsequent-work checks | 0 | Incomplete pipe `end`/`close`/`error` uses one idempotent disconnect path, invalidates only that credential, changes only that recipient's queued handoffs to `manual_actionable`, publishes each change, and keeps later work manual. A completed request close remains healthy. | PASS |
 | 2026-08-29 | T060 OpenAI Sol final review | Independent read-only `gpt-5.6-sol` / `max` fault re-review of branch `codex/002-provider-coordination-us3` at base `e9d2d7c` | 0 | No P0–P3 findings remain. Approval is limited to US3: one oldest user-origin item per proved safe point; provider replies still require T066/P4 opt-in; built-in Claude 2.1.251 and Codex 0.150.1 remain manual-only. | PASS — APPROVED FOR US3 |
 | 2026-08-29 | T060 final current-tree verification | Lint; typecheck; full unit; full contract; desktop build; focused Windows delivery; full coordination E2E; provider acceptance; scoped formatting and whitespace audit | 0 | Lint/typecheck passed; unit 121/121, contract 150/150, desktop main/preload/renderer built, Windows delivery 13/13, coordination E2E 6/6, provider acceptance 6 passed with 1 packaged-only skip, scoped Prettier passed, and `git diff --check` passed. | PASS — US3 COMPLETE |
+| 2026-08-29 | T061 US4 model and reviewer gate | Codex CLI 0.150.1 exact tool-free read-only probes for `gpt-5.6-sol` / `max` and `gpt-5.6-terra` / `max`; Claude Code 2.1.251 exact tool-free `claude-opus-5` / `xhigh` probe; `agy models`; active human-owner instruction | 0 | Sol and Terra returned their exact availability markers; Claude resolved canonical `claude-opus-5` and returned its exact marker at USD 0.032029; Antigravity 1.1.22 lists optional `gemini-3.1-pro-high`; the human owner explicitly started the next sequence. Codex emitted unrelated configured-MCP authentication warnings but completed both probes without tool use. | PASS — IMPLEMENTATION ASSIGNED; FINAL REVIEWS/OWNER ACCEPTANCE REMAIN T070 |
+| 2026-08-29 | T062 US4 domain policy red | `pnpm exec vitest run --project unit tests/unit/domain/coordination.test.ts` | 1 | Six intended failures at the absent `evaluateAutomaticContinuation` policy cover depth eight/ninth hold, third exact repeat within eight, third consecutive failure, allowed/held message kinds, paused/closed late messages, opt-in, conflict, and authority. Ten prior domain tests remained green. | EXPECTED RED |
+| 2026-08-29 | T063 US4 contract red | `pnpm exec vitest run --project contract tests/contract/desktop-ipc-coordination.test.ts` | 1 | Three intended failures for absent strict auto-continue disclosure/confirmation, escalation/disposition schemas, and named operations. Fourteen prior coordination contract tests remained green. | EXPECTED RED |
+| 2026-08-29 | T063 US4 E2E red | Focused Playwright `bounded coordination|authority escalation` | 1 | The first journey timed out at the absent enable-disclosure control; the second failed at the absent `coordination.previewAutoContinue` operation. Both failures occurred at the intended missing US4 surfaces. | EXPECTED RED |
 
 ## Cost-aware implementation delegation
 
@@ -204,6 +208,25 @@ gates and independent review rather than routine scaffolding.
   pending-draft, provider-failure, and no-replay behavior after deterministic tests pass.
 - Opus/maximum effort is restricted to lifecycle semantics and review. Deterministic fixture tests
   remain the acceptance authority; no model statement can establish safe-point support by itself.
+
+### US4 model gate decision
+
+- Codex CLI 0.150.1 completed isolated, ephemeral, read-only, tool-free probes for both the primary
+  `gpt-5.6-sol` / `max` and the same-ecosystem fallback `gpt-5.6-terra` / `max`. Sol is assigned to
+  the authority-critical US4 policy slice; Terra remains available only as the approved fallback.
+- The probes emitted authentication warnings for unrelated configured MCP servers, but both model
+  turns completed successfully and used no repository tools. Those optional MCP warnings do not
+  establish a US4 product or test dependency.
+- Claude Code 2.1.251 completed a safe-mode, tool-free, non-persistent probe that resolved canonical
+  `claude-opus-5` at `xhigh` and returned the exact availability marker. It remains independent and
+  must not be used to implement the code it will adversarially review at T070.
+- Antigravity CLI 1.1.22 lists optional `gemini-3.1-pro-high`; it may provide the second independent
+  review if quota permits, but its absence or non-use does not replace the required Claude/human gate.
+- The human owner is present and explicitly authorized starting this US4 sequence. Final human
+  acceptance of depth, loop, failure, conflict, closed-state, and consequential-authority behavior
+  remains open until T070; availability is not acceptance.
+- Maximum-effort frontier use is restricted to US4 policy and adversarial review. Deterministic red/
+  green tests, Windows isolation evidence, and explicit owner acceptance remain authoritative.
 
 ## Story checkpoints
 
@@ -319,6 +342,57 @@ verification. Never record secrets, terminal transcripts, hidden prompts, or raw
   manual-only; deterministic provider/Windows/E2E slices pass; and the independent OpenAI Sol fault
   review reports no remaining P0–P3 findings. Approval is limited to US3 and does not include the P4
   automatic-continuation/opt-in work beginning at T061.
+
+### User Story 4 Local Implementation & Test Evidence (T061–T070 partial)
+
+- **T061 model gate**: Codex CLI 0.150.1 returned exact successful read-only probes for
+  `gpt-5.6-sol`/`max` and fallback `gpt-5.6-terra`/`max`; Claude Code 2.1.251 returned an exact
+  successful no-tools probe for canonical `claude-opus-5`/`xhigh`. Antigravity 1.1.22 lists the
+  optional `gemini-3.1-pro-high` reviewer. Human-owner availability is established by the owner
+  starting this sequence; final acceptance remains pending.
+- **T062/T064 domain policy**: the initial focused run failed 6/6 new cases because
+  `evaluateAutomaticContinuation` did not exist. The final focused domain/persistence/service run
+  passed 41/41. It proves terminal-state precedence, specific authority/conflict reasons even when
+  opt-in is off, depth eight/ninth hold, third exact equivalent inside the bounded window, held-kind
+  loop detection, consecutive-failure reset after success, allowed/held kinds, and closed-state
+  finality.
+- **T063/T067 strict desktop contract**: the initial focused contract run failed 3 new cases on
+  missing schemas and operations. The final desktop/provider contract run passed 30/30, including
+  one-use auto-continue disclosure, content-free escalation views, exact dispositions, structured
+  conflict propagation, and recoverable MCP tool errors that do not revoke the session credential.
+- **T065 transactional persistence**: the initial focused persistence run failed 3 new cases on
+  missing opt-in/escalation methods and absent third-failure pause. The final suite proves rollback
+  when escalation insertion fails, the partial unique one-open-escalation invariant, specific held
+  late arrivals, closed conversations rejecting presentation/reopen, queued siblings becoming held
+  on pause, late post-deletion content remaining deleted, and exact once-only escalation resolution.
+- **T066/T068 E2E**: after the initial expected failures on missing named operations and UI, the
+  final built-desktop slice passed 2/2: a reviewed bounded continuation delivers exactly one eligible
+  provider reply, and an authority escalation closes the conversation while a later provider message
+  remains held with `CONVERSATION_CLOSED`.
+- **T069 Windows isolation**: the final sequential Windows recovery slice passed 10/10, including
+  exact-repeat loop, three-failure, conflict, authority, closed-arrival, and cross-conversation
+  isolation cases.
+- **Rust bridge**: `cargo fmt --check` passed and the coordination-bridge binary tests passed 8/8
+  after adding required structured conflict and response-expectation fields.
+- **Static/build gates**: Prettier, ESLint, TypeScript project build, and Electron desktop build all
+  passed on the corrected implementation.
+- **Claude adversarial review**: `claude-opus-5`/`xhigh` reviewed the current repository with
+  read-only tools. Its P1 paused-sibling presentation path was reproduced and fixed by holding queued
+  and manual-actionable siblings transactionally and checking open conversation state at disclosure,
+  confirmation, repository attempt preparation, and automatic safe-point presentation. Its bounded
+  P2 findings were also corrected where in scope: tool-call errors return safe MCP errors without
+  revoking a valid bridge, escalation/conversation changes are emitted live, post-deletion late
+  arrivals remain content-free, deleted handoffs cannot be retargeted, response expectations are
+  schema-aligned, and the repeat window uses one documented newest-first ordering.
+- **Open reviewer/design disposition**: `redirect` currently records an exact redirected disposition
+  but, under the approved invariant that no third participant enters a reply conversation, the only
+  non-sender participant is already the current recipient. Making redirect change the target safely
+  requires an explicit contract decision: fork the held work into a new two-party conversation with
+  auditable linkage, or expand the participant model. This is not being guessed in implementation.
+  T070 and human acceptance remain open until the owner selects that interpretation or explicitly
+  accepts the bounded same-participant disposition.
+- **Optional review**: Antigravity review was not consumed because it is optional and the independent
+  Claude review already identified the remaining product-contract decision. No result is claimed.
 
 ## Rollback and recovery notes
 

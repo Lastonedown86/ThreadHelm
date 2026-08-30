@@ -23,6 +23,7 @@ import {
   CONVERSATION_TRANSITIONS,
   DELIVERY_ATTEMPT_TRANSITIONS,
   DELIVERY_TRANSITIONS,
+  evaluateAutomaticContinuation,
   ESCALATION_TRANSITIONS,
   selectExactRecipient,
   WORK_OUTCOME_TRANSITIONS,
@@ -41,7 +42,7 @@ const EXPECTED_CONVERSATION_TRANSITIONS: Readonly<
 const EXPECTED_DELIVERY_TRANSITIONS: Readonly<Record<DeliveryState, readonly DeliveryState[]>> = {
   queued: ['held', 'manual_actionable', 'presenting', 'failed', 'cancelled'],
   held: ['queued', 'manual_actionable', 'cancelled'],
-  manual_actionable: ['queued', 'presenting', 'cancelled'],
+  manual_actionable: ['queued', 'held', 'presenting', 'cancelled'],
   presenting: ['delivered', 'manual_actionable'],
   delivered: ['acknowledged'],
   acknowledged: [],
@@ -200,5 +201,163 @@ describe('coordination delivery policy', () => {
     );
     expect(advanceEscalationState('continued', 'continued')).toBe('continued');
     expect(() => advanceEscalationState('closed', 'open')).toThrowError(ThreadHelmError);
+  });
+});
+
+describe('bounded automatic continuation policy', () => {
+  const baseInput = {
+    autoContinueEnabled: true,
+    conversationState: 'open' as const,
+    kind: 'response' as const,
+    replyDepth: 1,
+    candidateFingerprint: 'reply-a',
+    recentEquivalentFingerprints: [] as string[],
+    consecutiveDeliveryFailures: 0,
+    conflictingInstruction: false,
+    authorityRequired: false,
+  };
+
+  it('presents replies through depth eight and pauses before the ninth reply', () => {
+    expect(evaluateAutomaticContinuation({ ...baseInput, replyDepth: 8 })).toEqual({
+      action: 'present',
+      reasonCode: null,
+      escalationKind: null,
+      pauseConversation: false,
+    });
+    expect(evaluateAutomaticContinuation({ ...baseInput, replyDepth: 9 })).toEqual({
+      action: 'hold',
+      reasonCode: 'REPLY_DEPTH_LIMIT',
+      escalationKind: 'reply_depth',
+      pauseConversation: true,
+    });
+  });
+
+  it('pauses before the third exact equivalent item within the latest eight handoffs', () => {
+    expect(
+      evaluateAutomaticContinuation({
+        ...baseInput,
+        candidateFingerprint: 'same',
+        recentEquivalentFingerprints: ['other-1', 'same', 'other-2', 'same'],
+      }),
+    ).toEqual({
+      action: 'hold',
+      reasonCode: 'EQUIVALENT_MESSAGE_LOOP',
+      escalationKind: 'equivalent_message_loop',
+      pauseConversation: true,
+    });
+
+    expect(
+      evaluateAutomaticContinuation({
+        ...baseInput,
+        candidateFingerprint: 'same',
+        recentEquivalentFingerprints: [
+          'same',
+          'outside-1',
+          'outside-2',
+          'outside-3',
+          'outside-4',
+          'outside-5',
+          'outside-6',
+          'same',
+        ],
+      }),
+    ).toEqual({
+      action: 'present',
+      reasonCode: null,
+      escalationKind: null,
+      pauseConversation: false,
+    });
+  });
+
+  it('pauses after three consecutive delivery failures', () => {
+    expect(
+      evaluateAutomaticContinuation({ ...baseInput, consecutiveDeliveryFailures: 2 }).action,
+    ).toBe('present');
+    expect(evaluateAutomaticContinuation({ ...baseInput, consecutiveDeliveryFailures: 3 })).toEqual(
+      {
+        action: 'hold',
+        reasonCode: 'REPEATED_DELIVERY_FAILURE',
+        escalationKind: 'repeated_delivery_failure',
+        pauseConversation: true,
+      },
+    );
+  });
+
+  it('allows only non-authorizing continuation kinds and holds requests, queries, and proposals', () => {
+    for (const kind of ['inform', 'response', 'completion', 'refusal', 'failure'] as const) {
+      expect(evaluateAutomaticContinuation({ ...baseInput, kind }).action, kind).toBe('present');
+    }
+    for (const kind of ['request', 'query', 'proposal'] as const) {
+      expect(evaluateAutomaticContinuation({ ...baseInput, kind }), kind).toEqual({
+        action: 'hold',
+        reasonCode: 'KIND_HELD',
+        escalationKind: null,
+        pauseConversation: false,
+      });
+    }
+  });
+
+  it('holds every late message for paused or closed conversations without reopening them', () => {
+    expect(evaluateAutomaticContinuation({ ...baseInput, conversationState: 'paused' })).toEqual({
+      action: 'hold',
+      reasonCode: 'CONVERSATION_PAUSED',
+      escalationKind: null,
+      pauseConversation: false,
+    });
+    expect(evaluateAutomaticContinuation({ ...baseInput, conversationState: 'closed' })).toEqual({
+      action: 'hold',
+      reasonCode: 'CONVERSATION_CLOSED',
+      escalationKind: null,
+      pauseConversation: false,
+    });
+  });
+
+  it('fails closed for disabled opt-in, conflicts, and consequential authority', () => {
+    expect(evaluateAutomaticContinuation({ ...baseInput, autoContinueEnabled: false })).toEqual({
+      action: 'hold',
+      reasonCode: 'AUTO_CONTINUE_DISABLED',
+      escalationKind: null,
+      pauseConversation: false,
+    });
+    expect(evaluateAutomaticContinuation({ ...baseInput, conflictingInstruction: true })).toEqual({
+      action: 'hold',
+      reasonCode: 'CONFLICTING_INSTRUCTION',
+      escalationKind: 'conflicting_instruction',
+      pauseConversation: true,
+    });
+    expect(evaluateAutomaticContinuation({ ...baseInput, authorityRequired: true })).toEqual({
+      action: 'hold',
+      reasonCode: 'AUTHORITY_REQUIRED',
+      escalationKind: 'authority_required',
+      pauseConversation: true,
+    });
+    expect(
+      evaluateAutomaticContinuation({
+        ...baseInput,
+        autoContinueEnabled: false,
+        authorityRequired: true,
+      }),
+    ).toEqual({
+      action: 'hold',
+      reasonCode: 'AUTHORITY_REQUIRED',
+      escalationKind: 'authority_required',
+      pauseConversation: true,
+    });
+  });
+
+  it('escalates the third equivalent item even when its message kind is already held', () => {
+    expect(
+      evaluateAutomaticContinuation({
+        ...baseInput,
+        kind: 'query',
+        candidateFingerprint: 'same',
+        recentEquivalentFingerprints: ['same', 'other', 'same'],
+      }),
+    ).toEqual({
+      action: 'hold',
+      reasonCode: 'EQUIVALENT_MESSAGE_LOOP',
+      escalationKind: 'equivalent_message_loop',
+      pauseConversation: true,
+    });
   });
 });

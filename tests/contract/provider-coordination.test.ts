@@ -88,6 +88,22 @@ describe('Provider coordination bridge contract (T033)', () => {
       expect(response.result).toMatchObject({ isError: false });
       expect(manager.hasValidCredential(SESSION_B)).toBe(true);
 
+      const rejected = await requestOverPipe(config.pipeName, {
+        sessionId: SESSION_B,
+        credential: secretConfig.credential,
+        payload: {
+          jsonrpc: '2.0',
+          id: 8,
+          method: 'tools/call',
+          params: { name: 'threadhelm_unknown_tool', arguments: {} },
+        },
+      });
+      expect(rejected.result).toMatchObject({
+        isError: true,
+        structuredContent: { code: 'INVALID_REQUEST' },
+      });
+      expect(manager.hasValidCredential(SESSION_B)).toBe(true);
+
       manager.revoke(SESSION_B);
       expect(() => readFileSync(config.sessionConfigPath, 'utf8')).toThrow();
     } finally {
@@ -154,6 +170,7 @@ describe('Provider coordination bridge contract (T033)', () => {
         body: 'x'.repeat(33 * 1024),
         responseExpectation: 'none',
         authorityRequired: false,
+        conflictingInstruction: false,
       },
     };
     await expect(
@@ -211,6 +228,20 @@ describe('Provider coordination bridge contract (T033)', () => {
     // 4. report_outcome
     const outcomeRes = await manager.dispatch(SESSION_B, cred.token, bridgeReportOutcomeRequest());
     expect(resultOf(outcomeRes).workOutcome).toBe('completed');
+  });
+
+  it('carries a structured conflict signal into a held provider reply', async () => {
+    const manager = new BridgeSessionManager();
+    const cred = manager.issueCredential(SESSION_B, 'claude-code', '2.0.0');
+    const fixture = bridgeReplyRequest();
+    const response = await manager.dispatch(SESSION_B, cred.token, {
+      ...fixture,
+      params: { ...fixture.params, conflictingInstruction: true },
+    });
+    expect(resultOf(response)).toMatchObject({
+      deliveryState: 'held',
+      holdReasonCode: 'CONFLICTING_INSTRUCTION',
+    });
   });
 
   it('enforces rate limit of at most 20 actions per minute per session', async () => {

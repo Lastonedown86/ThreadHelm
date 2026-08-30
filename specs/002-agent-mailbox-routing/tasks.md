@@ -183,21 +183,21 @@ completion, hold, pause, or escalation.
 
 ### Model gate for User Story 4
 
-- [ ] T061 [US4] Verify OpenAI `gpt-5.6-sol` at `max`, fallback `gpt-5.6-terra` at `max`, Claude `claude-opus-5` at `xhigh`, human owner, and optional Antigravity `gemini-3.1-pro-high` reviewer availability; record the complete gate in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T061 [US4] Verify OpenAI `gpt-5.6-sol` at `max`, fallback `gpt-5.6-terra` at `max`, Claude `claude-opus-5` at `xhigh`, human owner, and optional Antigravity `gemini-3.1-pro-high` reviewer availability; record the complete gate in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 ### Tests for User Story 4
 
-- [ ] T062 [P] [US4] Write failing depth-eight, exact-repeat-three-of-eight, three-failure, message-kind, pause/close, and consequential-authority tests in `tests/unit/domain/coordination.test.ts`
-- [ ] T063 [P] [US4] Write failing auto-continue disclosure, held-message, escalation disposition, and late-message contract/E2E cases in `tests/contract/desktop-ipc-coordination.test.ts` and `tests/e2e/coordination.spec.ts`
+- [X] T062 [P] [US4] Write failing depth-eight, exact-repeat-three-of-eight, three-failure, message-kind, pause/close, and consequential-authority tests in `tests/unit/domain/coordination.test.ts`
+- [X] T063 [P] [US4] Write failing auto-continue disclosure, held-message, escalation disposition, and late-message contract/E2E cases in `tests/contract/desktop-ipc-coordination.test.ts` and `tests/e2e/coordination.spec.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T064 [US4] Implement deterministic automatic-continuation, reply-depth, normalized-repeat, failure, conflict, closed-state, and authority-hold policy in `packages/domain/src/coordination.ts`
-- [ ] T065 [US4] Persist failure counters, open escalation uniqueness, held arrivals, and exact user dispositions transactionally in `packages/persistence/src/repositories/coordination.ts`
-- [ ] T066 [US4] Enforce per-conversation opt-in and evaluate every provider reply before presentation in `apps/desktop/src/main/coordination/service.ts` and `apps/desktop/src/main/coordination/delivery.ts`
-- [ ] T067 [US4] Add strict auto-continue preview/confirm and escalation continue/redirect/close operations in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
-- [ ] T068 [US4] Build the keyboard-accessible held-message and escalation disposition surface in `apps/desktop/src/renderer/features/coordination/EscalationPanel.tsx` and integrate it in `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`
-- [ ] T069 [US4] Add sequential Windows loop, failure, conflict, authority, and closed-conversation isolation tests in `tests/integration/windows/coordination-recovery.test.ts`
+- [X] T064 [US4] Implement deterministic automatic-continuation, reply-depth, normalized-repeat, failure, conflict, closed-state, and authority-hold policy in `packages/domain/src/coordination.ts`
+- [X] T065 [US4] Persist failure counters, open escalation uniqueness, held arrivals, and exact user dispositions transactionally in `packages/persistence/src/repositories/coordination.ts`
+- [X] T066 [US4] Enforce per-conversation opt-in and evaluate every provider reply before presentation in `apps/desktop/src/main/coordination/service.ts` and `apps/desktop/src/main/coordination/delivery.ts`
+- [X] T067 [US4] Add strict auto-continue preview/confirm and escalation continue/redirect/close operations in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
+- [X] T068 [US4] Build the keyboard-accessible held-message and escalation disposition surface in `apps/desktop/src/renderer/features/coordination/EscalationPanel.tsx` and integrate it in `apps/desktop/src/renderer/features/coordination/ConversationView.tsx`
+- [X] T069 [US4] Add sequential Windows loop, failure, conflict, authority, and closed-conversation isolation tests in `tests/integration/windows/coordination-recovery.test.ts`
 - [ ] T070 [US4] Run the US4 domain, contract, Windows, and E2E slices; capture final exits, Claude adversarial review, optional Antigravity review, and explicit human acceptance in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 **Checkpoint**: US4 provides bounded coordination suitable as the deterministic safety layer for

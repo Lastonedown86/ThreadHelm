@@ -13,6 +13,7 @@ import {
   type LaunchPermissionSelection,
   type LaunchPreviewView,
   type LaunchRuntimeSelection,
+  type LaunchWorkType,
   type ProviderId,
   type ReadinessView,
   type TerminalSize,
@@ -25,7 +26,9 @@ import { revalidateWorkspace, type ResolvedWorkspace } from '../workspaces/ident
 import { assertLeaseFree } from './lease.js';
 import {
   DEFAULT_PROVIDER_EXECUTION_BOUNDS,
+  type PersistedRuntimePolicy,
   resolveLaunchPermission,
+  resolveLaunchRuntime,
   samePermissionCapability,
 } from './launch-policy.js';
 
@@ -45,9 +48,16 @@ export async function previewLaunch(
   workspaceId: string,
   providerId: ProviderId,
   terminal: TerminalSize,
-  runtimeSelection: LaunchRuntimeSelection,
+  runtimeSelection: LaunchRuntimeSelection | null,
   permissionSelection: LaunchPermissionSelection = { policy: null, boundedAllowlist: [] },
   executionBounds: ProviderExecutionBounds = DEFAULT_PROVIDER_EXECUTION_BOUNDS,
+  workType: LaunchWorkType = 'general',
+  runtimeEscalationReason: string | null = null,
+  persistedRuntimePolicies: {
+    profileRevisionRequest: PersistedRuntimePolicy | null;
+    taskTypePolicy: PersistedRuntimePolicy | null;
+    projectPolicy: PersistedRuntimePolicy | null;
+  } = { profileRevisionRequest: null, taskTypePolicy: null, projectPolicy: null },
 ): Promise<LaunchPreviewView> {
   const workspace = findWorkspace(ctx, workspaceId);
   if (workspace.revokedAt) {
@@ -67,17 +77,25 @@ export async function previewLaunch(
   if (!adapter || !readiness.version) {
     throw new ThreadHelmError('PROVIDER_UNAVAILABLE', 'The provider is not ready to launch.');
   }
+  const runtimeResolution = resolveLaunchRuntime({
+    providerId,
+    taskType: workType,
+    oneRunOverride: runtimeSelection,
+    ...persistedRuntimePolicies,
+    escalationReason: runtimeEscalationReason,
+  });
+  const effectiveRuntimeSelection = runtimeResolution.runtimeSelection;
   const observedAt = ctx.clock().toISOString();
   const capabilityEvidence =
     adapter.permissionCapabilityEvidence?.({
       providerVersion: readiness.version,
-      model: runtimeSelection.model,
+      model: effectiveRuntimeSelection.model,
       observedAt,
     }) ?? null;
   const permissionResolution = resolveLaunchPermission({
     providerId,
     providerVersion: readiness.version,
-    model: runtimeSelection.model,
+    model: effectiveRuntimeSelection.model,
     invocation: 'direct',
     oneRunSelection: permissionSelection,
     taskPolicy: null,
@@ -96,7 +114,8 @@ export async function previewLaunch(
     providerId,
     readiness,
     terminal,
-    runtimeSelection,
+    runtimeSelection: effectiveRuntimeSelection,
+    runtimeResolution,
     permissionSelection,
     permissionResolution,
     executionBounds: boundedExecution,
@@ -118,7 +137,8 @@ export async function previewLaunch(
     readiness,
     boundaryWarning: BOUNDARY_WARNING,
     terminal,
-    runtimeSelection,
+    runtimeSelection: effectiveRuntimeSelection,
+    runtimeResolution,
     permissionResolution,
     executionBounds: boundedExecution,
     coordinationBridge,
@@ -140,6 +160,13 @@ export async function revalidatePreview(
   ctx: Context,
   preview: PreviewPayload,
 ): Promise<RevalidatedLaunch> {
+  if (preview.runtimeResolution.disposition !== 'ready') {
+    throw new ThreadHelmError(
+      'INVALID_REQUEST',
+      'A recorded reason is required for this model or effort escalation.',
+      { reason: preview.runtimeResolution.reasonCode ?? 'RUNTIME_POLICY_HELD' },
+    );
+  }
   const workspaceRecord = findWorkspace(ctx, preview.workspaceId);
   if (workspaceRecord.revokedAt) {
     throw new ThreadHelmError('WORKSPACE_CHANGED', 'This workspace approval was revoked.', {

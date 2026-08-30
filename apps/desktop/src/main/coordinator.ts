@@ -49,6 +49,8 @@ export function createHandlers(ctx: Context): Handlers {
       providerId,
       terminal,
       runtimeSelection,
+      workType,
+      runtimeEscalationReason,
       permissionSelection,
       executionBounds,
     }) =>
@@ -60,6 +62,8 @@ export function createHandlers(ctx: Context): Handlers {
         runtimeSelection ?? { model: null, effort: null },
         permissionSelection ?? { policy: null, boundedAllowlist: [] },
         executionBounds,
+        workType,
+        runtimeEscalationReason,
       ),
     'sessions.launch': ({ previewToken, boundaryConfirmation }) =>
       launchSession(ctx, previewToken, boundaryConfirmation),

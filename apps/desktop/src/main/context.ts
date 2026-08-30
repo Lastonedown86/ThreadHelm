@@ -8,6 +8,7 @@ import type { MessagePortMain } from 'electron';
 import type {
   LifecycleState,
   LaunchPermissionResolution,
+  LaunchRuntimeResolution,
   LaunchPermissionSelection,
   LaunchRuntimeSelection,
   MainToHostMessage,
@@ -152,6 +153,7 @@ export interface PreviewPayload {
   readiness: ReadinessView;
   terminal: TerminalSize;
   runtimeSelection: LaunchRuntimeSelection;
+  runtimeResolution: LaunchRuntimeResolution;
   permissionSelection: LaunchPermissionSelection;
   permissionResolution: LaunchPermissionResolution;
   executionBounds: ProviderExecutionBounds;

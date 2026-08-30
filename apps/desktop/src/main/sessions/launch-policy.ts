@@ -8,6 +8,8 @@
 
 import {
   BreakGlassIsolationProof,
+  LaunchRuntimeResolution,
+  LaunchRuntimeSelection,
   LaunchPermissionResolution,
   PermissionCapabilityEvidence,
   ProviderExecutionBounds,
@@ -15,10 +17,131 @@ import {
   ProviderProgressEvent,
   ThreadHelmError,
   type LaunchPermissionSelection,
+  type LaunchRuntimeSource,
+  type LaunchWorkType,
   type ProviderId,
   type RuntimePermissionPolicy,
   type RuntimePermissionSource,
 } from '@threadhelm/contracts';
+
+export interface PersistedRuntimePolicy {
+  /** Immutable revision/policy identity loaded by main from durable state. */
+  reference: string;
+  runtimeSelection: LaunchRuntimeSelection;
+}
+
+export interface ResolveLaunchRuntimeInput {
+  providerId: ProviderId;
+  taskType: LaunchWorkType;
+  /** A non-null object includes an explicit one-run CLI-default choice when both fields are null. */
+  oneRunOverride: LaunchRuntimeSelection | null;
+  profileRevisionRequest: PersistedRuntimePolicy | null;
+  taskTypePolicy: PersistedRuntimePolicy | null;
+  projectPolicy: PersistedRuntimePolicy | null;
+  escalationReason: string | null;
+}
+
+interface RuntimeCandidate {
+  source: LaunchRuntimeSource;
+  runtimeSelection: LaunchRuntimeSelection;
+}
+
+const source = (
+  kind: LaunchRuntimeSource['kind'],
+  reference: string | null,
+): LaunchRuntimeSource => ({
+  kind,
+  reference,
+});
+
+function persistedCandidate(
+  kind: 'profile_revision' | 'task_type_policy' | 'project_policy',
+  policy: PersistedRuntimePolicy | null,
+): RuntimeCandidate | null {
+  if (!policy) return null;
+  return {
+    source: source(kind, policy.reference),
+    runtimeSelection: LaunchRuntimeSelection.parse(policy.runtimeSelection),
+  };
+}
+
+function resolveRuntimeField<K extends keyof LaunchRuntimeSelection>(
+  field: K,
+  candidates: readonly RuntimeCandidate[],
+): { value: LaunchRuntimeSelection[K]; source: LaunchRuntimeSource } {
+  for (const candidate of candidates) {
+    const value = candidate.runtimeSelection[field];
+    if (candidate.source.kind === 'one_run' || value !== null) {
+      return { value, source: candidate.source };
+    }
+  }
+  return { value: null, source: source('cli_default', null) } as {
+    value: LaunchRuntimeSelection[K];
+    source: LaunchRuntimeSource;
+  };
+}
+
+function testWorkRecommendation(providerId: ProviderId, workType: LaunchWorkType) {
+  if (workType !== 'test_authoring' && workType !== 'failure_analysis') return null;
+  return {
+    model: providerId === 'codex-cli' ? 'gpt-5.6-luna' : 'sonnet',
+    effort: 'low' as const,
+    reason:
+      workType === 'test_authoring'
+        ? 'Lowest-cost capable approved option for routine test authoring.'
+        : 'Lowest-cost capable approved option for routine test failure analysis.',
+  };
+}
+
+function isHighCostModel(providerId: ProviderId, model: string | null): boolean {
+  if (!model) return false;
+  const normalized = model.toLowerCase();
+  return providerId === 'codex-cli'
+    ? normalized === 'gpt-5.6-sol' || normalized === 'gpt-5.5'
+    : normalized === 'opus' || normalized.includes('opus-');
+}
+
+export function resolveLaunchRuntime(input: ResolveLaunchRuntimeInput): LaunchRuntimeResolution {
+  const candidates: RuntimeCandidate[] = [];
+  if (input.oneRunOverride) {
+    candidates.push({
+      source: source('one_run', null),
+      runtimeSelection: LaunchRuntimeSelection.parse(input.oneRunOverride),
+    });
+  }
+  const profile = persistedCandidate('profile_revision', input.profileRevisionRequest);
+  const task = persistedCandidate('task_type_policy', input.taskTypePolicy);
+  const project = persistedCandidate('project_policy', input.projectPolicy);
+  if (profile) candidates.push(profile);
+  if (task) candidates.push(task);
+  if (project) candidates.push(project);
+
+  const model = resolveRuntimeField('model', candidates);
+  const effort = resolveRuntimeField('effort', candidates);
+  const requiresEscalationReason =
+    isHighCostModel(input.providerId, model.value) ||
+    effort.value === 'high' ||
+    effort.value === 'xhigh' ||
+    effort.value === 'max';
+  const suppliedReason = input.escalationReason?.trim() ?? '';
+  const escalationReason =
+    requiresEscalationReason && suppliedReason.length >= 20 && suppliedReason.length <= 500
+      ? suppliedReason
+      : null;
+  const heldForReason = requiresEscalationReason && escalationReason === null;
+
+  return LaunchRuntimeResolution.parse({
+    runtimeSelection: { model: model.value, effort: effort.value },
+    modelSource: model.source,
+    effortSource: effort.source,
+    workType: input.taskType,
+    recommendation: testWorkRecommendation(input.providerId, input.taskType),
+    requiresEscalationReason,
+    escalationReason,
+    disposition: heldForReason ? 'held' : 'ready',
+    reasonCode: heldForReason ? 'RUNTIME_ESCALATION_REASON_REQUIRED' : null,
+  });
+}
 
 export const DEFAULT_PROVIDER_EXECUTION_BOUNDS = ProviderExecutionBounds.parse({
   maxElapsedMs: 30 * 60_000,

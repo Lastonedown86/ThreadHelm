@@ -45,17 +45,32 @@ test('approve → disclose → launch journey', async () => {
     await expect(dialog).toContainText('Codex CLI 1.0.0');
     const model = dialog.getByRole('combobox', { name: 'Model', exact: true });
     const effort = dialog.getByRole('combobox', { name: 'Effort', exact: true });
+    const workType = dialog.getByRole('combobox', { name: 'Work type', exact: true });
     await expect(model).toHaveValue('');
     await expect(model.getByRole('option', { name: 'CLI default' })).toBeAttached();
     await expect(model.getByRole('option', { name: 'GPT-5.6 Luna' })).toBeAttached();
     await expect(model.getByRole('option', { name: 'Custom model…' })).toBeAttached();
     await expect(effort).toHaveValue('');
+    await expect(workType).toHaveValue('general');
     await expect(dialog).toContainText('CLI default');
+    await expect(dialog).toContainText('Model source');
+    await expect(dialog).toContainText('Effort source');
     const launch = dialog.getByRole('button', { name: 'Launch session' });
     const boundary = dialog.getByRole('checkbox');
     await expect(launch).toBeDisabled();
     await boundary.check();
     await expect(launch).toBeEnabled();
+
+    await workType.selectOption('test_authoring');
+    await expect(dialog).toContainText('GPT-5.6 Luna at Low');
+    await effort.selectOption('high');
+    const escalationReason = dialog.getByRole('textbox', { name: 'Escalation reason' });
+    await expect(escalationReason).toBeVisible();
+    await expect(launch).toBeDisabled();
+    await escalationReason.fill('Cross-provider regression needs deeper reasoning.');
+    await expect(launch).toBeEnabled();
+    await effort.selectOption('low');
+    await expect(escalationReason).toHaveCount(0);
 
     // Model/effort are direct choices: they refresh the preview without a second gate.
     await model.selectOption('gpt-5.6-luna');

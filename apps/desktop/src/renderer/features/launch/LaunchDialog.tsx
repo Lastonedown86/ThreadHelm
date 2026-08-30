@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import type {
   LaunchEffort,
   LaunchPreviewView,
+  LaunchWorkType,
   RuntimePermissionPolicy,
   SessionView,
 } from '@threadhelm/contracts';
@@ -47,6 +48,25 @@ function abbreviate(path: string | null): string {
   return path.length > 60 ? `…${path.slice(-57)}` : path;
 }
 
+function sourceLabel(kind: LaunchPreviewView['runtimeResolution']['modelSource']['kind']): string {
+  switch (kind) {
+    case 'one_run':
+      return 'One-run choice';
+    case 'profile_revision':
+      return 'Exact profile revision';
+    case 'task_type_policy':
+      return 'Task-type policy';
+    case 'project_policy':
+      return 'Project policy';
+    case 'cli_default':
+      return 'CLI default';
+  }
+}
+
+function modelLabel(providerId: keyof typeof MODEL_OPTIONS, model: string): string {
+  return MODEL_OPTIONS[providerId].find((option) => option.value === model)?.label ?? model;
+}
+
 export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props) {
   const [preview, setPreview] = useState<LaunchPreviewView | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -56,6 +76,8 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
   const [model, setModel] = useState('');
   const [customModel, setCustomModel] = useState('');
   const [effort, setEffort] = useState<LaunchEffort | ''>('');
+  const [workType, setWorkType] = useState<LaunchWorkType>('general');
+  const [runtimeEscalationReason, setRuntimeEscalationReason] = useState('');
   const [permission, setPermission] = useState<RuntimePermissionPolicy | ''>('');
   const [allowlist, setAllowlist] = useState('');
 
@@ -65,6 +87,8 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
     setModel('');
     setCustomModel('');
     setEffort('');
+    setWorkType('general');
+    setRuntimeEscalationReason('');
     setPermission('');
     setAllowlist('');
   }, [request.workspaceId, request.providerId]);
@@ -99,6 +123,9 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
               model: selectedModel.trim() || null,
               effort: effort || null,
             },
+            workType,
+            runtimeEscalationReason:
+              runtimeEscalationReason.trim().length >= 20 ? runtimeEscalationReason.trim() : null,
             permissionSelection: {
               policy: permission || null,
               boundedAllowlist: permission === 'bounded_allowlist' ? boundedAllowlist : [],
@@ -131,6 +158,8 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
     terminal.rows,
     selectedModel,
     effort,
+    workType,
+    runtimeEscalationReason,
     model,
     modelReady,
     permission,
@@ -160,6 +189,17 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
     <Modal title="Review this launch" onCancel={onCancel} describedBy="launch-boundary">
       <fieldset className="launch-settings">
         <legend>Provider runtime</legend>
+        <label className="field">
+          Work type
+          <select
+            value={workType}
+            onChange={(event) => setWorkType(event.target.value as LaunchWorkType)}
+          >
+            <option value="general">General work</option>
+            <option value="test_authoring">Test authoring</option>
+            <option value="failure_analysis">Test failure analysis</option>
+          </select>
+        </label>
         <label className="field">
           Model
           <select
@@ -247,6 +287,27 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
       ) : null}
       {preview ? (
         <>
+          {preview.runtimeResolution.recommendation ? (
+            <p className="notice">
+              Recommended for this work:{' '}
+              {modelLabel(request.providerId, preview.runtimeResolution.recommendation.model)} at{' '}
+              {preview.runtimeResolution.recommendation.effort === 'low' ? 'Low' : 'Medium'}.{' '}
+              {preview.runtimeResolution.recommendation.reason}
+            </p>
+          ) : null}
+          {preview.runtimeResolution.requiresEscalationReason ? (
+            <label className="field">
+              Escalation reason
+              <textarea
+                value={runtimeEscalationReason}
+                rows={2}
+                minLength={20}
+                maxLength={500}
+                placeholder="Why this higher-cost model or effort is required"
+                onChange={(event) => setRuntimeEscalationReason(event.target.value)}
+              />
+            </label>
+          ) : null}
           <dl className="facts">
             <dt>Agent</dt>
             <dd>
@@ -260,6 +321,8 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
             <dd>{preview.readiness.authentication}</dd>
             <dt>Model</dt>
             <dd>{preview.runtimeSelection.model ?? 'CLI default'}</dd>
+            <dt>Model source</dt>
+            <dd>{sourceLabel(preview.runtimeResolution.modelSource.kind)}</dd>
             <dt>Effort</dt>
             <dd>
               {preview.runtimeSelection.effort
@@ -270,6 +333,8 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
                     : `${preview.runtimeSelection.effort[0]!.toUpperCase()}${preview.runtimeSelection.effort.slice(1)}`
                 : 'CLI default'}
             </dd>
+            <dt>Effort source</dt>
+            <dd>{sourceLabel(preview.runtimeResolution.effortSource.kind)}</dd>
             <dt>Runtime permission</dt>
             <dd>{preview.permissionResolution.policy.replaceAll('_', ' ')}</dd>
             <dt>Permission source</dt>
@@ -317,6 +382,12 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
               . ThreadHelm will not substitute bypass permission.
             </p>
           ) : null}
+          {preview.runtimeResolution.disposition === 'held' ? (
+            <p className="notice warning" role="status">
+              Record why this higher-cost model or effort is required before launch. The reason is
+              bound to this one-run preview.
+            </p>
+          ) : null}
           <p id="launch-boundary" className="notice warning">
             {preview.boundaryWarning}
           </p>
@@ -344,6 +415,7 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
           disabled={
             !preview ||
             preview.permissionResolution.disposition !== 'ready' ||
+            preview.runtimeResolution.disposition !== 'ready' ||
             !confirmed ||
             busy ||
             checking

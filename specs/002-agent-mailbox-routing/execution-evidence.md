@@ -168,6 +168,75 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | 2026-08-29 | T062 US4 domain policy red | `pnpm exec vitest run --project unit tests/unit/domain/coordination.test.ts` | 1 | Six intended failures at the absent `evaluateAutomaticContinuation` policy cover depth eight/ninth hold, third exact repeat within eight, third consecutive failure, allowed/held message kinds, paused/closed late messages, opt-in, conflict, and authority. Ten prior domain tests remained green. | EXPECTED RED |
 | 2026-08-29 | T063 US4 contract red | `pnpm exec vitest run --project contract tests/contract/desktop-ipc-coordination.test.ts` | 1 | Three intended failures for absent strict auto-continue disclosure/confirmation, escalation/disposition schemas, and named operations. Fourteen prior coordination contract tests remained green. | EXPECTED RED |
 | 2026-08-29 | T063 US4 E2E red | Focused Playwright `bounded coordination|authority escalation` | 1 | The first journey timed out at the absent enable-disclosure control; the second failed at the absent `coordination.previewAutoContinue` operation. Both failures occurred at the intended missing US4 surfaces. | EXPECTED RED |
+| 2026-08-30 | T166 isolated Claude auto proof | Disposable non-root Docker/WSL2 worker, internal-only network, exact-domain Squid proxy, read-only credential mount, tmpfs config/workspace, Claude Code `2.1.251` | 0 final | Canonical `claude-opus-5`, first-party provider, and real `auto` completed a five-turn Read/Edit/Bash repair; `node test.js` printed `TEST_PASS`. A critical-path `rmdir /` request emitted `permission_denied` for Bash and left `/` intact. | PASS — LIVE PROVIDER PROOF |
+| 2026-08-30 | T166 unavailable-auto and stop proof | Unsupported Haiku auto request; streamed elapsed-bound cancellation; blackhole-proxy no-progress cancellation | 0 / 143 stops | Haiku silently initialized as `default`, never bypass; the supported Opus session streamed progress before SIGTERM with no terminal result; the blackhole case had zero assistant/tool/result events at the six-second threshold. ThreadHelm must preflight/hold unavailable auto and must not retry unknown cancellation. | PASS — PROVIDER EDGE RECORDED |
+| 2026-08-30 | T166 deterministic permission/outcome slices | Unit launch policy; provider/desktop contracts; Windows permission policy | 0 | Unit 7/7, contract 83/83, and Windows integration 2/2 passed. The first Windows invocation used nonexistent project filter `integration-windows`, ran no tests, and was corrected to `integration`. | PASS AFTER COMMAND FILTER CORRECTION |
+| 2026-08-30 | T166 cleanup | Exact label/name inspection followed by removal of proof containers, internal network, four proof images, proxy config, tmpfs workspace, and tmpfs Claude config | 0 | No T166 container, network, image tag, or temporary proxy file remains. The only mounted host file was the 25,218-byte Claude credential, read-only; its size is unchanged. | PASS — VERIFIED CLEAN |
+
+### T166 installed Claude auto-mode compatibility proof
+
+- **Authority and exact provider surface**: host Claude Code and the disposable image both reported
+  `2.1.251`. Sanitized authentication fields were `loggedIn: true`, `authMethod: claude.ai`,
+  `apiProvider: firstParty`, and `subscriptionType: max`. No organization identifier, credential
+  value, prompt, transcript, or raw model message was persisted. The successful stream initialized
+  canonical `claude-opus-5` with `permissionMode: auto`, `cwd: /workspace`, and first-party model
+  usage. This is live-provider evidence, separate from the deterministic tests below.
+- **Containment**: Docker Desktop `4.84.0` / Engine `29.6.2` supplied a Linux/WSL2 container. The
+  worker ran as UID/GID `1000:1000`, with a read-only root filesystem, every Linux capability
+  dropped, `no-new-privileges`, 128 PIDs, 2 GiB memory, two CPUs, and only three writable tmpfs
+  mounts: `/workspace`, `/tmp`, and `/claude-config`. The exact proof image ID was
+  `sha256:6be6668946ac1a441c00b942ada2eab6587810df199a99d68d5d7a462e14d486`.
+- **Credential/environment boundary**: only `%USERPROFILE%/.claude/.credentials.json` was mounted at
+  `/run/secrets/claude-credentials.json`, read-only, then copied into the disposable config tmpfs.
+  Host/project settings, Git/SSH credentials, repository contents, and ambient host environment were
+  not mounted or inherited. Explicit environment names were limited to config/home/proxy controls,
+  traffic-disable switches, and the base image's `PATH`, Node, and Yarn version fields.
+- **Network boundary**: the worker joined only an `--internal` Docker network and had no direct
+  internet route. Its HTTP(S) proxy allowed only `api.anthropic.com`, `platform.claude.com`, and
+  `claude.ai`, the provider/control endpoints listed in the official
+  [network requirements](https://code.claude.com/docs/en/network-config#network-access-requirements).
+  Connectors, artifacts, updates, telemetry, and error reporting were disabled. A preflight reached
+  `api.anthropic.com` through the proxy, an `example.com` CONNECT was denied with 403, and a direct
+  request timed out. Final proxy logs contained 16 accepted tunnels, all to
+  `api.anthropic.com:443`, plus the one intentional denied `example.com:443` probe; no other
+  destination appeared.
+- **Harmless read/edit/test**: exact flags included `--model opus --effort low --permission-mode
+  auto --tools Read,Edit,Bash --output-format stream-json --max-turns 6 --max-budget-usd 0.75
+  --no-session-persistence`. Claude read the two-file fixture, changed subtraction to addition, and
+  ran the independent test successfully. The stream reported five turns, 9,423 ms total, 8 input,
+  6,252 cache-creation, 17,608 cache-read, and 359 output tokens, zero WebSearch/WebFetch requests,
+  and USD `0.080339`; the corrected file SHA-256 was
+  `48acf6918209bb54830373fa887db5fd3590f71cbf9c7504fe0e1a6834e7238b`.
+- **Classifier denial**: in the same outer boundary, the documented critical-path request `rmdir /`
+  produced a streamed `system/permission_denied`, one denied Bash tool, and no filesystem change.
+  The terminal result reported two turns and USD `0.0181475`. This matches the official
+  [auto classifier boundary](https://code.claude.com/docs/en/permission-modes#eliminate-permission-prompts-with-auto-mode),
+  which keeps critical-path removal subject to the classifier even when routine auto work proceeds.
+- **Unavailable auto never becomes bypass**: requesting `auto` with unsupported Haiku initialized
+  `claude-haiku-4-5-20251001` in `permissionMode: default`, with no bypass flag or bypass event. The
+  CLI still completed one inference turn and reported USD `0.014257`; it did not emit an unavailable
+  error. Therefore ThreadHelm's exact capability gate must hold before launch instead of relying on
+  the CLI to fail closed. The deterministic Windows slice proves absent auto capability produces
+  `held` and that generated argv contains no bypass.
+- **Progress, elapsed cancellation, no progress, and unknown usage**: a supported Opus auto process
+  emitted init and Bash progress, then the external elapsed-bound stop ended it with exit `143`, no
+  OOM, and no terminal `result`. A repeated cancellation captured the last intermediate assistant
+  usage as 2 input, 293 cache-creation, 4,232 cache-read, and 2 output tokens before the same no-result
+  stop. With a local blackhole proxy, the installed CLI emitted zero assistant, tool, user, or result
+  events at the six-second no-progress observation point and was stopped with exit `143` without a
+  TLS/provider connection. Five completed exploratory/proof result streams reported USD `0.182733`
+  in aggregate; the forced-cancel streams had no terminal cost field. ThreadHelm must therefore
+  preserve intermediate usage separately, return timeout/cancel/no-progress as distinct main-owned
+  outcomes, and treat missing terminal accounting as unknown rather than zero or safe-to-retry.
+- **Deterministic separation**: `launch-policy.test.ts` passed 7/7,
+  `provider-adapter.test.ts` plus `desktop-ipc-launch.test.ts` passed 83/83, and
+  `provider-permission-policy.test.ts` passed 2/2. These cover capability drift, progress bounds,
+  typed permission/classifier/timeout/cancel/no-progress/budget/unknown outcomes, held unavailable
+  auto, and bypass exclusion without spending provider usage.
+- **Cleanup**: exact labels/names were inspected before deletion. All worker/proxy/blackhole
+  containers, the internal network, the proof/Squid/curl/Node images, the temporary proxy config,
+  and every tmpfs workspace/config were removed. A final inventory returned zero proof containers,
+  networks, or image tags and no temporary file. No bypass invocation was needed or performed.
 
 ## Cost-aware implementation delegation
 

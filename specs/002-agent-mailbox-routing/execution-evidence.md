@@ -37,7 +37,7 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | US2 Auditable conversations | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | VERIFIED 2026-08-29 | APPROVED FOR US2 |
 | US3 Lifecycle-aware delivery | Claude `claude-opus-5` / `high` | `claude-sonnet-5` / `xhigh` | OpenAI `gpt-5.6-sol` / `max` | VERIFIED 2026-08-29 | APPROVED FOR US3 |
 | US4 Bounded coordination | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human | VERIFIED 2026-08-29 | PENDING IMPLEMENTATION/REVIEW/HUMAN ACCEPTANCE |
-| US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | VERIFIED 2026-08-29 | LOCAL IMPLEMENTATION PASS; REVIEW PENDING |
+| US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | VERIFIED 2026-08-29 | APPROVED FOR US5 |
 | US6 Reviewed agent roster | Claude `claude-sonnet-5` / `high` | `claude-opus-5` / `high` | OpenAI `gpt-5.6-sol` / `high` | UNVERIFIED | PENDING |
 | US7 Agent wizard/templates | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | UNVERIFIED | PENDING |
 | US8 Autonomous supervisor | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human + Antigravity `gemini-3.1-pro-high` | UNVERIFIED | PENDING |
@@ -157,6 +157,9 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | 2026-08-29 | T088 review remediation GREEN | Lint; typecheck; focused US5 unit/contract/provider/Windows slices; desktop build; expanded memory E2E | 0 | Focused Vitest passed 66 tests with 1 packaged-path skip; four E2E journeys passed conflict resolution, modal focus/Escape, state resync, active-only default, explicit pagination, expiry, and the prior publish/search/retract/delete/no-animation paths. Lint, TypeScript, and desktop build passed. | PASS — RE-REVIEW PENDING |
 | 2026-08-29 | T088 Claude remediation re-review | Resumed read-only `claude-opus-5` / `high` session `ce983938-6e11-48e3-8110-aff34fd02156`; USD 3.2447885 | 0 | Claude verified all original 11 findings closed, then found one new P2 stale/retracted-resolution reactivation path and one P3 filter/cursor mismatch. Verdict remained `CHANGES REQUIRED`. | FINDINGS — REMEDIATED LOCALLY |
 | 2026-08-29 | T088 second remediation | Current-contested resolution unit regressions; cursor-invalidation E2E; typecheck; desktop build | 1 then 0 | RED reproduced resurrection/stale-revision acceptance and the absent searchable-current index. GREEN requires the exact current contested revision, enforces one searchable current revision per entry, invalidates cursors on every bound input change, passes 18 unit tests and all 4 memory E2E journeys. | RED/GREEN PASS — FINAL RE-REVIEW PENDING |
+| 2026-08-29 | T088 Claude final re-review | Resumed read-only `claude-opus-5` / `high` session `ce983938-6e11-48e3-8110-aff34fd02156`; USD 2.6638065 | 0 | Claude verified both second-order regressions closed, the searchable-current index consistent with every writer, no new P0–P3 issue, and returned exact verdict `APPROVED FOR US5`. | PASS — APPROVED FOR US5 |
+| 2026-08-29 | T088 full Vitest initial | `pnpm format`; `pnpm lint`; `pnpm typecheck`; `pnpm test` | 1 | Static gates passed; full Vitest found only two stale schema-ledger expectations after v3 introduced the memory tables/version. The remaining 378 tests passed with 10 skips. | FAIL — FIXED |
+| 2026-08-29 | T088 full repository final | Format; lint; typecheck; full Vitest; desktop build; Rust format/Clippy/tests; full Playwright | 0 | Format/lint/typecheck/build passed; Vitest passed 42 files and 380 tests with 10 intentional skips; Rust passed 17 supervisor and 8 bridge tests; Playwright passed all 21 keyboard/recovery/isolation journeys. | PASS — US5 COMPLETE LOCALLY |
 | 2026-08-29 | T062 US4 domain policy red | `pnpm exec vitest run --project unit tests/unit/domain/coordination.test.ts` | 1 | Six intended failures at the absent `evaluateAutomaticContinuation` policy cover depth eight/ninth hold, third exact repeat within eight, third consecutive failure, allowed/held message kinds, paused/closed late messages, opt-in, conflict, and authority. Ten prior domain tests remained green. | EXPECTED RED |
 | 2026-08-29 | T063 US4 contract red | `pnpm exec vitest run --project contract tests/contract/desktop-ipc-coordination.test.ts` | 1 | Three intended failures for absent strict auto-continue disclosure/confirmation, escalation/disposition schemas, and named operations. Fourteen prior coordination contract tests remained green. | EXPECTED RED |
 | 2026-08-29 | T063 US4 E2E red | Focused Playwright `bounded coordination|authority escalation` | 1 | The first journey timed out at the absent enable-disclosure control; the second failed at the absent `coordination.previewAutoContinue` operation. Both failures occurred at the intended missing US4 surfaces. | EXPECTED RED |
@@ -271,7 +274,7 @@ gates and independent review rather than routine scaffolding.
 | US2 | PASS | PASS | PASS | PASS | PASS | PASS — LOCAL/PACKAGED, NO LIVE PROVIDER CALL | PASS — CLAUDE SONNET APPROVED | N/A | US2 PASS |
 | US3 | PASS — SERVICE POLICY | PASS | PASS | PASS | PASS | PASS — EXACT CODEX/CLAUDE MANUAL-ONLY PROOFS | PASS — OPENAI SOL APPROVED | N/A | US3 PASS |
 | US4 | PASS | PASS | PASS | PASS | PASS | N/A — FIXTURES | PASS — CLAUDE OPUS APPROVED | PASS — PR #10 OWNER APPROVED | US4 PASS |
-| US5 | PASS | PASS | PASS | PASS | PASS | PASS — DETERMINISTIC SESSION BRIDGE | PENDING | N/A | REVIEW PENDING |
+| US5 | PASS | PASS | PASS | PASS | PASS | PASS — DETERMINISTIC SESSION BRIDGE | PASS — CLAUDE OPUS APPROVED | N/A | US5 PASS |
 | US6 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | CONFIRM IMPORT | NOT READY |
 | US7 | PENDING | PENDING | PENDING | PENDING | PENDING | N/A | PENDING | CONFIRM SAVE/EXPORT | NOT READY |
 | US8 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | NOT READY |
@@ -280,20 +283,20 @@ gates and independent review rather than routine scaffolding.
 
 | Gate | Local status | Hosted/external status | Evidence or blocker |
 |---|---|---|---|
-| Formatting | PASS | N/A | Scoped US3 Prettier check plus prior full `pnpm format`. |
-| Lint | PASS | N/A | Full `pnpm lint` after US3 lifecycle changes. |
+| Formatting | PASS | N/A | Fresh full `pnpm format` after US5 final remediation. |
+| Lint | PASS | N/A | Fresh full `pnpm lint` after US5 final remediation. |
 | Rust format/check/test | PASS | N/A | Format, clippy with warnings denied, 17 supervisor tests, and 8 bridge tests passed. |
-| Typecheck | PASS | N/A | Full `pnpm typecheck` after US3 lifecycle changes. |
-| Unit tests | PASS | N/A | Full suite: 17 files, 121 tests. |
-| Contract tests | PASS | N/A | Full suite: 8 files, 150 tests; focused US3 provider lifecycle after transport remediation 12/12. |
+| Typecheck | PASS | N/A | Fresh full `pnpm typecheck` after US5 final remediation. |
+| Unit tests | PASS | N/A | Full cross-project Vitest: 42 files and 380 tests passed with 10 intentional skips. |
+| Contract tests | PASS | N/A | Included in the fresh full Vitest pass; focused US5 provider/desktop boundaries are green. |
 | Desktop build | PASS | N/A | Main, preload, and renderer built. |
 | Windows supervision proof | PASS — LOCAL X64 | N/A | Exact real native bridge PID containment proof passes; full serialized integration: 12 files, 42 passed, 1 intentional skip. |
 | Windows integration | US1 + US2 + US3 FIXTURE SLICES PASS | N/A | Focused coordination delivery 13/13, including exact-version fixture safe points, real named-pipe EOF degradation, recipient isolation, and fail-closed power/provider paths. |
-| E2E | US1 + US2 + US3 + LAUNCH-POLICY SLICES PASS | N/A | Full coordination file 6/6 plus the prior model/effort launch journey. |
+| E2E | US1–US5 + LAUNCH-POLICY SLICES PASS | N/A | Fresh full Playwright passed 21/21, including four shared-memory journeys. |
 | Packaged installed artifact | PASS — LOCAL X64, UNSIGNED | N/A | Provider smoke 3/3 and installed-app acceptance 5/5; bridge present in ASAR-unpacked signed-path location, but no signing certificate was configured. |
 | Codex live provider | PASS — MANUAL-ONLY | N/A | Authenticated exact Codex CLI 0.150.1 proof found no pending-draft/editor safety field; automatic presentation remains disabled. |
 | Claude live provider | PASS — MANUAL-ONLY | N/A | Authenticated exact Claude Code 2.1.251 Stop-hook proof found no pending-draft/editor safety field; automatic presentation remains disabled. |
-| Hosted CI | PASS — PR #10 | PASS — X64, ARM64, CODEQL | PR #10 head `79247d3`: Windows x64 and ARM64 CI plus Actions, JavaScript/TypeScript, and Rust CodeQL completed successfully before merge. |
+| Hosted CI | PENDING — US5 | PASS — BASE PR #10 | PR #10 checks cover the merged base only; US5 hosted checks require its new PR. |
 | Owner release approval | PENDING | PENDING | Requires exact artifact/commit and all required gates. |
 
 ## Review findings and decisions

@@ -59,9 +59,19 @@ describe('migrate', () => {
       'coordination_escalations',
       'coordination_events',
       'coordination_handoffs',
+      'memory_conflicts',
       'recovery_records',
       'schema_meta',
       'session_events',
+      'shared_memory_entries',
+      'shared_memory_fts',
+      'shared_memory_fts_config',
+      'shared_memory_fts_content',
+      'shared_memory_fts_data',
+      'shared_memory_fts_docsize',
+      'shared_memory_fts_idx',
+      'shared_memory_revisions',
+      'shared_memory_scope_quotas',
     ]);
   });
 

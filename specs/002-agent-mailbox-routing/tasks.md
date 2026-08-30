@@ -239,7 +239,7 @@ lineage, FTS cleanup, performance, and absence of terminal/provider ingestion.
 - [X] T085 [US5] Integrate content-free memory events and explicit detail loading into `apps/desktop/src/renderer/store.tsx`, `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`, and `apps/desktop/src/renderer/App.tsx`
 - [X] T086 [US5] Add representative Windows FTS latency, quota, idle-cost, and deletion-index benchmarks in `tests/integration/windows/performance.test.ts` and `tests/integration/windows/shared-memory.test.ts`
 - [X] T087 [US5] Extend installed provider proof with scoped memory search/publish, cross-scope denial, transcript exclusion, and role isolation in `tests/acceptance/provider-coordination-smoke.test.ts`
-- [ ] T088 [US5] Run the US5 domain, persistence, contract, Windows, E2E, and provider-proof slices; capture final exits, Antigravity implementation evidence, Claude review, and deterministic relevance/privacy results in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T088 [US5] Run the US5 domain, persistence, contract, Windows, E2E, and provider-proof slices; capture final exits, Antigravity implementation evidence, Claude review, and deterministic relevance/privacy results in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 **Checkpoint**: US5 supplies durable shared context with explicit provenance and conflict state; no
 model output is silently authoritative and no topology/office visualization is introduced.

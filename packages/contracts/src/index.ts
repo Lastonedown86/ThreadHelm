@@ -395,6 +395,45 @@ export const LaunchRuntimeSelection = strictObject({
 });
 export type LaunchRuntimeSelection = z.infer<typeof LaunchRuntimeSelection>;
 
+export const LaunchWorkType = z.enum(['general', 'test_authoring', 'failure_analysis']);
+export type LaunchWorkType = z.infer<typeof LaunchWorkType>;
+
+export const LaunchRuntimeSourceKind = z.enum([
+  'one_run',
+  'profile_revision',
+  'task_type_policy',
+  'project_policy',
+  'cli_default',
+]);
+export type LaunchRuntimeSourceKind = z.infer<typeof LaunchRuntimeSourceKind>;
+
+export const LaunchRuntimeSource = strictObject({
+  kind: LaunchRuntimeSourceKind,
+  /** Stable persisted policy/revision identity; absent for one-run and CLI-default values. */
+  reference: z.string().min(1).max(200).nullable(),
+});
+export type LaunchRuntimeSource = z.infer<typeof LaunchRuntimeSource>;
+
+export const LaunchRuntimeRecommendation = strictObject({
+  model: z.string().min(1).max(128),
+  effort: z.enum(['low', 'medium']),
+  reason: z.string().min(1).max(300),
+});
+export type LaunchRuntimeRecommendation = z.infer<typeof LaunchRuntimeRecommendation>;
+
+export const LaunchRuntimeResolution = strictObject({
+  runtimeSelection: LaunchRuntimeSelection,
+  modelSource: LaunchRuntimeSource,
+  effortSource: LaunchRuntimeSource,
+  workType: LaunchWorkType,
+  recommendation: LaunchRuntimeRecommendation.nullable(),
+  requiresEscalationReason: z.boolean(),
+  escalationReason: z.string().trim().min(20).max(500).nullable(),
+  disposition: z.enum(['ready', 'held']),
+  reasonCode: z.literal('RUNTIME_ESCALATION_REASON_REQUIRED').nullable(),
+});
+export type LaunchRuntimeResolution = z.infer<typeof LaunchRuntimeResolution>;
+
 /** Main-owned launch policy. Persona/profile/template text can never populate this value. */
 export const RuntimePermissionPolicy = z.enum([
   'manual',
@@ -1178,6 +1217,7 @@ export const LaunchPreviewView = z.object({
   terminal: TerminalSize,
   /** Exact per-process choices bound into this one-time preview. */
   runtimeSelection: LaunchRuntimeSelection,
+  runtimeResolution: LaunchRuntimeResolution,
   permissionResolution: LaunchPermissionResolution,
   executionBounds: ProviderExecutionBounds,
   coordinationBridge: strictObject({
@@ -1462,6 +1502,8 @@ export const operations = {
       providerId: ProviderId,
       terminal: TerminalSize,
       runtimeSelection: LaunchRuntimeSelection.default({ model: null, effort: null }),
+      workType: LaunchWorkType.default('general'),
+      runtimeEscalationReason: z.string().trim().min(20).max(500).nullable().default(null),
       permissionSelection: LaunchPermissionSelection.default({
         policy: null,
         boundedAllowlist: [],

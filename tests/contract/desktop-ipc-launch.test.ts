@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { BOUNDARY_WARNING, LaunchPreviewView, SessionView } from '@threadhelm/contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BridgeSessionManager } from '../../apps/desktop/src/main/coordination/bridge.js';
+import { resolveLaunchRuntime } from '../../apps/desktop/src/main/sessions/launch-policy.js';
 import {
   createWorld,
   errorCode,
@@ -36,6 +37,151 @@ const preview = (providerId = 'codex-cli') =>
   });
 
 describe('sessions.previewLaunch', () => {
+  it('resolves model and effort independently through persisted policy precedence', () => {
+    const base = {
+      providerId: 'codex-cli' as const,
+      taskType: 'test_authoring' as const,
+      escalationReason: null,
+      profileRevisionRequest: {
+        reference: 'profile-revision-7',
+        runtimeSelection: { model: 'gpt-5.6-terra', effort: null },
+      },
+      taskTypePolicy: {
+        reference: 'test-authoring-policy-3',
+        runtimeSelection: { model: 'gpt-5.6-luna', effort: 'low' as const },
+      },
+      projectPolicy: {
+        reference: 'project-policy-5',
+        runtimeSelection: { model: 'gpt-5.4-mini', effort: 'medium' as const },
+      },
+    };
+
+    expect(resolveLaunchRuntime({ ...base, oneRunOverride: null })).toMatchObject({
+      runtimeSelection: { model: 'gpt-5.6-terra', effort: 'low' },
+      modelSource: { kind: 'profile_revision', reference: 'profile-revision-7' },
+      effortSource: { kind: 'task_type_policy', reference: 'test-authoring-policy-3' },
+    });
+    expect(
+      resolveLaunchRuntime({
+        ...base,
+        oneRunOverride: { model: null, effort: null },
+      }),
+    ).toMatchObject({
+      runtimeSelection: { model: null, effort: null },
+      modelSource: { kind: 'one_run', reference: null },
+      effortSource: { kind: 'one_run', reference: null },
+    });
+    expect(
+      resolveLaunchRuntime({
+        ...base,
+        oneRunOverride: null,
+        profileRevisionRequest: null,
+        taskTypePolicy: null,
+      }),
+    ).toMatchObject({
+      runtimeSelection: { model: 'gpt-5.4-mini', effort: 'medium' },
+      modelSource: { kind: 'project_policy', reference: 'project-policy-5' },
+      effortSource: { kind: 'project_policy', reference: 'project-policy-5' },
+    });
+    expect(
+      resolveLaunchRuntime({
+        ...base,
+        oneRunOverride: null,
+        profileRevisionRequest: null,
+        taskTypePolicy: null,
+        projectPolicy: null,
+      }),
+    ).toMatchObject({
+      runtimeSelection: { model: null, effort: null },
+      modelSource: { kind: 'cli_default', reference: null },
+      effortSource: { kind: 'cli_default', reference: null },
+    });
+  });
+
+  it('recommends the lowest-cost test model and holds costly escalation without a reason', () => {
+    const recommended = resolveLaunchRuntime({
+      providerId: 'claude-code',
+      taskType: 'test_authoring',
+      oneRunOverride: null,
+      profileRevisionRequest: null,
+      taskTypePolicy: null,
+      projectPolicy: null,
+      escalationReason: null,
+    });
+    expect(recommended.recommendation).toEqual({
+      model: 'sonnet',
+      effort: 'low',
+      reason: 'Lowest-cost capable approved option for routine test authoring.',
+    });
+
+    const held = resolveLaunchRuntime({
+      providerId: 'claude-code',
+      taskType: 'test_authoring',
+      oneRunOverride: { model: 'opus', effort: 'high' },
+      profileRevisionRequest: null,
+      taskTypePolicy: null,
+      projectPolicy: null,
+      escalationReason: null,
+    });
+    expect(held).toMatchObject({
+      disposition: 'held',
+      reasonCode: 'RUNTIME_ESCALATION_REASON_REQUIRED',
+      requiresEscalationReason: true,
+    });
+
+    expect(
+      resolveLaunchRuntime({
+        providerId: 'claude-code',
+        taskType: 'test_authoring',
+        oneRunOverride: { model: 'opus', effort: 'high' },
+        profileRevisionRequest: null,
+        taskTypePolicy: null,
+        projectPolicy: null,
+        escalationReason: 'Complex cross-provider regression requires deeper analysis.',
+      }),
+    ).toMatchObject({
+      disposition: 'ready',
+      escalationReason: 'Complex cross-provider regression requires deeper analysis.',
+    });
+  });
+
+  it('binds a required high-cost escalation reason into the one-use preview', async () => {
+    const held = await world.ok<LaunchPreviewView>('sessions.previewLaunch', {
+      workspaceId,
+      providerId: 'codex-cli',
+      terminal: TERMINAL,
+      runtimeSelection: { model: 'gpt-5.6-sol', effort: 'high' },
+      workType: 'failure_analysis',
+    });
+    expect(held.runtimeResolution).toMatchObject({
+      disposition: 'held',
+      requiresEscalationReason: true,
+      escalationReason: null,
+    });
+    expect(
+      errorCode(
+        await world.call('sessions.launch', {
+          previewToken: held.previewToken,
+          boundaryConfirmation: true,
+        }),
+      ),
+    ).toBe('INVALID_REQUEST');
+
+    const reason = 'A cross-provider release regression requires deeper analysis.';
+    const ready = await world.ok<LaunchPreviewView>('sessions.previewLaunch', {
+      workspaceId,
+      providerId: 'codex-cli',
+      terminal: TERMINAL,
+      runtimeSelection: { model: 'gpt-5.6-sol', effort: 'high' },
+      workType: 'failure_analysis',
+      runtimeEscalationReason: reason,
+    });
+    expect(ready.runtimeResolution).toMatchObject({
+      disposition: 'ready',
+      escalationReason: reason,
+    });
+  });
+
   it('discloses effective path, readiness, and the boundary warning behind a token', async () => {
     const result = await preview();
     expect(result.ok).toBe(true);
@@ -46,6 +192,11 @@ describe('sessions.previewLaunch', () => {
     expect(view.readiness.resolvedExecutable).toBe(READY.resolvedExecutable);
     expect(view.terminal).toEqual(TERMINAL);
     expect(view.runtimeSelection).toEqual({ model: 'gpt-5.6-luna', effort: 'low' });
+    expect(view.runtimeResolution).toMatchObject({
+      modelSource: { kind: 'one_run' },
+      effortSource: { kind: 'one_run' },
+      disposition: 'ready',
+    });
     expect(view.previewToken.length).toBeGreaterThanOrEqual(16);
   });
 
@@ -63,6 +214,10 @@ describe('sessions.previewLaunch', () => {
       failureBehavior: 'manual_only',
     });
     expect(view.runtimeSelection).toEqual({ model: null, effort: null });
+    expect(view.runtimeResolution).toMatchObject({
+      modelSource: { kind: 'one_run' },
+      effortSource: { kind: 'one_run' },
+    });
     expect(view.permissionResolution).toMatchObject({
       policy: 'manual',
       source: 'provider_default',

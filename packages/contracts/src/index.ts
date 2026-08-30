@@ -172,6 +172,25 @@ export type EscalationKind = z.infer<typeof EscalationKind>;
 export const EscalationState = z.enum(['open', 'continued', 'redirected', 'closed']);
 export type EscalationState = z.infer<typeof EscalationState>;
 
+export const MemoryKind = z.enum(['fact', 'decision', 'constraint', 'artifact', 'lesson']);
+export type MemoryKind = z.infer<typeof MemoryKind>;
+
+export const MemoryStatus = z.enum([
+  'active',
+  'contested',
+  'superseded',
+  'retracted',
+  'expired',
+  'deleted',
+]);
+export type MemoryStatus = z.infer<typeof MemoryStatus>;
+
+export const MemoryConfidence = z.enum(['unknown', 'low', 'medium', 'high']);
+export type MemoryConfidence = z.infer<typeof MemoryConfidence>;
+
+export const MemoryConflictState = z.enum(['open', 'resolved']);
+export type MemoryConflictState = z.infer<typeof MemoryConflictState>;
+
 export const CoordinationEventKind = z.enum([
   'created',
   'queued',
@@ -242,6 +261,15 @@ export const ErrorCode = z.enum([
   'COORDINATION_BRIDGE_UNAVAILABLE',
   'COORDINATION_AUTHORITY_REQUIRED',
   'COORDINATION_CLOSED',
+  // shared memory
+  'MEMORY_NOT_FOUND',
+  'MEMORY_SCOPE_UNAUTHORIZED',
+  'MEMORY_CONTENT_INVALID',
+  'MEMORY_SOURCE_INVALID',
+  'MEMORY_QUOTA_REACHED',
+  'MEMORY_CONFLICT_OPEN',
+  'MEMORY_REVISION_STALE',
+  'MEMORY_CONTENT_DELETED',
   // application and boundary
   'ACTIVE_SESSIONS',
   'INVALID_REQUEST',
@@ -647,6 +675,226 @@ export const EscalationView = strictObject({
 });
 export type EscalationView = z.infer<typeof EscalationView>;
 
+// Shared memory is deliberately plain text, revisioned, and scope-filtered.
+// Main derives provider scope/author; provider tool inputs below cannot name either.
+const WorkspaceMemoryScope = strictObject({ workspaceId: Uuid, missionId: z.null().optional() });
+const MissionMemoryScope = strictObject({ missionId: Uuid, workspaceId: z.null().optional() });
+export const MemoryScope = z.union([WorkspaceMemoryScope, MissionMemoryScope]);
+export type MemoryScope = z.infer<typeof MemoryScope>;
+
+export const MemorySourceReference = strictObject({
+  kind: z.enum(['handoff', 'work_item', 'memory', 'artifact']),
+  id: z.string().trim().min(1).max(512),
+});
+export type MemorySourceReference = z.infer<typeof MemorySourceReference>;
+
+export const MemoryAuthorView = z.union([
+  strictObject({ kind: z.literal('user') }),
+  strictObject({ kind: z.literal('session'), sessionId: Uuid }),
+]);
+export type MemoryAuthorView = z.infer<typeof MemoryAuthorView>;
+
+export const MemorySummaryView = strictObject({
+  entryId: Uuid,
+  revisionId: Uuid,
+  scope: MemoryScope,
+  kind: MemoryKind,
+  status: MemoryStatus,
+  title: z.string().max(160).nullable(),
+  author: MemoryAuthorView,
+  sourceRefs: z.array(MemorySourceReference).max(32),
+  confidence: MemoryConfidence,
+  conflictCount: z.number().int().min(0),
+  expiresAt: Timestamp.nullable(),
+  expiredAt: Timestamp.nullable(),
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+});
+export type MemorySummaryView = z.infer<typeof MemorySummaryView>;
+
+export const MemoryRevisionView = strictObject({
+  id: Uuid,
+  entryId: Uuid,
+  revision: z.number().int().min(1),
+  title: z.string().max(160).nullable(),
+  body: z
+    .string()
+    .max(16 * 1024)
+    .nullable(),
+  sourceRefs: z.array(MemorySourceReference).max(32),
+  author: MemoryAuthorView,
+  confidence: MemoryConfidence,
+  status: MemoryStatus,
+  supersedesRevisionId: Uuid.nullable(),
+  contentBytes: z.number().int().min(0).nullable(),
+  createdAt: Timestamp,
+});
+export type MemoryRevisionView = z.infer<typeof MemoryRevisionView>;
+
+export const MemoryConflictView = strictObject({
+  id: Uuid,
+  leftRevisionId: Uuid,
+  leftEntryId: Uuid,
+  rightRevisionId: Uuid,
+  rightEntryId: Uuid,
+  state: MemoryConflictState,
+  reasonCode: z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
+  resolvedByRevisionId: Uuid.nullable(),
+  createdAt: Timestamp,
+  resolvedAt: Timestamp.nullable(),
+});
+export type MemoryConflictView = z.infer<typeof MemoryConflictView>;
+
+export const MemoryDetailView = strictObject({
+  summary: MemorySummaryView,
+  body: z
+    .string()
+    .max(16 * 1024)
+    .nullable(),
+  lineage: z.array(MemoryRevisionView).max(10_000),
+  conflicts: z.array(MemoryConflictView).max(100),
+  availableActions: z.array(z.enum(['supersede', 'retract', 'resolve_conflict', 'delete'])).max(4),
+});
+export type MemoryDetailView = z.infer<typeof MemoryDetailView>;
+
+export const MemorySearchResultView = MemorySummaryView.extend({
+  excerpt: z.string().max(4096),
+  rank: z.number().finite(),
+}).strict();
+export type MemorySearchResultView = z.infer<typeof MemorySearchResultView>;
+
+export const MemorySearchPageView = strictObject({
+  items: z.array(MemorySearchResultView).max(20),
+  nextCursor: z.string().max(512).nullable(),
+});
+export type MemorySearchPageView = z.infer<typeof MemorySearchPageView>;
+
+const MemoryPublicationContent = {
+  kind: MemoryKind,
+  title: z.string().trim().max(160).nullable().optional(),
+  body: z
+    .string()
+    .min(1)
+    .max(16 * 1024),
+  sourceRefs: z.array(MemorySourceReference).max(32).default([]),
+  confidence: MemoryConfidence.default('unknown'),
+};
+
+export const PreviewMemoryPublishRequest = strictObject({
+  scope: MemoryScope,
+  ...MemoryPublicationContent,
+  memoryExpiresAt: Timestamp.nullable().optional(),
+});
+export type PreviewMemoryPublishRequest = z.infer<typeof PreviewMemoryPublishRequest>;
+
+export const MemoryPublishDisclosureView = strictObject({
+  publishToken: OpaqueToken,
+  scope: MemoryScope,
+  kind: MemoryKind,
+  title: z.string().max(160).nullable(),
+  body: z.string().max(16 * 1024),
+  sourceRefs: z.array(MemorySourceReference).max(32),
+  confidence: MemoryConfidence,
+  memoryExpiresAt: Timestamp.nullable(),
+  expiresAt: Timestamp,
+  safeSummary: SafeSummary,
+});
+export type MemoryPublishDisclosureView = z.infer<typeof MemoryPublishDisclosureView>;
+
+export const ConfirmMemoryPublishRequest = strictObject({
+  publishToken: OpaqueToken,
+  durableContentConfirmation: z.literal(true),
+});
+export type ConfirmMemoryPublishRequest = z.infer<typeof ConfirmMemoryPublishRequest>;
+
+export const PreviewMemorySupersedeRequest = strictObject({
+  entryId: Uuid,
+  targetRevisionId: Uuid,
+  title: z.string().trim().max(160).nullable().optional(),
+  body: z
+    .string()
+    .min(1)
+    .max(16 * 1024),
+  sourceRefs: z.array(MemorySourceReference).max(32).default([]),
+  confidence: MemoryConfidence.default('unknown'),
+});
+export type PreviewMemorySupersedeRequest = z.infer<typeof PreviewMemorySupersedeRequest>;
+
+export const MemorySupersedeDisclosureView = strictObject({
+  supersedeToken: OpaqueToken,
+  entryId: Uuid,
+  targetRevisionId: Uuid,
+  title: z.string().max(160).nullable(),
+  body: z.string().max(16 * 1024),
+  sourceRefs: z.array(MemorySourceReference).max(32),
+  confidence: MemoryConfidence,
+  expiresAt: Timestamp,
+  safeSummary: SafeSummary,
+});
+export type MemorySupersedeDisclosureView = z.infer<typeof MemorySupersedeDisclosureView>;
+
+export const ConfirmMemorySupersedeRequest = strictObject({ supersedeToken: OpaqueToken });
+export const RetractMemoryRequest = strictObject({
+  entryId: Uuid,
+  revisionId: Uuid,
+  reasonCode: z.string().trim().min(1).max(160),
+});
+export const ResolveMemoryConflictRequest = strictObject({
+  conflictId: Uuid,
+  resolutionRevisionId: Uuid.nullable(),
+});
+export const RequestMemoryDeletionRequest = strictObject({ entryId: Uuid });
+export const MemoryDeletionDisclosureView = strictObject({
+  deletionToken: OpaqueToken,
+  entryId: Uuid,
+  expiresAt: Timestamp,
+  safeSummary: SafeSummary,
+});
+export type MemoryDeletionDisclosureView = z.infer<typeof MemoryDeletionDisclosureView>;
+export const ConfirmMemoryDeletionRequest = strictObject({
+  deletionToken: OpaqueToken,
+  permanentDeletionConfirmation: z.literal(true),
+});
+
+export const ProviderMemorySearchInput = strictObject({
+  query: z.string().trim().min(1).max(500),
+  kind: MemoryKind.optional(),
+  includeContested: z.boolean().optional(),
+  cursor: z.string().max(512).optional(),
+  limit: z.number().int().min(1).max(20).optional(),
+});
+export type ProviderMemorySearchInput = z.infer<typeof ProviderMemorySearchInput>;
+export const ProviderMemoryGetInput = strictObject({
+  entryId: Uuid,
+  revisionId: Uuid.optional(),
+});
+export type ProviderMemoryGetInput = z.infer<typeof ProviderMemoryGetInput>;
+export const ProviderMemoryProposeRevisionInput = strictObject({
+  ...MemoryPublicationContent,
+  memoryExpiresAt: Timestamp.nullable().optional(),
+});
+export type ProviderMemoryProposeRevisionInput = z.infer<typeof ProviderMemoryProposeRevisionInput>;
+
+export const MemoryChangedEvent = strictObject({
+  entryId: Uuid,
+  revisionId: Uuid,
+  scope: MemoryScope,
+  kind: MemoryKind,
+  status: MemoryStatus,
+  author: MemoryAuthorView,
+  conflictCount: z.number().int().min(0),
+  sequence: z.number().int().min(1),
+  occurredAt: Timestamp,
+});
+export type MemoryChangedEvent = z.infer<typeof MemoryChangedEvent>;
+export const MemoryConflictChangedEvent = strictObject({
+  conflictId: Uuid,
+  state: MemoryConflictState,
+  sequence: z.number().int().min(1),
+  occurredAt: Timestamp,
+});
+export type MemoryConflictChangedEvent = z.infer<typeof MemoryConflictChangedEvent>;
+
 export const ResolveEscalationRequest = z.discriminatedUnion('disposition', [
   strictObject({ escalationId: Uuid, disposition: z.literal('continue') }),
   strictObject({
@@ -1000,6 +1248,58 @@ export const operations = {
     request: ConfirmDeleteContentRequest,
     response: ConversationSummaryView,
   },
+  'memory.search': {
+    request: strictObject({
+      scope: MemoryScope,
+      query: z.string().trim().min(1).max(500),
+      kind: MemoryKind.optional(),
+      status: z.enum(['active', 'contested']).optional(),
+      includeContested: z.boolean().optional(),
+      cursor: z.string().max(512).optional(),
+      limit: z.number().int().min(1).max(20).optional(),
+    }),
+    response: MemorySearchPageView,
+  },
+  'memory.get': {
+    request: strictObject({
+      entryId: Uuid,
+      scope: MemoryScope,
+      revisionId: Uuid.optional(),
+    }),
+    response: MemoryDetailView,
+  },
+  'memory.previewPublish': {
+    request: PreviewMemoryPublishRequest,
+    response: MemoryPublishDisclosureView,
+  },
+  'memory.confirmPublish': {
+    request: ConfirmMemoryPublishRequest,
+    response: MemoryDetailView,
+  },
+  'memory.previewSupersede': {
+    request: PreviewMemorySupersedeRequest,
+    response: MemorySupersedeDisclosureView,
+  },
+  'memory.confirmSupersede': {
+    request: ConfirmMemorySupersedeRequest,
+    response: MemoryDetailView,
+  },
+  'memory.retract': {
+    request: RetractMemoryRequest,
+    response: MemoryDetailView,
+  },
+  'memory.resolveConflict': {
+    request: ResolveMemoryConflictRequest,
+    response: MemoryDetailView,
+  },
+  'memory.requestDeletion': {
+    request: RequestMemoryDeletionRequest,
+    response: MemoryDeletionDisclosureView,
+  },
+  'memory.confirmDeletion': {
+    request: ConfirmMemoryDeletionRequest,
+    response: MemoryDetailView,
+  },
   'application.requestClose': { request: none, response: CloseResultView },
   'application.stopAllAndClose': { request: none, response: CloseResultView },
   'application.getInfo': { request: none, response: ApplicationInfoView },
@@ -1043,6 +1343,8 @@ export const events = {
   'coordination.handoffChanged': CoordinationEventEnvelope,
   'coordination.conversationChanged': ConversationSummaryView,
   'coordination.escalationChanged': EscalationView,
+  'memory.changed': MemoryChangedEvent,
+  'memory.conflictChanged': MemoryConflictChangedEvent,
   'coordination.bridgeChanged': strictObject({
     sessionId: Uuid,
     capability: z.string(),

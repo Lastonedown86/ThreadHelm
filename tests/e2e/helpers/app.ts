@@ -13,7 +13,12 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { PowerEvent, ProviderId } from '@threadhelm/contracts';
+import type {
+  MemoryDetailView,
+  PowerEvent,
+  ProviderId,
+  ProviderMemoryProposeRevisionInput,
+} from '@threadhelm/contracts';
 import type { FakeAgentMode } from '@threadhelm/test-fixtures';
 
 export const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
@@ -54,6 +59,10 @@ export interface LaunchedApp {
     handoffId: string,
     outcome: 'completed' | 'refused' | 'failed',
   ): Promise<{ handoffId: string; workOutcome: string }>;
+  proposeProviderMemory(
+    sessionId: string,
+    input: ProviderMemoryProposeRevisionInput,
+  ): Promise<MemoryDetailView>;
   /** Hard-kills the coordinator with no cleanup; resolves once the process is gone. */
   crashCoordinator(): Promise<void>;
   close(): Promise<void>;
@@ -143,6 +152,8 @@ export async function launchApp(options: LaunchOptions = {}): Promise<LaunchedAp
         handoffId,
         outcome,
       }),
+    proposeProviderMemory: (sessionId, input) =>
+      hooks('hooks.proposeProviderMemory(arg.sessionId, arg.input)', { sessionId, input }),
     async crashCoordinator() {
       // app.process() is Playwright's cli wrapper; the coordinator is the browser process.
       const pid = await app.evaluate(() => process.pid);

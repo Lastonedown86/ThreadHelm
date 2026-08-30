@@ -24,6 +24,7 @@ import type { JobRegistry } from './native/job-registry.js';
 import type { StorageHealth } from './storage-health.js';
 import type { CoordinationService } from './coordination/service.js';
 import type { BridgeSessionManager } from './coordination/bridge.js';
+import type { MemoryService } from './coordination/memory.js';
 
 // --- native boundary (contracts/windows-supervisor.md) ----------------------
 
@@ -176,6 +177,8 @@ export interface Context {
   probes: ProbeRunner;
   /** Main-owned coordination seam; absent until coordination startup is composed. */
   coordination?: CoordinationService;
+  /** Main-owned shared-memory authority; absent until handler composition. */
+  memory?: MemoryService;
   /** Session-scoped provider bridge authority; absent in degraded/test compositions. */
   coordinationBridge?: BridgeSessionManager;
   appInfo: AppInfo;

@@ -37,7 +37,7 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | US2 Auditable conversations | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | VERIFIED 2026-08-29 | APPROVED FOR US2 |
 | US3 Lifecycle-aware delivery | Claude `claude-opus-5` / `high` | `claude-sonnet-5` / `xhigh` | OpenAI `gpt-5.6-sol` / `max` | VERIFIED 2026-08-29 | APPROVED FOR US3 |
 | US4 Bounded coordination | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human | VERIFIED 2026-08-29 | PENDING IMPLEMENTATION/REVIEW/HUMAN ACCEPTANCE |
-| US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | UNVERIFIED | PENDING |
+| US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | VERIFIED 2026-08-29 | APPROVED FOR US5 |
 | US6 Reviewed agent roster | Claude `claude-sonnet-5` / `high` | `claude-opus-5` / `high` | OpenAI `gpt-5.6-sol` / `high` | UNVERIFIED | PENDING |
 | US7 Agent wizard/templates | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | UNVERIFIED | PENDING |
 | US8 Autonomous supervisor | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human + Antigravity `gemini-3.1-pro-high` | UNVERIFIED | PENDING |
@@ -141,6 +141,25 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | 2026-08-29 | T060 OpenAI Sol final review | Independent read-only `gpt-5.6-sol` / `max` fault re-review of branch `codex/002-provider-coordination-us3` at base `e9d2d7c` | 0 | No P0–P3 findings remain. Approval is limited to US3: one oldest user-origin item per proved safe point; provider replies still require T066/P4 opt-in; built-in Claude 2.1.251 and Codex 0.150.1 remain manual-only. | PASS — APPROVED FOR US3 |
 | 2026-08-29 | T060 final current-tree verification | Lint; typecheck; full unit; full contract; desktop build; focused Windows delivery; full coordination E2E; provider acceptance; scoped formatting and whitespace audit | 0 | Lint/typecheck passed; unit 121/121, contract 150/150, desktop main/preload/renderer built, Windows delivery 13/13, coordination E2E 6/6, provider acceptance 6 passed with 1 packaged-only skip, scoped Prettier passed, and `git diff --check` passed. | PASS — US3 COMPLETE |
 | 2026-08-29 | T061 US4 model and reviewer gate | Codex CLI 0.150.1 exact tool-free read-only probes for `gpt-5.6-sol` / `max` and `gpt-5.6-terra` / `max`; Claude Code 2.1.251 exact tool-free `claude-opus-5` / `xhigh` probe; `agy models`; active human-owner instruction | 0 | Sol and Terra returned their exact availability markers; Claude resolved canonical `claude-opus-5` and returned its exact marker at USD 0.032029; Antigravity 1.1.22 lists optional `gemini-3.1-pro-high`; the human owner explicitly started the next sequence. Codex emitted unrelated configured-MCP authentication warnings but completed both probes without tool use. | PASS — IMPLEMENTATION ASSIGNED; FINAL REVIEWS/OWNER ACCEPTANCE REMAIN T070 |
+| 2026-08-29 | T071 US5 model and reviewer gate | `agy --version`; `agy models`; `claude --version`; `claude auth status`; exact tool-free `claude-opus-5` / `high` marker probe | 0 | Antigravity 1.1.22 exposes primary `gemini-3.1-pro-high` and fallback `gemini-3.7-flash-medium`; Claude Code 2.1.251 is first-party authenticated and returned the exact US5 reviewer marker. | PASS — IMPLEMENTATION ASSIGNED; REVIEW REMAINS T088 |
+| 2026-08-29 | T072–T075 executable RED | Focused domain, persistence, contract, and Windows shared-memory Vitest files | 1 each | 6 domain, 8 persistence, 5 contract, and 5 Windows cases failed at absent US5 policies, schema/repository, operations/views, and repository surfaces. All files parsed and executed; no fake throw helper or syntax failure remained. | EXPECTED RED |
+| 2026-08-29 | T076 executable RED | Desktop build; focused `hive-memory.spec.ts` | 1 | Desktop built, then both real fixture journeys timed out at the absent accessible `Shared memory` control. | EXPECTED RED |
+| 2026-08-29 | T072/T077 domain GREEN | Focused shared-memory domain Vitest | 0 | 6/6 passed: lifecycle matrix, exact scope/author, stable sources, immutable content, confirmed deletion, and confidence/rank non-authority. | PASS |
+| 2026-08-29 | T073/T078/T079 persistence GREEN | Focused persistence and Windows shared-memory Vitest | 0 | Persistence 8/8 and Windows 5/5 passed, including transactional v3/FTS, append-only revision/conflict lineage, quotas, stable cursor, rollback, 10,000 revisions, restart, scope isolation, explicit-ingestion boundary, and deletion cleanup. | PASS |
+| 2026-08-29 | T074 contract GREEN | Focused shared-memory contract Vitest | 0 | 5/5 passed: strict scopes, 20-result/4 KiB bounds, content-free summary versus explicit detail, named preview/confirm operations, and provider inputs that cannot choose scope or author. | PASS |
+| 2026-08-29 | T080–T087 US5 consolidated deterministic gate | Shared-memory domain, persistence, desktop/provider contracts, Windows repository/performance, and provider acceptance Vitest files | 0 | 8 files passed, 69 tests passed, and 1 packaged-path conditional skip. Coverage includes 10,000 revisions, FTS p95 under 500 ms, open-panel idle cost, deletion-index cleanup, authenticated provider attribution, cross-scope denial, and absent transcript/owner bridge tools. | PASS |
+| 2026-08-29 | T083–T085 US5 desktop journey | Desktop build; focused `hive-memory.spec.ts` | 0 | Main/preload/renderer built and 2/2 keyboard journeys passed: durable publish/search/detail/retract/delete plus a calm list/detail surface with no graph, canvas, or animation. | PASS |
+| 2026-08-29 | T081 US5 Rust bridge | Cargo format; warnings-denied Clippy; coordination-bridge binary tests | 0 | Format and Clippy passed; 8/8 bridge tests passed with the three bounded memory tools in discovery and no owner-only deletion/conflict method. | PASS |
+| 2026-08-29 | T088 US5 static gate initial | Full format; lint; typecheck; desktop build | 2 then 0 | Format/lint/build passed; typecheck exposed an exact-optional spread in the new provider acceptance fixture. The fixture now copies only present fields; its 7 tests plus 1 conditional skip and the full TypeScript build pass. | RED/GREEN PASS |
+| 2026-08-29 | T088 Antigravity implementation evidence | Two Pro test-draft attempts; bounded Flash Medium read-only audit attempts | 0 drafts / no audit verdict | Both Pro drafts were rejected before production use because they contained synthetic missing-export assertions and invalid escaped TypeScript. Flash was invoked as the quota-preserving fallback: its first sandbox run could not obtain read permission and its second timed out without a response. No Antigravity code or verdict is claimed as accepted evidence; deterministic tests remain authoritative. | EVIDENCE CAPTURED — NO MODEL VERDICT |
+| 2026-08-29 | T088 Claude independent review | Read-only `claude-opus-5` / `high`; retained session `ce983938-6e11-48e3-8110-aff34fd02156` | budget guards | The USD 3.00 inspection and USD 1.25 conclusion guards stopped the CLI wrappers after generation; the retained local session record contained one P1, four P2, and six P3 reproducible findings with verdict `CHANGES REQUIRED`. Total reported cost was USD 4.6299745. | FINDINGS — REMEDIATED LOCALLY |
+| 2026-08-29 | T088 review remediation RED | Focused persistence and shared-memory contract tests | 1 | Six intended failures reproduced contested supersession losing conflict state, revoked-scope supersession, non-canonical null scope equality, unbounded retained bytes, missing competing entry IDs, and absent publication expiry. | EXPECTED RED |
+| 2026-08-29 | T088 review remediation GREEN | Lint; typecheck; focused US5 unit/contract/provider/Windows slices; desktop build; expanded memory E2E | 0 | Focused Vitest passed 66 tests with 1 packaged-path skip; four E2E journeys passed conflict resolution, modal focus/Escape, state resync, active-only default, explicit pagination, expiry, and the prior publish/search/retract/delete/no-animation paths. Lint, TypeScript, and desktop build passed. | PASS — RE-REVIEW PENDING |
+| 2026-08-29 | T088 Claude remediation re-review | Resumed read-only `claude-opus-5` / `high` session `ce983938-6e11-48e3-8110-aff34fd02156`; USD 3.2447885 | 0 | Claude verified all original 11 findings closed, then found one new P2 stale/retracted-resolution reactivation path and one P3 filter/cursor mismatch. Verdict remained `CHANGES REQUIRED`. | FINDINGS — REMEDIATED LOCALLY |
+| 2026-08-29 | T088 second remediation | Current-contested resolution unit regressions; cursor-invalidation E2E; typecheck; desktop build | 1 then 0 | RED reproduced resurrection/stale-revision acceptance and the absent searchable-current index. GREEN requires the exact current contested revision, enforces one searchable current revision per entry, invalidates cursors on every bound input change, passes 18 unit tests and all 4 memory E2E journeys. | RED/GREEN PASS — FINAL RE-REVIEW PENDING |
+| 2026-08-29 | T088 Claude final re-review | Resumed read-only `claude-opus-5` / `high` session `ce983938-6e11-48e3-8110-aff34fd02156`; USD 2.6638065 | 0 | Claude verified both second-order regressions closed, the searchable-current index consistent with every writer, no new P0–P3 issue, and returned exact verdict `APPROVED FOR US5`. | PASS — APPROVED FOR US5 |
+| 2026-08-29 | T088 full Vitest initial | `pnpm format`; `pnpm lint`; `pnpm typecheck`; `pnpm test` | 1 | Static gates passed; full Vitest found only two stale schema-ledger expectations after v3 introduced the memory tables/version. The remaining 378 tests passed with 10 skips. | FAIL — FIXED |
+| 2026-08-29 | T088 full repository final | Format; lint; typecheck; full Vitest; desktop build; Rust format/Clippy/tests; full Playwright | 0 | Format/lint/typecheck/build passed; Vitest passed 42 files and 380 tests with 10 intentional skips; Rust passed 17 supervisor and 8 bridge tests; Playwright passed all 21 keyboard/recovery/isolation journeys. | PASS — US5 COMPLETE LOCALLY |
 | 2026-08-29 | T062 US4 domain policy red | `pnpm exec vitest run --project unit tests/unit/domain/coordination.test.ts` | 1 | Six intended failures at the absent `evaluateAutomaticContinuation` policy cover depth eight/ninth hold, third exact repeat within eight, third consecutive failure, allowed/held message kinds, paused/closed late messages, opt-in, conflict, and authority. Ten prior domain tests remained green. | EXPECTED RED |
 | 2026-08-29 | T063 US4 contract red | `pnpm exec vitest run --project contract tests/contract/desktop-ipc-coordination.test.ts` | 1 | Three intended failures for absent strict auto-continue disclosure/confirmation, escalation/disposition schemas, and named operations. Fourteen prior coordination contract tests remained green. | EXPECTED RED |
 | 2026-08-29 | T063 US4 E2E red | Focused Playwright `bounded coordination|authority escalation` | 1 | The first journey timed out at the absent enable-disclosure control; the second failed at the absent `coordination.previewAutoContinue` operation. Both failures occurred at the intended missing US4 surfaces. | EXPECTED RED |
@@ -228,6 +247,25 @@ gates and independent review rather than routine scaffolding.
 - Maximum-effort frontier use is restricted to US4 policy and adversarial review. Deterministic red/
   green tests, Windows isolation evidence, and explicit owner acceptance remain authoritative.
 
+### US5 model gate decision
+
+- Antigravity CLI 1.1.22 currently exposes the approved primary `gemini-3.1-pro-high` and the only
+  approved same-ecosystem fallback, `gemini-3.7-flash-medium`. Pro is assigned to the cross-layer
+  revision, FTS, conflict, deletion, bridge, and compact UI slice; no provider substitution is made.
+- Gemini Pro consumes the scarcer five-hour/weekly quota. Two test-draft attempts were rejected
+  before production use because they contained invalid or synthetic assertions. Flash Medium was
+  then invoked as the quota-preserving fallback for a read-only audit; permission denial followed by
+  a bounded timeout produced no verdict. No Antigravity output is treated as accepted implementation
+  or review evidence.
+- Claude Code 2.1.251 is authenticated through the first-party service. An exact tool-free one-turn
+  probe resolved canonical `claude-opus-5` at `high` and returned
+  `THREADHELM_US5_REVIEWER_AVAILABLE`. It remains independent and must not implement the slice it
+  reviews at T088.
+- Deterministic domain, persistence, contract, Windows, E2E, quota, and privacy tests own acceptance.
+  The reviewer must independently inspect scope derivation, immutable attribution, conflict
+  preservation, content-free lineage, FTS deletion, bounded excerpts/results, and the absence of
+  terminal, transcript, reasoning, credential, environment, or workspace-file ingestion.
+
 ## Story checkpoints
 
 | Story | Unit/domain | Persistence | Contract | Windows integration | E2E | Provider/installed proof | Independent review | Human gate | Overall |
@@ -235,8 +273,8 @@ gates and independent review rather than routine scaffolding.
 | US1 | PASS | PASS | PASS | PASS | PASS | N/A — FIXTURES | PASS — CLAUDE OPUS APPROVED | N/A | MVP PASS |
 | US2 | PASS | PASS | PASS | PASS | PASS | PASS — LOCAL/PACKAGED, NO LIVE PROVIDER CALL | PASS — CLAUDE SONNET APPROVED | N/A | US2 PASS |
 | US3 | PASS — SERVICE POLICY | PASS | PASS | PASS | PASS | PASS — EXACT CODEX/CLAUDE MANUAL-ONLY PROOFS | PASS — OPENAI SOL APPROVED | N/A | US3 PASS |
-| US4 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | NOT READY |
-| US5 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | N/A | NOT READY |
+| US4 | PASS | PASS | PASS | PASS | PASS | N/A — FIXTURES | PASS — CLAUDE OPUS APPROVED | PASS — PR #10 OWNER APPROVED | US4 PASS |
+| US5 | PASS | PASS | PASS | PASS | PASS | PASS — DETERMINISTIC SESSION BRIDGE | PASS — CLAUDE OPUS APPROVED | N/A | US5 PASS |
 | US6 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | CONFIRM IMPORT | NOT READY |
 | US7 | PENDING | PENDING | PENDING | PENDING | PENDING | N/A | PENDING | CONFIRM SAVE/EXPORT | NOT READY |
 | US8 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | NOT READY |
@@ -245,20 +283,20 @@ gates and independent review rather than routine scaffolding.
 
 | Gate | Local status | Hosted/external status | Evidence or blocker |
 |---|---|---|---|
-| Formatting | PASS | N/A | Scoped US3 Prettier check plus prior full `pnpm format`. |
-| Lint | PASS | N/A | Full `pnpm lint` after US3 lifecycle changes. |
+| Formatting | PASS | N/A | Fresh full `pnpm format` after US5 final remediation. |
+| Lint | PASS | N/A | Fresh full `pnpm lint` after US5 final remediation. |
 | Rust format/check/test | PASS | N/A | Format, clippy with warnings denied, 17 supervisor tests, and 8 bridge tests passed. |
-| Typecheck | PASS | N/A | Full `pnpm typecheck` after US3 lifecycle changes. |
-| Unit tests | PASS | N/A | Full suite: 17 files, 121 tests. |
-| Contract tests | PASS | N/A | Full suite: 8 files, 150 tests; focused US3 provider lifecycle after transport remediation 12/12. |
+| Typecheck | PASS | N/A | Fresh full `pnpm typecheck` after US5 final remediation. |
+| Unit tests | PASS | N/A | Full cross-project Vitest: 42 files and 380 tests passed with 10 intentional skips. |
+| Contract tests | PASS | N/A | Included in the fresh full Vitest pass; focused US5 provider/desktop boundaries are green. |
 | Desktop build | PASS | N/A | Main, preload, and renderer built. |
 | Windows supervision proof | PASS — LOCAL X64 | N/A | Exact real native bridge PID containment proof passes; full serialized integration: 12 files, 42 passed, 1 intentional skip. |
 | Windows integration | US1 + US2 + US3 FIXTURE SLICES PASS | N/A | Focused coordination delivery 13/13, including exact-version fixture safe points, real named-pipe EOF degradation, recipient isolation, and fail-closed power/provider paths. |
-| E2E | US1 + US2 + US3 + LAUNCH-POLICY SLICES PASS | N/A | Full coordination file 6/6 plus the prior model/effort launch journey. |
+| E2E | US1–US5 + LAUNCH-POLICY SLICES PASS | N/A | Fresh full Playwright passed 21/21, including four shared-memory journeys. |
 | Packaged installed artifact | PASS — LOCAL X64, UNSIGNED | N/A | Provider smoke 3/3 and installed-app acceptance 5/5; bridge present in ASAR-unpacked signed-path location, but no signing certificate was configured. |
 | Codex live provider | PASS — MANUAL-ONLY | N/A | Authenticated exact Codex CLI 0.150.1 proof found no pending-draft/editor safety field; automatic presentation remains disabled. |
 | Claude live provider | PASS — MANUAL-ONLY | N/A | Authenticated exact Claude Code 2.1.251 Stop-hook proof found no pending-draft/editor safety field; automatic presentation remains disabled. |
-| Hosted CI | NOT RUN | NOT RUN | Local evidence does not imply hosted status. |
+| Hosted CI | PENDING — US5 | PASS — BASE PR #10 | PR #10 checks cover the merged base only; US5 hosted checks require its new PR. |
 | Owner release approval | PENDING | PENDING | Requires exact artifact/commit and all required gates. |
 
 ## Review findings and decisions
@@ -281,6 +319,11 @@ verification. Never record secrets, terminal transcripts, hidden prompts, or raw
 | US2 | Claude `claude-sonnet-5` / `high` | P1 | Renderer IPC exposed `coordination.reportOutcome`; the service reloaded the handoff and passed its stored recipient back into the repository check, making the identity check tautological and allowing renderer-forged provider outcomes. | Removed the renderer contract, coordinator handler, preload exposure, and service method. Provider outcomes are accepted only through the authenticated session bridge; deterministic E2E uses an explicitly test-only hook that requires a live recipient session. | Focused desktop IPC/bridge contracts pass 21/21 and assert the renderer operation is absent; Claude re-review marked fixed. |
 | US2 | Claude `claude-sonnet-5` / `high` | P2 | Packaging smoke proved bridge presence but not that the real native bridge process inherits the provider session Job Object. | The fixture provider now spawns the actual Rust bridge with a private session config and publishes the exact child PID; the architecture proof calls native `verifyProcessInJob` for that PID and proves terminate/handle-close cleanup. | Windows architecture proof passes 3/3, including exact real-bridge PID containment; Claude re-review marked fixed. |
 | US2 | Claude `claude-sonnet-5` / `high` | P3 | The anti-impersonation test claimed a forged sender attempt but never submitted a sender field. | Test now submits `senderSessionId` as an unknown parameter and proves strict rejection before verifying authenticated sender derivation on a valid request. | Focused provider bridge contract passes; Claude re-review marked fixed. |
+| US5 | Claude `claude-opus-5` / `high` | P1 | A resolution revision created through the UI cited only its own entry while persistence required citations to both competing entries, making conflict resolution unreachable. | Conflict views now expose both content-free entry IDs; supersession prioritizes both mandatory memory citations; the actual UI resolves a provider-created conflict. | Expanded memory E2E conflict journey passes end to end. |
+| US5 | Claude `claude-opus-5` / `high` | P2 | Contested supersession became clean active content before conflict resolution; revoked scopes could supersede; expiry had no production input/caller; retained-byte quota was tracked but unenforced. | Contested state and conflict counts follow the entry lineage until cited resolution; supersede revalidates approval; publication/proposal expiry is explicit and applied on reads; 64 MiB retained bytes are enforced transactionally. | Persistence/contract remediation changed from six RED failures to 18/18 GREEN; production expiry and conflict paths pass E2E. |
+| US5 | Claude `claude-opus-5` / `high` | P3 | Contract-valid null scopes failed equality; renderer lacked pagination and contested opt-in; competing resolution events, modal focus/Escape, and supersede-state resync were incomplete. | Scope comparison uses canonical keys; renderer exposes active-only default plus load-more; main emits every changed entry; native modal behavior and revision-state resync are explicit. | Typecheck/lint pass and four keyboard E2E journeys cover each corrected renderer path. |
+| US5 | Claude `claude-opus-5` / `high` | P2 | First remediation unconditionally activated any cited resolution revision, allowing a retracted current or stale superseded revision to become searchable and desynchronize entry/current state. | Resolution now requires the entry's exact current revision in `contested` state; a partial unique index permits only one active/contested revision per entry. | Retraction and two-supersession stale-resolution regressions fail before the fix and pass after it without FTS resurrection. |
+| US5 | Claude `claude-opus-5` / `high` | P3 | A load-more cursor remained visible after query/scope/contested-filter changes, then failed its bound query hash. | Every cursor-bound input change clears results, detail, and `nextCursor`; a fresh search is explicit. | Pagination E2E toggles contested state, proves load-more disappears, then retrieves 21 results after a fresh search. |
 
 ### User Story 2 Implementation & Test Evidence (T033–T047)
 
@@ -393,6 +436,16 @@ verification. Never record secrets, terminal transcripts, hidden prompts, or raw
   accepts the bounded same-participant disposition.
 - **Optional review**: Antigravity review was not consumed because it is optional and the independent
   Claude review already identified the remaining product-contract decision. No result is claimed.
+- **T070 merged acceptance**: the owner explicitly approved and merged PR #10 at merge commit
+  `d58379d` after every hosted Windows and CodeQL check passed. Fresh PR-head evidence at `79247d3`
+  was: full Vitest 347 passed/10 skipped, TypeScript/Prettier/ESLint clean, Rust format/Clippy clean,
+  Rust tests 25/25, desktop build pass, and Playwright 17/17. The E2E startup-readiness race found by
+  the first merge-gate run was reproduced, fixed by waiting for the renderer's initial versioned
+  state before fixture events, and passed five repeated focused runs before the full green suite.
+- **Redirect acceptance boundary**: owner approval covers the exact bounded disposition shipped in
+  PR #10. It does not claim that redirect already forks work to a different static persona. That
+  meaningful retarget/fork behavior remains deferred to the reviewed roster/supervisor sequence and
+  must preserve a new linked two-party conversation rather than silently changing participants.
 
 ## Rollback and recovery notes
 

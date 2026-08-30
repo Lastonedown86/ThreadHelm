@@ -198,7 +198,7 @@ completion, hold, pause, or escalation.
 - [X] T067 [US4] Add strict auto-continue preview/confirm and escalation continue/redirect/close operations in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
 - [X] T068 [US4] Build the keyboard-accessible held-message and escalation disposition surface in `apps/desktop/src/renderer/features/coordination/EscalationPanel.tsx` and integrate it in `apps/desktop/src/renderer/features/coordination/ConversationView.tsx`
 - [X] T069 [US4] Add sequential Windows loop, failure, conflict, authority, and closed-conversation isolation tests in `tests/integration/windows/coordination-recovery.test.ts`
-- [ ] T070 [US4] Run the US4 domain, contract, Windows, and E2E slices; capture final exits, Claude adversarial review, optional Antigravity review, and explicit human acceptance in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T070 [US4] Run the US4 domain, contract, Windows, and E2E slices; capture final exits, Claude adversarial review, optional Antigravity review, and explicit human acceptance in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 **Checkpoint**: US4 provides bounded coordination suitable as the deterministic safety layer for
 shared memory and autonomous missions.
@@ -216,30 +216,30 @@ lineage, FTS cleanup, performance, and absence of terminal/provider ingestion.
 
 ### Model gate for User Story 5
 
-- [ ] T071 [US5] Verify Antigravity `gemini-3.1-pro-high`, fallback `gemini-3.7-flash-medium`, and Claude `claude-opus-5` at `high` reviewer availability; record versions, quota tradeoff, fallback result, and deterministic retrieval/privacy verification responsibility in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T071 [US5] Verify Antigravity `gemini-3.1-pro-high`, fallback `gemini-3.7-flash-medium`, and Claude `claude-opus-5` at `high` reviewer availability; record versions, quota tradeoff, fallback result, and deterministic retrieval/privacy verification responsibility in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 ### Tests for User Story 5
 
-- [ ] T072 [P] [US5] Write failing memory kind/status, immutable revision, conflict, scope, source, confidence-nonauthority, and deletion transition tests in `tests/unit/domain/shared-memory.test.ts`
-- [ ] T073 [P] [US5] Write failing migration-v3 memory tables, FTS synchronization, quotas, cursor stability, conflict lineage, expiry, rollback, and content deletion tests in `tests/unit/persistence/shared-memory.test.ts`
-- [ ] T074 [P] [US5] Write failing desktop/bridge scope, strict schema, bounded excerpt, cross-scope denial, publish, supersede, retract, conflict, and deletion tests in `tests/contract/shared-memory.test.ts`
-- [ ] T075 [P] [US5] Write failing 10,000-revision search, restart, deletion, transcript exclusion, and unrelated-scope isolation cases in `tests/integration/windows/shared-memory.test.ts`
-- [ ] T076 [P] [US5] Write failing keyboard search/detail/publish/conflict/deletion and no-graph/no-animation journeys in `tests/e2e/hive-memory.spec.ts`
+- [X] T072 [P] [US5] Write failing memory kind/status, immutable revision, conflict, scope, source, confidence-nonauthority, and deletion transition tests in `tests/unit/domain/shared-memory.test.ts`
+- [X] T073 [P] [US5] Write failing migration-v3 memory tables, FTS synchronization, quotas, cursor stability, conflict lineage, expiry, rollback, and content deletion tests in `tests/unit/persistence/shared-memory.test.ts`
+- [X] T074 [P] [US5] Write failing desktop/bridge scope, strict schema, bounded excerpt, cross-scope denial, publish, supersede, retract, conflict, and deletion tests in `tests/contract/shared-memory.test.ts`
+- [X] T075 [P] [US5] Write failing 10,000-revision search, restart, deletion, transcript exclusion, and unrelated-scope isolation cases in `tests/integration/windows/shared-memory.test.ts`
+- [X] T076 [P] [US5] Write failing keyboard search/detail/publish/conflict/deletion and no-graph/no-animation journeys in `tests/e2e/hive-memory.spec.ts`
 
 ### Implementation for User Story 5
 
-- [ ] T077 [US5] Implement memory entry/revision/conflict state policy, source validation, and explicit lifecycle transitions in `packages/domain/src/shared-memory.ts` and export it from `packages/domain/src/index.ts`
-- [ ] T078 [US5] Add migration v3 memory entry/revision/conflict tables, FTS5 virtual table/triggers, scope indexes, quotas, and deletion invariants in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
-- [ ] T079 [US5] Implement transactional scoped publish/search/get/supersede/contest/resolve/retract/expire/delete queries and stable pagination in `packages/persistence/src/repositories/shared-memory.ts` and export them from `packages/persistence/src/repositories/index.ts`
-- [ ] T080 [US5] Implement authenticated memory scope derivation, deliberate publication, conflict handling, deletion disclosures, and content-free events in `apps/desktop/src/main/coordination/memory.ts`
-- [ ] T081 [US5] Add versioned `memory_search`, `memory_get`, and `memory_propose_revision` bridge tools with worker scope enforcement in `apps/desktop/src/main/coordination/bridge.ts` and `native/windows-supervisor/src/bin/threadhelm-coordination-bridge.rs`
-- [ ] T082 [US5] Add strict memory desktop contracts, named IPC handlers, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
-- [ ] T083 [P] [US5] Build the keyboard-accessible bounded memory search/filter/list surface without polling or graph rendering in `apps/desktop/src/renderer/features/coordination/MemoryList.tsx`
-- [ ] T084 [P] [US5] Build explicit memory detail, lineage, citations, conflict, supersede, retract, expiry, and deletion controls in `apps/desktop/src/renderer/features/coordination/MemoryDetail.tsx`
-- [ ] T085 [US5] Integrate content-free memory events and explicit detail loading into `apps/desktop/src/renderer/store.tsx`, `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`, and `apps/desktop/src/renderer/App.tsx`
-- [ ] T086 [US5] Add representative Windows FTS latency, quota, idle-cost, and deletion-index benchmarks in `tests/integration/windows/performance.test.ts` and `tests/integration/windows/shared-memory.test.ts`
-- [ ] T087 [US5] Extend installed provider proof with scoped memory search/publish, cross-scope denial, transcript exclusion, and role isolation in `tests/acceptance/provider-coordination-smoke.test.ts`
-- [ ] T088 [US5] Run the US5 domain, persistence, contract, Windows, E2E, and provider-proof slices; capture final exits, Antigravity implementation evidence, Claude review, and deterministic relevance/privacy results in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T077 [US5] Implement memory entry/revision/conflict state policy, source validation, and explicit lifecycle transitions in `packages/domain/src/shared-memory.ts` and export it from `packages/domain/src/index.ts`
+- [X] T078 [US5] Add migration v3 memory entry/revision/conflict tables, FTS5 virtual table/triggers, scope indexes, quotas, and deletion invariants in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
+- [X] T079 [US5] Implement transactional scoped publish/search/get/supersede/contest/resolve/retract/expire/delete queries and stable pagination in `packages/persistence/src/repositories/shared-memory.ts` and export them from `packages/persistence/src/repositories/index.ts`
+- [X] T080 [US5] Implement authenticated memory scope derivation, deliberate publication, conflict handling, deletion disclosures, and content-free events in `apps/desktop/src/main/coordination/memory.ts`
+- [X] T081 [US5] Add versioned `memory_search`, `memory_get`, and `memory_propose_revision` bridge tools with worker scope enforcement in `apps/desktop/src/main/coordination/bridge.ts` and `native/windows-supervisor/src/bin/threadhelm-coordination-bridge.rs`
+- [X] T082 [US5] Add strict memory desktop contracts, named IPC handlers, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
+- [X] T083 [P] [US5] Build the keyboard-accessible bounded memory search/filter/list surface without polling or graph rendering in `apps/desktop/src/renderer/features/coordination/MemoryList.tsx`
+- [X] T084 [P] [US5] Build explicit memory detail, lineage, citations, conflict, supersede, retract, expiry, and deletion controls in `apps/desktop/src/renderer/features/coordination/MemoryDetail.tsx`
+- [X] T085 [US5] Integrate content-free memory events and explicit detail loading into `apps/desktop/src/renderer/store.tsx`, `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`, and `apps/desktop/src/renderer/App.tsx`
+- [X] T086 [US5] Add representative Windows FTS latency, quota, idle-cost, and deletion-index benchmarks in `tests/integration/windows/performance.test.ts` and `tests/integration/windows/shared-memory.test.ts`
+- [X] T087 [US5] Extend installed provider proof with scoped memory search/publish, cross-scope denial, transcript exclusion, and role isolation in `tests/acceptance/provider-coordination-smoke.test.ts`
+- [X] T088 [US5] Run the US5 domain, persistence, contract, Windows, E2E, and provider-proof slices; capture final exits, Antigravity implementation evidence, Claude review, and deterministic relevance/privacy results in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 **Checkpoint**: US5 supplies durable shared context with explicit provenance and conflict state; no
 model output is silently authoritative and no topology/office visualization is introduced.

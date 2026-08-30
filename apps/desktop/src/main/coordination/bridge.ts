@@ -8,6 +8,9 @@ import {
   HandoffId,
   HandoffKind,
   ProviderLifecycleEvidence,
+  ProviderMemoryGetInput,
+  ProviderMemoryProposeRevisionInput,
+  ProviderMemorySearchInput,
   ReasonCode,
   ThreadHelmError,
   WorkOutcome,
@@ -21,6 +24,7 @@ import {
 import type { ProviderId } from '@threadhelm/contracts';
 import type { ProviderLifecycleEvidence as ProviderLifecycleEvidenceValue } from '@threadhelm/contracts';
 import type { ProviderAdapter, SessionBridgeConfig } from '@threadhelm/providers';
+import type { MemoryBridgeAuthority } from './memory.js';
 
 export interface BridgeSessionInfo {
   sessionId: string;
@@ -101,6 +105,7 @@ export class BridgeSessionManager {
       ) => Promise<LifecyclePresentationResult> | LifecyclePresentationResult)
     | undefined;
   readonly #onHandoffChanged: ((handoffId: string) => void) | undefined;
+  #memoryAuthority: MemoryBridgeAuthority | undefined;
 
   constructor(options: BridgeDispatchContext = {}) {
     this.#repo = options.repo;
@@ -115,6 +120,10 @@ export class BridgeSessionManager {
 
   setAdapters(adapters: readonly ProviderAdapter[]): void {
     this.#adapters = adapters;
+  }
+
+  setMemoryAuthority(authority: MemoryBridgeAuthority): void {
+    this.#memoryAuthority = authority;
   }
 
   async prepareSession(
@@ -645,7 +654,11 @@ export class BridgeSessionManager {
     this.#rateLimits.set(sessionId, recent);
 
     const params = request.params ?? {};
-    const isMutation = request.method !== 'threadhelm_list_pending';
+    const isMutation = ![
+      'threadhelm_list_pending',
+      'threadhelm_memory_search',
+      'threadhelm_memory_get',
+    ].includes(request.method);
     if (isMutation && this.#inFlightMutations.has(sessionId)) {
       throw new ThreadHelmError(
         'COORDINATION_LIMIT_REACHED',
@@ -674,6 +687,42 @@ export class BridgeSessionManager {
             jsonrpc: '2.0',
             id: request.id,
             result: { handoffs: [] },
+          };
+        }
+
+        case 'threadhelm_memory_search': {
+          const parsed = ProviderMemorySearchInput.parse(params);
+          if (!this.#memoryAuthority) {
+            throw new ThreadHelmError('STORAGE_UNAVAILABLE', 'Shared memory is unavailable.');
+          }
+          return {
+            jsonrpc: '2.0',
+            id: request.id,
+            result: this.#memoryAuthority.searchForSession(sessionId, parsed),
+          };
+        }
+
+        case 'threadhelm_memory_get': {
+          const parsed = ProviderMemoryGetInput.parse(params);
+          if (!this.#memoryAuthority) {
+            throw new ThreadHelmError('STORAGE_UNAVAILABLE', 'Shared memory is unavailable.');
+          }
+          return {
+            jsonrpc: '2.0',
+            id: request.id,
+            result: this.#memoryAuthority.getForSession(sessionId, parsed),
+          };
+        }
+
+        case 'threadhelm_memory_propose_revision': {
+          const parsed = ProviderMemoryProposeRevisionInput.parse(params);
+          if (!this.#memoryAuthority) {
+            throw new ThreadHelmError('STORAGE_UNAVAILABLE', 'Shared memory is unavailable.');
+          }
+          return {
+            jsonrpc: '2.0',
+            id: request.id,
+            result: this.#memoryAuthority.proposeForSession(sessionId, parsed),
           };
         }
 

@@ -6,6 +6,7 @@ import { RecoveryRecordRepository } from './recovery.js';
 import { AgentSessionRepository, SessionEventRepository } from './sessions.js';
 import { ApprovedWorkspaceRepository } from './workspaces.js';
 import { CoordinationRepository } from './coordination.js';
+import { SharedMemoryRepository } from './shared-memory.js';
 
 export interface Repositories {
   workspaces: ApprovedWorkspaceRepository;
@@ -15,6 +16,7 @@ export interface Repositories {
   events: SessionEventRepository;
   recovery: RecoveryRecordRepository;
   coordination: CoordinationRepository;
+  memory: SharedMemoryRepository;
   /** Runs `fn` atomically; nested calls become savepoints. */
   transaction<T>(fn: () => T): T;
 }
@@ -28,6 +30,7 @@ export function createRepositories(db: Db): Repositories {
     events: new SessionEventRepository(db),
     recovery: new RecoveryRecordRepository(db),
     coordination: new CoordinationRepository(db),
+    memory: new SharedMemoryRepository(db),
     transaction: <T>(fn: () => T): T => db.transaction(fn)(),
   };
 }
@@ -37,3 +40,4 @@ export * from './recovery.js';
 export * from './sessions.js';
 export * from './workspaces.js';
 export * from './coordination.js';
+export * from './shared-memory.js';

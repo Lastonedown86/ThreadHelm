@@ -240,6 +240,63 @@ pub fn handle_mcp_message(input: &str) -> Result<String, &'static str> {
     }
   },
   {
+    "name": "threadhelm_memory_search",
+    "description": "Search attributed shared memory in this authenticated session scope",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["query"],
+      "properties": {
+        "query": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "kind": { "type": "string", "enum": ["fact", "decision", "constraint", "artifact", "lesson"] },
+        "includeContested": { "type": "boolean" },
+        "cursor": { "type": "string", "maxLength": 512 },
+        "limit": { "type": "number", "minimum": 1, "maximum": 20 }
+      }
+    }
+  },
+  {
+    "name": "threadhelm_memory_get",
+    "description": "Get one visible shared-memory entry or revision in this authenticated session scope",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entryId"],
+      "properties": {
+        "entryId": { "type": "string", "format": "uuid" },
+        "revisionId": { "type": "string", "format": "uuid" }
+      }
+    }
+  },
+  {
+    "name": "threadhelm_memory_propose_revision",
+    "description": "Deliberately propose bounded attributed content in this authenticated session scope",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "body"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["fact", "decision", "constraint", "artifact", "lesson"] },
+        "title": { "type": ["string", "null"], "maxLength": 160 },
+        "body": { "type": "string", "minLength": 1, "maxLength": 16384 },
+        "sourceRefs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id"],
+            "properties": {
+              "kind": { "type": "string", "enum": ["handoff", "work_item", "memory", "artifact"] },
+              "id": { "type": "string", "minLength": 1, "maxLength": 512 }
+            }
+          }
+        },
+        "confidence": { "type": "string", "enum": ["unknown", "low", "medium", "high"] }
+      }
+    }
+  },
+  {
     "name": "threadhelm_report_outcome",
     "description": "Report final work outcome for a coordination handoff",
     "inputSchema": {
@@ -460,6 +517,9 @@ mod tests {
         assert!(response.contains("threadhelm_acknowledge"));
         assert!(response.contains("threadhelm_reply"));
         assert!(response.contains("threadhelm_report_outcome"));
+        assert!(response.contains("threadhelm_memory_search"));
+        assert!(response.contains("threadhelm_memory_get"));
+        assert!(response.contains("threadhelm_memory_propose_revision"));
     }
 
     #[test]

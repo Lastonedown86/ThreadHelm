@@ -5,6 +5,7 @@ import {
   migrate,
   openDatabase,
   readSchemaVersion,
+  SCHEMA_VERSION,
   type Db,
 } from '@threadhelm/persistence';
 
@@ -166,9 +167,9 @@ function handoffInput(overrides: Record<string, unknown> = {}) {
 }
 
 describe('coordination migration v2', () => {
-  it('upgrades v1 transactionally and creates the coordination tables', () => {
+  it('retains the v2 coordination tables through the current transactional schema', () => {
     const database = openMigrated();
-    expect(readSchemaVersion(database)).toBe(2);
+    expect(readSchemaVersion(database)).toBe(SCHEMA_VERSION);
     expect(tables(database)).toEqual(
       expect.arrayContaining([
         'coordination_conversations',

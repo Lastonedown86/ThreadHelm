@@ -430,6 +430,68 @@ button:disabled {
   margin-top: 0.5rem;
 }
 
+.memory-surface {
+  margin-top: 0.75rem;
+}
+
+.memory-search {
+  display: flex;
+  flex: 1;
+  gap: 0.375rem;
+}
+
+.memory-search input {
+  min-width: 0;
+  width: 100%;
+  padding: 0.25rem 0.375rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+}
+
+.memory-results > li,
+.memory-detail {
+  overflow-wrap: anywhere;
+}
+
+.memory-excerpt,
+.memory-body {
+  margin: 0.375rem 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.memory-body {
+  max-height: 16rem;
+  overflow: auto;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: var(--bg);
+}
+
+.memory-detail {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.memory-detail h3,
+.memory-detail h4 {
+  margin: 0.5rem 0 0.25rem;
+}
+
+.memory-contested {
+  color: var(--warning-text);
+  border-color: var(--warning-text);
+}
+
+.memory-deleted,
+.memory-retracted,
+.memory-expired,
+.memory-superseded {
+  color: var(--muted);
+}
+
 .modal {
   width: min(40rem, 90vw);
   padding: 1rem 1.25rem;

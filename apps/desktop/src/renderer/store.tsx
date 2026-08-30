@@ -45,6 +45,8 @@ export interface State {
   coordinationHandoffs: Record<string, HandoffSummaryView>;
   coordinationOrder: string[];
   coordinationNotice: string | null;
+  /** Monotonic content-free signal; components explicitly reload scoped detail. */
+  memorySequence: number;
   selectedSessionId: string | null;
   unread: Record<string, boolean>;
   truncation: TruncationState;
@@ -68,6 +70,7 @@ const initial: State = {
   coordinationHandoffs: {},
   coordinationOrder: [],
   coordinationNotice: null,
+  memorySequence: 0,
   selectedSessionId: null,
   unread: {},
   truncation: {},
@@ -117,7 +120,8 @@ type Action =
   | { type: 'notice'; notice: string | null }
   | { type: 'handoff'; handoff: HandoffSummaryView }
   | { type: 'coordinationLoaded'; handoffs: HandoffSummaryView[] }
-  | { type: 'coordinationEvent'; event: CoordinationEventEnvelope };
+  | { type: 'coordinationEvent'; event: CoordinationEventEnvelope }
+  | { type: 'memoryEvent'; sequence: number };
 
 function upsertSession(state: State, session: SessionView): State {
   const known = session.id in state.sessions;
@@ -254,6 +258,8 @@ function reduce(state: State, action: Action): State {
       };
     case 'coordinationEvent':
       return { ...state, coordinationNotice: action.event.safeSummary };
+    case 'memoryEvent':
+      return { ...state, memorySequence: Math.max(state.memorySequence, action.sequence) };
   }
 }
 
@@ -392,6 +398,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           });
         }
       }),
+      api.on('memory.changed', (event) =>
+        dispatch({ type: 'memoryEvent', sequence: event.sequence }),
+      ),
+      api.on('memory.conflictChanged', (event) =>
+        dispatch({ type: 'memoryEvent', sequence: event.sequence }),
+      ),
     ];
     void refresh();
     return () => {

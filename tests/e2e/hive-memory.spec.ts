@@ -24,6 +24,7 @@ test('keyboard-only shared-memory flow publishes, searches, inspects, retracts, 
       .getByLabel('Body')
       .fill('ThreadHelm uses local FTS5 before any semantic retrieval upgrade.');
     await composer.getByLabel('Source reference').fill('research.md');
+    await composer.getByLabel('Confidence').selectOption('high');
     await press(composer.getByRole('button', { name: 'Review publication' }));
 
     const review = page.getByRole('dialog', { name: 'Review durable memory publication' });

@@ -37,7 +37,7 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | US2 Auditable conversations | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | VERIFIED 2026-08-29 | APPROVED FOR US2 |
 | US3 Lifecycle-aware delivery | Claude `claude-opus-5` / `high` | `claude-sonnet-5` / `xhigh` | OpenAI `gpt-5.6-sol` / `max` | VERIFIED 2026-08-29 | APPROVED FOR US3 |
 | US4 Bounded coordination | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human | VERIFIED 2026-08-29 | PENDING IMPLEMENTATION/REVIEW/HUMAN ACCEPTANCE |
-| US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | VERIFIED 2026-08-29 | IMPLEMENTATION ASSIGNED; REVIEW PENDING |
+| US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | VERIFIED 2026-08-29 | LOCAL IMPLEMENTATION PASS; REVIEW PENDING |
 | US6 Reviewed agent roster | Claude `claude-sonnet-5` / `high` | `claude-opus-5` / `high` | OpenAI `gpt-5.6-sol` / `high` | UNVERIFIED | PENDING |
 | US7 Agent wizard/templates | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | UNVERIFIED | PENDING |
 | US8 Autonomous supervisor | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human + Antigravity `gemini-3.1-pro-high` | UNVERIFIED | PENDING |
@@ -147,6 +147,11 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | 2026-08-29 | T072/T077 domain GREEN | Focused shared-memory domain Vitest | 0 | 6/6 passed: lifecycle matrix, exact scope/author, stable sources, immutable content, confirmed deletion, and confidence/rank non-authority. | PASS |
 | 2026-08-29 | T073/T078/T079 persistence GREEN | Focused persistence and Windows shared-memory Vitest | 0 | Persistence 8/8 and Windows 5/5 passed, including transactional v3/FTS, append-only revision/conflict lineage, quotas, stable cursor, rollback, 10,000 revisions, restart, scope isolation, explicit-ingestion boundary, and deletion cleanup. | PASS |
 | 2026-08-29 | T074 contract GREEN | Focused shared-memory contract Vitest | 0 | 5/5 passed: strict scopes, 20-result/4 KiB bounds, content-free summary versus explicit detail, named preview/confirm operations, and provider inputs that cannot choose scope or author. | PASS |
+| 2026-08-29 | T080–T087 US5 consolidated deterministic gate | Shared-memory domain, persistence, desktop/provider contracts, Windows repository/performance, and provider acceptance Vitest files | 0 | 8 files passed, 69 tests passed, and 1 packaged-path conditional skip. Coverage includes 10,000 revisions, FTS p95 under 500 ms, open-panel idle cost, deletion-index cleanup, authenticated provider attribution, cross-scope denial, and absent transcript/owner bridge tools. | PASS |
+| 2026-08-29 | T083–T085 US5 desktop journey | Desktop build; focused `hive-memory.spec.ts` | 0 | Main/preload/renderer built and 2/2 keyboard journeys passed: durable publish/search/detail/retract/delete plus a calm list/detail surface with no graph, canvas, or animation. | PASS |
+| 2026-08-29 | T081 US5 Rust bridge | Cargo format; warnings-denied Clippy; coordination-bridge binary tests | 0 | Format and Clippy passed; 8/8 bridge tests passed with the three bounded memory tools in discovery and no owner-only deletion/conflict method. | PASS |
+| 2026-08-29 | T088 US5 static gate initial | Full format; lint; typecheck; desktop build | 2 then 0 | Format/lint/build passed; typecheck exposed an exact-optional spread in the new provider acceptance fixture. The fixture now copies only present fields; its 7 tests plus 1 conditional skip and the full TypeScript build pass. | RED/GREEN PASS |
+| 2026-08-29 | T088 Antigravity implementation evidence | Two Pro test-draft attempts; bounded Flash Medium read-only audit attempts | 0 drafts / no audit verdict | Both Pro drafts were rejected before production use because they contained synthetic missing-export assertions and invalid escaped TypeScript. Flash was invoked as the quota-preserving fallback: its first sandbox run could not obtain read permission and its second timed out without a response. No Antigravity code or verdict is claimed as accepted evidence; deterministic tests remain authoritative. | EVIDENCE CAPTURED — NO MODEL VERDICT |
 | 2026-08-29 | T062 US4 domain policy red | `pnpm exec vitest run --project unit tests/unit/domain/coordination.test.ts` | 1 | Six intended failures at the absent `evaluateAutomaticContinuation` policy cover depth eight/ninth hold, third exact repeat within eight, third consecutive failure, allowed/held message kinds, paused/closed late messages, opt-in, conflict, and authority. Ten prior domain tests remained green. | EXPECTED RED |
 | 2026-08-29 | T063 US4 contract red | `pnpm exec vitest run --project contract tests/contract/desktop-ipc-coordination.test.ts` | 1 | Three intended failures for absent strict auto-continue disclosure/confirmation, escalation/disposition schemas, and named operations. Fourteen prior coordination contract tests remained green. | EXPECTED RED |
 | 2026-08-29 | T063 US4 E2E red | Focused Playwright `bounded coordination|authority escalation` | 1 | The first journey timed out at the absent enable-disclosure control; the second failed at the absent `coordination.previewAutoContinue` operation. Both failures occurred at the intended missing US4 surfaces. | EXPECTED RED |
@@ -239,9 +244,11 @@ gates and independent review rather than routine scaffolding.
 - Antigravity CLI 1.1.22 currently exposes the approved primary `gemini-3.1-pro-high` and the only
   approved same-ecosystem fallback, `gemini-3.7-flash-medium`. Pro is assigned to the cross-layer
   revision, FTS, conflict, deletion, bridge, and compact UI slice; no provider substitution is made.
-- Gemini Pro consumes the scarcer five-hour/weekly quota and is reserved for the contract-sensitive
-  implementation. Flash Medium is the quota-preserving fallback, but was not invoked because the
-  primary is available; it must be rechecked before use if the primary later becomes unavailable.
+- Gemini Pro consumes the scarcer five-hour/weekly quota. Two test-draft attempts were rejected
+  before production use because they contained invalid or synthetic assertions. Flash Medium was
+  then invoked as the quota-preserving fallback for a read-only audit; permission denial followed by
+  a bounded timeout produced no verdict. No Antigravity output is treated as accepted implementation
+  or review evidence.
 - Claude Code 2.1.251 is authenticated through the first-party service. An exact tool-free one-turn
   probe resolved canonical `claude-opus-5` at `high` and returned
   `THREADHELM_US5_REVIEWER_AVAILABLE`. It remains independent and must not implement the slice it
@@ -259,7 +266,7 @@ gates and independent review rather than routine scaffolding.
 | US2 | PASS | PASS | PASS | PASS | PASS | PASS — LOCAL/PACKAGED, NO LIVE PROVIDER CALL | PASS — CLAUDE SONNET APPROVED | N/A | US2 PASS |
 | US3 | PASS — SERVICE POLICY | PASS | PASS | PASS | PASS | PASS — EXACT CODEX/CLAUDE MANUAL-ONLY PROOFS | PASS — OPENAI SOL APPROVED | N/A | US3 PASS |
 | US4 | PASS | PASS | PASS | PASS | PASS | N/A — FIXTURES | PASS — CLAUDE OPUS APPROVED | PASS — PR #10 OWNER APPROVED | US4 PASS |
-| US5 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | N/A | NOT READY |
+| US5 | PASS | PASS | PASS | PASS | PASS | PASS — DETERMINISTIC SESSION BRIDGE | PENDING | N/A | REVIEW PENDING |
 | US6 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | CONFIRM IMPORT | NOT READY |
 | US7 | PENDING | PENDING | PENDING | PENDING | PENDING | N/A | PENDING | CONFIRM SAVE/EXPORT | NOT READY |
 | US8 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | NOT READY |

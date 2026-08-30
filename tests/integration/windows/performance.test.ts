@@ -6,7 +6,9 @@
  */
 
 import { rmSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { createRepositories, migrate, openDatabase } from '@threadhelm/persistence';
 import {
   cleanupUserData,
   launchApp,
@@ -70,6 +72,7 @@ function appWorkingSetMiB(needle: string): number {
 // THREADHELM_ENFORCE_BUDGETS=1 (release runs). Latency gates stay hard.
 const enforceBudgets = process.env.THREADHELM_ENFORCE_BUDGETS === '1';
 const idleWindows = enforceBudgets ? 12 : 4; // × 5 s = 60 s release, 20 s CI
+const memoryIdleWindows = enforceBudgets ? 12 : 2; // × 5 s = 60 s release, 10 s CI
 function budget(label: string, value: number, max: number, unit: string) {
   const verdict = value <= max ? 'within budget' : 'OVER BUDGET';
   console.log(
@@ -79,6 +82,68 @@ function budget(label: string, value: number, max: number, unit: string) {
 }
 
 describe('performance budgets', () => {
+  it('shared-memory FTS stays below 500 ms p95 for a representative local corpus', () => {
+    const workspace = ws('memory-performance');
+    const database = openDatabase(join(workspace, 'memory-performance.sqlite'));
+    try {
+      migrate(database);
+      const workspaceId = '00000000-0000-4000-8000-000000000091';
+      const at = '2026-01-01T00:00:00.000Z';
+      database
+        .prepare(
+          `INSERT INTO approved_workspaces
+            (id, selected_path, display_path, canonical_path, volume_serial, file_id, drive_type,
+             approved_at, last_validated_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'fixed_local', ?, ?)`,
+        )
+        .run(
+          workspaceId,
+          workspace,
+          workspace,
+          `\\\\?\\${workspace}`,
+          'memory-performance-volume',
+          'memory-performance-file',
+          at,
+          at,
+        );
+      const memory = createRepositories(database).memory;
+      database.transaction(() => {
+        for (let index = 0; index < 2_000; index += 1) {
+          memory.publish({
+            scope: { workspaceId },
+            kind: 'fact',
+            title: `Performance item ${index}`,
+            body: `representative indexed memory needle-${index}`,
+            sourceRefs: [],
+            authorSessionId: null,
+            authorUser: true,
+            confidence: 'unknown',
+            submission: 'deliberate',
+            createdAt: new Date(Date.parse(at) + index).toISOString(),
+          });
+        }
+      })();
+
+      const samples: number[] = [];
+      for (let index = 0; index < 20; index += 1) {
+        const started = performance.now();
+        const page = memory.search({
+          scope: { workspaceId },
+          query: `needle-${1_999 - index}`,
+          limit: 20,
+        });
+        samples.push(performance.now() - started);
+        expect(page.items).toHaveLength(1);
+      }
+      samples.sort((left, right) => left - right);
+      const p95 = samples[Math.ceil(samples.length * 0.95) - 1]!;
+      console.log(`shared-memory FTS p95: ${p95.toFixed(1)} ms (2,000 revisions)`);
+      expect(p95).toBeLessThanOrEqual(500);
+    } finally {
+      database.close();
+    }
+  }, 60_000);
+
   it('recovery view for four crashed sessions is usable within 5 s', async () => {
     app = await launchApp();
     userData = app.userData;
@@ -192,6 +257,33 @@ describe('performance budgets', () => {
     const median = (windows[windows.length / 2 - 1]! + windows[windows.length / 2]!) / 2;
     console.log(`idle CPU windows (% of one core): ${windows.map((w) => w.toFixed(2)).join(', ')}`);
     budget('idle CPU median', median, 1, '%');
+  }, 120_000);
+
+  it(`open shared-memory surface remains idle without polling over ${memoryIdleWindows * 5} s`, async () => {
+    app = await launchApp();
+    userData = app.userData;
+    await app.page.getByRole('button', { name: 'Shared memory' }).click();
+    await app.page.getByRole('region', { name: 'Shared memory' }).waitFor();
+    await sleep(2_000);
+
+    const windows: number[] = [];
+    for (let index = 0; index < memoryIdleWindows; index += 1) {
+      const before = processesMatching(userData).reduce((sum, process) => sum + process.cpuMs, 0);
+      const started = performance.now();
+      await sleep(5_000);
+      const after = processesMatching(userData).reduce((sum, process) => sum + process.cpuMs, 0);
+      windows.push(((after - before) / (performance.now() - started)) * 100);
+    }
+    windows.sort((left, right) => left - right);
+    const middle = Math.floor(windows.length / 2);
+    const median =
+      windows.length % 2 === 0 ? (windows[middle - 1]! + windows[middle]!) / 2 : windows[middle]!;
+    console.log(
+      `shared-memory idle CPU windows (% of one core): ${windows
+        .map((window) => window.toFixed(2))
+        .join(', ')}`,
+    );
+    budget('shared-memory idle CPU median', median, 1, '%');
   }, 120_000);
 
   it('working set: ≤ 250 MiB with no sessions, ≤ 700 MiB with four idle sessions', async () => {

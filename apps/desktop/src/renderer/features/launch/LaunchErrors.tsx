@@ -67,6 +67,15 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   COORDINATION_AUTHORITY_REQUIRED:
     'This action requires explicit user authority before coordination can continue.',
   COORDINATION_CLOSED: 'That coordination conversation is closed.',
+  MEMORY_NOT_FOUND: 'That shared-memory entry or revision no longer exists.',
+  MEMORY_SCOPE_UNAUTHORIZED:
+    'That shared memory is outside the approved workspace or mission scope.',
+  MEMORY_CONTENT_INVALID: 'The shared-memory content was rejected by the size or privacy boundary.',
+  MEMORY_SOURCE_INVALID: 'One or more shared-memory sources are invalid or unattributed.',
+  MEMORY_QUOTA_REACHED: 'This workspace or mission reached its active shared-memory quota.',
+  MEMORY_CONFLICT_OPEN: 'That memory conflict still requires an explicit cited resolution.',
+  MEMORY_REVISION_STALE: 'The shared-memory revision changed. Reload it before continuing.',
+  MEMORY_CONTENT_DELETED: 'That shared-memory content was permanently deleted.',
   ACTIVE_SESSIONS: 'Sessions are still active. Cancel closing or stop all sessions first.',
   INVALID_REQUEST: 'The request was rejected as invalid.',
   UNAUTHORIZED_SENDER: 'The request came from an unauthorized source.',

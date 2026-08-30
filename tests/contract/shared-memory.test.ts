@@ -8,6 +8,7 @@ import {
   ProviderMemorySearchInput,
   operations,
 } from '@threadhelm/contracts';
+import { BridgeSessionManager } from '../../apps/desktop/src/main/coordination/bridge.js';
 
 const WORKSPACE_ID = '00000000-0000-4000-8000-000000000001';
 const ENTRY_ID = '00000000-0000-4000-8000-000000000010';
@@ -173,5 +174,50 @@ describe('shared-memory desktop and provider contracts', () => {
         missionId: WORKSPACE_ID,
       }),
     ).toThrow();
+  });
+
+  it('derives provider scope from the authenticated bridge session and rejects impersonation', async () => {
+    const manager = new BridgeSessionManager();
+    const seen: { sessionId: string | null } = { sessionId: null };
+    manager.setMemoryAuthority({
+      searchForSession(sessionId) {
+        seen.sessionId = sessionId;
+        return { items: [], nextCursor: null };
+      },
+      getForSession() {
+        throw new Error('not used');
+      },
+      proposeForSession() {
+        throw new Error('not used');
+      },
+    });
+    const sessionId = '00000000-0000-4000-8000-000000000099';
+    const credential = manager.issueCredential(sessionId, 'codex-cli', 'fixture');
+
+    const response = await manager.dispatch(sessionId, credential.token, {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'threadhelm_memory_search',
+      params: { query: 'authority', limit: 5 },
+    });
+    expect(response.result).toEqual({ items: [], nextCursor: null });
+    expect(seen.sessionId).toBe(sessionId);
+
+    await expect(
+      manager.dispatch(sessionId, credential.token, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'threadhelm_memory_search',
+        params: { query: 'authority', workspaceId: WORKSPACE_ID },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      manager.dispatch(sessionId, credential.token, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'threadhelm_memory_propose_revision',
+        params: { kind: 'fact', body: 'claim', authorSessionId: ENTRY_ID },
+      }),
+    ).rejects.toThrow();
   });
 });

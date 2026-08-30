@@ -3,6 +3,7 @@ import { CloseBlockedDialog } from './features/control/CloseBlockedDialog.js';
 import { ControlBar } from './features/control/ControlBar.js';
 import { CoordinationPanel } from './features/coordination/CoordinationPanel.js';
 import { ConversationView } from './features/coordination/ConversationView.js';
+import { MemoryList } from './features/coordination/MemoryList.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
 import { RecoveryPanel } from './features/recovery/RecoveryPanel.js';
 import { TerminalPane } from './features/session/Terminal.js';
@@ -52,6 +53,7 @@ function Shell() {
           <WorkspacePanel />
           <ProviderReadiness />
           <SessionList />
+          <MemoryList />
           <CoordinationPanel />
           <ConversationView />
         </aside>

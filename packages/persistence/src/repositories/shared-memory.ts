@@ -246,6 +246,20 @@ export class SharedMemoryRepository {
     );
   }
 
+  scopeForEntry(entryId: string): MemoryScope {
+    const entry = this.entry(entryId);
+    if (!entry) throw new ThreadHelmError('MEMORY_NOT_FOUND', 'Shared-memory entry was not found.');
+    return rowScope(entry);
+  }
+
+  entryIdForRevision(revisionId: string): string {
+    const revision = this.revision(revisionId);
+    if (!revision) {
+      throw new ThreadHelmError('MEMORY_NOT_FOUND', 'Shared-memory revision was not found.');
+    }
+    return revision.entry_id;
+  }
+
   private assertWorkspaceExists(scope: MemoryScope): void {
     const key = scopeKey(scope);
     if (key.kind === 'workspace') {

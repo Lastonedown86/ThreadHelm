@@ -844,6 +844,7 @@ export const MemoryDeletionDisclosureView = strictObject({
   expiresAt: Timestamp,
   safeSummary: SafeSummary,
 });
+export type MemoryDeletionDisclosureView = z.infer<typeof MemoryDeletionDisclosureView>;
 export const ConfirmMemoryDeletionRequest = strictObject({
   deletionToken: OpaqueToken,
   permanentDeletionConfirmation: z.literal(true),
@@ -856,11 +857,14 @@ export const ProviderMemorySearchInput = strictObject({
   cursor: z.string().max(512).optional(),
   limit: z.number().int().min(1).max(20).optional(),
 });
+export type ProviderMemorySearchInput = z.infer<typeof ProviderMemorySearchInput>;
 export const ProviderMemoryGetInput = strictObject({
   entryId: Uuid,
   revisionId: Uuid.optional(),
 });
+export type ProviderMemoryGetInput = z.infer<typeof ProviderMemoryGetInput>;
 export const ProviderMemoryProposeRevisionInput = strictObject(MemoryPublicationContent);
+export type ProviderMemoryProposeRevisionInput = z.infer<typeof ProviderMemoryProposeRevisionInput>;
 
 export const MemoryChangedEvent = strictObject({
   entryId: Uuid,
@@ -873,12 +877,14 @@ export const MemoryChangedEvent = strictObject({
   sequence: z.number().int().min(1),
   occurredAt: Timestamp,
 });
+export type MemoryChangedEvent = z.infer<typeof MemoryChangedEvent>;
 export const MemoryConflictChangedEvent = strictObject({
   conflictId: Uuid,
   state: MemoryConflictState,
   sequence: z.number().int().min(1),
   occurredAt: Timestamp,
 });
+export type MemoryConflictChangedEvent = z.infer<typeof MemoryConflictChangedEvent>;
 
 export const ResolveEscalationRequest = z.discriminatedUnion('disposition', [
   strictObject({ escalationId: Uuid, disposition: z.literal('continue') }),

@@ -16,6 +16,7 @@ import {
 import type { Handlers } from './ipc/router.js';
 import type { Context } from './context.js';
 import { createCoordinationService, type CoordinationService } from './coordination/service.js';
+import { createMemoryService, type MemoryService } from './coordination/memory.js';
 import { deliverHandoff } from './coordination/delivery.js';
 import { requestClose, stopAllAndClose } from './lifecycle/close.js';
 import { listReadiness } from './providers/readiness.js';
@@ -34,6 +35,7 @@ import { approveWorkspace, listWorkspaces, revokeWorkspace } from './workspaces/
 
 export function createHandlers(ctx: Context): Handlers {
   const coordination = startCoordination(ctx);
+  const memory = startMemory(ctx);
   return {
     'workspaces.choose': () => chooseWorkspace(ctx),
     'workspaces.approve': ({ candidateToken }) => approveWorkspace(ctx, candidateToken),
@@ -111,10 +113,28 @@ export function createHandlers(ctx: Context): Handlers {
       coordination.requestContentDeletion(conversationId),
     'coordination.confirmContentDeletion': (request) =>
       coordination.confirmContentDeletion(request),
+    'memory.search': (request) => memory.search(request),
+    'memory.get': (request) => memory.get(request),
+    'memory.previewPublish': (request) => memory.previewPublish(request),
+    'memory.confirmPublish': (request) => memory.confirmPublish(request),
+    'memory.previewSupersede': (request) => memory.previewSupersede(request),
+    'memory.confirmSupersede': (request) => memory.confirmSupersede(request),
+    'memory.retract': (request) => memory.retract(request),
+    'memory.resolveConflict': (request) => memory.resolveConflict(request),
+    'memory.requestDeletion': (request) => memory.requestDeletion(request),
+    'memory.confirmDeletion': (request) => memory.confirmDeletion(request),
     'application.requestClose': () => requestClose(ctx),
     'application.stopAllAndClose': () => stopAllAndClose(ctx),
     'application.getInfo': () => ({ ...ctx.appInfo, storageDegraded: ctx.health.degraded }),
   };
+}
+
+/** Compose the one durable memory writer/search authority and bind provider tools to it. */
+export function startMemory(ctx: Context): MemoryService {
+  const service = ctx.memory ?? createMemoryService(ctx);
+  ctx.memory = service;
+  ctx.coordinationBridge?.setMemoryAuthority(service);
+  return service;
 }
 
 /** Compose the single main-owned coordination authority for this application run. */

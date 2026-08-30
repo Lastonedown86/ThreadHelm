@@ -33,6 +33,23 @@ export {
   type CoordinationParticipantFixture,
 } from './coordination.js';
 export {
+  CHANGED_AFTER_PREVIEW_EDITED_FIXTURE,
+  CHANGED_AFTER_PREVIEW_ORIGINAL_FIXTURE,
+  DUPLICATE_HIRE_MANIFEST_FIXTURE,
+  EXCESSIVE_BOUND_HIRE_MANIFEST_FIXTURE,
+  HIRE_MANIFEST_SPEC,
+  HOSTILE_TEXT_HIRE_MANIFEST_FIXTURE,
+  MALFORMED_HIRE_MANIFEST_TEXT_FIXTURES,
+  MARVEL_ROSTER_FIXTURES,
+  MAX_HIRE_MANIFEST_TOKEN_CAP,
+  REVISED_HIRE_MANIFEST_FIXTURE,
+  UNAVAILABLE_MODEL_HIRE_MANIFEST_FIXTURE,
+  hireManifestDigest,
+  writeHireManifestFile,
+  type HireManifestFixture,
+  type HireManifestFixtureFields,
+} from './agent-profiles.js';
+export {
   bridgeAcknowledgeRequest,
   bridgeListPendingRequest,
   bridgeMemoryGetRequest,

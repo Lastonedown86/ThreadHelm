@@ -17,6 +17,7 @@ import type { Handlers } from './ipc/router.js';
 import type { Context } from './context.js';
 import { createCoordinationService, type CoordinationService } from './coordination/service.js';
 import { createMemoryService, type MemoryService } from './coordination/memory.js';
+import { createProfileService, type ProfileService } from './coordination/profiles.js';
 import { deliverHandoff } from './coordination/delivery.js';
 import { requestClose, stopAllAndClose } from './lifecycle/close.js';
 import { listReadiness } from './providers/readiness.js';
@@ -36,6 +37,7 @@ import { approveWorkspace, listWorkspaces, revokeWorkspace } from './workspaces/
 export function createHandlers(ctx: Context): Handlers {
   const coordination = startCoordination(ctx);
   const memory = startMemory(ctx);
+  const profiles = startProfiles(ctx);
   return {
     'workspaces.choose': () => chooseWorkspace(ctx),
     'workspaces.approve': ({ candidateToken }) => approveWorkspace(ctx, candidateToken),
@@ -123,10 +125,25 @@ export function createHandlers(ctx: Context): Handlers {
     'memory.resolveConflict': (request) => memory.resolveConflict(request),
     'memory.requestDeletion': (request) => memory.requestDeletion(request),
     'memory.confirmDeletion': (request) => memory.confirmDeletion(request),
+    'profiles.chooseFile': () => profiles.chooseFile(),
+    'profiles.previewImport': (request) => profiles.previewImport(request),
+    'profiles.confirmImport': (request) => profiles.confirmImport(request),
+    'profiles.list': (request) => profiles.list(request),
+    'profiles.get': (request) => profiles.get(request),
+    'profiles.setEnabled': (request) => profiles.setEnabled(request),
+    'profiles.previewDelete': (request) => profiles.previewDelete(request),
+    'profiles.confirmDelete': (request) => profiles.confirmDelete(request),
     'application.requestClose': () => requestClose(ctx),
     'application.stopAllAndClose': () => stopAllAndClose(ctx),
     'application.getInfo': () => ({ ...ctx.appInfo, storageDegraded: ctx.health.degraded }),
   };
+}
+
+/** Compose the one main-owned reviewed-profile import and roster authority. */
+export function startProfiles(ctx: Context): ProfileService {
+  const service = ctx.profiles ?? createProfileService(ctx);
+  ctx.profiles = service;
+  return service;
 }
 
 /** Compose the one durable memory writer/search authority and bind provider tools to it. */

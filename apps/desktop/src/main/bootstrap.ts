@@ -21,7 +21,12 @@ import { createHandlers, stopCoordination } from './coordinator.js';
 import { BridgeSessionManager } from './coordination/bridge.js';
 import { presentNextAtSafePoint, publishLatest } from './coordination/delivery.js';
 import { reconcileCoordinationAtStartup } from './coordination/recovery.js';
-import { electronChannels, electronHostSpawner, electronPicker } from './electron-adapters.js';
+import {
+  electronChannels,
+  electronHostSpawner,
+  electronPicker,
+  electronProfileFilePicker,
+} from './electron-adapters.js';
 import { bindRouter, createRendererEvents } from './ipc/electron-binding.js';
 import { createRouter } from './ipc/router.js';
 import { cancelClose, requestClose } from './lifecycle/close.js';
@@ -132,6 +137,7 @@ export function bootstrap(paths: BootstrapPaths): void {
       hosts: electronHostSpawner(paths.hostEntry),
       channels: electronChannels,
       picker: electronPicker(getWindow),
+      profilePicker: electronProfileFilePicker(getWindow),
       events,
       storage,
       health: degradedHealth,

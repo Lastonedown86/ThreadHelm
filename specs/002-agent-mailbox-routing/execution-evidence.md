@@ -38,7 +38,7 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | US3 Lifecycle-aware delivery | Claude `claude-opus-5` / `high` | `claude-sonnet-5` / `xhigh` | OpenAI `gpt-5.6-sol` / `max` | VERIFIED 2026-08-29 | APPROVED FOR US3 |
 | US4 Bounded coordination | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human | VERIFIED 2026-08-29 | PENDING IMPLEMENTATION/REVIEW/HUMAN ACCEPTANCE |
 | US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | VERIFIED 2026-08-29 | APPROVED FOR US5 |
-| US6 Reviewed agent roster | Claude `claude-sonnet-5` / `high` | `claude-opus-5` / `high` | OpenAI `gpt-5.6-sol` / `high` | UNVERIFIED | PENDING |
+| US6 Reviewed agent roster | Claude `claude-sonnet-5` / `high` | `claude-opus-5` / `high` | OpenAI `gpt-5.6-sol` / `high` | VERIFIED 2026-08-29 | IMPLEMENTATION PENDING |
 | US7 Agent wizard/templates | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | UNVERIFIED | PENDING |
 | US8 Autonomous supervisor | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human + Antigravity `gemini-3.1-pro-high` | UNVERIFIED | PENDING |
 
@@ -142,6 +142,11 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | 2026-08-29 | T060 final current-tree verification | Lint; typecheck; full unit; full contract; desktop build; focused Windows delivery; full coordination E2E; provider acceptance; scoped formatting and whitespace audit | 0 | Lint/typecheck passed; unit 121/121, contract 150/150, desktop main/preload/renderer built, Windows delivery 13/13, coordination E2E 6/6, provider acceptance 6 passed with 1 packaged-only skip, scoped Prettier passed, and `git diff --check` passed. | PASS — US3 COMPLETE |
 | 2026-08-29 | T061 US4 model and reviewer gate | Codex CLI 0.150.1 exact tool-free read-only probes for `gpt-5.6-sol` / `max` and `gpt-5.6-terra` / `max`; Claude Code 2.1.251 exact tool-free `claude-opus-5` / `xhigh` probe; `agy models`; active human-owner instruction | 0 | Sol and Terra returned their exact availability markers; Claude resolved canonical `claude-opus-5` and returned its exact marker at USD 0.032029; Antigravity 1.1.22 lists optional `gemini-3.1-pro-high`; the human owner explicitly started the next sequence. Codex emitted unrelated configured-MCP authentication warnings but completed both probes without tool use. | PASS — IMPLEMENTATION ASSIGNED; FINAL REVIEWS/OWNER ACCEPTANCE REMAIN T070 |
 | 2026-08-29 | T071 US5 model and reviewer gate | `agy --version`; `agy models`; `claude --version`; `claude auth status`; exact tool-free `claude-opus-5` / `high` marker probe | 0 | Antigravity 1.1.22 exposes primary `gemini-3.1-pro-high` and fallback `gemini-3.7-flash-medium`; Claude Code 2.1.251 is first-party authenticated and returned the exact US5 reviewer marker. | PASS — IMPLEMENTATION ASSIGNED; REVIEW REMAINS T088 |
+| 2026-08-29 | T089 US6 model and verifier gate | `claude --version`; `claude auth status`; exact tool-free `claude-sonnet-5` / `high` marker probe; `codex --version`; exact read-only `gpt-5.6-sol` / `high` marker probe | 0 | Claude Code 2.1.251 returned `THREADHELM_US6_PRIMARY_AVAILABLE`; Codex CLI 0.150.1 returned `THREADHELM_US6_VERIFIER_AVAILABLE`. The Opus fallback was not invoked because the primary passed. Claude owns schema/runtime compatibility and cost review; OpenAI independently verifies stable-ID authority separation, deterministic behavior, and privacy. Owner clarification: `Tony Stark` and every other persona/display name are mutable presentation data; stable internal profile/supervisor IDs and immutable revisions remain the only identity inputs to routing, permissions, memory, launch, and audit. | PASS — IMPLEMENTATION GATE OPEN |
+| 2026-08-29 | US6 primary implementation assignment | Bounded `claude-sonnet-5` / `high` run for T090–T105 | 1 (interrupted) | The run remained in analysis for more than six minutes, produced no repository edits or executable test result, and was terminated. No implementation evidence from the stalled run is accepted. | NO RESULT — CONTINUE LOCALLY |
+| 2026-08-29 | T090–T095 US6 executable RED and fixtures | Focused domain/persistence unit, contract, Windows integration, and Playwright roster commands after building the fixture package | 1 each (expected) | Unit executed 32/32 intended failures at absent domain/schema/repository behavior; contract executed 16 intended failures plus one existing disclosure-store pass; Windows executed 6/6 intended failures at the absent profile picker/import surface; Playwright executed 5/5 intended failures at the same absent production hook. Sanitized fixtures include ten roster manifests plus duplicate, revised, hostile, unavailable, excessive, and changed-after-preview cases. | EXPECTED RED |
+| 2026-08-29 | T096 profile domain/contracts GREEN | Focused profile domain and contract Vitest files | 0 | Domain 23/23 and contracts 17/17 passed after enforcing strict hire schema, bounded normalization, mutable-name/stable-ID separation, exact compatibility, narrowing-only budgets, lifecycle policy, strict views/requests/events, and one-use drift failure. | PASS |
+| 2026-08-29 | T097–T098 persistence GREEN | Bypass-authorized streamed `claude-sonnet-5` / `high` persistence-only run; independent local focused Vitest, Prettier, and diff checks | 0 | Claude completed without approval loops at USD 0.8316102; local audit passed 9/9 persistence tests, formatting, and whitespace checks. Migration v3 now contains profile/revision/pin tables and indexes; repository import is digest-idempotent, revision-pinned, transactional, and mission-pin guarded. | PASS |
 | 2026-08-29 | T072–T075 executable RED | Focused domain, persistence, contract, and Windows shared-memory Vitest files | 1 each | 6 domain, 8 persistence, 5 contract, and 5 Windows cases failed at absent US5 policies, schema/repository, operations/views, and repository surfaces. All files parsed and executed; no fake throw helper or syntax failure remained. | EXPECTED RED |
 | 2026-08-29 | T076 executable RED | Desktop build; focused `hive-memory.spec.ts` | 1 | Desktop built, then both real fixture journeys timed out at the absent accessible `Shared memory` control. | EXPECTED RED |
 | 2026-08-29 | T072/T077 domain GREEN | Focused shared-memory domain Vitest | 0 | 6/6 passed: lifecycle matrix, exact scope/author, stable sources, immutable content, confirmed deletion, and confidence/rank non-authority. | PASS |
@@ -446,6 +451,58 @@ verification. Never record secrets, terminal transcripts, hidden prompts, or raw
   PR #10. It does not claim that redirect already forks work to a different static persona. That
   meaningful retarget/fork behavior remains deferred to the reviewed roster/supervisor sequence and
   must preserve a new linked two-party conversation rather than silently changing participants.
+
+### US6 reviewed roster implementation evidence
+
+- **T099-T100 main/IPC**: bounded file-handle selection, 64 KiB reads, strict parsing, SHA-256
+  digest-bound one-use preview tokens, changed-file recheck, compatibility evaluation, transactional
+  confirmation/deletion, content-free events, and generic least-privilege preload routing are green.
+  Focused contract tests passed 17/17 and Windows import tests passed 6/6; confirmation creates no
+  session, workspace approval, worktree, provider setting, role, tool, or budget authority.
+- **T101-T103 renderer**: Claude Sonnet 5/high produced the bounded renderer slice using streamed
+  output and `bypassPermissions`; it reached the 30-turn cap at USD 1.476916 after writing the UI.
+  Independent local correction supplied required empty IPC request arguments. Typecheck, desktop
+  build, and all five keyboard-only Playwright roster journeys then passed. The UI is compact,
+  text-only, and has no avatar, image, video, canvas, or animation dependency.
+- **T104 provider disclosure seam**: both built-in adapters now return a main-owned, process-only
+  disclosure for exact stable profile/revision IDs, effective provider/model/effort, requested versus
+  effective isolation and token budget, effective elapsed/concurrency budget, closed tool registry,
+  and exact workspace. Unsafe expansion and unsatisfied required isolation fail closed; profile IDs
+  are not placed in provider argv and neither adapter adds a settings mutation. Provider adapter
+  contract tests passed 47/47.
+- **T105 exact Downloads acceptance**: opt-in acceptance imported the ten user-selected files in
+  place and logged only basenames/digests/results. Portable provider `claude` was explicitly resolved
+  to runtime adapter `claude-code` without rewriting the stored request; lowercase hyphenated
+  capability labels remained inert data. Result: 10/10 PASS, four Opus/six Sonnet, eight isolated/two
+  non-isolated, every requested token cap exactly 2,000,000, every compatibility result compatible,
+  and zero sessions/workspaces created.
+
+| Basename | SHA-256 | Result |
+|---|---|---|
+| `black-panther-commerce-engineer.hire.json` | `7cf5af78041346cb91eabcc1d485900097ad2c0a1d1cf4252fa5b38d9de49214` | PASS |
+| `captain-america-pr-deployment-gatekeeper.hire.json` | `17a94e34540a37cc43b49a0df2c85af5da4851584a9c872475d5ef3ae189373b` | PASS |
+| `doctor-strange-square-event-sentinel.hire.json` | `2a0aa5268a3cc413d3598a5b9e660866a89ab7d7ca2bec7bc2462dea27345b3a` | PASS |
+| `maria-hill-issue-triage.hire.json` | `88d8b9677c564e530c6a306878d62d08299e0c16a1e25a775e63863b0768eb31` | PASS |
+| `nick-fury-release-commander.hire.json` | `a0be866432d56d47bce9123425a37ff8dee0ee5cf1fb99cae0241dc919248521` | PASS |
+| `she-hulk-spec-review-counsel.hire.json` | `17db7fa89b4403ecbd6e1aac66a0be62e86890e9539da3cb5728c423862eb7cb` | PASS |
+| `shuri-ui-ux.hire.json` | `932ea6d8870af3fe9774bf310d457220febe306363032876016de671737f64c0` | PASS |
+| `spider-man-quality-engineer.hire.json` | `18a234d108fccdce28cee2a12882431c2f1952eb3d1697b5aaca390d0e6c38e7` | PASS |
+| `vision-authority-flags-architect.hire.json` | `9b1cee77bdc0a4b740a7ad07709a161ca2a41eff0ceef3849d3d3f9838a86515` | PASS |
+| `war-machine-devops-operator.hire.json` | `332ca412f71ada3f8238686836d0a76efc40bff85b2973fac20b457c4a3f2e6e` | PASS |
+
+- **T106 independent review and final verification**: the bypass-authorized, read-only OpenAI Sol
+  review found one P1 in same-digest compatibility reconciliation: a previously compatible profile
+  could remain active after provider/model availability changed. The repository now refreshes only
+  derived compatibility metadata, disables every incompatible current revision, rejects enabling it,
+  and preserves the user's disabled state if compatibility later returns. It also requires an inactive
+  profile before deletion. Existing schema-v3 databases now receive the additive profile tables
+  transactionally instead of being skipped by the unchanged version number. Regression tests cover
+  same-digest compatible-to-unavailable-to-compatible, same-version v3 extension,
+  new incompatible revisions, stale revisions, mission pins, and disable-before-delete. Final exits:
+  ESLint 0; TypeScript 0; Prettier/whitespace 0; full unit 189/189; full contract 182/182;
+  focused Windows 6/6; keyboard Playwright 5/5; exact Downloads acceptance 1/1; desktop main,
+  preload, and renderer build 0. Stable profile/revision UUIDs remain independent of mutable names;
+  content-free events contain no goal/persona text or source path; import launches and grants nothing.
 
 ## Rollback and recovery notes
 

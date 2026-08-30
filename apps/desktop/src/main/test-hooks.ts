@@ -38,6 +38,7 @@ export const TEST_HOOKS_SWITCH = 'threadhelm-test-hooks';
 export interface TestHooks {
   dispatch(name: string, payload?: unknown): Promise<Envelope<unknown>>;
   setPickerPath(path: string | null): void;
+  setProfileFilePickerPath(path: string | null): void;
   useFixtureAdapters(modes: Partial<Record<ProviderId, FakeAgentMode>>, lines?: number): void;
   liveSessions(): { id: string; state: string; hostPid: number; rootPid: number | null }[];
   jobSnapshot(sessionId: string): { activeProcessCount: number; processIds: number[] } | null;
@@ -76,6 +77,7 @@ export function testHooksEnabled(): boolean {
 
 export function installTestHooks(ctx: Context, router: Router, allowedOrigin: () => string): void {
   let pickerPath: string | null = null;
+  let profileFilePickerPath: string | null = null;
   let nextHostReadyDelayMs = 0;
   let nextControlAppliedDelayMs = 0;
   let rejectNextHostInput = false;
@@ -118,12 +120,16 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
     },
   };
   ctx.picker = { pickDirectory: async () => pickerPath };
+  ctx.profilePicker = { pickFile: async () => profileFilePickerPath };
 
   const hooks: TestHooks = {
     dispatch: (name, payload) =>
       router.dispatch(name, payload, { frameUrl: allowedOrigin(), isMainFrame: true }),
     setPickerPath: (path) => {
       pickerPath = path;
+    },
+    setProfileFilePickerPath: (path) => {
+      profileFilePickerPath = path;
     },
     useFixtureAdapters: (modes, lines) => {
       ctx.adapters = ctx.adapters.map((adapter) => {

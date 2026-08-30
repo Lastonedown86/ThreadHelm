@@ -4,7 +4,13 @@
  */
 
 import { dialog, MessageChannelMain, utilityProcess, type BrowserWindow } from 'electron';
-import type { DirectoryPicker, HostHandle, HostSpawner, StreamChannelFactory } from './context.js';
+import type {
+  DirectoryPicker,
+  HostHandle,
+  HostSpawner,
+  ProfileFilePicker,
+  StreamChannelFactory,
+} from './context.js';
 
 export function electronHostSpawner(hostEntry: string): HostSpawner {
   return {
@@ -51,6 +57,26 @@ export function electronPicker(getWindow: () => BrowserWindow | null): Directory
       const options = {
         title: 'Choose a workspace folder',
         properties: ['openDirectory', 'dontAddToRecent'] as ('openDirectory' | 'dontAddToRecent')[],
+      };
+      const result = window
+        ? await dialog.showOpenDialog(window, options)
+        : await dialog.showOpenDialog(options);
+      if (result.canceled || result.filePaths.length !== 1) return null;
+      return result.filePaths[0] ?? null;
+    },
+  };
+}
+
+export function electronProfileFilePicker(
+  getWindow: () => BrowserWindow | null,
+): ProfileFilePicker {
+  return {
+    async pickFile() {
+      const window = getWindow();
+      const options = {
+        title: 'Choose an agent profile manifest',
+        properties: ['openFile', 'dontAddToRecent'] as ('openFile' | 'dontAddToRecent')[],
+        filters: [{ name: 'ThreadHelm hire manifests', extensions: ['json'] }],
       };
       const result = window
         ? await dialog.showOpenDialog(window, options)

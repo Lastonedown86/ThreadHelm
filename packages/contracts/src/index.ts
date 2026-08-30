@@ -29,6 +29,10 @@ export const STOP_GRACE_MS = 15_000;
 export const INTERRUPT_OBSERVE_MS = 5_000;
 /** Bounded provider probe budget. */
 export const PROBE_TIMEOUT_MS = 10_000;
+/** Ceiling on a hire manifest's requested token budget (agent-profiles.md). */
+export const MAX_TOKEN_CAP = 2_000_000;
+/** Bounded length for reviewed free-text manifest fields (goal, description). */
+export const MAX_GOAL_LENGTH = 4_000;
 
 // ---------------------------------------------------------------------------
 // Enumerations
@@ -36,6 +40,10 @@ export const PROBE_TIMEOUT_MS = 10_000;
 
 export const ProviderId = z.enum(['codex-cli', 'claude-code']);
 export type ProviderId = z.infer<typeof ProviderId>;
+
+/** Portable hire-provider labels are data, not runtime adapter identifiers. */
+export const ProfileProviderId = z.enum(['claude', 'codex', 'claude-code', 'codex-cli']);
+export type ProfileProviderId = z.infer<typeof ProfileProviderId>;
 
 export const LifecycleState = z.enum([
   'starting',
@@ -191,6 +199,24 @@ export type MemoryConfidence = z.infer<typeof MemoryConfidence>;
 export const MemoryConflictState = z.enum(['open', 'resolved']);
 export type MemoryConflictState = z.infer<typeof MemoryConflictState>;
 
+// Agent profiles are reviewed portable manifests imported into a local
+// roster. Import is never equivalent to launching or authorizing an agent;
+// display name and capability labels are inert presentation data, never
+// identity or authority (contracts/agent-profiles.md).
+export const ProfileState = z.enum(['active', 'disabled', 'deleted']);
+export type ProfileState = z.infer<typeof ProfileState>;
+
+export const ProfileCompatibility = z.enum([
+  'compatible',
+  'incompatible_provider',
+  'incompatible_model',
+  'unavailable',
+]);
+export type ProfileCompatibility = z.infer<typeof ProfileCompatibility>;
+
+export const ProfileEventKind = z.enum(['imported', 'enabled', 'disabled', 'deleted']);
+export type ProfileEventKind = z.infer<typeof ProfileEventKind>;
+
 export const CoordinationEventKind = z.enum([
   'created',
   'queued',
@@ -270,6 +296,17 @@ export const ErrorCode = z.enum([
   'MEMORY_CONFLICT_OPEN',
   'MEMORY_REVISION_STALE',
   'MEMORY_CONTENT_DELETED',
+  // agent profiles
+  'PROFILE_SCHEMA_INVALID',
+  'PROFILE_OVERSIZED',
+  'PROFILE_UNREADABLE',
+  'PROFILE_TOKEN_EXPIRED',
+  'PROFILE_DIGEST_CHANGED',
+  'PROFILE_LIMIT_REACHED',
+  'PROFILE_NOT_FOUND',
+  'PROFILE_INCOMPATIBLE',
+  'PROFILE_REVISION_STALE',
+  'PROFILE_MISSION_PINNED',
   // application and boundary
   'ACTIVE_SESSIONS',
   'INVALID_REQUEST',
@@ -323,6 +360,11 @@ export const DeliveryAttemptId = z.uuid().brand<'DeliveryAttemptId'>();
 export type DeliveryAttemptId = z.infer<typeof DeliveryAttemptId>;
 export const CoordinationEventId = z.uuid().brand<'CoordinationEventId'>();
 export type CoordinationEventId = z.infer<typeof CoordinationEventId>;
+/** Stable roster identity. Never the mutable display name/persona. */
+export const ProfileId = z.uuid().brand<'ProfileId'>();
+export type ProfileId = z.infer<typeof ProfileId>;
+export const ProfileRevisionId = z.uuid().brand<'ProfileRevisionId'>();
+export type ProfileRevisionId = z.infer<typeof ProfileRevisionId>;
 /** Plain `Uint8Array` (any buffer kind) — structured-clone safe across IPC. */
 export const Bytes = z.custom<Uint8Array>((value) => value instanceof Uint8Array, 'expected bytes');
 export const Timestamp = z.iso.datetime();
@@ -1099,6 +1141,141 @@ export const SelectionView = z.object({ selectedSessionId: Uuid.nullable() });
 export type SelectionView = z.infer<typeof SelectionView>;
 
 // ---------------------------------------------------------------------------
+// Agent profiles (contracts/agent-profiles.md). A hire manifest is untrusted
+// portable data, never an instruction. `effort` is launch policy and is
+// deliberately absent; capability labels and the display name never grant
+// tools, roles, or budget expansion.
+// ---------------------------------------------------------------------------
+
+const ProfileCapabilityLabel = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(/^[a-z][a-z0-9_-]*$/, 'capability labels are inert lowercase routing tags');
+
+const ProfileModelId = z
+  .string()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._:/-]*$/, 'invalid provider model identifier');
+
+const ProfileDigest = z.string().regex(/^[0-9a-f]{64}$/, 'expected a SHA-256 hex digest');
+const ProfileDigestPrefix = z.string().regex(/^[0-9a-f]{12}$/, 'expected a 12-hex digest prefix');
+
+export const HireManifestV1 = strictObject({
+  spec: z.literal('munder-difflin/hire@1'),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().min(1).max(MAX_GOAL_LENGTH),
+  provider: ProfileProviderId,
+  model: ProfileModelId,
+  goal: z.string().trim().min(1).max(MAX_GOAL_LENGTH),
+  capabilities: z.array(ProfileCapabilityLabel).max(16),
+  isolate: z.boolean(),
+  tokenCap: z.number().int().positive().max(MAX_TOKEN_CAP),
+  author: z.string().trim().min(1).max(200),
+});
+export type HireManifestV1 = z.infer<typeof HireManifestV1>;
+
+const AgentProfileSummaryFields = {
+  profileId: ProfileId,
+  currentRevisionId: ProfileRevisionId,
+  displayName: z.string().min(1).max(200),
+  description: z.string().min(1).max(MAX_GOAL_LENGTH),
+  requestedProvider: ProfileProviderId,
+  requestedModel: ProfileModelId,
+  compatibility: ProfileCompatibility,
+  state: ProfileState,
+  capabilities: z.array(ProfileCapabilityLabel).max(16),
+  isolateRequested: z.boolean(),
+  tokenCapRequested: z.number().int().positive().max(MAX_TOKEN_CAP),
+  author: z.string().min(1).max(200),
+  digestPrefix: ProfileDigestPrefix,
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+};
+
+export const AgentProfileSummaryView = strictObject(AgentProfileSummaryFields);
+export type AgentProfileSummaryView = z.infer<typeof AgentProfileSummaryView>;
+
+export const AgentProfileDetailView = strictObject({
+  ...AgentProfileSummaryFields,
+  goal: z.string().min(1).max(MAX_GOAL_LENGTH),
+  digest: ProfileDigest,
+  manifestSpec: z.literal('munder-difflin/hire@1'),
+  compatibilityReasons: z.array(z.string().max(300)).max(20),
+  revisionHistory: z
+    .array(
+      strictObject({
+        revisionId: ProfileRevisionId,
+        digest: ProfileDigest,
+        createdAt: Timestamp,
+      }),
+    )
+    .max(100),
+});
+export type AgentProfileDetailView = z.infer<typeof AgentProfileDetailView>;
+
+/** Accepts only a renderer file-selection handle, never arbitrary provider input. */
+export const PreviewImportProfileRequest = strictObject({
+  fileHandle: z.string().min(1).max(256),
+});
+export type PreviewImportProfileRequest = z.infer<typeof PreviewImportProfileRequest>;
+
+export const ProfilePreviewView = strictObject({
+  previewToken: OpaqueToken,
+  digest: ProfileDigest,
+  basename: z.string().min(1).max(255),
+  normalized: HireManifestV1,
+  warnings: z.array(z.string().max(300)).max(20),
+  compatibility: ProfileCompatibility,
+  compatibilityReasons: z.array(z.string().max(300)).max(20),
+  expiresAt: Timestamp,
+});
+export type ProfilePreviewView = z.infer<typeof ProfilePreviewView>;
+
+export const ConfirmImportProfileRequest = strictObject({
+  previewToken: OpaqueToken,
+  importConfirmation: z.literal(true),
+});
+export type ConfirmImportProfileRequest = z.infer<typeof ConfirmImportProfileRequest>;
+
+export const SetProfileEnabledRequest = strictObject({
+  profileId: ProfileId,
+  revisionId: ProfileRevisionId,
+  enabled: z.boolean(),
+});
+export type SetProfileEnabledRequest = z.infer<typeof SetProfileEnabledRequest>;
+
+/** Content-free: deletion is disclosed without goal/description text. */
+export const ProfileDeletionDisclosureView = strictObject({
+  deleteToken: OpaqueToken,
+  profileId: ProfileId,
+  displayName: z.string().min(1).max(200),
+  expiresAt: Timestamp,
+});
+export type ProfileDeletionDisclosureView = z.infer<typeof ProfileDeletionDisclosureView>;
+
+export const ConfirmDeleteProfileRequest = strictObject({
+  deleteToken: OpaqueToken,
+  deleteConfirmation: z.literal(true),
+});
+export type ConfirmDeleteProfileRequest = z.infer<typeof ConfirmDeleteProfileRequest>;
+
+/** Content-free: ids, state, compatibility, digest prefix, and timestamps only. */
+export const ProfileEventEnvelope = strictObject({
+  type: z.literal('profiles.changed'),
+  eventId: Uuid,
+  profileId: ProfileId,
+  revisionId: ProfileRevisionId,
+  state: ProfileState,
+  compatibility: ProfileCompatibility,
+  digestPrefix: ProfileDigestPrefix,
+  kind: ProfileEventKind,
+  occurredAt: Timestamp,
+});
+export type ProfileEventEnvelope = z.infer<typeof ProfileEventEnvelope>;
+
+// ---------------------------------------------------------------------------
 // Request/response operations. One entry per preload method; main validates
 // every request against `request` before doing anything else.
 // ---------------------------------------------------------------------------
@@ -1303,6 +1480,46 @@ export const operations = {
   'application.requestClose': { request: none, response: CloseResultView },
   'application.stopAllAndClose': { request: none, response: CloseResultView },
   'application.getInfo': { request: none, response: ApplicationInfoView },
+  'profiles.chooseFile': {
+    request: none,
+    response: strictObject({ fileHandle: z.string().min(1).max(256) }),
+  },
+  'profiles.previewImport': {
+    request: PreviewImportProfileRequest,
+    response: ProfilePreviewView,
+  },
+  'profiles.confirmImport': {
+    request: ConfirmImportProfileRequest,
+    response: AgentProfileSummaryView,
+  },
+  'profiles.list': {
+    request: strictObject({
+      state: ProfileState.optional(),
+      compatibility: ProfileCompatibility.optional(),
+      cursor: z.string().max(512).optional(),
+      limit: z.number().int().min(1).max(100).optional(),
+    }).optional(),
+    response: strictObject({
+      profiles: z.array(AgentProfileSummaryView).max(100),
+      nextCursor: z.string().max(512).nullable(),
+    }),
+  },
+  'profiles.get': {
+    request: strictObject({ profileId: ProfileId }),
+    response: AgentProfileDetailView,
+  },
+  'profiles.setEnabled': {
+    request: SetProfileEnabledRequest,
+    response: AgentProfileSummaryView,
+  },
+  'profiles.previewDelete': {
+    request: strictObject({ profileId: ProfileId }),
+    response: ProfileDeletionDisclosureView,
+  },
+  'profiles.confirmDelete': {
+    request: ConfirmDeleteProfileRequest,
+    response: AgentProfileSummaryView,
+  },
 } as const;
 
 export type OperationName = keyof typeof operations;
@@ -1345,6 +1562,7 @@ export const events = {
   'coordination.escalationChanged': EscalationView,
   'memory.changed': MemoryChangedEvent,
   'memory.conflictChanged': MemoryConflictChangedEvent,
+  'profiles.changed': ProfileEventEnvelope,
   'coordination.bridgeChanged': strictObject({
     sessionId: Uuid,
     capability: z.string(),

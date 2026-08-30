@@ -14,6 +14,7 @@ import type {
   ProviderAdapter,
   ReadinessResult,
 } from '@threadhelm/providers';
+import { profileLaunchDisclosure } from '@threadhelm/providers';
 import { FAKE_AGENT_PATH, type FakeAgentMode } from './index.js';
 
 export interface FixtureAdapterOptions {
@@ -91,6 +92,9 @@ export function fixtureAdapter(options: FixtureAdapterOptions): ProviderAdapter 
         environmentPolicy: 'inherit-sanitized',
         terminal: ctx.terminal,
       };
+    },
+    buildLaunchDisclosure(ctx: LaunchContext) {
+      return profileLaunchDisclosure(options.id, ctx);
     },
     buildCleanStop() {
       // The stubborn modes ignore '/exit' so clean stop times out and force

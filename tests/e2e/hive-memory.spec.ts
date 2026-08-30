@@ -187,6 +187,11 @@ test('shared-memory UI paginates explicitly and production reads expire due entr
       .getByRole('list', { name: 'Shared memory results' })
       .getByRole('listitem');
     await expect(results).toHaveCount(20);
+    await region.getByRole('checkbox', { name: 'Include contested' }).check();
+    await expect(region.getByRole('button', { name: 'Load more memories' })).toHaveCount(0);
+    await region.getByRole('checkbox', { name: 'Include contested' }).uncheck();
+    await search.press('Enter');
+    await expect(results).toHaveCount(20);
     await region.getByRole('button', { name: 'Load more memories' }).click();
     await expect(results).toHaveCount(21);
     await expect(region.getByRole('button', { name: 'Load more memories' })).toHaveCount(0);

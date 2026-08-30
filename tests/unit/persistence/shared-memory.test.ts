@@ -80,6 +80,10 @@ describe('shared-memory persistence', () => {
         expect.objectContaining({ type: 'trigger', name: 'shared_memory_revisions_fts_insert' }),
         expect.objectContaining({ type: 'trigger', name: 'shared_memory_revisions_fts_update' }),
         expect.objectContaining({ type: 'index', name: 'shared_memory_entries_scope_status' }),
+        expect.objectContaining({
+          type: 'index',
+          name: 'shared_memory_revisions_one_searchable_current',
+        }),
       ]),
     );
   });
@@ -223,6 +227,108 @@ describe('shared-memory persistence', () => {
     expect(memory.get(right.entry.id, { workspaceId: WORKSPACE_ID }).summary.status).toBe(
       'superseded',
     );
+  });
+
+  it('rejects retracted or stale resolution revisions without resurrecting searchable content', () => {
+    const left = publish('Resolution safety claim alpha');
+    const right = publish('Resolution safety claim beta', {
+      createdAt: '2026-01-01T00:00:01.000Z',
+    });
+    const conflict = memory.reportConflict({
+      leftRevisionId: left.revision.id,
+      rightRevisionId: right.revision.id,
+      reasonCode: 'EXPLICIT_REPORT',
+      createdAt: '2026-01-01T00:00:02.000Z',
+    });
+    const resolution = memory.supersede({
+      entryId: left.entry.id,
+      targetRevisionId: left.revision.id,
+      title: 'Resolution safety current',
+      body: 'Current cited resolution content',
+      sourceRefs: [
+        { kind: 'memory', id: left.entry.id },
+        { kind: 'memory', id: right.entry.id },
+      ],
+      authorSessionId: null,
+      authorUser: true,
+      confidence: 'medium',
+      submission: 'deliberate',
+      createdAt: '2026-01-01T00:00:03.000Z',
+    });
+    memory.retract({
+      entryId: left.entry.id,
+      revisionId: resolution.revision.id,
+      reasonCode: 'OWNER_WITHDREW',
+      retractedAt: '2026-01-01T00:00:04.000Z',
+    });
+    expect(() =>
+      memory.resolveConflict({
+        conflictId: conflict.id,
+        resolutionRevisionId: resolution.revision.id,
+        resolvedAt: '2026-01-01T00:00:05.000Z',
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'MEMORY_REVISION_STALE' }));
+    expect(memory.get(left.entry.id, { workspaceId: WORKSPACE_ID }).summary.status).toBe(
+      'retracted',
+    );
+    expect(
+      memory.search({ scope: { workspaceId: WORKSPACE_ID }, query: 'current cited resolution' })
+        .items,
+    ).toEqual([]);
+
+    const replacement = publish('Stale resolution claim alpha', {
+      createdAt: '2026-01-01T00:00:06.000Z',
+    });
+    const competitor = publish('Stale resolution claim beta', {
+      createdAt: '2026-01-01T00:00:07.000Z',
+    });
+    const secondConflict = memory.reportConflict({
+      leftRevisionId: replacement.revision.id,
+      rightRevisionId: competitor.revision.id,
+      reasonCode: 'EXPLICIT_REPORT',
+      createdAt: '2026-01-01T00:00:08.000Z',
+    });
+    const staleResolution = memory.supersede({
+      entryId: replacement.entry.id,
+      targetRevisionId: replacement.revision.id,
+      title: 'Stale resolution first draft',
+      body: 'First cited resolution draft',
+      sourceRefs: [
+        { kind: 'memory', id: replacement.entry.id },
+        { kind: 'memory', id: competitor.entry.id },
+      ],
+      authorSessionId: null,
+      authorUser: true,
+      confidence: 'medium',
+      submission: 'deliberate',
+      createdAt: '2026-01-01T00:00:09.000Z',
+    });
+    const currentResolution = memory.supersede({
+      entryId: replacement.entry.id,
+      targetRevisionId: staleResolution.revision.id,
+      title: 'Stale resolution current draft',
+      body: 'Current cited resolution draft',
+      sourceRefs: [
+        { kind: 'memory', id: replacement.entry.id },
+        { kind: 'memory', id: competitor.entry.id },
+      ],
+      authorSessionId: null,
+      authorUser: true,
+      confidence: 'high',
+      submission: 'deliberate',
+      createdAt: '2026-01-01T00:00:10.000Z',
+    });
+    expect(() =>
+      memory.resolveConflict({
+        conflictId: secondConflict.id,
+        resolutionRevisionId: staleResolution.revision.id,
+        resolvedAt: '2026-01-01T00:00:11.000Z',
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'MEMORY_REVISION_STALE' }));
+    expect(memory.get(replacement.entry.id, { workspaceId: WORKSPACE_ID }).summary).toMatchObject({
+      revisionId: currentResolution.revision.id,
+      status: 'contested',
+    });
   });
 
   it('rejects supersession after workspace approval is revoked', () => {

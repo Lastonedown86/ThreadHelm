@@ -15,6 +15,7 @@ import {
   type MemorySummaryView,
 } from '@threadhelm/contracts';
 import {
+  activateResolvedMemory,
   advanceMemoryStatus,
   assertMemoryAuthor,
   assertMemoryScope,
@@ -732,6 +733,13 @@ export class SharedMemoryRepository {
     if (!sameScope(rowScope(leftEntry), rowScope(resolutionEntry))) {
       throw new ThreadHelmError('MEMORY_SCOPE_UNAUTHORIZED', 'Resolution must stay in scope.');
     }
+    if (resolutionEntry.current_revision_id !== resolution.id) {
+      throw new ThreadHelmError(
+        'MEMORY_REVISION_STALE',
+        'Conflict resolution requires the current revision.',
+      );
+    }
+    const resolutionStatus = activateResolvedMemory(resolution.status);
     const sourceIds = new Set(parseSources(resolution.source_refs).map((source) => source.id));
     if (!sourceIds.has(leftEntry.id) || !sourceIds.has(rightEntry.id)) {
       throw new ThreadHelmError(
@@ -775,11 +783,11 @@ export class SharedMemoryRepository {
         }
       }
       this.db
-        .prepare("UPDATE shared_memory_revisions SET status = 'active' WHERE id = ?")
-        .run(resolution.id);
+        .prepare('UPDATE shared_memory_revisions SET status = ? WHERE id = ?')
+        .run(resolutionStatus, resolution.id);
       this.db
-        .prepare("UPDATE shared_memory_entries SET status = 'active', updated_at = ? WHERE id = ?")
-        .run(input.resolvedAt, resolution.entry_id);
+        .prepare('UPDATE shared_memory_entries SET status = ?, updated_at = ? WHERE id = ?')
+        .run(resolutionStatus, input.resolvedAt, resolution.entry_id);
       return this.conflictView(
         this.db.prepare('SELECT * FROM memory_conflicts WHERE id = ?').get(row.id) as ConflictRow,
       );

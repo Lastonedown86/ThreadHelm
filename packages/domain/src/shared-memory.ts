@@ -27,6 +27,17 @@ export function advanceMemoryStatus(from: MemoryStatus, to: MemoryStatus): Memor
   return to;
 }
 
+/** Conflict resolution may activate only the current contested revision it explicitly cites. */
+export function activateResolvedMemory(status: MemoryStatus): 'active' {
+  if (status !== 'contested') {
+    throw new ThreadHelmError(
+      'MEMORY_REVISION_STALE',
+      'Conflict resolution requires the current contested revision.',
+    );
+  }
+  return 'active';
+}
+
 export function assertMemoryScope(scope: {
   workspaceId?: string | null | undefined;
   missionId?: string | null | undefined;

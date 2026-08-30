@@ -179,7 +179,15 @@ export function MemoryList() {
         <div className="memory-surface" role="region" aria-label="Shared memory">
           <label className="field">
             Memory scope
-            <select value={workspaceId} onChange={(event) => setWorkspaceId(event.target.value)}>
+            <select
+              value={workspaceId}
+              onChange={(event) => {
+                setWorkspaceId(event.target.value);
+                setItems([]);
+                setNextCursor(null);
+                setDetail(null);
+              }}
+            >
               {state.workspaces
                 .filter((workspace) => !workspace.revokedAt)
                 .map((workspace) => (
@@ -202,7 +210,11 @@ export function MemoryList() {
                 type="search"
                 aria-label="Search shared memory"
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setItems([]);
+                  setNextCursor(null);
+                }}
                 disabled={!workspaceId}
               />
               <button type="submit" className="small" disabled={!workspaceId || !query.trim()}>
@@ -213,7 +225,12 @@ export function MemoryList() {
               <input
                 type="checkbox"
                 checked={includeContested}
-                onChange={(event) => setIncludeContested(event.target.checked)}
+                onChange={(event) => {
+                  setIncludeContested(event.target.checked);
+                  setItems([]);
+                  setNextCursor(null);
+                  setDetail(null);
+                }}
               />{' '}
               Include contested
             </label>

@@ -299,6 +299,8 @@ CREATE INDEX shared_memory_revisions_entry_revision
   ON shared_memory_revisions (entry_id, revision DESC);
 CREATE INDEX shared_memory_revisions_status_created
   ON shared_memory_revisions (status, created_at DESC, id DESC);
+CREATE UNIQUE INDEX shared_memory_revisions_one_searchable_current
+  ON shared_memory_revisions (entry_id) WHERE status IN ('active', 'contested');
 
 CREATE TABLE memory_conflicts (
   id TEXT PRIMARY KEY,

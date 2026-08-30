@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   MAX_ACTIVE_MEMORY_REVISIONS_PER_SCOPE,
+  MAX_RETAINED_MEMORY_BYTES_PER_SCOPE,
   createRepositories,
   migrate,
   openDatabase,
@@ -190,6 +191,23 @@ describe('shared-memory persistence', () => {
       submission: 'deliberate',
       createdAt: '2026-01-01T00:00:03.000Z',
     });
+    expect(resolution).toMatchObject({
+      entry: { status: 'contested' },
+      revision: { status: 'contested' },
+    });
+    expect(
+      memory.search({
+        scope: { workspaceId: WORKSPACE_ID },
+        query: 'cited release record',
+        includeContested: true,
+      }).items,
+    ).toEqual([
+      expect.objectContaining({
+        entryId: left.entry.id,
+        status: 'contested',
+        conflictCount: 1,
+      }),
+    ]);
     const resolved = memory.resolveConflict({
       conflictId: conflict.id,
       resolutionRevisionId: resolution.revision.id,
@@ -201,6 +219,44 @@ describe('shared-memory persistence', () => {
       rightRevisionId: right.revision.id,
       resolvedByRevisionId: resolution.revision.id,
     });
+    expect(memory.get(left.entry.id, { workspaceId: WORKSPACE_ID }).summary.status).toBe('active');
+    expect(memory.get(right.entry.id, { workspaceId: WORKSPACE_ID }).summary.status).toBe(
+      'superseded',
+    );
+  });
+
+  it('rejects supersession after workspace approval is revoked', () => {
+    const published = publish('Revocation-bound memory');
+    db.prepare('UPDATE approved_workspaces SET revoked_at = ? WHERE id = ?').run(
+      '2026-01-01T00:00:01.000Z',
+      WORKSPACE_ID,
+    );
+    expect(() =>
+      memory.supersede({
+        entryId: published.entry.id,
+        targetRevisionId: published.revision.id,
+        title: 'Must not persist',
+        body: 'This scope is no longer approved.',
+        sourceRefs: [{ kind: 'memory', id: published.entry.id }],
+        authorSessionId: null,
+        authorUser: true,
+        confidence: 'high',
+        submission: 'deliberate',
+        createdAt: '2026-01-01T00:00:02.000Z',
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'MEMORY_SCOPE_UNAUTHORIZED' }));
+    expect(
+      db
+        .prepare('SELECT COUNT(*) AS count FROM shared_memory_revisions WHERE entry_id = ?')
+        .get(published.entry.id),
+    ).toEqual({ count: 1 });
+  });
+
+  it('canonicalizes contract-valid null scope fields for authorization comparisons', () => {
+    const published = publish('Canonical workspace scope');
+    expect(
+      memory.get(published.entry.id, { workspaceId: WORKSPACE_ID, missionId: null }).summary.scope,
+    ).toEqual({ workspaceId: WORKSPACE_ID });
   });
 
   it('expires and retracts content out of default search without deleting lineage', () => {
@@ -216,7 +272,7 @@ describe('shared-memory persistence', () => {
       reasonCode: 'OWNER_WITHDREW',
       retractedAt: '2026-01-01T00:00:02.000Z',
     });
-    expect(memory.expireDue('2026-01-01T00:00:11.000Z')).toBe(1);
+    expect(memory.expireDue('2026-01-01T00:00:11.000Z')).toEqual([expired.entry.id]);
     expect(
       memory.search({ scope: { workspaceId: WORKSPACE_ID }, query: 'deployment note' }).items,
     ).toHaveLength(0);
@@ -244,6 +300,37 @@ describe('shared-memory persistence', () => {
     expect(db.prepare('SELECT COUNT(*) AS count FROM shared_memory_entries').get()).toEqual({
       count: 0,
     });
+  });
+
+  it('enforces retained-content byte quota for both publish and supersede transactions', () => {
+    const existing = publish('Retained quota baseline');
+    db.prepare(
+      `UPDATE shared_memory_scope_quotas SET retained_content_bytes = ?
+       WHERE scope_kind = 'workspace' AND scope_id = ?`,
+    ).run(MAX_RETAINED_MEMORY_BYTES_PER_SCOPE, WORKSPACE_ID);
+
+    expect(() => publish('Retained quota publish overflow')).toThrowError(
+      expect.objectContaining({ code: 'MEMORY_QUOTA_REACHED' }),
+    );
+    expect(() =>
+      memory.supersede({
+        entryId: existing.entry.id,
+        targetRevisionId: existing.revision.id,
+        title: 'Retained quota supersede overflow',
+        body: 'This revision must roll back at the byte bound.',
+        sourceRefs: [{ kind: 'memory', id: existing.entry.id }],
+        authorSessionId: null,
+        authorUser: true,
+        confidence: 'medium',
+        submission: 'deliberate',
+        createdAt: '2026-01-01T00:00:01.000Z',
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'MEMORY_QUOTA_REACHED' }));
+    expect(
+      db
+        .prepare('SELECT COUNT(*) AS count FROM shared_memory_revisions WHERE entry_id = ?')
+        .get(existing.entry.id),
+    ).toEqual({ count: 1 });
   });
 
   it('rolls back entry, revision, quota, and FTS state when a revision insert fails', () => {

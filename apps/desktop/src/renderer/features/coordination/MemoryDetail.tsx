@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type {
   MemoryDeletionDisclosureView,
   MemoryDetailView,
   MemorySupersedeDisclosureView,
 } from '@threadhelm/contracts';
 import { api, call } from '../../api.js';
+import { ModalDialog } from './ModalDialog.js';
 
 function label(value: string): string {
   return value.replaceAll('_', ' ').replace(/^./u, (first) => first.toUpperCase());
@@ -29,6 +30,12 @@ export function MemoryDetail({
   const [supersedeDisclosure, setSupersedeDisclosure] =
     useState<MemorySupersedeDisclosureView | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSupersedeTitle(detail.summary.title ?? '');
+    setSupersedeBody(detail.body ?? '');
+    setSupersedeDisclosure(null);
+  }, [detail.summary.revisionId, detail.summary.title, detail.body]);
 
   const retract = async () => {
     try {
@@ -76,6 +83,15 @@ export function MemoryDetail({
 
   const previewSupersede = async () => {
     try {
+      const citedMemoryIds = new Set<string>([detail.summary.entryId]);
+      for (const conflict of detail.conflicts) {
+        if (conflict.state !== 'open') continue;
+        citedMemoryIds.add(conflict.leftEntryId);
+        citedMemoryIds.add(conflict.rightEntryId);
+      }
+      const stableSources = detail.summary.sourceRefs.filter(
+        (source) => source.kind !== 'memory' || !citedMemoryIds.has(source.id),
+      );
       const preview = await call(
         api.memory.previewSupersede({
           entryId: detail.summary.entryId,
@@ -83,8 +99,8 @@ export function MemoryDetail({
           title: supersedeTitle || null,
           body: supersedeBody,
           sourceRefs: [
-            ...detail.summary.sourceRefs,
-            { kind: 'memory' as const, id: detail.summary.entryId },
+            ...[...citedMemoryIds].map((id) => ({ kind: 'memory' as const, id })),
+            ...stableSources,
           ].slice(0, 32),
           confidence: detail.summary.confidence,
         }),
@@ -137,6 +153,11 @@ export function MemoryDetail({
         {detail.lineage.find((revision) => revision.id === detail.summary.revisionId)?.revision ??
           1}
       </p>
+      {detail.summary.expiredAt ? (
+        <p className="hint">Expired {new Date(detail.summary.expiredAt).toLocaleString()}</p>
+      ) : detail.summary.expiresAt ? (
+        <p className="hint">Expires {new Date(detail.summary.expiresAt).toLocaleString()}</p>
+      ) : null}
       {detail.body === null ? (
         <p className="notice">Content deleted. Content-free lifecycle evidence remains.</p>
       ) : (
@@ -221,7 +242,7 @@ export function MemoryDetail({
       </div>
 
       {retractOpen ? (
-        <dialog open className="modal" aria-label="Retract memory revision">
+        <ModalDialog label="Retract memory revision" onDismiss={() => setRetractOpen(false)}>
           <h3>Retract memory revision</h3>
           <label className="field">
             Reason
@@ -243,11 +264,14 @@ export function MemoryDetail({
               Retract revision
             </button>
           </div>
-        </dialog>
+        </ModalDialog>
       ) : null}
 
       {deleteDisclosure ? (
-        <dialog open className="modal" aria-label="Delete shared memory content">
+        <ModalDialog
+          label="Delete shared memory content"
+          onDismiss={() => setDeleteDisclosure(null)}
+        >
           <h3>Delete shared memory content</h3>
           <p>{deleteDisclosure.safeSummary}</p>
           <p>
@@ -275,11 +299,11 @@ export function MemoryDetail({
               Delete permanently
             </button>
           </div>
-        </dialog>
+        </ModalDialog>
       ) : null}
 
       {supersedeOpen ? (
-        <dialog open className="modal" aria-label="Supersede shared memory">
+        <ModalDialog label="Supersede shared memory" onDismiss={() => setSupersedeOpen(false)}>
           <h3>Supersede with a new revision</h3>
           <label className="field">
             Title
@@ -316,7 +340,7 @@ export function MemoryDetail({
           <button type="button" onClick={() => setSupersedeOpen(false)}>
             Cancel
           </button>
-        </dialog>
+        </ModalDialog>
       ) : null}
     </section>
   );

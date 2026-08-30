@@ -16,7 +16,9 @@ import {
   CoordinationEventEnvelope,
   EscalationView,
   type HandoffKind,
+  type MemoryDetailView,
   type PowerEvent,
+  type ProviderMemoryProposeRevisionInput,
   type ProviderId,
   type WorkOutcome,
 } from '@threadhelm/contracts';
@@ -49,6 +51,10 @@ export interface TestHooks {
     handoffId: string,
     outcome: WorkOutcome,
   ): { handoffId: string; workOutcome: WorkOutcome };
+  proposeProviderMemory(
+    sessionId: string,
+    input: ProviderMemoryProposeRevisionInput,
+  ): MemoryDetailView;
   replyFromProvider(input: {
     sessionId: string;
     inReplyToId: string;
@@ -177,6 +183,11 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
         ctx.clock().toISOString(),
       );
       return { handoffId: handoff.id, workOutcome: handoff.workOutcome };
+    },
+    proposeProviderMemory: (sessionId, input) => {
+      if (!ctx.live.has(sessionId)) throw new Error('TEST_SESSION_NOT_LIVE');
+      if (!ctx.memory) throw new Error('TEST_MEMORY_UNAVAILABLE');
+      return ctx.memory.proposeForSession(sessionId, input);
     },
     replyFromProvider: (input) => {
       if (!ctx.live.has(input.sessionId)) throw new Error('TEST_SESSION_NOT_LIVE');

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MemoryConflictView,
   MemoryDetailView,
   MemorySearchPageView,
   MemorySummaryView,
@@ -13,6 +14,8 @@ import { BridgeSessionManager } from '../../apps/desktop/src/main/coordination/b
 const WORKSPACE_ID = '00000000-0000-4000-8000-000000000001';
 const ENTRY_ID = '00000000-0000-4000-8000-000000000010';
 const REVISION_ID = '00000000-0000-4000-8000-000000000011';
+const OTHER_ENTRY_ID = '00000000-0000-4000-8000-000000000012';
+const OTHER_REVISION_ID = '00000000-0000-4000-8000-000000000013';
 const AT = '2026-01-01T00:00:00.000Z';
 
 const summary = {
@@ -26,6 +29,8 @@ const summary = {
   sourceRefs: [{ kind: 'artifact', id: 'spec.md' }],
   confidence: 'medium',
   conflictCount: 0,
+  expiresAt: null,
+  expiredAt: null,
   createdAt: AT,
   updatedAt: AT,
 };
@@ -108,6 +113,7 @@ describe('shared-memory desktop and provider contracts', () => {
       body: 'Use deterministic local text retrieval first.',
       sourceRefs: [{ kind: 'artifact', id: 'research.md' }],
       confidence: 'high',
+      memoryExpiresAt: '2026-02-01T00:00:00.000Z',
     };
     expect(operations['memory.previewPublish'].request.parse(publish)).toEqual(publish);
     expect(
@@ -126,6 +132,17 @@ describe('shared-memory desktop and provider contracts', () => {
         confidence: 'high',
       }),
     ).toBeTruthy();
+    expect(() =>
+      operations['memory.previewSupersede'].request.parse({
+        entryId: ENTRY_ID,
+        targetRevisionId: REVISION_ID,
+        title: 'Use FTS5',
+        body: 'Expiry belongs to publication, not supersession.',
+        sourceRefs: [{ kind: 'memory', id: ENTRY_ID }],
+        confidence: 'high',
+        memoryExpiresAt: '2026-02-01T00:00:00.000Z',
+      }),
+    ).toThrow();
     expect(
       operations['memory.retract'].request.parse({
         entryId: ENTRY_ID,
@@ -146,6 +163,37 @@ describe('shared-memory desktop and provider contracts', () => {
         permanentDeletionConfirmation: true,
       }),
     ).toBeTruthy();
+  });
+
+  it('identifies both competing entries and carries explicit expiry through disclosure contracts', () => {
+    expect(
+      MemoryConflictView.parse({
+        id: '00000000-0000-4000-8000-000000000014',
+        leftRevisionId: REVISION_ID,
+        leftEntryId: ENTRY_ID,
+        rightRevisionId: OTHER_REVISION_ID,
+        rightEntryId: OTHER_ENTRY_ID,
+        state: 'open',
+        reasonCode: 'EXACT_SUBJECT_CONFLICT',
+        resolvedByRevisionId: null,
+        createdAt: AT,
+        resolvedAt: null,
+      }),
+    ).toMatchObject({ leftEntryId: ENTRY_ID, rightEntryId: OTHER_ENTRY_ID });
+    expect(
+      operations['memory.previewPublish'].response.parse({
+        publishToken: 'opaque-token-1234',
+        scope: { workspaceId: WORKSPACE_ID },
+        kind: 'fact',
+        title: 'Expiring fact',
+        body: 'This deliberate memory has an explicit lifetime.',
+        sourceRefs: [],
+        confidence: 'medium',
+        memoryExpiresAt: '2026-02-01T00:00:00.000Z',
+        expiresAt: '2026-01-01T00:02:00.000Z',
+        safeSummary: 'Review expiry.',
+      }).memoryExpiresAt,
+    ).toBe('2026-02-01T00:00:00.000Z');
   });
 
   it('keeps provider tools scope- and author-free while bounding deliberate content', () => {

@@ -9,6 +9,7 @@ import type {
 import { api, call } from '../../api.js';
 import { useStore } from '../../store.js';
 import { MemoryDetail } from './MemoryDetail.js';
+import { ModalDialog } from './ModalDialog.js';
 
 const KIND_LABELS: Record<MemoryKind, string> = {
   fact: 'Fact',
@@ -24,6 +25,8 @@ export function MemoryList() {
   const [workspaceId, setWorkspaceId] = useState('');
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<MemorySearchResultView[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [includeContested, setIncludeContested] = useState(false);
   const [detail, setDetail] = useState<MemoryDetailView | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [kind, setKind] = useState<MemoryKind>('fact');
@@ -31,6 +34,7 @@ export function MemoryList() {
   const [body, setBody] = useState('');
   const [source, setSource] = useState('');
   const [confidence, setConfidence] = useState<MemoryConfidence>('unknown');
+  const [memoryExpiresAt, setMemoryExpiresAt] = useState('');
   const [publishDisclosure, setPublishDisclosure] = useState<MemoryPublishDisclosureView | null>(
     null,
   );
@@ -44,9 +48,10 @@ export function MemoryList() {
     }
   }, [state.workspaces, workspaceId]);
 
-  const runSearch = async () => {
+  const runSearch = async (cursor?: string, append = false) => {
     if (!workspaceId || !query.trim()) {
       setItems([]);
+      setNextCursor(null);
       return;
     }
     setLoading(true);
@@ -56,11 +61,13 @@ export function MemoryList() {
         api.memory.search({
           scope: { workspaceId },
           query: query.trim(),
-          includeContested: true,
+          ...(includeContested ? { includeContested: true } : {}),
+          ...(cursor ? { cursor } : {}),
           limit: 20,
         }),
       );
-      setItems(result.items);
+      setItems((current) => (append ? [...current, ...result.items] : result.items));
+      setNextCursor(result.nextCursor);
       if (detail && !result.items.some((item) => item.entryId === detail.summary.entryId)) {
         setDetail(null);
       }
@@ -120,6 +127,7 @@ export function MemoryList() {
             body,
             sourceRefs: source.trim() ? [{ kind: 'artifact', id: source.trim() }] : [],
             confidence,
+            memoryExpiresAt: memoryExpiresAt ? new Date(memoryExpiresAt).toISOString() : null,
           }),
         ),
       );
@@ -144,6 +152,7 @@ export function MemoryList() {
       setTitle('');
       setBody('');
       setSource('');
+      setMemoryExpiresAt('');
       setDetail(published);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Memory publication failed.');
@@ -200,6 +209,14 @@ export function MemoryList() {
                 Search
               </button>
             </form>
+            <label className="confirmation compact">
+              <input
+                type="checkbox"
+                checked={includeContested}
+                onChange={(event) => setIncludeContested(event.target.checked)}
+              />{' '}
+              Include contested
+            </label>
             <button
               type="button"
               className="small"
@@ -236,10 +253,20 @@ export function MemoryList() {
               </li>
             ))}
           </ul>
+          {nextCursor ? (
+            <button
+              type="button"
+              className="small"
+              disabled={loading}
+              onClick={() => void runSearch(nextCursor, true)}
+            >
+              Load more memories
+            </button>
+          ) : null}
           {detail ? <MemoryDetail detail={detail} onChanged={setDetail} /> : null}
 
           {publishOpen && !publishDisclosure ? (
-            <dialog open className="modal" aria-label="Publish shared memory">
+            <ModalDialog label="Publish shared memory" onDismiss={() => setPublishOpen(false)}>
               <h3>Publish shared memory</h3>
               <label className="field">
                 Kind
@@ -286,6 +313,14 @@ export function MemoryList() {
                   <option value="high">High</option>
                 </select>
               </label>
+              <label className="field">
+                Expires at (optional)
+                <input
+                  type="datetime-local"
+                  value={memoryExpiresAt}
+                  onChange={(event) => setMemoryExpiresAt(event.target.value)}
+                />
+              </label>
               <div className="actions">
                 <button type="button" onClick={() => setPublishOpen(false)}>
                   Cancel
@@ -299,11 +334,14 @@ export function MemoryList() {
                   Review publication
                 </button>
               </div>
-            </dialog>
+            </ModalDialog>
           ) : null}
 
           {publishDisclosure ? (
-            <dialog open className="modal" aria-label="Review durable memory publication">
+            <ModalDialog
+              label="Review durable memory publication"
+              onDismiss={() => setPublishDisclosure(null)}
+            >
               <h3>Review durable memory publication</h3>
               <p>{publishDisclosure.safeSummary}</p>
               <pre className="memory-body">{publishDisclosure.body}</pre>
@@ -311,6 +349,9 @@ export function MemoryList() {
                 This context does not grant authority for tools, scope, credentials, spending, or
                 external actions.
               </p>
+              {publishDisclosure.memoryExpiresAt ? (
+                <p>Expires {new Date(publishDisclosure.memoryExpiresAt).toLocaleString()}</p>
+              ) : null}
               <label className="confirmation">
                 <input
                   type="checkbox"
@@ -332,7 +373,7 @@ export function MemoryList() {
                   Publish memory
                 </button>
               </div>
-            </dialog>
+            </ModalDialog>
           ) : null}
         </div>
       ) : null}

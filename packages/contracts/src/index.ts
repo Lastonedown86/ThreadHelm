@@ -705,6 +705,8 @@ export const MemorySummaryView = strictObject({
   sourceRefs: z.array(MemorySourceReference).max(32),
   confidence: MemoryConfidence,
   conflictCount: z.number().int().min(0),
+  expiresAt: Timestamp.nullable(),
+  expiredAt: Timestamp.nullable(),
   createdAt: Timestamp,
   updatedAt: Timestamp,
 });
@@ -732,7 +734,9 @@ export type MemoryRevisionView = z.infer<typeof MemoryRevisionView>;
 export const MemoryConflictView = strictObject({
   id: Uuid,
   leftRevisionId: Uuid,
+  leftEntryId: Uuid,
   rightRevisionId: Uuid,
+  rightEntryId: Uuid,
   state: MemoryConflictState,
   reasonCode: z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/),
   resolvedByRevisionId: Uuid.nullable(),
@@ -779,6 +783,7 @@ const MemoryPublicationContent = {
 export const PreviewMemoryPublishRequest = strictObject({
   scope: MemoryScope,
   ...MemoryPublicationContent,
+  memoryExpiresAt: Timestamp.nullable().optional(),
 });
 export type PreviewMemoryPublishRequest = z.infer<typeof PreviewMemoryPublishRequest>;
 
@@ -790,6 +795,7 @@ export const MemoryPublishDisclosureView = strictObject({
   body: z.string().max(16 * 1024),
   sourceRefs: z.array(MemorySourceReference).max(32),
   confidence: MemoryConfidence,
+  memoryExpiresAt: Timestamp.nullable(),
   expiresAt: Timestamp,
   safeSummary: SafeSummary,
 });
@@ -863,7 +869,10 @@ export const ProviderMemoryGetInput = strictObject({
   revisionId: Uuid.optional(),
 });
 export type ProviderMemoryGetInput = z.infer<typeof ProviderMemoryGetInput>;
-export const ProviderMemoryProposeRevisionInput = strictObject(MemoryPublicationContent);
+export const ProviderMemoryProposeRevisionInput = strictObject({
+  ...MemoryPublicationContent,
+  memoryExpiresAt: Timestamp.nullable().optional(),
+});
 export type ProviderMemoryProposeRevisionInput = z.infer<typeof ProviderMemoryProposeRevisionInput>;
 
 export const MemoryChangedEvent = strictObject({

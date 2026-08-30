@@ -81,6 +81,7 @@ class MainMemoryService implements MemoryService {
   }
 
   search(request: OperationRequest<'memory.search'>): MemorySearchPageView {
+    this.#expireDue();
     const options = {
       scope: request.scope,
       query: request.query,
@@ -95,6 +96,7 @@ class MainMemoryService implements MemoryService {
   }
 
   get(request: OperationRequest<'memory.get'>): MemoryDetailView {
+    this.#expireDue();
     return this.#repo().get(request.entryId, request.scope, request.revisionId);
   }
 
@@ -111,6 +113,7 @@ class MainMemoryService implements MemoryService {
       body: request.body,
       sourceRefs: request.sourceRefs ?? [],
       confidence: request.confidence ?? 'unknown',
+      memoryExpiresAt: request.memoryExpiresAt ?? null,
       expiresAt: issued.expiresAt,
       safeSummary: 'Publish one deliberate revision; shared memory never grants authority.',
     });
@@ -133,6 +136,7 @@ class MainMemoryService implements MemoryService {
       confidence: snapshot.request.confidence ?? 'unknown',
       submission: 'deliberate',
       createdAt: at,
+      expiresAt: snapshot.request.memoryExpiresAt ?? null,
     });
     const detail = this.#repo().get(published.entry.id, snapshot.request.scope);
     this.#emit(detail);
@@ -145,6 +149,7 @@ class MainMemoryService implements MemoryService {
     this.#assertWritable();
     this.#assertContent(request.title ?? null, request.body);
     const scope = this.#repo().scopeForEntry(request.entryId);
+    this.#assertScope(scope);
     const detail = this.#repo().get(request.entryId, scope);
     if (detail.summary.revisionId !== request.targetRevisionId) {
       throw new ThreadHelmError('MEMORY_REVISION_STALE', 'The target revision changed.');
@@ -167,6 +172,7 @@ class MainMemoryService implements MemoryService {
     this.#assertWritable();
     const snapshot = this.#supersedeTokens.take(request.supersedeToken);
     if (!snapshot) throw new ThreadHelmError('CONFIRMATION_EXPIRED', 'Memory preview expired.');
+    this.#assertScope(snapshot.scope);
     const current = this.#repo().get(snapshot.request.entryId, snapshot.scope);
     if (current.summary.revisionId !== snapshot.request.targetRevisionId) {
       throw new ThreadHelmError('MEMORY_REVISION_STALE', 'The target revision changed.');
@@ -209,21 +215,33 @@ class MainMemoryService implements MemoryService {
         'Leaving a conflict unresolved does not mutate shared memory.',
       );
     }
+    const resolutionEntryId = this.#repo().entryIdForRevision(request.resolutionRevisionId);
+    const resolutionScope = this.#repo().scopeForEntry(resolutionEntryId);
+    const before = this.#repo().get(resolutionEntryId, resolutionScope);
+    const conflict = before.conflicts.find((candidate) => candidate.id === request.conflictId);
+    if (!conflict) throw new ThreadHelmError('MEMORY_NOT_FOUND', 'Memory conflict was not found.');
     this.#repo().resolveConflict({
       conflictId: request.conflictId,
       resolutionRevisionId: request.resolutionRevisionId,
       resolvedAt: this.#ctx.clock().toISOString(),
     });
-    const entryId = this.#repo().entryIdForRevision(request.resolutionRevisionId);
-    const detail = this.#repo().get(entryId, this.#repo().scopeForEntry(entryId));
-    this.#emit(detail);
+    let detail: MemoryDetailView | null = null;
+    for (const entryId of new Set([
+      conflict.leftEntryId,
+      conflict.rightEntryId,
+      resolutionEntryId,
+    ])) {
+      const changed = this.#repo().get(entryId, this.#repo().scopeForEntry(entryId));
+      this.#emit(changed);
+      if (entryId === resolutionEntryId) detail = changed;
+    }
     this.#ctx.events.emit('memory.conflictChanged', {
       conflictId: request.conflictId,
       state: 'resolved',
       sequence: ++this.#sequence,
       occurredAt: this.#ctx.clock().toISOString(),
     });
-    return detail;
+    return detail!;
   }
 
   requestDeletion(
@@ -262,6 +280,7 @@ class MainMemoryService implements MemoryService {
   }
 
   searchForSession(sessionId: string, request: ProviderMemorySearchInput): MemorySearchPageView {
+    this.#expireDue();
     const scope = this.#scopeForSession(sessionId);
     return this.#repo().search({
       scope,
@@ -274,6 +293,7 @@ class MainMemoryService implements MemoryService {
   }
 
   getForSession(sessionId: string, request: ProviderMemoryGetInput): MemoryDetailView {
+    this.#expireDue();
     return this.#repo().get(request.entryId, this.#scopeForSession(sessionId), request.revisionId);
   }
 
@@ -295,6 +315,7 @@ class MainMemoryService implements MemoryService {
       confidence: request.confidence,
       submission: 'deliberate',
       createdAt: this.#ctx.clock().toISOString(),
+      expiresAt: request.memoryExpiresAt ?? null,
     });
 
     // Exact same titled subject in the same scope is a deterministic conflict candidate.
@@ -382,6 +403,14 @@ class MainMemoryService implements MemoryService {
 
   #repo(): SharedMemoryRepository {
     return this.#storage().repositories.memory;
+  }
+
+  #expireDue(): void {
+    if (!this.#ctx.storage || this.#ctx.health.degraded) return;
+    const repository = this.#repo();
+    for (const entryId of repository.expireDue(this.#ctx.clock().toISOString())) {
+      this.#emit(repository.get(entryId, repository.scopeForEntry(entryId)));
+    }
   }
 
   #emit(detail: MemoryDetailView): void {

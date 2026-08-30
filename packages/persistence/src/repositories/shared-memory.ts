@@ -25,6 +25,7 @@ import {
 import type { Db } from '../migrate.js';
 
 export const MAX_ACTIVE_MEMORY_REVISIONS_PER_SCOPE = 10_000;
+export const MAX_RETAINED_MEMORY_BYTES_PER_SCOPE = 64 * 1024 * 1024;
 export const MAX_MEMORY_BODY_BYTES = 16 * 1024;
 export const MAX_MEMORY_EXCERPT_CHARS = 4096;
 
@@ -119,7 +120,9 @@ function rowScope(row: EntryRow): MemoryScope {
 }
 
 function sameScope(left: MemoryScope, right: MemoryScope): boolean {
-  return JSON.stringify(left) === JSON.stringify(right);
+  const leftKey = scopeKey(left);
+  const rightKey = scopeKey(right);
+  return leftKey.kind === rightKey.kind && leftKey.id === rightKey.id;
 }
 
 function authorView(authorSessionId: string | null, authorUser: number | boolean) {
@@ -149,11 +152,17 @@ function toRevision(row: RevisionRow): MemoryRevisionView {
   };
 }
 
-function toConflict(row: ConflictRow): MemoryConflictView {
+function toConflict(
+  row: ConflictRow,
+  leftEntryId: string,
+  rightEntryId: string,
+): MemoryConflictView {
   return {
     id: row.id,
     leftRevisionId: row.left_revision_id,
+    leftEntryId,
     rightRevisionId: row.right_revision_id,
+    rightEntryId,
     state: row.state,
     reasonCode: row.reason_code,
     resolvedByRevisionId: row.resolved_by_revision_id,
@@ -188,7 +197,18 @@ function normalizePublication(input: PublishMemoryInput) {
   ) {
     throw new ThreadHelmError('MEMORY_CONTENT_INVALID', 'Shared-memory content is out of bounds.');
   }
-  return { title, body, bytes: contentBytes(title, body) };
+  const expiresAt = input.expiresAt ?? null;
+  if (
+    expiresAt !== null &&
+    (!Number.isFinite(Date.parse(expiresAt)) ||
+      Date.parse(expiresAt) <= Date.parse(input.createdAt))
+  ) {
+    throw new ThreadHelmError(
+      'MEMORY_CONTENT_INVALID',
+      'Shared-memory expiry must be later than publication.',
+    );
+  }
+  return { title, body, bytes: contentBytes(title, body), expiresAt };
 }
 
 function encodeCursor(cursor: SearchCursor): string {
@@ -275,7 +295,15 @@ export class SharedMemoryRepository {
     }
   }
 
-  private ensureQuota(scope: MemoryScope): void {
+  private conflictView(row: ConflictRow): MemoryConflictView {
+    return toConflict(
+      row,
+      this.entryIdForRevision(row.left_revision_id),
+      this.entryIdForRevision(row.right_revision_id),
+    );
+  }
+
+  private ensureQuota(scope: MemoryScope, additionalBytes: number, additionalActive = 1): void {
     const key = scopeKey(scope);
     this.db
       .prepare(
@@ -286,14 +314,23 @@ export class SharedMemoryRepository {
       .run(key.kind, key.id);
     const quota = this.db
       .prepare(
-        `SELECT active_revision_count FROM shared_memory_scope_quotas
+        `SELECT active_revision_count, retained_content_bytes FROM shared_memory_scope_quotas
          WHERE scope_kind = ? AND scope_id = ?`,
       )
-      .get(key.kind, key.id) as { active_revision_count: number };
-    if (quota.active_revision_count >= MAX_ACTIVE_MEMORY_REVISIONS_PER_SCOPE) {
+      .get(key.kind, key.id) as {
+      active_revision_count: number;
+      retained_content_bytes: number;
+    };
+    if (quota.active_revision_count + additionalActive > MAX_ACTIVE_MEMORY_REVISIONS_PER_SCOPE) {
       throw new ThreadHelmError(
         'MEMORY_QUOTA_REACHED',
         'The shared-memory scope reached its active revision quota.',
+      );
+    }
+    if (quota.retained_content_bytes + additionalBytes > MAX_RETAINED_MEMORY_BYTES_PER_SCOPE) {
+      throw new ThreadHelmError(
+        'MEMORY_QUOTA_REACHED',
+        'The shared-memory scope reached its retained-content quota.',
       );
     }
   }
@@ -314,7 +351,7 @@ export class SharedMemoryRepository {
     const normalized = normalizePublication(input);
     this.assertWorkspaceExists(input.scope);
     return this.db.transaction(() => {
-      this.ensureQuota(input.scope);
+      this.ensureQuota(input.scope, normalized.bytes);
       const entryId = input.id ?? randomUUID();
       const revisionId = input.revisionId ?? randomUUID();
       const workspaceId = 'workspaceId' in input.scope ? (input.scope.workspaceId ?? null) : null;
@@ -336,7 +373,7 @@ export class SharedMemoryRepository {
           Number(input.authorUser),
           input.createdAt,
           input.createdAt,
-          input.expiresAt ?? null,
+          normalized.expiresAt,
         );
       this.db
         .prepare(
@@ -400,14 +437,16 @@ export class SharedMemoryRepository {
       .prepare(
         `WITH matches AS (
            SELECT e.id AS entry_id, e.workspace_id, e.mission_id, e.kind, e.status AS entry_status,
-                  e.created_at AS entry_created_at, e.updated_at, r.id AS revision_id,
+                  e.created_at AS entry_created_at, e.updated_at, e.expires_at, e.expired_at,
+                  r.id AS revision_id,
                   r.title, r.body, r.source_refs, r.author_session_id, r.author_user,
                   r.confidence, r.status, r.created_at,
                   bm25(shared_memory_fts) AS rank,
                   substr(snippet(shared_memory_fts, 3, '', '', ' … ', 48), 1, 4096) AS excerpt,
-                  (SELECT COUNT(*) FROM memory_conflicts c
-                    WHERE c.state = 'open'
-                      AND (c.left_revision_id = r.id OR c.right_revision_id = r.id)) AS conflict_count
+                  (SELECT COUNT(DISTINCT c.id) FROM memory_conflicts c
+                    JOIN shared_memory_revisions cr
+                      ON cr.id IN (c.left_revision_id, c.right_revision_id)
+                    WHERE c.state = 'open' AND cr.entry_id = e.id) AS conflict_count
            FROM shared_memory_fts
            JOIN shared_memory_revisions r ON r.id = shared_memory_fts.revision_id
            JOIN shared_memory_entries e ON e.id = r.entry_id
@@ -438,6 +477,8 @@ export class SharedMemoryRepository {
       entry_status: MemoryStatus;
       entry_created_at: string;
       updated_at: string;
+      expires_at: string | null;
+      expired_at: string | null;
       revision_id: string;
       title: string | null;
       source_refs: string;
@@ -465,6 +506,8 @@ export class SharedMemoryRepository {
       sourceRefs: parseSources(row.source_refs),
       confidence: row.confidence,
       conflictCount: row.conflict_count,
+      expiresAt: row.expires_at,
+      expiredAt: row.expired_at,
       createdAt: row.entry_created_at,
       updatedAt: row.updated_at,
       excerpt: row.excerpt,
@@ -520,7 +563,7 @@ export class SharedMemoryRepository {
            WHERE r.entry_id = ? ORDER BY c.created_at, c.id`,
         )
         .all(entryId) as ConflictRow[]
-    ).map(toConflict);
+    ).map((row) => this.conflictView(row));
     const conflictCount = conflicts.filter((conflict) => conflict.state === 'open').length;
     const summary: MemorySummaryView = {
       entryId: entry.id,
@@ -533,6 +576,8 @@ export class SharedMemoryRepository {
       sourceRefs: parseSources(selected.source_refs),
       confidence: selected.confidence,
       conflictCount,
+      expiresAt: entry.expires_at,
+      expiredAt: entry.expired_at,
       createdAt: entry.created_at,
       updatedAt: entry.updated_at,
     };
@@ -564,8 +609,11 @@ export class SharedMemoryRepository {
       );
     }
     const scope = rowScope(entry);
+    this.assertWorkspaceExists(scope);
     const normalized = normalizePublication({ ...input, scope, kind: entry.kind });
+    const status = prior.status === 'contested' ? ('contested' as const) : ('active' as const);
     return this.db.transaction(() => {
+      this.ensureQuota(scope, normalized.bytes, 0);
       const revisionId = randomUUID();
       this.db
         .prepare("UPDATE shared_memory_revisions SET status = 'superseded' WHERE id = ?")
@@ -575,7 +623,7 @@ export class SharedMemoryRepository {
           `INSERT INTO shared_memory_revisions
             (id, entry_id, revision, title, body, source_refs, author_session_id, author_user,
              confidence, status, supersedes_revision_id, content_bytes, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           revisionId,
@@ -587,6 +635,7 @@ export class SharedMemoryRepository {
           input.authorSessionId,
           Number(input.authorUser),
           input.confidence,
+          status,
           prior.id,
           normalized.bytes,
           input.createdAt,
@@ -594,16 +643,16 @@ export class SharedMemoryRepository {
       this.db
         .prepare(
           `UPDATE shared_memory_entries
-           SET status = 'active', current_revision_id = ?, updated_at = ? WHERE id = ?`,
+           SET status = ?, current_revision_id = ?, updated_at = ? WHERE id = ?`,
         )
-        .run(revisionId, input.createdAt, entry.id);
+        .run(status, revisionId, input.createdAt, entry.id);
       this.adjustQuota(scope, 0, normalized.bytes);
       return {
         entry: {
           id: entry.id,
           scope,
           kind: entry.kind,
-          status: 'active' as const,
+          status,
           currentRevisionId: revisionId,
         },
         revision: toRevision(this.revision(revisionId)!),
@@ -657,7 +706,7 @@ export class SharedMemoryRepository {
             .run(input.createdAt, revision.entry_id);
         }
       }
-      return toConflict(
+      return this.conflictView(
         this.db.prepare('SELECT * FROM memory_conflicts WHERE id = ?').get(id) as ConflictRow,
       );
     })();
@@ -725,7 +774,13 @@ export class SharedMemoryRepository {
           }
         }
       }
-      return toConflict(
+      this.db
+        .prepare("UPDATE shared_memory_revisions SET status = 'active' WHERE id = ?")
+        .run(resolution.id);
+      this.db
+        .prepare("UPDATE shared_memory_entries SET status = 'active', updated_at = ? WHERE id = ?")
+        .run(input.resolvedAt, resolution.entry_id);
+      return this.conflictView(
         this.db.prepare('SELECT * FROM memory_conflicts WHERE id = ?').get(row.id) as ConflictRow,
       );
     })();
@@ -760,7 +815,7 @@ export class SharedMemoryRepository {
     return this.get(entry.id, rowScope(entry));
   }
 
-  expireDue(now: string): number {
+  expireDue(now: string): string[] {
     const entries = this.db
       .prepare(
         `SELECT * FROM shared_memory_entries
@@ -780,7 +835,7 @@ export class SharedMemoryRepository {
         this.adjustQuota(rowScope(entry), -1, 0);
       }
     })();
-    return entries.length;
+    return entries.map((entry) => entry.id);
   }
 
   deleteContent(input: { entryId: string; deletedAt: string }): MemoryDetailView {

@@ -271,6 +271,8 @@ CREATE TABLE shared_memory_entries (
 );
 CREATE INDEX shared_memory_entries_scope_status
   ON shared_memory_entries (workspace_id, mission_id, status, updated_at, id);
+CREATE INDEX shared_memory_entries_expiry
+  ON shared_memory_entries (expires_at) WHERE expires_at IS NOT NULL;
 
 CREATE TABLE shared_memory_revisions (
   id TEXT PRIMARY KEY,

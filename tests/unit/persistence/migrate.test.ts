@@ -51,6 +51,8 @@ describe('migrate', () => {
     ).map((t) => t.name);
     expect(tables).toEqual([
       'agent_definitions',
+      'agent_profile_revisions',
+      'agent_profiles',
       'agent_readiness_snapshots',
       'agent_sessions',
       'approved_workspaces',
@@ -60,6 +62,7 @@ describe('migrate', () => {
       'coordination_events',
       'coordination_handoffs',
       'memory_conflicts',
+      'mission_profile_pins',
       'recovery_records',
       'schema_meta',
       'session_events',
@@ -73,6 +76,33 @@ describe('migrate', () => {
       'shared_memory_revisions',
       'shared_memory_scope_quotas',
     ]);
+  });
+
+  it('adds later v3 profile tables to an existing v3 database', () => {
+    const db = fresh();
+    migrate(db);
+    db.exec(`
+      DROP TABLE mission_profile_pins;
+      DROP TABLE agent_profile_revisions;
+      DROP TABLE agent_profiles;
+    `);
+    expect(readSchemaVersion(db)).toBe(3);
+
+    migrate(db);
+
+    const restored = db
+      .prepare(
+        `SELECT name FROM sqlite_master
+         WHERE type = 'table' AND name IN ('agent_profiles', 'agent_profile_revisions', 'mission_profile_pins')
+         ORDER BY name`,
+      )
+      .all() as { name: string }[];
+    expect(restored.map(({ name }) => name)).toEqual([
+      'agent_profile_revisions',
+      'agent_profiles',
+      'mission_profile_pins',
+    ]);
+    expect(readSchemaVersion(db)).toBe(3);
   });
 
   it('refuses a newer schema without touching it', () => {

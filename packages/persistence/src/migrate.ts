@@ -6,7 +6,7 @@
 import Database from 'better-sqlite3';
 import { ThreadHelmError } from '@threadhelm/contracts';
 
-import { MIGRATIONS, SCHEMA_VERSION } from './schema.js';
+import { CURRENT_SCHEMA_EXTENSIONS, MIGRATIONS, SCHEMA_VERSION } from './schema.js';
 
 export type Db = Database.Database;
 
@@ -44,12 +44,24 @@ export function migrate(db: Db): void {
       supported: SCHEMA_VERSION,
     });
   }
-  if (current === SCHEMA_VERSION) return;
+  const applyCurrentExtensions = () => {
+    for (const extension of CURRENT_SCHEMA_EXTENSIONS) {
+      const exists = db
+        .prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?`)
+        .get(extension.table);
+      if (!exists) db.exec(extension.sql);
+    }
+  };
+  if (current === SCHEMA_VERSION) {
+    db.transaction(applyCurrentExtensions)();
+    return;
+  }
   db.transaction(() => {
     for (const migration of MIGRATIONS) {
       if (migration.version > current) db.exec(migration.sql);
     }
     db.exec('DELETE FROM schema_meta');
     db.prepare('INSERT INTO schema_meta (version) VALUES (?)').run(SCHEMA_VERSION);
+    applyCurrentExtensions();
   })();
 }

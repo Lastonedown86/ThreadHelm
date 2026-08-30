@@ -23,6 +23,9 @@ import {
   MemoryConfidence,
   MemoryKind,
   MemoryStatus,
+  ProfileCompatibility,
+  ProfileProviderId,
+  ProfileState,
   ProviderId,
   RecoveryClassification,
   RecoveryResolution,
@@ -376,8 +379,57 @@ BEGIN
 END;
 `;
 
+const V3_AGENT_PROFILES = `
+CREATE TABLE agent_profiles (
+  id TEXT PRIMARY KEY,
+  manifest_key TEXT NOT NULL,
+  current_revision_id TEXT,
+  state TEXT NOT NULL CHECK (state ${inList(ProfileState.options)}),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX agent_profiles_manifest_key ON agent_profiles (manifest_key);
+
+CREATE TABLE agent_profile_revisions (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL REFERENCES agent_profiles (id) ON DELETE RESTRICT,
+  digest TEXT NOT NULL CHECK (length(digest) = 64),
+  display_name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  requested_provider TEXT NOT NULL CHECK (requested_provider ${inList(ProfileProviderId.options)}),
+  requested_model TEXT NOT NULL,
+  capabilities TEXT NOT NULL,
+  isolate_requested INTEGER NOT NULL CHECK (isolate_requested IN (0, 1)),
+  token_cap_requested INTEGER NOT NULL CHECK (token_cap_requested > 0),
+  author TEXT NOT NULL,
+  goal TEXT NOT NULL,
+  manifest_spec TEXT NOT NULL,
+  compatibility TEXT NOT NULL CHECK (compatibility ${inList(ProfileCompatibility.options)}),
+  compatibility_reasons TEXT NOT NULL DEFAULT '[]',
+  source_basename TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE (profile_id, digest)
+);
+CREATE INDEX agent_profile_revisions_profile_created
+  ON agent_profile_revisions (profile_id, created_at, id);
+
+CREATE TABLE mission_profile_pins (
+  mission_id TEXT NOT NULL,
+  profile_id TEXT NOT NULL REFERENCES agent_profiles (id) ON DELETE RESTRICT,
+  revision_id TEXT NOT NULL REFERENCES agent_profile_revisions (id) ON DELETE RESTRICT,
+  pinned_at TEXT NOT NULL,
+  PRIMARY KEY (mission_id, profile_id)
+);
+CREATE INDEX mission_profile_pins_profile ON mission_profile_pins (profile_id);
+`;
+
 export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 1, sql: V1 },
   { version: 2, sql: V2 },
-  { version: 3, sql: V3 },
+  { version: 3, sql: `${V3}\n${V3_AGENT_PROFILES}` },
+];
+
+/** Additive slices intentionally delivered under the still-unreleased v3 schema. */
+export const CURRENT_SCHEMA_EXTENSIONS: readonly { table: string; sql: string }[] = [
+  { table: 'agent_profiles', sql: V3_AGENT_PROFILES },
 ];

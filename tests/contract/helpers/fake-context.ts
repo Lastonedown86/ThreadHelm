@@ -17,7 +17,12 @@ import {
 } from '@threadhelm/contracts';
 import { ControllerLeases } from '@threadhelm/domain';
 import { openStorage } from '@threadhelm/persistence';
-import type { ProbeContext, ProviderAdapter, ReadinessResult } from '@threadhelm/providers';
+import {
+  profileLaunchDisclosure,
+  type ProbeContext,
+  type ProviderAdapter,
+  type ReadinessResult,
+} from '@threadhelm/providers';
 import { vi } from 'vitest';
 import type {
   Context,
@@ -319,6 +324,9 @@ export function fakeAdapter(
         terminal: ctx.terminal,
       };
     },
+    buildLaunchDisclosure(ctx) {
+      return profileLaunchDisclosure(id, ctx);
+    },
     buildCleanStop() {
       return { writes: ['/exit\r'], graceMs: 3000 };
     },
@@ -426,6 +434,7 @@ export function createWorld(options: { degraded?: boolean; noStorage?: boolean }
         },
       },
       picker: { pickDirectory: async () => world.pickerPath },
+      profilePicker: { pickFile: async () => null },
       events: rendererEvents,
       storage,
       health,

@@ -257,30 +257,30 @@ verify compact roster management with no launch, settings edit, worktree creatio
 
 ### Model gate for User Story 6
 
-- [ ] T089 [US6] Verify Claude `claude-sonnet-5` at `high`, fallback `claude-opus-5` at `high`, and OpenAI `gpt-5.6-sol` at `high` verifier availability; record schema/runtime compatibility, cost, and authority-separation ownership in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T089 [US6] Verify Claude `claude-sonnet-5` at `high`, fallback `claude-opus-5` at `high`, and OpenAI `gpt-5.6-sol` at `high` verifier availability; record schema/runtime compatibility, cost, and authority-separation ownership in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 ### Tests for User Story 6
 
-- [ ] T090 [P] [US6] Write failing strict schema, normalization, bounds, compatibility, non-authority, state, and revision tests in `tests/unit/domain/agent-profile.test.ts`
-- [ ] T091 [P] [US6] Write failing digest idempotency, current-revision, enable/disable/delete, rollback, and active-mission pin tests in `tests/unit/persistence/agent-profiles.test.ts`
-- [ ] T092 [P] [US6] Write failing preview/confirm, changed-after-preview, unknown-field, hostile-goal, unsupported-model, role-grant, token-budget, and isolation contract tests in `tests/contract/agent-profiles.test.ts`
-- [ ] T093 [P] [US6] Write failing Windows file-selection/import/restart/source-redaction and ten-manifest acceptance cases in `tests/integration/windows/agent-profile-import.test.ts`
-- [ ] T094 [P] [US6] Write failing keyboard preview/confirmation/roster/detail/disable/re-import journeys with no avatar or animation dependency in `tests/e2e/agent-roster.spec.ts`
+- [X] T090 [P] [US6] Write failing strict schema, normalization, bounds, compatibility, non-authority, state, and revision tests in `tests/unit/domain/agent-profile.test.ts`
+- [X] T091 [P] [US6] Write failing digest idempotency, current-revision, enable/disable/delete, rollback, and active-mission pin tests in `tests/unit/persistence/agent-profiles.test.ts`
+- [X] T092 [P] [US6] Write failing preview/confirm, changed-after-preview, unknown-field, hostile-goal, unsupported-model, role-grant, token-budget, and isolation contract tests in `tests/contract/agent-profiles.test.ts`
+- [X] T093 [P] [US6] Write failing Windows file-selection/import/restart/source-redaction and ten-manifest acceptance cases in `tests/integration/windows/agent-profile-import.test.ts`
+- [X] T094 [P] [US6] Write failing keyboard preview/confirmation/roster/detail/disable/re-import journeys with no avatar or animation dependency in `tests/e2e/agent-roster.spec.ts`
 
 ### Implementation for User Story 6
 
-- [ ] T095 [P] [US6] Add sanitized valid, duplicate, revised, hostile-text, unavailable-model, excessive-bound, and changed-after-preview hire fixtures in `packages/test-fixtures/src/agent-profiles.ts` and export them from `packages/test-fixtures/src/index.ts`
-- [ ] T096 [US6] Implement `munder-difflin/hire@1` field validation, compatibility, revision, role-separation, isolation, and effective-budget policy in `packages/domain/src/agent-profile.ts` and export it from `packages/domain/src/index.ts`
-- [ ] T097 [US6] Extend migration v3 with agent-profile/revision/current-digest indexes and mission revision pins in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
-- [ ] T098 [US6] Implement transactional profile/revision, duplicate, enable/disable, and deletion repositories in `packages/persistence/src/repositories/agent-profiles.ts` and export them from `packages/persistence/src/repositories/index.ts`
-- [ ] T099 [US6] Implement bounded file read, strict parse, SHA-256 preview token, changed-file recheck, compatibility evaluation, and no-launch confirmation in `apps/desktop/src/main/coordination/profiles.ts`
-- [ ] T100 [US6] Add strict profile views, named import/list/detail/enable/delete IPC operations, content-free events, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
-- [ ] T101 [P] [US6] Build the compact keyboard-accessible profile list, filters, compatibility/state badges, and text-only Marvel identity in `apps/desktop/src/renderer/features/coordination/AgentProfileList.tsx`
-- [ ] T102 [P] [US6] Build exact-field import preview, warnings, confirmation, untrusted-goal detail, revision history, and enable/disable controls in `apps/desktop/src/renderer/features/coordination/AgentProfileDetail.tsx`
-- [ ] T103 [US6] Integrate content-free profile events and explicit detail loading into `apps/desktop/src/renderer/store.tsx`, `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`, and `apps/desktop/src/renderer/App.tsx`
-- [ ] T104 [US6] Add launch-time profile revision, provider/model/effort, isolation, effective token/resource budget, tool registry, and workspace disclosures without editing global/project settings in `packages/providers/src/adapter.ts`, `packages/providers/src/codex.ts`, and `packages/providers/src/claude-code.ts`
-- [ ] T105 [US6] Run manual acceptance against the ten user-selected Downloads manifests, record basenames/digests/results without copying their contents, and verify four Opus/six Sonnet, eight isolated/two non-isolated, and two-million token-cap requests in `specs/002-agent-mailbox-routing/execution-evidence.md`
-- [ ] T106 [US6] Run the US6 domain, persistence, contract, Windows, E2E, and acceptance slices; capture final exits, Claude implementation evidence, OpenAI independent review, and deterministic authority/privacy results in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T095 [P] [US6] Add sanitized valid, duplicate, revised, hostile-text, unavailable-model, excessive-bound, and changed-after-preview hire fixtures in `packages/test-fixtures/src/agent-profiles.ts` and export them from `packages/test-fixtures/src/index.ts`
+- [X] T096 [US6] Implement `munder-difflin/hire@1` field validation, compatibility, revision, role-separation, isolation, and effective-budget policy in `packages/domain/src/agent-profile.ts` and export it from `packages/domain/src/index.ts`
+- [X] T097 [US6] Extend migration v3 with agent-profile/revision/current-digest indexes and mission revision pins in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
+- [X] T098 [US6] Implement transactional profile/revision, duplicate, enable/disable, and deletion repositories in `packages/persistence/src/repositories/agent-profiles.ts` and export them from `packages/persistence/src/repositories/index.ts`
+- [X] T099 [US6] Implement bounded file read, strict parse, SHA-256 preview token, changed-file recheck, compatibility evaluation, and no-launch confirmation in `apps/desktop/src/main/coordination/profiles.ts`
+- [X] T100 [US6] Add strict profile views, named import/list/detail/enable/delete IPC operations, content-free events, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
+- [X] T101 [P] [US6] Build the compact keyboard-accessible profile list, filters, compatibility/state badges, and text-only Marvel identity in `apps/desktop/src/renderer/features/coordination/AgentProfileList.tsx`
+- [X] T102 [P] [US6] Build exact-field import preview, warnings, confirmation, untrusted-goal detail, revision history, and enable/disable controls in `apps/desktop/src/renderer/features/coordination/AgentProfileDetail.tsx`
+- [X] T103 [US6] Integrate content-free profile events and explicit detail loading into `apps/desktop/src/renderer/store.tsx`, `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`, and `apps/desktop/src/renderer/App.tsx`
+- [X] T104 [US6] Add launch-time profile revision, provider/model/effort, isolation, effective token/resource budget, tool registry, and workspace disclosures without editing global/project settings in `packages/providers/src/adapter.ts`, `packages/providers/src/codex.ts`, and `packages/providers/src/claude-code.ts`
+- [X] T105 [US6] Run manual acceptance against the ten user-selected Downloads manifests, record basenames/digests/results without copying their contents, and verify four Opus/six Sonnet, eight isolated/two non-isolated, and two-million token-cap requests in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T106 [US6] Run the US6 domain, persistence, contract, Windows, E2E, and acceptance slices; capture final exits, Claude implementation evidence, OpenAI independent review, and deterministic authority/privacy results in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 **Checkpoint**: US6 preserves the Marvel roster as reviewed presentation/context data and supplies
 stable profile revisions for later missions without making a manifest an authority source.

@@ -101,6 +101,41 @@ export interface LaunchContext {
   runtimeSelection: LaunchRuntimeSelection;
   /** Ephemeral session bridge configuration if supported */
   bridgeConfig?: SessionBridgeConfig | null;
+  /** Exact reviewed profile and main-owned effective authority for this launch. */
+  profileBinding?: ProfileLaunchBinding | null;
+}
+
+export interface ProfileLaunchBinding {
+  profileId: string;
+  profileRevisionId: string;
+  workspaceId: string;
+  requestedIsolation: boolean;
+  effectiveIsolation: boolean;
+  requestedTokenCap: number;
+  effectiveTokenBudget: number;
+  effectiveResourceBudget: {
+    maxElapsedMs: number;
+    maxConcurrentProcesses: number;
+  };
+  /** Main-owned closed registry; manifest capability labels never populate it. */
+  toolRegistry: readonly string[];
+}
+
+export interface ProviderLaunchDisclosure {
+  providerId: ProviderId;
+  profileId: string;
+  profileRevisionId: string;
+  workspaceId: string;
+  canonicalWorkspacePath: string;
+  model: string | null;
+  effort: LaunchRuntimeSelection['effort'];
+  requestedIsolation: boolean;
+  effectiveIsolation: boolean;
+  requestedTokenCap: number;
+  effectiveTokenBudget: number;
+  effectiveResourceBudget: ProfileLaunchBinding['effectiveResourceBudget'];
+  toolRegistry: readonly string[];
+  configurationScope: 'process_only';
 }
 
 export interface StopContext {
@@ -130,10 +165,56 @@ export interface ProviderAdapter {
   readonly executableCandidates: readonly ExecutableCandidate[];
   probe(ctx: ProbeContext): Promise<ReadinessResult>;
   buildLaunch(ctx: LaunchContext): LaunchDescriptor;
+  buildLaunchDisclosure(ctx: LaunchContext): ProviderLaunchDisclosure | null;
   buildCleanStop(ctx: StopContext): CleanStopAction;
   parseStructuredActivity?(event: Uint8Array): ActivityEvidence | null;
   /** Raw provider payloads are reduced or rejected inside the adapter. */
   parseLifecycleEvidence?(event: unknown): ProviderLifecycleEvidence | null;
+}
+
+/**
+ * Build the safe, renderer-facing launch disclosure from main-owned policy.
+ * It is never serialized into provider configuration, and therefore cannot
+ * grant tools or mutate global/project settings.
+ */
+export function profileLaunchDisclosure(
+  providerId: ProviderId,
+  ctx: LaunchContext,
+): ProviderLaunchDisclosure | null {
+  const binding = ctx.profileBinding;
+  if (!binding) return null;
+  if (
+    binding.requestedTokenCap <= 0 ||
+    binding.effectiveTokenBudget <= 0 ||
+    binding.effectiveTokenBudget > binding.requestedTokenCap ||
+    binding.effectiveResourceBudget.maxElapsedMs <= 0 ||
+    binding.effectiveResourceBudget.maxConcurrentProcesses <= 0 ||
+    (binding.requestedIsolation && !binding.effectiveIsolation)
+  ) {
+    throw new ThreadHelmError('INVALID_REQUEST', 'Profile launch policy does not safely narrow.');
+  }
+  if (new Set(binding.toolRegistry).size !== binding.toolRegistry.length) {
+    throw new ThreadHelmError(
+      'INVALID_REQUEST',
+      'Profile launch tool registry is not deterministic.',
+    );
+  }
+  return {
+    providerId,
+    profileId: binding.profileId,
+    profileRevisionId: binding.profileRevisionId,
+    workspaceId: binding.workspaceId,
+    canonicalWorkspacePath: ctx.canonicalWorkspacePath,
+    model: ctx.runtimeSelection.model,
+    effort: ctx.runtimeSelection.effort,
+    requestedIsolation: binding.requestedIsolation,
+    effectiveIsolation: binding.effectiveIsolation,
+    requestedTokenCap: binding.requestedTokenCap,
+    effectiveTokenBudget: binding.effectiveTokenBudget,
+    effectiveResourceBudget: { ...binding.effectiveResourceBudget },
+    toolRegistry: [...binding.toolRegistry],
+    configurationScope: 'process_only',
+  };
 }
 
 // ---------------------------------------------------------------------------

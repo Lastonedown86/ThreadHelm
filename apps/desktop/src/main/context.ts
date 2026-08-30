@@ -25,6 +25,7 @@ import type { StorageHealth } from './storage-health.js';
 import type { CoordinationService } from './coordination/service.js';
 import type { BridgeSessionManager } from './coordination/bridge.js';
 import type { MemoryService } from './coordination/memory.js';
+import type { ProfileService } from './coordination/profiles.js';
 
 // --- native boundary (contracts/windows-supervisor.md) ----------------------
 
@@ -79,6 +80,10 @@ export interface StreamChannelFactory {
 
 export interface DirectoryPicker {
   pickDirectory(): Promise<string | null>;
+}
+
+export interface ProfileFilePicker {
+  pickFile(): Promise<string | null>;
 }
 
 // --- provider probing ---------------------------------------------------------
@@ -165,6 +170,7 @@ export interface Context {
   hosts: HostSpawner;
   channels: StreamChannelFactory;
   picker: DirectoryPicker;
+  profilePicker: ProfileFilePicker;
   events: RendererEvents;
   storage: Storage | null;
   health: StorageHealth;
@@ -179,6 +185,8 @@ export interface Context {
   coordination?: CoordinationService;
   /** Main-owned shared-memory authority; absent until handler composition. */
   memory?: MemoryService;
+  /** Main-owned reviewed-profile import and roster authority. */
+  profiles?: ProfileService;
   /** Session-scoped provider bridge authority; absent in degraded/test compositions. */
   coordinationBridge?: BridgeSessionManager;
   appInfo: AppInfo;

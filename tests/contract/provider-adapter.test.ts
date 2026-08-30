@@ -270,6 +270,78 @@ describe.each(cases)('$adapter.id adapter', ({ adapter, native, shim, version, a
     );
   });
 
+  it('discloses an exact profile revision and only main-owned effective launch authority', () => {
+    const context = {
+      sessionId: 'session-a',
+      canonicalWorkspacePath: 'C:\\projects\\alpha',
+      resolvedExecutable: native,
+      executableKind: 'native' as const,
+      terminal: { columns: 100, rows: 30 },
+      version: '1.0.0',
+      runtimeSelection: {
+        model: adapter.id === 'codex-cli' ? 'gpt-5.6-sol' : 'claude-sonnet-5',
+        effort: 'medium' as const,
+      },
+      profileBinding: {
+        profileId: '11111111-1111-4111-8111-111111111111',
+        profileRevisionId: '22222222-2222-4222-8222-222222222222',
+        workspaceId: '33333333-3333-4333-8333-333333333333',
+        requestedIsolation: true,
+        effectiveIsolation: true,
+        requestedTokenCap: 2_000_000,
+        effectiveTokenBudget: 250_000,
+        effectiveResourceBudget: { maxElapsedMs: 600_000, maxConcurrentProcesses: 1 },
+        toolRegistry: ['coordination.list-pending', 'coordination.reply'],
+      },
+    };
+    const disclosure = adapter.buildLaunchDisclosure(context);
+    expect(disclosure).toEqual({
+      providerId: adapter.id,
+      profileId: context.profileBinding.profileId,
+      profileRevisionId: context.profileBinding.profileRevisionId,
+      workspaceId: context.profileBinding.workspaceId,
+      canonicalWorkspacePath: context.canonicalWorkspacePath,
+      model: context.runtimeSelection.model,
+      effort: 'medium',
+      requestedIsolation: true,
+      effectiveIsolation: true,
+      requestedTokenCap: 2_000_000,
+      effectiveTokenBudget: 250_000,
+      effectiveResourceBudget: { maxElapsedMs: 600_000, maxConcurrentProcesses: 1 },
+      toolRegistry: ['coordination.list-pending', 'coordination.reply'],
+      configurationScope: 'process_only',
+    });
+    const descriptor = adapter.buildLaunch(context);
+    expect(descriptor.args.join(' ')).not.toContain(context.profileBinding.profileId);
+    expect(descriptor.args.join(' ')).not.toContain(context.profileBinding.profileRevisionId);
+    expect(descriptor.args).not.toContain('--settings');
+  });
+
+  it('fails closed when a profile request would exceed effective launch authority', () => {
+    expect(() =>
+      adapter.buildLaunchDisclosure({
+        sessionId: 'session-a',
+        canonicalWorkspacePath: 'C:\\projects\\alpha',
+        resolvedExecutable: native,
+        executableKind: 'native',
+        terminal: { columns: 100, rows: 30 },
+        version: '1.0.0',
+        runtimeSelection: { model: null, effort: null },
+        profileBinding: {
+          profileId: 'profile-a',
+          profileRevisionId: 'revision-a',
+          workspaceId: 'workspace-a',
+          requestedIsolation: true,
+          effectiveIsolation: false,
+          requestedTokenCap: 100_000,
+          effectiveTokenBudget: 200_000,
+          effectiveResourceBudget: { maxElapsedMs: 600_000, maxConcurrentProcesses: 1 },
+          toolRegistry: [],
+        },
+      }),
+    ).toThrowError('Profile launch policy does not safely narrow.');
+  });
+
   it('owns a bounded clean stop', () => {
     const stop = adapter.buildCleanStop({ sessionId: 's' });
     expect(stop.writes).toHaveLength(1);

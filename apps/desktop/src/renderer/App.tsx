@@ -1,6 +1,7 @@
 import { api, call } from './api.js';
 import { CloseBlockedDialog } from './features/control/CloseBlockedDialog.js';
 import { ControlBar } from './features/control/ControlBar.js';
+import { AgentProfileList } from './features/coordination/AgentProfileList.js';
 import { CoordinationPanel } from './features/coordination/CoordinationPanel.js';
 import { ConversationView } from './features/coordination/ConversationView.js';
 import { MemoryList } from './features/coordination/MemoryList.js';
@@ -54,6 +55,7 @@ function Shell() {
           <ProviderReadiness />
           <SessionList />
           <MemoryList />
+          <AgentProfileList />
           <CoordinationPanel />
           <ConversationView />
         </aside>

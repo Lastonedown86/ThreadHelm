@@ -3,6 +3,7 @@
 import type { CleanStopAction, LaunchDescriptor } from '@threadhelm/contracts';
 import {
   interactiveLaunch,
+  profileLaunchDisclosure,
   runProbe,
   type LaunchContext,
   type ProbeContext,
@@ -56,6 +57,9 @@ export const claudeCodeAdapter: ProviderAdapter = {
   },
   buildLaunch(ctx: LaunchContext): LaunchDescriptor {
     return interactiveLaunch(ctx, launchArgs(ctx));
+  },
+  buildLaunchDisclosure(ctx: LaunchContext) {
+    return profileLaunchDisclosure('claude-code', ctx);
   },
   buildCleanStop(): CleanStopAction {
     return { writes: ['/exit\r'], graceMs: 10_000 };

@@ -7,6 +7,7 @@ import { AgentSessionRepository, SessionEventRepository } from './sessions.js';
 import { ApprovedWorkspaceRepository } from './workspaces.js';
 import { CoordinationRepository } from './coordination.js';
 import { SharedMemoryRepository } from './shared-memory.js';
+import { AgentProfileRepository } from './agent-profiles.js';
 
 export interface Repositories {
   workspaces: ApprovedWorkspaceRepository;
@@ -17,6 +18,7 @@ export interface Repositories {
   recovery: RecoveryRecordRepository;
   coordination: CoordinationRepository;
   memory: SharedMemoryRepository;
+  agentProfiles: AgentProfileRepository;
   /** Runs `fn` atomically; nested calls become savepoints. */
   transaction<T>(fn: () => T): T;
 }
@@ -31,6 +33,7 @@ export function createRepositories(db: Db): Repositories {
     recovery: new RecoveryRecordRepository(db),
     coordination: new CoordinationRepository(db),
     memory: new SharedMemoryRepository(db),
+    agentProfiles: new AgentProfileRepository(db),
     transaction: <T>(fn: () => T): T => db.transaction(fn)(),
   };
 }
@@ -41,3 +44,4 @@ export * from './sessions.js';
 export * from './workspaces.js';
 export * from './coordination.js';
 export * from './shared-memory.js';
+export * from './agent-profiles.js';

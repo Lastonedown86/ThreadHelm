@@ -47,6 +47,8 @@ export interface State {
   coordinationNotice: string | null;
   /** Monotonic content-free signal; components explicitly reload scoped detail. */
   memorySequence: number;
+  /** Monotonic content-free signal; components explicitly reload the agent roster. */
+  profilesSequence: number;
   selectedSessionId: string | null;
   unread: Record<string, boolean>;
   truncation: TruncationState;
@@ -71,6 +73,7 @@ const initial: State = {
   coordinationOrder: [],
   coordinationNotice: null,
   memorySequence: 0,
+  profilesSequence: 0,
   selectedSessionId: null,
   unread: {},
   truncation: {},
@@ -121,7 +124,8 @@ type Action =
   | { type: 'handoff'; handoff: HandoffSummaryView }
   | { type: 'coordinationLoaded'; handoffs: HandoffSummaryView[] }
   | { type: 'coordinationEvent'; event: CoordinationEventEnvelope }
-  | { type: 'memoryEvent'; sequence: number };
+  | { type: 'memoryEvent'; sequence: number }
+  | { type: 'profilesEvent' };
 
 function upsertSession(state: State, session: SessionView): State {
   const known = session.id in state.sessions;
@@ -260,6 +264,8 @@ function reduce(state: State, action: Action): State {
       return { ...state, coordinationNotice: action.event.safeSummary };
     case 'memoryEvent':
       return { ...state, memorySequence: Math.max(state.memorySequence, action.sequence) };
+    case 'profilesEvent':
+      return { ...state, profilesSequence: state.profilesSequence + 1 };
   }
 }
 
@@ -404,6 +410,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       api.on('memory.conflictChanged', (event) =>
         dispatch({ type: 'memoryEvent', sequence: event.sequence }),
       ),
+      api.on('profiles.changed', () => dispatch({ type: 'profilesEvent' })),
     ];
     void refresh();
     return () => {

@@ -426,6 +426,7 @@ Stable identity and scope for one evolving unit of shared knowledge.
 | `supervisorSessionId` | UUID nullable | One ordinary eligible session while running. |
 | `approvedWorkspaceIds` | bounded JSON | Exact approved workspace set. |
 | `eligibleProfiles` | bounded JSON | Provider/profile identifiers approved by the user. |
+| `autoStartWorkerBindings` | bounded JSON | Exact pinned profile-revision/workspace/runtime tuples the user authorized main to start during this mission; empty means active sessions only. |
 | `maxWorkers`, `maxWorkItems`, `maxDepth`, `maxAttempts` | integers | Fixed by confirmed envelope and product maxima. |
 | `deadlineAt`, `resourceBudget` | bounded values | Required stop conditions; never model-interpreted. |
 | `permittedRoutineActions` | bounded enum set | Cannot include consequential authority classes. |
@@ -467,9 +468,10 @@ Stable identity and scope for one evolving unit of shared knowledge.
 | Field | Type | Rules |
 |---|---|---|
 | `id` | UUID | Primary key. |
-| `missionId`, `workItemId`, `sessionId`, `workspaceId` | UUID | Exact assignment identity. |
+| `missionId`, `workItemId`, `workspaceId`, `profileRevisionId` | UUID | Exact assignment and pre-authorized worker identity. |
+| `sessionId` | UUID nullable | Bound only after an active worker is selected or a reserved automatic start succeeds. |
 | `mode` | `read` or `write` | Write leases conflict for the same effective workspace. |
-| `state` | `active`, `released`, `expired`, or `unknown` | Unknown blocks automatic reassignment to conflicting scope. |
+| `state` | `reserved`, `active`, `released`, `expired`, or `unknown` | Reserved blocks conflicting launch/assignment; unknown blocks automatic reassignment to conflicting scope. |
 | `acquiredAt`, `expiresAt`, `releasedAt` | timestamps nullable | Main-owned lifecycle. |
 
 ### WorkAttempt
@@ -477,10 +479,13 @@ Stable identity and scope for one evolving unit of shared knowledge.
 | Field | Type | Rules |
 |---|---|---|
 | `id` | UUID | Primary key. |
-| `workItemId`, `sessionId`, `decisionId`, `leaseId` | UUID | Exact attempt and authority chain. |
+| `workItemId`, `decisionId`, `leaseId` | UUID | Exact attempt and authority chain. |
+| `sessionId` | UUID nullable | Assigned only after an active worker is selected or a pre-authorized start succeeds. |
 | `attemptNumber` | integer | Unique and monotonic per work item. |
 | `state` | WorkAttemptState | Unknown is terminal for automatic replay. |
+| `workerStartDisposition` | `not_needed`, `started`, `held`, or `failed` | Main-owned result for the envelope-bound start request; never implies work delivery. |
 | `handoffId` | UUID nullable | Addressed assignment handoff when created. |
+| `resultHandoffId` | UUID nullable | Structured worker result routed by main to the bound supervisor mission inbox. |
 | `reasonCode` | safe code nullable | Required for failure/unknown. |
 | `createdAt`, `completedAt` | timestamps nullable | UTC ISO-8601. |
 
@@ -721,6 +726,28 @@ No database transaction remains open while waiting for a provider, bridge, PTY, 
 
 ## Launch policy (non-manifest state)
 
-Launch resolution records effective provider, model, effort, and resolution source before process start. A model/effort selection directly refreshes the bound preview and needs no separate confirmation state; the independent checkbox records only folder-boundary confirmation. Priority is one-run override > exact agent/profile revision request > task-type/project policy > CLI default; CLI default remains explicit. Readiness probes and app load have no confirmation side effect. Effort is not part of `munder-difflin/hire@1`; automated tests are no-LLM, and test authoring/failure analysis defaults to the lowest-cost capable approved model at low/medium effort, with high-cost/high-effort requiring explicit selection or recorded escalation.
+Launch resolution records effective provider, model, effort, permission policy, provider-specific mapping,
+and the source of each value before process start. Permission policy is `manual`, `auto`,
+`bounded_allowlist`, or `break_glass_bypass`; it is non-manifest state and cannot be derived from
+persona text. `break_glass_bypass` is valid only as an exact one-run override with a fresh container,
+VM, or provider-supported sandbox runtime proving child-process containment, disposable-workspace-only
+writes, no unrelated credential/environment inheritance, bounded network destinations, and verified
+process/workspace/config cleanup; it is never persisted. A model/effort/permission selection directly
+refreshes the bound preview and needs no separate confirmation state; the independent checkbox records
+only folder-boundary confirmation. Model/effort priority is one-run override > exact agent/profile revision
+request > task-type/project policy > CLI default. Permission priority is one-run selection >
+task/project policy > provider default; profiles, personas, templates, and missions are excluded as
+permission sources, and no persisted source may resolve to bypass. CLI default remains an explicit
+model/effort option. Readiness probes and app load have no confirmation side effect. Effort and
+permission policy are not part of `munder-difflin/hire@1`; automated tests are no-LLM, and test
+authoring/failure analysis defaults to the lowest-cost capable approved model at low/medium effort,
+with high-cost/high-effort requiring explicit selection or recorded escalation.
+
+A supervisor automatic-start binding snapshots the resolved policy plus provider capability evidence,
+isolation, workspace, tools, model/effort, elapsed/turn/no-progress/resource bounds, and resolution
+sources. Claude `auto` capability evidence includes the exact CLI version, selected model/provider
+surface, and organization availability. Missing or stale evidence changes the start disposition to
+`held`; it never widens to bypass. Permission denial, classifier failure, timeout, cancellation,
+no-progress stop, budget exhaustion, and unknown completion are distinct main-owned attempt outcomes.
 - Mission envelope maxima may only stay equal or decrease automatically; expansion requires a new
   user-confirmed mission version.

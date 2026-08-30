@@ -49,7 +49,17 @@ agy models
 
 Also use Claude Code `/model` and `/status`, and the current Codex app model selector/inventory.
 
-Before any provider CLI session starts, review the displayed provider/model/effort resolution. Changing model or effort automatically refreshes the bound preview; there is no separate settings-review button. The one checkbox confirms only the folder-access boundary. Priority is one-run override > exact agent/profile revision request > task-type/project policy > CLI default; CLI default remains explicit. Readiness probes and app load do not prompt. Automated tests run without an LLM. Routine test authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort; explicitly select or record escalation for high-cost/high-effort. Planning may use only ChatGPT/OpenAI, Claude, or Google Antigravity; runtime remains Codex CLI and Claude Code. Effort is not a hire-manifest field.
+Before any provider CLI session starts, review the displayed provider/model/effort resolution plus the
+separate runtime permission policy and source. Changing model, effort, or permission automatically
+refreshes the bound preview; there is no separate settings-review button. The one checkbox confirms
+only the folder-access boundary. Model/effort priority is one-run override > exact agent/profile
+revision request > task-type/project policy > CLI default. Permission priority is one-run selection >
+task/project policy > provider default, excluding profiles, personas, templates, missions, and
+persisted bypass. Readiness probes and app load do not prompt. Automated tests run without an LLM.
+Routine test authoring/failure analysis recommends the lowest-cost capable approved model at
+low/medium effort; explicitly select or record escalation for high-cost/high-effort. Planning may use
+only ChatGPT/OpenAI, Claude, or Google Antigravity; runtime remains Codex CLI and Claude Code. Effort
+and permission policy are not hire-manifest fields.
 
 Expected assignments:
 
@@ -267,8 +277,20 @@ pnpm exec playwright test tests/e2e/supervisor-mission.spec.ts
 Expected:
 
 - The user confirms exact mission objective, scopes, eligible profiles, concurrency, retry/time/resource
-  limits, routine actions, and escalation rules before autonomy starts.
+  limits, routine actions, escalation rules, and any exact per-worker automatic-start bindings,
+  including runtime permission policy/source and capability evidence, before autonomy starts.
 - One ordinary supervisor decomposes and assigns only valid DAG work to approved worker/workspace pairs.
+- With a confirmed binding, main can reserve the work/workspace, start an offline ordinary worker,
+  bind the resulting session, and deliver without a second prompt; launch drift or substitution holds.
+- Claude automatic workers use supported real auto mode. Unsupported or failed auto holds for Manual or
+  bounded-allowlist handling and never silently enters bypass. Bypass remains a separate isolated
+  one-run break-glass launch with fresh process/filesystem containment, disposable-workspace-only
+  writes, bounded credential/environment/network exposure, and verified cleanup; it is not stored in
+  any persona, profile, template, mission, or recovery.
+- Permission denial, classifier failure, timeout, cancellation, no-progress, budget exhaustion, and
+  unknown completion remain distinguishable, bounded, and attributable in the supervisor result path.
+- Every worker's structured result and deliberate artifact/evidence references return through main to
+  the bound supervisor mission inbox; transcripts and implicit workspace contents do not.
 - Conflicting write leases, 65th work item, depth nine, fourth attempt, third equivalent decision,
   exhausted budget, invalid output, and supervisor loss pause safely.
 - Known-safe failures may be reassigned inside bounds; unknown attempts are never replayed automatically.

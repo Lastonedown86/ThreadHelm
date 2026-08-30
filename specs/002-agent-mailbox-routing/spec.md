@@ -260,12 +260,20 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
    every work item has bounded scope, acceptance evidence, dependencies, and an attributable decision.
 2. **Given** multiple eligible workers, **When** work is assignable, **Then** the supervisor selects
    only an approved profile/workspace and ThreadHelm prevents conflicting write leases.
-3. **Given** a routine known-safe failure within retry limits, **When** the supervisor reassigns or
+3. **Given** an eligible worker is offline and its exact profile revision, workspace, runtime
+   settings, and automatic-start permission were confirmed in the mission envelope, **When** the
+   supervisor assigns ready work, **Then** Electron main may start that ordinary worker without a
+   second prompt, records the launch and assignment, and holds rather than substituting if preflight
+   no longer matches.
+4. **Given** a worker completes, refuses, fails, proposes a change, or requires authority, **When** it
+   reports the outcome, **Then** ThreadHelm persists the structured result and deliberate artifact or
+   evidence references and routes them to the bound supervisor's mission inbox.
+5. **Given** a routine known-safe failure within retry limits, **When** the supervisor reassigns or
    retries it, **Then** the prior attempt remains auditable and no uncertain external action is replayed.
-4. **Given** destructive, privileged, external, spending, credential, workspace-expanding, or
+6. **Given** destructive, privileged, external, spending, credential, workspace-expanding, or
    materially scope-changing work, **When** it is proposed, **Then** the mission pauses that branch and
    asks the user for exact authority through ThreadHelm's normal confirmation surface.
-5. **Given** the supervisor crashes, exceeds a bound, loops, or produces invalid structured output,
+7. **Given** the supervisor crashes, exceeds a bound, loops, or produces invalid structured output,
    **When** ThreadHelm recovers, **Then** worker processes remain controllable, mission state is honest,
    and no new work is assigned until the supervisor is safely resumed or replaced.
 
@@ -399,11 +407,17 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
   content-free provenance and lifecycle evidence MAY remain for integrity and troubleshooting.
 - **FR-038**: ThreadHelm MUST let the user create an autonomous mission only through an explicit
   envelope defining objective, approved workspaces, eligible provider/profile set, maximum workers,
-  task/retry/time/resource bounds, permitted routine actions, and stop/escalation rules.
+  task/retry/time/resource bounds, permitted routine actions, per-profile automatic-start permissions
+  with exact runtime/workspace bindings, and stop/escalation rules.
 - **FR-039**: The supervisor MUST be an ordinary replaceable agent session. It MUST NOT receive direct
   database, shell, filesystem, terminal, credential, process, or unrestricted IPC authority.
-- **FR-040**: The supervisor MAY decompose, sequence, assign, monitor, retry, and reassign work only
-  through typed operations that main validates against the active mission envelope.
+- **FR-040**: The supervisor MAY decompose, sequence, assign, monitor, retry, reassign, and request
+  startup of a pre-authorized eligible worker only through typed operations that main validates
+  against the active mission envelope. Electron main owns every process start; the supervisor cannot
+  select an unapproved launch target or silently substitute runtime settings. Every worker outcome
+  and deliberate artifact/evidence reference MUST return through main to the bound supervisor's
+  mission inbox; a worker cannot select a different return recipient or implicitly attach its
+  transcript, terminal history, credentials, or workspace contents.
 - **FR-041**: ThreadHelm MUST prevent two write-capable workers from holding conflicting workspace
   leases and MUST make every assignment, reassignment, retry, and cancellation attributable.
 - **FR-042**: Supervisor decisions MUST include structured rationale, inputs/references, selected
@@ -468,6 +482,29 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
   attributable and revisioned; templates referenced by active drafts MUST remain reproducible.
 - **FR-066**: Template substitution, if offered, MUST use only declared bounded text variables with
   literal previewed values; templates MUST NOT execute scripts, expressions, tools, or file reads.
+- **FR-067**: Permission mode MUST be resolved as main-owned runtime policy and MUST NOT be stored in,
+  inferred from, or inherited through an agent name, persona, capability label, template, or
+  `munder-difflin/hire@1` profile. Renaming the supervisor or a worker MUST NOT change effective
+  permissions.
+- **FR-068**: A pre-authorized Claude worker start MUST use the provider's real `auto` permission mode
+  only after the exact installed CLI, selected model, provider/account surface, and organization policy
+  prove it available. Unsupported or unavailable `auto` MUST hold the assignment for Manual or a
+  bounded allowlist decision and MUST NOT silently substitute `bypassPermissions`.
+- **FR-069**: `bypassPermissions` MUST be an explicit one-run break-glass override limited to a fresh
+  container, VM, or provider-supported sandbox runtime that proves child-process containment, write
+  access limited to one approved disposable workspace, no unrelated host/project credential or
+  environment inheritance, network limited to provider/control endpoints plus exact task-approved
+  destinations, and verified process/workspace/config cleanup. It MUST NOT be persisted as profile,
+  template, task, project, or mission policy; inherited by a worker; or consumed by supervisor
+  pre-authorization or recovery.
+- **FR-070**: The launch or mission disclosure MUST bind the effective permission policy and source,
+  provider mapping, isolation, model/effort, workspace, tools, elapsed/turn/resource bounds, and
+  automatic-start disposition. Electron main MUST revalidate those values immediately before process
+  start and hold on drift without widening or substitution.
+- **FR-071**: Provider permission denial, classifier failure, timeout, cancellation, no-progress stop,
+  budget exhaustion, and unknown completion MUST become distinct structured attempt outcomes. Every
+  worker outcome MUST return through main to the bound replaceable supervisor, and no unknown outcome
+  may be retried automatically.
 
 ### Roadmap Boundaries
 
@@ -533,7 +570,8 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
 **v1.4 milestone — Autonomous supervisor (P8)**:
 
 - User-approved mission envelopes, task decomposition, eligible-worker selection, dependency tracking,
-  structured progress monitoring, and bounded known-safe retry/reassignment.
+  pre-authorized exact worker startup, structured progress monitoring, and bounded known-safe
+  retry/reassignment.
 - Supervisor intelligence remains an ordinary provider session; Electron main enforces policy,
   persistence, leases, process controls, and human escalation.
 - Compact mission/task/memory views replace Munder Difflin's office floor and memory graph.
@@ -645,6 +683,15 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
   recover or fail with an honest next step and no existing export is overwritten without confirmation.
 - **SC-028**: Every shipped starter template is generic, text-only, versioned, and independently
   customizable; no user-specific Marvel persona or project goal is bundled as a product default.
+- **SC-029**: Across unsupported-model, unavailable-classifier, policy-disabled, and version-drift
+  tests, 100% of Claude `auto` starts hold or use an explicitly approved safer policy and zero starts
+  silently enter `bypassPermissions`.
+- **SC-030**: Across profile/template import, duplicate, rename, mission recovery, and reassignment
+  tests, zero permission modes are inherited from persona data and zero break-glass overrides persist
+  beyond their exact one-run launch.
+- **SC-031**: Across permission denial, timeout, cancellation, no-progress, budget, crash, and unknown
+  completion tests, 100% of worker attempts produce one attributable terminal or held outcome for the
+  bound supervisor and zero unknown actions are replayed automatically.
 
 ## Assumptions
 
@@ -698,4 +745,4 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
 
 ## Provider launch confirmation policy
 
-Before starting any provider CLI session, ThreadHelm shows resolved provider/model/effort. Model and effort controls are direct choices that automatically refresh the bound launch preview; they do not require a second settings-review action. One checkbox confirms only the folder-access boundary and remains independent of model/effort changes. Readiness probing and app load never prompt. Priority is one-run override > exact agent/profile revision request > task-type/project policy > CLI default; CLI default remains an explicit option. Automated tests use no LLM; routine test authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort, while high-cost/high-effort requires explicit selection or recorded escalation. Planning providers are ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers remain Codex CLI and Claude Code. Effort is launch policy, not hire-schema data.
+Before starting any provider CLI session, ThreadHelm shows resolved provider/model/effort and the separately resolved runtime permission policy and source. Model, effort, and permission controls are direct choices that automatically refresh the bound launch preview; they do not require a second settings-review action. One checkbox confirms only the folder-access boundary and remains independent of those choices. Permission policy is never persona or hire-schema data. For an autonomous mission, the mission-envelope confirmation may serve as pre-authorization for later worker starts only when it shows and binds the exact profile revision, provider/model/effort, effective permission policy/provider mapping, isolation/resource/elapsed/turn/no-progress limits, workspace/folder boundary, and automatic-start permission. A Claude automatic worker start uses real `auto` only after capability proof; unavailable `auto` holds for Manual or bounded allowlist handling and never falls through to `bypassPermissions`. Bypass is an explicit isolated one-run break-glass override and cannot be mission-pre-authorized, persisted, inherited, or restored. Electron main revalidates the complete tuple immediately before launch; drift, unavailability, or substitution holds the assignment for an exact user action instead of prompting or launching silently. Recovery never consumes launch permission until the user explicitly resumes the mission and re-establishes a valid supervisor. Readiness probing and app load never prompt. Model/effort priority is one-run override > exact agent/profile revision request > task-type/project policy > CLI default. Permission priority is one-run selection > task/project policy > provider default; profiles, personas, templates, and missions are not permission-policy sources, and no persisted source may select bypass. CLI default remains an explicit model/effort option. Automated tests use no LLM; routine test authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort, while high-cost/high-effort requires explicit selection or recorded escalation. Planning providers are ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers remain Codex CLI and Claude Code. Effort and permission policy are launch state, not hire-schema data.

@@ -11,6 +11,8 @@ Before autonomy starts, the user reviews and confirms:
 - exact objective and completion evidence;
 - approved workspace IDs and allowed read/write modes;
 - eligible provider/profile-revision/role set and supervisor profile revision;
+- per-worker automatic-start permission, bound to the exact pinned profile revision, workspace,
+  provider/model/effort, effective isolation/resource limits, and folder-access boundary;
 - maximum concurrent workers, work items, decomposition depth, attempts, elapsed time, and resource use;
 - permitted routine actions and known-safe retry classes;
 - stop conditions and escalation rules; and
@@ -52,11 +54,41 @@ confidence, or memory search rank cannot override a policy result.
 - Main validates every proposed child/dependency before insertion. Equivalent decomposition detected
   three times within the latest eight decisions pauses the affected branch.
 - Assignment is allowed only to an eligible active pinned profile revision/session in an approved workspace.
+- When no matching worker session is active, `threadhelm_work_assign` may request automatic startup
+  only for an exact worker binding pre-authorized by the confirmed envelope. The mission confirmation
+  is the launch authorization, so no second prompt is required for an unchanged binding.
+- Main revalidates profile state, runtime availability, launch settings, workspace identity, folder
+  boundary, effective permission policy/provider mapping, permission capability evidence, capacity,
+  elapsed/turn/no-progress/resource bounds, budget, and idempotency immediately before starting the
+  ordinary worker session. It reserves the work/workspace lease first, owns the process start, binds
+  the reservation to the new session, and records both the launch disposition and resulting assignment
+  before delivery.
+- Changed, unavailable, failed, duplicate, or ambiguous launch state holds the affected branch with no
+  profile, provider, model, effort, permission, workspace, isolation, or resource substitution. An
+  unavailable Claude auto classifier holds for Manual or bounded-allowlist handling; it never widens
+  to bypass. Workers and supervisor prose cannot grant or widen automatic-start permission.
+- Break-glass bypass is not a valid mission binding. It requires a separate direct one-run disclosure,
+  proved disposable isolation, and exact user action; it cannot be requested, persisted, inherited, or
+  restored by a supervisor, worker, profile, template, task/project policy, or recovery path.
 - Profile persona/capability text cannot assign a role or expand the envelope; role eligibility is a
   separate user-confirmed mission field.
 - A main-owned lease prevents conflicting write-capable assignments. Unknown leases fail closed.
 - Main creates one addressed handoff after the decision and lease commit. The mailbox delivery contract
   remains authoritative for presentation, acknowledgement, and uncertain outcome.
+
+## Worker result routing
+
+- Every supervisor assignment carries a main-derived return route to the bound supervisor's mission
+  inbox. A worker cannot replace it, address an arbitrary peer, or claim another sender identity.
+- Workers return a closed structured disposition: completion, refusal, failure, proposal,
+  authority-required, permission-blocked, classifier-failed, timed-out, cancelled, no-progress,
+  budget-exhausted, or unknown, plus deliberate artifact/evidence/memory references and bounded
+  explanation.
+- Main persists the result against the exact mission, work item, attempt, assignment handoff, worker
+  session, and pinned profile revision before notifying the supervisor.
+- Raw transcripts, terminal input/output, reasoning traces, credentials, environment values, and
+  implicit workspace contents are never attached as “all items.” Peer collaboration requires a
+  separately approved conversation; its final result still returns to the supervisor.
 
 ## Retry, reassignment, and recovery
 
@@ -69,7 +101,8 @@ confidence, or memory search rank cannot override a policy result.
   conflict, storage failure, or recovery ambiguity moves the mission/branch to paused or
   `recovery_required` and creates a content-free escalation.
 - Startup launches/resumes no supervisor or worker. User action re-establishes a valid supervisor
-  session and explicitly resumes the mission.
+  session and explicitly resumes the mission. Only after that explicit resume may an unchanged
+  envelope's worker automatic-start permissions be used again.
 
 ## Consequential authority
 
@@ -102,5 +135,7 @@ polling is never a scheduler.
 - `WORK_DAG_INVALID`
 - `WORK_LEASE_CONFLICT`
 - `WORK_ATTEMPT_UNKNOWN`
+- `WORKER_AUTOSTART_NOT_AUTHORIZED`
+- `WORKER_AUTOSTART_PREFLIGHT_FAILED`
 - `SUPERVISOR_DECISION_LOOP`
 - `MISSION_AUTHORITY_REQUIRED`

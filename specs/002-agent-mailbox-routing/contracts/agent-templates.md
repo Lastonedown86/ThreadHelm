@@ -11,7 +11,8 @@ assign mission roles.
 3. **Role and goal**: bounded untrusted goal text with role-scoping guidance.
 4. **Capabilities**: normalized routing labels only; no tool or permission chooser.
 5. **Runtime requests**: provider/model preference, isolation request, and token-cap request. Effort,
-   effective tools, workspace, and mission role are explicitly deferred to launch/mission policy.
+   permission mode, effective tools, workspace, and mission role are explicitly deferred to
+   launch/mission policy.
 6. **Review**: exact JSON, strict validation, compatibility reasons, provenance, and action disclosure.
 
 Each transition validates its owned fields and persists the draft through Electron main. Back,

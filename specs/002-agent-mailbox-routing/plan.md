@@ -202,7 +202,8 @@ authority source.
 1. The user previews and confirms a mission envelope bound to exact objective, scopes, eligible
    profiles, limits, routine actions, stop rules, supervisor session/profile, and any per-worker
    automatic-start bindings. Each binding includes the exact pinned profile revision, workspace,
-   provider/model/effort, effective isolation/resource limits, and folder-access boundary.
+   provider/model/effort, effective runtime permission policy and capability evidence,
+   isolation/resource/elapsed/turn/no-progress limits, and folder-access boundary.
 2. Main starts or binds one ordinary supervisor session and exposes only supervisor-role tools for
    that mission. The supervisor inspects structured mission, roster, mailbox, outcome, and memory views.
 3. The supervisor proposes a bounded work DAG. Main validates depth/count/dependencies/scope and
@@ -269,13 +270,39 @@ authority source.
   that permission.
 - A hire manifest is also context, not authority. Its name, goal, capabilities, provider/model,
   isolation request, and token cap cannot grant tools, expand workspace/mission scope, select a role,
-  or raise a product budget. Source paths and goal text never enter broad logs or renderer events.
+  select permission mode, or raise a product budget. Source paths and goal text never enter broad logs
+  or renderer events. Persona rename, template copy, and profile revision do not inherit or mutate
+  runtime permission policy.
 - A mission envelope is the supervisor's maximum authority, not a suggestion. Supervisor prose,
   memory content, model confidence, or a worker request cannot expand it. Main may start an approved
   worker during an active mission only from its exact pre-authorized profile-revision/runtime/workspace
-  binding, after current-state revalidation, and must expose the target and resulting state. There is
-  no model/runtime/workspace substitution, and startup recovery never launches or resumes work
+  binding, including effective permission policy and capability evidence, after current-state
+  revalidation, and must expose the target and resulting state. Claude workers use the provider's real
+  auto classifier only when currently supported; missing support holds for Manual or bounded allowlist
+  handling and never widens to bypass. Break-glass bypass is one-run and requires a fresh container,
+  VM, or provider-supported sandbox runtime proving child containment, disposable-workspace-only
+  writes, no unrelated credential/environment inheritance, bounded network destinations, and verified
+  process/workspace/config cleanup. It cannot be mission-pre-authorized or persisted and is never
+  restored. There is no
+  model/runtime/workspace/permission substitution, and startup recovery never launches or resumes work
   automatically.
+
+### Runtime permission and progress policy
+
+- Electron main resolves permission policy separately from agent/profile/template data and snapshots
+  the value, source, provider mapping, model/effort, workspace, isolation, tools, and resource bounds in
+  the launch preview or mission automatic-start binding.
+- Provider adapters capability-check exact installed versions and the selected runtime/model surface.
+  Unsupported `auto` fails closed; no compatibility path silently adds a bypass flag.
+- Supervisor-started workers may use `auto` or a bounded allowlist only inside the exact confirmed
+  mission binding. Direct Manual launches remain available. Bypass requires a separate one-run
+  break-glass disclosure plus the disposable-isolation proof above and cannot be initiated by any
+  supervisor or worker.
+- Main consumes structured provider progress, applies elapsed/turn/resource and no-progress bounds,
+  exposes cancellation, and records permission denial, classifier failure, timeout, cancellation,
+  budget exhaustion, and unknown completion distinctly.
+- Every terminal or held worker outcome returns through main to the bound replaceable supervisor for
+  synthesis. Unknown outcomes pause the branch and are never automatically retried or reassigned.
 
 ### Fixed planning bounds
 
@@ -506,4 +533,14 @@ graphics subsystem, background hosted plane, or prompt-governed privilege bounda
 
 ## Launch policy decision
 
-Every provider CLI launch presents resolved provider/model/effort. Selecting model or effort directly refreshes the bound preview; there is no separate settings-review gate. The sole checkbox confirms the folder-access boundary and is not reset by model/effort changes. Readiness probes and app loading do not prompt. Priority is one-run override > exact agent/profile revision request > task-type/project policy > CLI default, with CLI default explicit. Automated tests use no LLM; test authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort. High-cost/high-effort requires explicit selection or recorded escalation. Planning providers are ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers are Codex CLI and Claude Code. Effort stays outside the Munder hire schema.
+Every provider CLI launch presents resolved provider/model/effort plus the separate runtime permission
+policy and source. Selecting model, effort, or permission directly refreshes the bound preview; there
+is no separate settings-review gate. The sole checkbox confirms the folder-access boundary and is not
+reset by those changes. Readiness probes and app loading do not prompt. Model/effort priority is
+one-run override > exact agent/profile revision request > task-type/project policy > CLI default.
+Permission priority is one-run selection > task/project policy > provider default, with no profile,
+persona, template, or mission source and no persisted bypass. Automated tests use no LLM; test
+authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort.
+High-cost/high-effort requires explicit selection or recorded escalation. Planning providers are
+ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers are Codex CLI and Claude Code. Effort
+and permission policy stay outside the Munder hire schema.

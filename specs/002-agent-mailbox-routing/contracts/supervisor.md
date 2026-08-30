@@ -58,12 +58,18 @@ confidence, or memory search rank cannot override a policy result.
   only for an exact worker binding pre-authorized by the confirmed envelope. The mission confirmation
   is the launch authorization, so no second prompt is required for an unchanged binding.
 - Main revalidates profile state, runtime availability, launch settings, workspace identity, folder
-  boundary, capacity, budget, and idempotency immediately before starting the ordinary worker session.
-  It reserves the work/workspace lease first, owns the process start, binds the reservation to the new
-  session, and records both the launch disposition and resulting assignment before delivery.
+  boundary, effective permission policy/provider mapping, permission capability evidence, capacity,
+  elapsed/turn/no-progress/resource bounds, budget, and idempotency immediately before starting the
+  ordinary worker session. It reserves the work/workspace lease first, owns the process start, binds
+  the reservation to the new session, and records both the launch disposition and resulting assignment
+  before delivery.
 - Changed, unavailable, failed, duplicate, or ambiguous launch state holds the affected branch with no
-  profile, provider, model, effort, workspace, isolation, or resource substitution. Workers and
-  supervisor prose cannot grant or widen automatic-start permission.
+  profile, provider, model, effort, permission, workspace, isolation, or resource substitution. An
+  unavailable Claude auto classifier holds for Manual or bounded-allowlist handling; it never widens
+  to bypass. Workers and supervisor prose cannot grant or widen automatic-start permission.
+- Break-glass bypass is not a valid mission binding. It requires a separate direct one-run disclosure,
+  proved disposable isolation, and exact user action; it cannot be requested, persisted, inherited, or
+  restored by a supervisor, worker, profile, template, task/project policy, or recovery path.
 - Profile persona/capability text cannot assign a role or expand the envelope; role eligibility is a
   separate user-confirmed mission field.
 - A main-owned lease prevents conflicting write-capable assignments. Unknown leases fail closed.
@@ -74,8 +80,10 @@ confidence, or memory search rank cannot override a policy result.
 
 - Every supervisor assignment carries a main-derived return route to the bound supervisor's mission
   inbox. A worker cannot replace it, address an arbitrary peer, or claim another sender identity.
-- Workers return a closed structured disposition: completion, refusal, failure, proposal, or
-  authority-required, plus deliberate artifact/evidence/memory references and bounded explanation.
+- Workers return a closed structured disposition: completion, refusal, failure, proposal,
+  authority-required, permission-blocked, classifier-failed, timed-out, cancelled, no-progress,
+  budget-exhausted, or unknown, plus deliberate artifact/evidence/memory references and bounded
+  explanation.
 - Main persists the result against the exact mission, work item, attempt, assignment handoff, worker
   session, and pinned profile revision before notifying the supervisor.
 - Raw transcripts, terminal input/output, reasoning traces, credentials, environment values, and

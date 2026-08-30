@@ -16,21 +16,36 @@ Each provider adapter declares:
 | `automaticPresentation` | `manual_only` or `structured_safe_point` |
 | `memoryTools` | `unsupported` or `scoped_revisioned_memory` |
 | `supervisorTools` | `unsupported`, `worker_only`, or `bound_supervisor` |
-| `configurationFailureBehavior` | Always `manual_only`; provider session may still launch after disclosure |
+| `permissionPolicies` | Provider/version/model-supported subset of `manual`, `auto`, `bounded_allowlist`, and `break_glass_bypass` |
+| `configurationFailureBehavior` | Direct user launch: `manual_only` after refreshed disclosure; supervisor automatic-start: `held` |
 
-Unknown version, disabled hook/MCP policy, malformed configuration, bridge startup failure, lost pipe,
-or rejected event changes only that session to `manual_only` and emits a safe reason. It does not fail
-or reconfigure another session.
+For a direct user launch, unknown version, disabled hook/MCP policy, malformed configuration, bridge
+startup failure, lost pipe, or rejected event changes only that session to `manual_only`, emits a safe
+reason, and may proceed only after the refreshed disclosure. For a supervisor automatic-start request,
+the same condition holds the assignment without starting a process. Neither path fails or reconfigures
+another session.
 
 ## Session configuration
 
 ### Launch disclosure and confirmation
 
-Before starting Codex CLI or Claude Code, ThreadHelm displays resolved provider/model/effort. Selecting model or effort automatically refreshes the exact bound preview, with no separate settings-review gate; the sole checkbox confirms only the folder-access boundary. Priority is one-run override > exact agent/profile revision request > task-type/project policy > CLI default; CLI default is selectable. Readiness probing and app load do not prompt. Automated tests use no LLM; test authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort, while high-cost/high-effort requires explicit selection or recorded escalation. Planning providers are ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers remain Codex CLI and Claude Code.
+Before starting Codex CLI or Claude Code, ThreadHelm displays resolved provider/model/effort and the
+separately resolved runtime permission policy, provider mapping, and source. Selecting model, effort,
+or permission policy automatically refreshes the exact bound preview, with no separate settings-review
+gate; the sole checkbox confirms only the folder-access boundary. Model/effort priority is one-run
+override > exact agent/profile revision request > task-type/project policy > CLI default. Permission
+priority is one-run selection > task/project policy > provider default; profiles, personas, templates,
+and missions are excluded as permission sources, and no persisted source may select bypass. CLI default
+remains an explicit model/effort option. Readiness probing and app load do not prompt. Automated tests
+use no LLM; test authoring/failure analysis recommends the lowest-cost capable approved model at
+low/medium effort, while high-cost/high-effort requires explicit selection or recorded escalation.
+Planning providers are ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers remain Codex
+CLI and Claude Code.
 
 - A selected agent profile pins an exact reviewed revision. Its goal may be passed only as disclosed
-  untrusted context; provider/model, effort, tools, isolation, workspace, and effective budget come
-  from separately validated launch policy. Importing a profile does not create this configuration.
+  untrusted context; provider/model, effort, permission policy, tools, isolation, workspace, and
+  effective budget come from separately validated launch policy. Importing, renaming, or templating a
+  profile does not create or change this configuration.
 - ThreadHelm creates configuration under its own user-data directory for one session.
 - Claude Code receives an additional session config through `--mcp-config` and, only for proved
   lifecycle events, `--settings`.
@@ -42,6 +57,25 @@ Before starting Codex CLI or Claude Code, ThreadHelm displays resolved provider/
   credential, user prompt, mission objective, memory content, workspace secret, or database path.
 - Session config and credential are invalidated/removed after the session ends. Failure to remove is
   reported safely and the credential remains invalid.
+
+### Permission policy mapping
+
+- Claude automatic supervisor workers map only to the real `--permission-mode auto` value after the
+  exact installed CLI, selected model/provider surface, and organization policy prove it available.
+- An unavailable or failed Claude auto classifier holds the assignment or returns a typed permission
+  outcome. ThreadHelm may offer Manual or a bounded allowlist as an explicit next action, but never
+  substitutes `bypassPermissions`.
+- `break_glass_bypass` maps to a provider bypass flag only for one direct launch after exact disclosure
+  and proof of a fresh container, VM, or provider-supported sandbox runtime. Proof covers child-process
+  containment, write access limited to one approved disposable workspace, no unrelated host/project
+  credential or environment inheritance, network limited to provider/control endpoints plus exact
+  task-approved destinations, and verified process/workspace/config cleanup. It is excluded from
+  profiles, templates, persisted task/project policy, mission automatic-start bindings, and recovery.
+- Provider permission prompts, explicit ask/deny rules, and classifier decisions remain authoritative.
+  A bridge message, persona, supervisor decision, or prior successful launch cannot approve them.
+- Permission denial, classifier failure, timeout, cancellation, no-progress stop, budget exhaustion,
+  and unknown completion are separate structured outcomes. Unknown completion is never retried
+  automatically; every worker outcome follows the main-derived supervisor return route.
 
 ## Bridge transports
 

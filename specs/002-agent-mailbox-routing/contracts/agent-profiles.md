@@ -63,7 +63,13 @@ source path, provider raw errors, and file content require an explicit detail or
 
 ### Launch confirmation
 
-Before starting the provider CLI, ThreadHelm shows resolved provider/model/effort. Model and effort selections directly refresh the bound preview without another settings-review action; the only checkbox confirms the folder boundary. Priority is one-run override > exact profile revision request > task-type/project policy > CLI default; CLI default remains selectable. Readiness probing and app load never prompt. Effort is launch policy and absent from the hire manifest.
+Before starting the provider CLI, ThreadHelm shows resolved provider/model/effort plus the separate
+runtime permission policy and source. Model, effort, and permission selections directly refresh the
+bound preview without another settings-review action; the only checkbox confirms the folder boundary.
+Model/effort priority is one-run override > exact profile revision request > task-type/project policy >
+CLI default. Permission priority is one-run selection > task/project policy > provider default,
+excluding profile/persona/template/mission sources and persisted bypass. Readiness probing and app load
+never prompt. Effort and permission policy are launch state and absent from the hire manifest.
 
 ## Acceptance roster
 

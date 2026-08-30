@@ -32,7 +32,17 @@ requested hive mechanics while avoiding cross-writer, project-modification, and 
 
 ## Launch policy decision
 
-Before a provider CLI session starts, show resolved provider/model/effort. Treat model and effort controls as direct choices that automatically refresh the bound preview; do not add a second settings-review gate. Keep one independent checkbox for the folder-access boundary. Readiness probing and app load do not prompt. Priority is one-run override > exact agent/profile revision request > task-type/project policy > CLI default, with CLI default selectable. Automated tests use no LLM. Test authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort; high-cost/high-effort requires explicit selection or recorded escalation. Planning providers remain ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers remain Codex CLI and Claude Code. Effort is launch policy, not hire-schema data.
+Before a provider CLI session starts, show resolved provider/model/effort plus separate runtime
+permission policy and source. Treat model, effort, and permission controls as direct choices that
+automatically refresh the bound preview; do not add a second settings-review gate. Keep one independent
+checkbox for the folder-access boundary. Readiness probing and app load do not prompt. Model/effort
+priority is one-run override > exact agent/profile revision request > task-type/project policy > CLI
+default. Permission priority is one-run selection > task/project policy > provider default, excluding
+profiles, personas, templates, missions, and persisted bypass. Automated tests use no LLM. Test
+authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort;
+high-cost/high-effort requires explicit selection or recorded escalation. Planning providers remain
+ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers remain Codex CLI and Claude Code.
+Effort and permission policy are launch state, not hire-schema data.
 
 ## Decision 2: Keep Electron main as the sole router and SQLite writer
 
@@ -456,4 +466,49 @@ Claude, or Antigravity execution model; safety and recovery do not depend on its
 **Sources**:
 
 - [Munder Difflin Hive design](https://github.com/chaitanyagiri/munder-difflin/blob/main/HIVE.md)
+- `.specify/memory/constitution.md`
+
+## Decision 16: Resolve provider permission mode at launch, never from persona data
+
+**Decision**: Treat permission mode as main-owned runtime policy alongside model, effort, isolation,
+workspace, tools, and resource bounds. Agent names, goals, capability labels, templates, and imported
+Munder manifests remain static context and cannot select or inherit permissions. A user may rename the
+supervisor and every worker without changing this policy.
+
+For Claude, ThreadHelm distinguishes the provider's current `auto` classifier from
+`bypassPermissions`. A supervisor-started worker may use real `--permission-mode auto` only after the
+exact installed CLI, selected model/provider surface, and organization policy prove it available. If
+that proof is missing, stale, or fails, main holds the assignment for Manual or bounded-allowlist
+handling and never falls through to bypass. Bypass is a direct one-run break-glass choice that requires
+a fresh container, VM, or provider-supported sandbox runtime proving child-process containment,
+disposable-workspace-only writes, no unrelated credential/environment inheritance, network limited to
+provider/control endpoints plus exact task-approved destinations, and verified process/workspace/config
+cleanup. It cannot be persisted, mission-pre-authorized, inherited, or restored.
+
+Auto mode addresses permission prompts, not runaway reasoning or opaque provider delay. ThreadHelm
+therefore independently owns elapsed/turn/resource bounds, no-progress detection, live structured
+progress, cancellation, and distinct permission/classifier/timeout/budget/unknown outcomes. Main
+routes every worker result back to the bound replaceable supervisor; unknown completion is not replayed.
+
+**Rationale**: Munder's local roster hardcodes Claude `bypassPermissions` and its command reference
+describes that as “auto mode,” but current Claude Code exposes `auto` and `bypassPermissions` as
+separate modes with different trust assumptions. Keeping permission policy outside persona data allows
+ThreadHelm to use the safer current classifier without making custom agents privileged or permanently
+coupling stored profiles to one provider version.
+
+**Alternatives considered**:
+
+- Persisting bypass in every custom agent was rejected because rename/template/import operations would
+  silently carry machine authority into unrelated work.
+- Treating current auto mode as equivalent to bypass was rejected because it removes the classifier and
+  requires an isolation boundary that ordinary local workspaces do not provide.
+- Falling back from unavailable auto to bypass was rejected because capability loss must narrow or hold
+  authority, never widen it.
+- Relying on auto mode alone for usage control was rejected because permission classification does not
+  bound turns, elapsed time, provider cost, or no-progress behavior.
+
+**Sources**:
+
+- [Claude Code permission modes](https://code.claude.com/docs/en/permission-modes)
+- [provider-coordination.md](contracts/provider-coordination.md)
 - `.specify/memory/constitution.md`

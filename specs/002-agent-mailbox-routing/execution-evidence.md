@@ -37,7 +37,7 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | US2 Auditable conversations | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | VERIFIED 2026-08-29 | APPROVED FOR US2 |
 | US3 Lifecycle-aware delivery | Claude `claude-opus-5` / `high` | `claude-sonnet-5` / `xhigh` | OpenAI `gpt-5.6-sol` / `max` | VERIFIED 2026-08-29 | APPROVED FOR US3 |
 | US4 Bounded coordination | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human | VERIFIED 2026-08-29 | PENDING IMPLEMENTATION/REVIEW/HUMAN ACCEPTANCE |
-| US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | UNVERIFIED | PENDING |
+| US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | VERIFIED 2026-08-29 | IMPLEMENTATION ASSIGNED; REVIEW PENDING |
 | US6 Reviewed agent roster | Claude `claude-sonnet-5` / `high` | `claude-opus-5` / `high` | OpenAI `gpt-5.6-sol` / `high` | UNVERIFIED | PENDING |
 | US7 Agent wizard/templates | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | UNVERIFIED | PENDING |
 | US8 Autonomous supervisor | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human + Antigravity `gemini-3.1-pro-high` | UNVERIFIED | PENDING |
@@ -141,6 +141,7 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | 2026-08-29 | T060 OpenAI Sol final review | Independent read-only `gpt-5.6-sol` / `max` fault re-review of branch `codex/002-provider-coordination-us3` at base `e9d2d7c` | 0 | No P0–P3 findings remain. Approval is limited to US3: one oldest user-origin item per proved safe point; provider replies still require T066/P4 opt-in; built-in Claude 2.1.251 and Codex 0.150.1 remain manual-only. | PASS — APPROVED FOR US3 |
 | 2026-08-29 | T060 final current-tree verification | Lint; typecheck; full unit; full contract; desktop build; focused Windows delivery; full coordination E2E; provider acceptance; scoped formatting and whitespace audit | 0 | Lint/typecheck passed; unit 121/121, contract 150/150, desktop main/preload/renderer built, Windows delivery 13/13, coordination E2E 6/6, provider acceptance 6 passed with 1 packaged-only skip, scoped Prettier passed, and `git diff --check` passed. | PASS — US3 COMPLETE |
 | 2026-08-29 | T061 US4 model and reviewer gate | Codex CLI 0.150.1 exact tool-free read-only probes for `gpt-5.6-sol` / `max` and `gpt-5.6-terra` / `max`; Claude Code 2.1.251 exact tool-free `claude-opus-5` / `xhigh` probe; `agy models`; active human-owner instruction | 0 | Sol and Terra returned their exact availability markers; Claude resolved canonical `claude-opus-5` and returned its exact marker at USD 0.032029; Antigravity 1.1.22 lists optional `gemini-3.1-pro-high`; the human owner explicitly started the next sequence. Codex emitted unrelated configured-MCP authentication warnings but completed both probes without tool use. | PASS — IMPLEMENTATION ASSIGNED; FINAL REVIEWS/OWNER ACCEPTANCE REMAIN T070 |
+| 2026-08-29 | T071 US5 model and reviewer gate | `agy --version`; `agy models`; `claude --version`; `claude auth status`; exact tool-free `claude-opus-5` / `high` marker probe | 0 | Antigravity 1.1.22 exposes primary `gemini-3.1-pro-high` and fallback `gemini-3.7-flash-medium`; Claude Code 2.1.251 is first-party authenticated and returned the exact US5 reviewer marker. | PASS — IMPLEMENTATION ASSIGNED; REVIEW REMAINS T088 |
 | 2026-08-29 | T062 US4 domain policy red | `pnpm exec vitest run --project unit tests/unit/domain/coordination.test.ts` | 1 | Six intended failures at the absent `evaluateAutomaticContinuation` policy cover depth eight/ninth hold, third exact repeat within eight, third consecutive failure, allowed/held message kinds, paused/closed late messages, opt-in, conflict, and authority. Ten prior domain tests remained green. | EXPECTED RED |
 | 2026-08-29 | T063 US4 contract red | `pnpm exec vitest run --project contract tests/contract/desktop-ipc-coordination.test.ts` | 1 | Three intended failures for absent strict auto-continue disclosure/confirmation, escalation/disposition schemas, and named operations. Fourteen prior coordination contract tests remained green. | EXPECTED RED |
 | 2026-08-29 | T063 US4 E2E red | Focused Playwright `bounded coordination|authority escalation` | 1 | The first journey timed out at the absent enable-disclosure control; the second failed at the absent `coordination.previewAutoContinue` operation. Both failures occurred at the intended missing US4 surfaces. | EXPECTED RED |
@@ -228,6 +229,23 @@ gates and independent review rather than routine scaffolding.
 - Maximum-effort frontier use is restricted to US4 policy and adversarial review. Deterministic red/
   green tests, Windows isolation evidence, and explicit owner acceptance remain authoritative.
 
+### US5 model gate decision
+
+- Antigravity CLI 1.1.22 currently exposes the approved primary `gemini-3.1-pro-high` and the only
+  approved same-ecosystem fallback, `gemini-3.7-flash-medium`. Pro is assigned to the cross-layer
+  revision, FTS, conflict, deletion, bridge, and compact UI slice; no provider substitution is made.
+- Gemini Pro consumes the scarcer five-hour/weekly quota and is reserved for the contract-sensitive
+  implementation. Flash Medium is the quota-preserving fallback, but was not invoked because the
+  primary is available; it must be rechecked before use if the primary later becomes unavailable.
+- Claude Code 2.1.251 is authenticated through the first-party service. An exact tool-free one-turn
+  probe resolved canonical `claude-opus-5` at `high` and returned
+  `THREADHELM_US5_REVIEWER_AVAILABLE`. It remains independent and must not implement the slice it
+  reviews at T088.
+- Deterministic domain, persistence, contract, Windows, E2E, quota, and privacy tests own acceptance.
+  The reviewer must independently inspect scope derivation, immutable attribution, conflict
+  preservation, content-free lineage, FTS deletion, bounded excerpts/results, and the absence of
+  terminal, transcript, reasoning, credential, environment, or workspace-file ingestion.
+
 ## Story checkpoints
 
 | Story | Unit/domain | Persistence | Contract | Windows integration | E2E | Provider/installed proof | Independent review | Human gate | Overall |
@@ -235,7 +253,7 @@ gates and independent review rather than routine scaffolding.
 | US1 | PASS | PASS | PASS | PASS | PASS | N/A — FIXTURES | PASS — CLAUDE OPUS APPROVED | N/A | MVP PASS |
 | US2 | PASS | PASS | PASS | PASS | PASS | PASS — LOCAL/PACKAGED, NO LIVE PROVIDER CALL | PASS — CLAUDE SONNET APPROVED | N/A | US2 PASS |
 | US3 | PASS — SERVICE POLICY | PASS | PASS | PASS | PASS | PASS — EXACT CODEX/CLAUDE MANUAL-ONLY PROOFS | PASS — OPENAI SOL APPROVED | N/A | US3 PASS |
-| US4 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | NOT READY |
+| US4 | PASS | PASS | PASS | PASS | PASS | N/A — FIXTURES | PASS — CLAUDE OPUS APPROVED | PASS — PR #10 OWNER APPROVED | US4 PASS |
 | US5 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | N/A | NOT READY |
 | US6 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | CONFIRM IMPORT | NOT READY |
 | US7 | PENDING | PENDING | PENDING | PENDING | PENDING | N/A | PENDING | CONFIRM SAVE/EXPORT | NOT READY |
@@ -258,7 +276,7 @@ gates and independent review rather than routine scaffolding.
 | Packaged installed artifact | PASS — LOCAL X64, UNSIGNED | N/A | Provider smoke 3/3 and installed-app acceptance 5/5; bridge present in ASAR-unpacked signed-path location, but no signing certificate was configured. |
 | Codex live provider | PASS — MANUAL-ONLY | N/A | Authenticated exact Codex CLI 0.150.1 proof found no pending-draft/editor safety field; automatic presentation remains disabled. |
 | Claude live provider | PASS — MANUAL-ONLY | N/A | Authenticated exact Claude Code 2.1.251 Stop-hook proof found no pending-draft/editor safety field; automatic presentation remains disabled. |
-| Hosted CI | NOT RUN | NOT RUN | Local evidence does not imply hosted status. |
+| Hosted CI | PASS — PR #10 | PASS — X64, ARM64, CODEQL | PR #10 head `79247d3`: Windows x64 and ARM64 CI plus Actions, JavaScript/TypeScript, and Rust CodeQL completed successfully before merge. |
 | Owner release approval | PENDING | PENDING | Requires exact artifact/commit and all required gates. |
 
 ## Review findings and decisions
@@ -393,6 +411,16 @@ verification. Never record secrets, terminal transcripts, hidden prompts, or raw
   accepts the bounded same-participant disposition.
 - **Optional review**: Antigravity review was not consumed because it is optional and the independent
   Claude review already identified the remaining product-contract decision. No result is claimed.
+- **T070 merged acceptance**: the owner explicitly approved and merged PR #10 at merge commit
+  `d58379d` after every hosted Windows and CodeQL check passed. Fresh PR-head evidence at `79247d3`
+  was: full Vitest 347 passed/10 skipped, TypeScript/Prettier/ESLint clean, Rust format/Clippy clean,
+  Rust tests 25/25, desktop build pass, and Playwright 17/17. The E2E startup-readiness race found by
+  the first merge-gate run was reproduced, fixed by waiting for the renderer's initial versioned
+  state before fixture events, and passed five repeated focused runs before the full green suite.
+- **Redirect acceptance boundary**: owner approval covers the exact bounded disposition shipped in
+  PR #10. It does not claim that redirect already forks work to a different static persona. That
+  meaningful retarget/fork behavior remains deferred to the reviewed roster/supervisor sequence and
+  must preserve a new linked two-party conversation rather than silently changing participants.
 
 ## Rollback and recovery notes
 

@@ -198,7 +198,7 @@ completion, hold, pause, or escalation.
 - [X] T067 [US4] Add strict auto-continue preview/confirm and escalation continue/redirect/close operations in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
 - [X] T068 [US4] Build the keyboard-accessible held-message and escalation disposition surface in `apps/desktop/src/renderer/features/coordination/EscalationPanel.tsx` and integrate it in `apps/desktop/src/renderer/features/coordination/ConversationView.tsx`
 - [X] T069 [US4] Add sequential Windows loop, failure, conflict, authority, and closed-conversation isolation tests in `tests/integration/windows/coordination-recovery.test.ts`
-- [ ] T070 [US4] Run the US4 domain, contract, Windows, and E2E slices; capture final exits, Claude adversarial review, optional Antigravity review, and explicit human acceptance in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T070 [US4] Run the US4 domain, contract, Windows, and E2E slices; capture final exits, Claude adversarial review, optional Antigravity review, and explicit human acceptance in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 **Checkpoint**: US4 provides bounded coordination suitable as the deterministic safety layer for
 shared memory and autonomous missions.
@@ -216,7 +216,7 @@ lineage, FTS cleanup, performance, and absence of terminal/provider ingestion.
 
 ### Model gate for User Story 5
 
-- [ ] T071 [US5] Verify Antigravity `gemini-3.1-pro-high`, fallback `gemini-3.7-flash-medium`, and Claude `claude-opus-5` at `high` reviewer availability; record versions, quota tradeoff, fallback result, and deterministic retrieval/privacy verification responsibility in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T071 [US5] Verify Antigravity `gemini-3.1-pro-high`, fallback `gemini-3.7-flash-medium`, and Claude `claude-opus-5` at `high` reviewer availability; record versions, quota tradeoff, fallback result, and deterministic retrieval/privacy verification responsibility in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 ### Tests for User Story 5
 

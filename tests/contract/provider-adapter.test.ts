@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ThreadHelmError } from '@threadhelm/contracts';
+import { ProviderAttemptOutcome, ThreadHelmError } from '@threadhelm/contracts';
 import {
   buildCmdShimInvocation,
   builtInAdapters,
@@ -11,6 +11,7 @@ import {
   type ProbeContext,
   type ProbeExecResult,
   type ProviderAdapter,
+  createProviderOutcome,
 } from '@threadhelm/providers';
 
 type Script = (executable: string, args: readonly string[]) => Partial<ProbeExecResult> | Error;
@@ -394,5 +395,111 @@ describe('versions', () => {
     expect(isWithinRange('1.9.9', { min: '1.0.0', maxExclusive: '2.0.0' })).toBe(true);
     expect(isWithinRange('2.0.0', { min: '1.0.0', maxExclusive: '2.0.0' })).toBe(false);
     expect(isWithinRange('0.9.0', { min: '1.0.0', maxExclusive: '2.0.0' })).toBe(false);
+  });
+});
+
+describe('runtime permission and provider outcome contracts', () => {
+  it('maps a proved Claude auto resolution to the exact per-process permission mode', () => {
+    const descriptor = claudeCodeAdapter.buildLaunch({
+      sessionId: 'session-auto',
+      canonicalWorkspacePath: 'C:\\projects\\alpha',
+      resolvedExecutable: cases[1]!.native,
+      executableKind: 'native',
+      terminal: { columns: 100, rows: 30 },
+      version: '2.1.251',
+      runtimeSelection: { model: 'claude-sonnet-5', effort: 'medium' },
+      permissionResolution: {
+        policy: 'auto',
+        source: 'task_policy',
+        disposition: 'ready',
+        providerMapping: 'claude_auto',
+        reasonCode: null,
+        fallbackActions: [],
+        capabilityEvidence: {
+          providerId: 'claude-code',
+          providerVersion: '2.1.251',
+          model: 'claude-sonnet-5',
+          providerSurface: 'claude-code',
+          organizationPolicy: 'allowed',
+          supportedPolicies: ['manual', 'auto'],
+          observedAt: '2026-08-30T11:59:00.000Z',
+          expiresAt: '2026-08-30T12:04:00.000Z',
+        },
+        boundedAllowlist: [],
+      },
+    });
+    expect(descriptor.args).toContain('--permission-mode');
+    expect(descriptor.args).toContain('auto');
+    expect(descriptor.args).not.toContain('bypassPermissions');
+  });
+
+  it('maps an explicit bounded Claude allowlist without widening to bypass', () => {
+    const descriptor = claudeCodeAdapter.buildLaunch({
+      sessionId: 'session-allowlist',
+      canonicalWorkspacePath: 'C:\\projects\\alpha',
+      resolvedExecutable: cases[1]!.native,
+      executableKind: 'native',
+      terminal: { columns: 100, rows: 30 },
+      version: '2.1.251',
+      runtimeSelection: { model: 'claude-sonnet-5', effort: 'medium' },
+      permissionResolution: {
+        policy: 'bounded_allowlist',
+        source: 'one_run',
+        disposition: 'ready',
+        providerMapping: 'claude_bounded_allowlist',
+        reasonCode: null,
+        fallbackActions: [],
+        capabilityEvidence: {
+          providerId: 'claude-code',
+          providerVersion: '2.1.251',
+          model: 'claude-sonnet-5',
+          providerSurface: 'claude-code',
+          organizationPolicy: 'unknown',
+          supportedPolicies: ['manual', 'bounded_allowlist'],
+          observedAt: '2026-08-30T11:59:00.000Z',
+          expiresAt: '2026-08-30T12:04:00.000Z',
+        },
+        boundedAllowlist: ['Read', 'Glob', 'Grep'],
+      },
+    });
+    expect(descriptor.args).toEqual([
+      '--model',
+      'claude-sonnet-5',
+      '--effort',
+      'medium',
+      '--permission-mode',
+      'manual',
+      '--allowedTools',
+      'Read',
+      'Glob',
+      'Grep',
+    ]);
+    expect(descriptor.args).not.toContain('bypassPermissions');
+  });
+
+  it.each([
+    'completed',
+    'refused',
+    'permission_denied',
+    'classifier_failed',
+    'timed_out',
+    'cancelled',
+    'no_progress',
+    'budget_exhausted',
+    'unknown',
+  ] as const)('returns a typed %s provider outcome', (kind) => {
+    const outcome = ProviderAttemptOutcome.parse(
+      createProviderOutcome({
+        attemptId: '11111111-1111-4111-8111-111111111111',
+        sessionId: '22222222-2222-4222-8222-222222222222',
+        kind,
+        occurredAt: '2026-08-30T12:00:00.000Z',
+      }),
+    );
+    expect(outcome.kind).toBe(kind);
+    expect(['known_safe', 'user_action_required', 'prohibited']).toContain(
+      outcome.retryDisposition,
+    );
+    if (kind === 'unknown') expect(outcome.retryDisposition).toBe('prohibited');
   });
 });

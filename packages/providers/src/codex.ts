@@ -19,6 +19,25 @@ function launchArgs(ctx: LaunchContext): string[] {
   for (const override of ctx.bridgeConfig?.codexConfigOverrides ?? []) {
     args.push('--config', override);
   }
+  const permission = ctx.permissionResolution;
+  if (permission) {
+    if (permission.disposition !== 'ready') throw new Error('PERMISSION_POLICY_HELD');
+    switch (permission.providerMapping) {
+      case 'provider_default':
+        break;
+      case 'codex_manual':
+        args.push('--ask-for-approval', 'on-request');
+        break;
+      case 'codex_full_auto':
+        args.push('--full-auto');
+        break;
+      case 'codex_bypass':
+        args.push('--dangerously-bypass-approvals-and-sandbox');
+        break;
+      default:
+        throw new Error('PERMISSION_MAPPING_MISMATCH');
+    }
+  }
   return args;
 }
 
@@ -42,6 +61,8 @@ export const codexAdapter: ProviderAdapter = {
     memoryTools: 'unsupported',
     supervisorTools: 'unsupported',
     configurationFailureBehavior: 'manual_only',
+    supervisorConfigurationFailureBehavior: 'held',
+    permissionPolicies: ['manual', 'auto', 'break_glass_bypass'],
   },
   executableCandidates: [
     { relativeTo: 'LOCALAPPDATA', subpath: 'Programs\\codex\\codex.exe', kind: 'native' },
@@ -71,6 +92,10 @@ export const codexAdapter: ProviderAdapter = {
     // but not the interactive TUI's pending draft or editor state. Returning
     // null is the sanitized manual-only result; completion/idle notifications
     // cannot authorize terminal input into an independently owned TUI.
+    return null;
+  },
+  permissionCapabilityEvidence() {
+    // Exact account/runtime proof is intentionally not inferred from login.
     return null;
   },
 };

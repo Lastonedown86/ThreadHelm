@@ -5,7 +5,12 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { LaunchEffort, LaunchPreviewView, SessionView } from '@threadhelm/contracts';
+import type {
+  LaunchEffort,
+  LaunchPreviewView,
+  RuntimePermissionPolicy,
+  SessionView,
+} from '@threadhelm/contracts';
 import { api, call } from '../../api.js';
 import { Modal } from '../control/Modal.js';
 import type { LaunchRequest } from '../../store.js';
@@ -51,6 +56,8 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
   const [model, setModel] = useState('');
   const [customModel, setCustomModel] = useState('');
   const [effort, setEffort] = useState<LaunchEffort | ''>('');
+  const [permission, setPermission] = useState<RuntimePermissionPolicy | ''>('');
+  const [allowlist, setAllowlist] = useState('');
 
   useEffect(() => {
     setPreview(null);
@@ -58,14 +65,21 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
     setModel('');
     setCustomModel('');
     setEffort('');
+    setPermission('');
+    setAllowlist('');
   }, [request.workspaceId, request.providerId]);
 
   const selectedModel = model === CUSTOM_MODEL ? customModel : model;
   const modelReady = model !== CUSTOM_MODEL || customModel.trim().length > 0;
+  const boundedAllowlist = allowlist
+    .split(/[\n,]/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const permissionReady = permission !== 'bounded_allowlist' || boundedAllowlist.length > 0;
 
   useEffect(() => {
     let cancelled = false;
-    if (!modelReady) {
+    if (!modelReady || !permissionReady) {
       setPreview(null);
       setError(null);
       setChecking(false);
@@ -84,6 +98,10 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
             runtimeSelection: {
               model: selectedModel.trim() || null,
               effort: effort || null,
+            },
+            permissionSelection: {
+              policy: permission || null,
+              boundedAllowlist: permission === 'bounded_allowlist' ? boundedAllowlist : [],
             },
           }),
         )
@@ -115,6 +133,9 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
     effort,
     model,
     modelReady,
+    permission,
+    allowlist,
+    permissionReady,
   ]);
 
   const launch = async () => {
@@ -186,6 +207,38 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
           CLI default preserves the provider's local settings. Routine test commands need no model;
           for test authoring or failure summaries, prefer a lower-cost model at Low or Medium.
         </p>
+        <label className="field">
+          Runtime permission
+          <select
+            value={permission}
+            onChange={(event) => {
+              setPermission(event.target.value as RuntimePermissionPolicy | '');
+              if (event.target.value !== 'bounded_allowlist') setAllowlist('');
+            }}
+          >
+            <option value="">Provider default (Manual)</option>
+            <option value="manual">Manual</option>
+            <option value="auto">Automatic provider classifier</option>
+            <option value="bounded_allowlist">Bounded allowlist</option>
+          </select>
+        </label>
+        {permission === 'bounded_allowlist' ? (
+          <label className="field">
+            Allowed provider tools
+            <textarea
+              value={allowlist}
+              rows={3}
+              placeholder="Read, Glob, Grep"
+              onChange={(event) => setAllowlist(event.target.value)}
+            />
+          </label>
+        ) : null}
+        <p className="hint">
+          Permission is resolved for this launch by ThreadHelm, never by the agent persona.
+          Automatic mode starts only with exact provider capability evidence. Break-glass bypass is
+          unavailable in this ordinary local launch because disposable isolation has not been
+          proved.
+        </p>
       </fieldset>
       {checking ? (
         <p className="hint" role="status">
@@ -217,6 +270,18 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
                     : `${preview.runtimeSelection.effort[0]!.toUpperCase()}${preview.runtimeSelection.effort.slice(1)}`
                 : 'CLI default'}
             </dd>
+            <dt>Runtime permission</dt>
+            <dd>{preview.permissionResolution.policy.replaceAll('_', ' ')}</dd>
+            <dt>Permission source</dt>
+            <dd>{preview.permissionResolution.source.replaceAll('_', ' ')}</dd>
+            <dt>Provider mapping</dt>
+            <dd>{preview.permissionResolution.providerMapping?.replaceAll('_', ' ') ?? 'held'}</dd>
+            <dt>Execution bounds</dt>
+            <dd>
+              {Math.round(preview.executionBounds.maxElapsedMs / 60_000)} min ·{' '}
+              {preview.executionBounds.maxTurns} turns ·{' '}
+              {Math.round(preview.executionBounds.maxNoProgressMs / 60_000)} min without progress
+            </dd>
             <dt>Effective folder</dt>
             <dd className="mono">{preview.workspace.displayPath}</dd>
             {preview.workspace.displayPath !== preview.workspace.selectedPath ? (
@@ -243,6 +308,15 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
               stays running and coordination falls back to manual presentation.
             </p>
           ) : null}
+          {preview.permissionResolution.disposition === 'held' ? (
+            <p className="notice warning" role="status">
+              This permission choice is held. Choose Manual
+              {preview.permissionResolution.fallbackActions.includes('bounded_allowlist')
+                ? ' or provide a bounded allowlist'
+                : ''}
+              . ThreadHelm will not substitute bypass permission.
+            </p>
+          ) : null}
           <p id="launch-boundary" className="notice warning">
             {preview.boundaryWarning}
           </p>
@@ -255,7 +329,7 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
             I understand ThreadHelm cannot confine this agent to the folder.
           </label>
         </>
-      ) : error || !modelReady ? null : (
+      ) : error || !modelReady || !permissionReady ? null : (
         <p>Checking the folder and agent…</p>
       )}
       <LaunchError error={error} />
@@ -267,7 +341,13 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
           type="button"
           className="primary"
           onClick={() => void launch()}
-          disabled={!preview || !confirmed || busy || checking}
+          disabled={
+            !preview ||
+            preview.permissionResolution.disposition !== 'ready' ||
+            !confirmed ||
+            busy ||
+            checking
+          }
         >
           Launch session
         </button>

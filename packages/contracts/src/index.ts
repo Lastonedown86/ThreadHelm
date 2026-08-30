@@ -395,6 +395,166 @@ export const LaunchRuntimeSelection = strictObject({
 });
 export type LaunchRuntimeSelection = z.infer<typeof LaunchRuntimeSelection>;
 
+/** Main-owned launch policy. Persona/profile/template text can never populate this value. */
+export const RuntimePermissionPolicy = z.enum([
+  'manual',
+  'auto',
+  'bounded_allowlist',
+  'break_glass_bypass',
+]);
+export type RuntimePermissionPolicy = z.infer<typeof RuntimePermissionPolicy>;
+
+export const RuntimePermissionSource = z.enum([
+  'one_run',
+  'task_policy',
+  'project_policy',
+  'provider_default',
+]);
+export type RuntimePermissionSource = z.infer<typeof RuntimePermissionSource>;
+
+const BoundedPermissionTool = z
+  .string()
+  .min(1)
+  .max(160)
+  .regex(/^[A-Za-z0-9_*.:/ -]+$/, 'invalid bounded provider tool pattern');
+
+/** Direct renderer choice. `null` means resolve from main-owned policy/defaults. */
+export const LaunchPermissionSelection = strictObject({
+  policy: RuntimePermissionPolicy.nullable(),
+  boundedAllowlist: z.array(BoundedPermissionTool).max(32),
+}).superRefine((value, ctx) => {
+  if (value.policy === 'bounded_allowlist' && value.boundedAllowlist.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['boundedAllowlist'], message: 'allowlist is required' });
+  }
+  if (value.policy !== 'bounded_allowlist' && value.boundedAllowlist.length !== 0) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['boundedAllowlist'],
+      message: 'allowlist is valid only for bounded_allowlist',
+    });
+  }
+});
+export type LaunchPermissionSelection = z.infer<typeof LaunchPermissionSelection>;
+
+/** Exact, time-bounded proof captured outside persona/profile state. */
+export const PermissionCapabilityEvidence = strictObject({
+  providerId: ProviderId,
+  providerVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
+  model: z.string().min(1).max(128).nullable(),
+  providerSurface: z.string().min(1).max(80),
+  organizationPolicy: z.enum(['allowed', 'denied', 'unknown']),
+  supportedPolicies: z.array(RuntimePermissionPolicy).min(1).max(4),
+  observedAt: Timestamp,
+  expiresAt: Timestamp,
+});
+export type PermissionCapabilityEvidence = z.infer<typeof PermissionCapabilityEvidence>;
+
+/** Break-glass proof is volatile and valid for exactly one direct launch. */
+export const BreakGlassIsolationProof = strictObject({
+  isolationKind: z.enum(['container', 'vm', 'provider_sandbox']),
+  freshRuntime: z.boolean(),
+  childProcessContainment: z.boolean(),
+  disposableWorkspaceOnlyWrites: z.boolean(),
+  unrelatedCredentialsExcluded: z.boolean(),
+  unrelatedEnvironmentExcluded: z.boolean(),
+  networkDestinations: z.array(z.string().min(1).max(253)).min(1).max(16),
+  processCleanupVerified: z.boolean(),
+  workspaceCleanupVerified: z.boolean(),
+  configCleanupVerified: z.boolean(),
+});
+export type BreakGlassIsolationProof = z.infer<typeof BreakGlassIsolationProof>;
+
+export const ProviderPermissionMapping = z.enum([
+  'provider_default',
+  'claude_manual',
+  'claude_auto',
+  'claude_bounded_allowlist',
+  'claude_bypass',
+  'codex_manual',
+  'codex_full_auto',
+  'codex_bypass',
+]);
+export type ProviderPermissionMapping = z.infer<typeof ProviderPermissionMapping>;
+
+export const PermissionFallbackAction = z.enum(['manual', 'bounded_allowlist']);
+export type PermissionFallbackAction = z.infer<typeof PermissionFallbackAction>;
+
+export const LaunchPermissionResolution = strictObject({
+  policy: RuntimePermissionPolicy,
+  source: RuntimePermissionSource,
+  disposition: z.enum(['ready', 'held']),
+  providerMapping: ProviderPermissionMapping.nullable(),
+  reasonCode: ReasonCode,
+  fallbackActions: z.array(PermissionFallbackAction).max(2),
+  capabilityEvidence: PermissionCapabilityEvidence.nullable(),
+  boundedAllowlist: z.array(BoundedPermissionTool).max(32),
+});
+export type LaunchPermissionResolution = z.infer<typeof LaunchPermissionResolution>;
+
+/** Independent main-owned limits; permission mode never replaces these controls. */
+export const ProviderExecutionBounds = strictObject({
+  maxElapsedMs: z
+    .number()
+    .int()
+    .min(1_000)
+    .max(24 * 60 * 60_000),
+  maxTurns: z.number().int().min(1).max(1_024),
+  maxNoProgressMs: z
+    .number()
+    .int()
+    .min(1_000)
+    .max(60 * 60_000),
+  maxOutputBytes: z
+    .number()
+    .int()
+    .min(1_024)
+    .max(64 * 1024 * 1024),
+  maxConcurrentProcesses: z.number().int().min(1).max(16),
+});
+export type ProviderExecutionBounds = z.infer<typeof ProviderExecutionBounds>;
+
+export const ProviderProgressEvent = strictObject({
+  attemptId: Uuid,
+  sessionId: Uuid,
+  kind: z.enum(['started', 'turn_completed', 'tool_activity', 'heartbeat']),
+  turnCount: z.number().int().min(0),
+  elapsedMs: z.number().int().min(0),
+  outputBytes: z.number().int().min(0),
+  activeProcessCount: z.number().int().min(0),
+  observedAt: Timestamp,
+});
+export type ProviderProgressEvent = z.infer<typeof ProviderProgressEvent>;
+
+export const ProviderCancelRequest = strictObject({
+  attemptId: Uuid,
+  sessionId: Uuid,
+  reason: z.enum(['user', 'elapsed_bound', 'turn_bound', 'no_progress', 'resource_bound']),
+});
+export type ProviderCancelRequest = z.infer<typeof ProviderCancelRequest>;
+
+export const ProviderAttemptOutcomeKind = z.enum([
+  'completed',
+  'refused',
+  'permission_denied',
+  'classifier_failed',
+  'timed_out',
+  'cancelled',
+  'no_progress',
+  'budget_exhausted',
+  'unknown',
+]);
+export type ProviderAttemptOutcomeKind = z.infer<typeof ProviderAttemptOutcomeKind>;
+
+export const ProviderAttemptOutcome = strictObject({
+  attemptId: Uuid,
+  sessionId: Uuid,
+  kind: ProviderAttemptOutcomeKind,
+  retryDisposition: z.enum(['known_safe', 'user_action_required', 'prohibited']),
+  reasonCode: ReasonCode,
+  occurredAt: Timestamp,
+});
+export type ProviderAttemptOutcome = z.infer<typeof ProviderAttemptOutcome>;
+
 export const CoordinationCursorToken = z.string().min(1).max(512);
 export type CoordinationCursorToken = z.infer<typeof CoordinationCursorToken>;
 
@@ -1018,6 +1178,8 @@ export const LaunchPreviewView = z.object({
   terminal: TerminalSize,
   /** Exact per-process choices bound into this one-time preview. */
   runtimeSelection: LaunchRuntimeSelection,
+  permissionResolution: LaunchPermissionResolution,
+  executionBounds: ProviderExecutionBounds,
   coordinationBridge: strictObject({
     enabled: z.boolean(),
     tools: z.tuple([
@@ -1300,6 +1462,17 @@ export const operations = {
       providerId: ProviderId,
       terminal: TerminalSize,
       runtimeSelection: LaunchRuntimeSelection.default({ model: null, effort: null }),
+      permissionSelection: LaunchPermissionSelection.default({
+        policy: null,
+        boundedAllowlist: [],
+      }),
+      executionBounds: ProviderExecutionBounds.default({
+        maxElapsedMs: 30 * 60_000,
+        maxTurns: 64,
+        maxNoProgressMs: 5 * 60_000,
+        maxOutputBytes: 8 * 1024 * 1024,
+        maxConcurrentProcesses: 1,
+      }),
     }),
     response: LaunchPreviewView,
   },

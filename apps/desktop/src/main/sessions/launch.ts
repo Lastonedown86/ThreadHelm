@@ -230,6 +230,8 @@ export async function launchSession(
         terminal: preview.terminal,
         version: readiness.version,
         runtimeSelection: preview.runtimeSelection,
+        permissionResolution: preview.permissionResolution,
+        executionBounds: preview.executionBounds,
         ...(bridgeConfig ? { bridgeConfig } : {}),
       }),
     );

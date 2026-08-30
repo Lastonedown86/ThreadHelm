@@ -17,6 +17,30 @@ function launchArgs(ctx: LaunchContext): string[] {
   if (ctx.bridgeConfig?.providerConfigPath) {
     args.push('--mcp-config', ctx.bridgeConfig.providerConfigPath);
   }
+  const permission = ctx.permissionResolution;
+  if (permission) {
+    if (permission.disposition !== 'ready') {
+      throw new Error('PERMISSION_POLICY_HELD');
+    }
+    switch (permission.providerMapping) {
+      case 'provider_default':
+        break;
+      case 'claude_manual':
+        args.push('--permission-mode', 'manual');
+        break;
+      case 'claude_auto':
+        args.push('--permission-mode', 'auto');
+        break;
+      case 'claude_bounded_allowlist':
+        args.push('--permission-mode', 'manual', '--allowedTools', ...permission.boundedAllowlist);
+        break;
+      case 'claude_bypass':
+        args.push('--permission-mode', 'bypassPermissions');
+        break;
+      default:
+        throw new Error('PERMISSION_MAPPING_MISMATCH');
+    }
+  }
   return args;
 }
 
@@ -40,6 +64,8 @@ export const claudeCodeAdapter: ProviderAdapter = {
     memoryTools: 'unsupported',
     supervisorTools: 'unsupported',
     configurationFailureBehavior: 'manual_only',
+    supervisorConfigurationFailureBehavior: 'held',
+    permissionPolicies: ['manual', 'auto', 'bounded_allowlist', 'break_glass_bypass'],
   },
   executableCandidates: [
     { relativeTo: 'LOCALAPPDATA', subpath: 'Programs\\claude\\claude.exe', kind: 'native' },
@@ -70,5 +96,21 @@ export const claudeCodeAdapter: ProviderAdapter = {
     // is the sanitized manual-only result; raw transcript/message fields never
     // cross the adapter boundary and cannot authorize terminal input.
     return null;
+  },
+  permissionCapabilityEvidence({ providerVersion, model, observedAt }) {
+    // The installed 2.1.251 surface proves bounded --allowedTools support, but
+    // organization/account classifier availability is not inferable from
+    // authentication or --help. T166 supplies that separate auto proof.
+    if (providerVersion !== '2.1.251') return null;
+    return {
+      providerId: 'claude-code',
+      providerVersion,
+      model,
+      providerSurface: 'claude-code',
+      organizationPolicy: 'unknown',
+      supportedPolicies: ['manual', 'bounded_allowlist'],
+      observedAt,
+      expiresAt: new Date(Date.parse(observedAt) + 5 * 60_000).toISOString(),
+    };
   },
 };

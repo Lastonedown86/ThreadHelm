@@ -44,13 +44,22 @@ export function createHandlers(ctx: Context): Handlers {
     'workspaces.list': () => listWorkspaces(ctx),
     'workspaces.revoke': ({ workspaceId }) => revokeWorkspace(ctx, workspaceId),
     'providers.listReadiness': () => listReadiness(ctx),
-    'sessions.previewLaunch': ({ workspaceId, providerId, terminal, runtimeSelection }) =>
+    'sessions.previewLaunch': ({
+      workspaceId,
+      providerId,
+      terminal,
+      runtimeSelection,
+      permissionSelection,
+      executionBounds,
+    }) =>
       previewLaunch(
         ctx,
         workspaceId,
         providerId,
         terminal,
         runtimeSelection ?? { model: null, effort: null },
+        permissionSelection ?? { policy: null, boundedAllowlist: [] },
+        executionBounds,
       ),
     'sessions.launch': ({ previewToken, boundaryConfirmation }) =>
       launchSession(ctx, previewToken, boundaryConfirmation),

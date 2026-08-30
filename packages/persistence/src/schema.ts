@@ -20,6 +20,9 @@ import {
   HandoffKind,
   HandoffOrigin,
   LifecycleState,
+  MemoryConfidence,
+  MemoryKind,
+  MemoryStatus,
   ProviderId,
   RecoveryClassification,
   RecoveryResolution,
@@ -27,7 +30,7 @@ import {
   WorkOutcome,
 } from '@threadhelm/contracts';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 const inList = (values: readonly string[]): string =>
   `IN (${values.map((v) => `'${v}'`).join(', ')})`;
@@ -244,7 +247,133 @@ CREATE UNIQUE INDEX coordination_escalations_one_open
   ON coordination_escalations (conversation_id) WHERE state = 'open';
 `;
 
+const V3 = `
+CREATE TABLE shared_memory_entries (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT REFERENCES approved_workspaces (id) ON DELETE RESTRICT,
+  mission_id TEXT,
+  kind TEXT NOT NULL CHECK (kind ${inList(MemoryKind.options)}),
+  status TEXT NOT NULL CHECK (status ${inList(MemoryStatus.options)}),
+  current_revision_id TEXT,
+  created_by_session_id TEXT REFERENCES agent_sessions (id) ON DELETE RESTRICT,
+  created_by_user INTEGER NOT NULL CHECK (created_by_user IN (0, 1)),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  expires_at TEXT,
+  expired_at TEXT,
+  content_deleted_at TEXT,
+  CHECK ((workspace_id IS NOT NULL AND mission_id IS NULL)
+      OR (workspace_id IS NULL AND mission_id IS NOT NULL)),
+  CHECK ((created_by_session_id IS NOT NULL AND created_by_user = 0)
+      OR (created_by_session_id IS NULL AND created_by_user = 1)),
+  CHECK ((status = 'deleted' AND current_revision_id IS NULL AND content_deleted_at IS NOT NULL)
+      OR (status <> 'deleted' AND current_revision_id IS NOT NULL))
+);
+CREATE INDEX shared_memory_entries_scope_status
+  ON shared_memory_entries (workspace_id, mission_id, status, updated_at, id);
+
+CREATE TABLE shared_memory_revisions (
+  id TEXT PRIMARY KEY,
+  entry_id TEXT NOT NULL REFERENCES shared_memory_entries (id) ON DELETE RESTRICT,
+  revision INTEGER NOT NULL CHECK (revision >= 1),
+  title TEXT CHECK (title IS NULL OR length(title) <= 160),
+  body TEXT,
+  source_refs TEXT NOT NULL,
+  author_session_id TEXT REFERENCES agent_sessions (id) ON DELETE RESTRICT,
+  author_user INTEGER NOT NULL CHECK (author_user IN (0, 1)),
+  confidence TEXT NOT NULL CHECK (confidence ${inList(MemoryConfidence.options)}),
+  status TEXT NOT NULL CHECK (status ${inList(MemoryStatus.options)}),
+  supersedes_revision_id TEXT REFERENCES shared_memory_revisions (id) ON DELETE RESTRICT,
+  content_bytes INTEGER,
+  created_at TEXT NOT NULL,
+  UNIQUE (entry_id, revision),
+  CHECK ((author_session_id IS NOT NULL AND author_user = 0)
+      OR (author_session_id IS NULL AND author_user = 1)),
+  CHECK ((status = 'deleted' AND title IS NULL AND body IS NULL AND source_refs = '[]'
+          AND content_bytes IS NULL)
+      OR (status <> 'deleted' AND body IS NOT NULL AND content_bytes > 0))
+);
+CREATE INDEX shared_memory_revisions_entry_revision
+  ON shared_memory_revisions (entry_id, revision DESC);
+CREATE INDEX shared_memory_revisions_status_created
+  ON shared_memory_revisions (status, created_at DESC, id DESC);
+
+CREATE TABLE memory_conflicts (
+  id TEXT PRIMARY KEY,
+  left_revision_id TEXT NOT NULL REFERENCES shared_memory_revisions (id) ON DELETE RESTRICT,
+  right_revision_id TEXT NOT NULL REFERENCES shared_memory_revisions (id) ON DELETE RESTRICT,
+  state TEXT NOT NULL CHECK (state IN ('open', 'resolved')),
+  reason_code TEXT NOT NULL,
+  resolved_by_revision_id TEXT REFERENCES shared_memory_revisions (id) ON DELETE RESTRICT,
+  created_at TEXT NOT NULL,
+  resolved_at TEXT,
+  CHECK (left_revision_id <> right_revision_id),
+  CHECK ((state = 'open' AND resolved_by_revision_id IS NULL AND resolved_at IS NULL)
+      OR (state = 'resolved' AND resolved_by_revision_id IS NOT NULL AND resolved_at IS NOT NULL))
+);
+CREATE UNIQUE INDEX memory_conflicts_one_open_pair
+  ON memory_conflicts (left_revision_id, right_revision_id) WHERE state = 'open';
+CREATE INDEX memory_conflicts_state_created ON memory_conflicts (state, created_at, id);
+
+CREATE TABLE shared_memory_scope_quotas (
+  scope_kind TEXT NOT NULL CHECK (scope_kind IN ('workspace', 'mission')),
+  scope_id TEXT NOT NULL,
+  active_revision_count INTEGER NOT NULL DEFAULT 0 CHECK (active_revision_count >= 0),
+  retained_content_bytes INTEGER NOT NULL DEFAULT 0 CHECK (retained_content_bytes >= 0),
+  PRIMARY KEY (scope_kind, scope_id)
+);
+
+CREATE VIRTUAL TABLE shared_memory_fts USING fts5(
+  revision_id UNINDEXED,
+  entry_id UNINDEXED,
+  title,
+  body,
+  tokenize = 'unicode61'
+);
+
+CREATE TRIGGER shared_memory_revisions_immutable
+BEFORE UPDATE ON shared_memory_revisions
+WHEN NEW.id <> OLD.id
+  OR NEW.entry_id <> OLD.entry_id
+  OR NEW.revision <> OLD.revision
+  OR NEW.author_session_id IS NOT OLD.author_session_id
+  OR NEW.author_user <> OLD.author_user
+  OR NEW.confidence <> OLD.confidence
+  OR NEW.supersedes_revision_id IS NOT OLD.supersedes_revision_id
+  OR NEW.created_at <> OLD.created_at
+  OR (NEW.status <> 'deleted' AND (
+       NEW.title IS NOT OLD.title OR NEW.body IS NOT OLD.body
+       OR NEW.source_refs <> OLD.source_refs OR NEW.content_bytes IS NOT OLD.content_bytes))
+BEGIN
+  SELECT RAISE(ABORT, 'shared memory revisions are immutable');
+END;
+
+CREATE TRIGGER shared_memory_revisions_fts_insert
+AFTER INSERT ON shared_memory_revisions
+WHEN NEW.status IN ('active', 'contested') AND NEW.body IS NOT NULL
+BEGIN
+  INSERT INTO shared_memory_fts (revision_id, entry_id, title, body)
+  VALUES (NEW.id, NEW.entry_id, COALESCE(NEW.title, ''), NEW.body);
+END;
+
+CREATE TRIGGER shared_memory_revisions_fts_update
+AFTER UPDATE ON shared_memory_revisions
+BEGIN
+  DELETE FROM shared_memory_fts WHERE revision_id = OLD.id;
+  INSERT INTO shared_memory_fts (revision_id, entry_id, title, body)
+  SELECT NEW.id, NEW.entry_id, COALESCE(NEW.title, ''), NEW.body
+  WHERE NEW.status IN ('active', 'contested') AND NEW.body IS NOT NULL;
+END;
+
+CREATE TRIGGER shared_memory_revisions_fts_delete
+AFTER DELETE ON shared_memory_revisions
+BEGIN
+  DELETE FROM shared_memory_fts WHERE revision_id = OLD.id;
+END;
+`;
+
 export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 1, sql: V1 },
   { version: 2, sql: V2 },
+  { version: 3, sql: V3 },
 ];

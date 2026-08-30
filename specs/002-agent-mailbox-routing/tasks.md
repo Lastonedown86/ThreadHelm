@@ -220,17 +220,17 @@ lineage, FTS cleanup, performance, and absence of terminal/provider ingestion.
 
 ### Tests for User Story 5
 
-- [ ] T072 [P] [US5] Write failing memory kind/status, immutable revision, conflict, scope, source, confidence-nonauthority, and deletion transition tests in `tests/unit/domain/shared-memory.test.ts`
-- [ ] T073 [P] [US5] Write failing migration-v3 memory tables, FTS synchronization, quotas, cursor stability, conflict lineage, expiry, rollback, and content deletion tests in `tests/unit/persistence/shared-memory.test.ts`
-- [ ] T074 [P] [US5] Write failing desktop/bridge scope, strict schema, bounded excerpt, cross-scope denial, publish, supersede, retract, conflict, and deletion tests in `tests/contract/shared-memory.test.ts`
-- [ ] T075 [P] [US5] Write failing 10,000-revision search, restart, deletion, transcript exclusion, and unrelated-scope isolation cases in `tests/integration/windows/shared-memory.test.ts`
-- [ ] T076 [P] [US5] Write failing keyboard search/detail/publish/conflict/deletion and no-graph/no-animation journeys in `tests/e2e/hive-memory.spec.ts`
+- [X] T072 [P] [US5] Write failing memory kind/status, immutable revision, conflict, scope, source, confidence-nonauthority, and deletion transition tests in `tests/unit/domain/shared-memory.test.ts`
+- [X] T073 [P] [US5] Write failing migration-v3 memory tables, FTS synchronization, quotas, cursor stability, conflict lineage, expiry, rollback, and content deletion tests in `tests/unit/persistence/shared-memory.test.ts`
+- [X] T074 [P] [US5] Write failing desktop/bridge scope, strict schema, bounded excerpt, cross-scope denial, publish, supersede, retract, conflict, and deletion tests in `tests/contract/shared-memory.test.ts`
+- [X] T075 [P] [US5] Write failing 10,000-revision search, restart, deletion, transcript exclusion, and unrelated-scope isolation cases in `tests/integration/windows/shared-memory.test.ts`
+- [X] T076 [P] [US5] Write failing keyboard search/detail/publish/conflict/deletion and no-graph/no-animation journeys in `tests/e2e/hive-memory.spec.ts`
 
 ### Implementation for User Story 5
 
-- [ ] T077 [US5] Implement memory entry/revision/conflict state policy, source validation, and explicit lifecycle transitions in `packages/domain/src/shared-memory.ts` and export it from `packages/domain/src/index.ts`
-- [ ] T078 [US5] Add migration v3 memory entry/revision/conflict tables, FTS5 virtual table/triggers, scope indexes, quotas, and deletion invariants in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
-- [ ] T079 [US5] Implement transactional scoped publish/search/get/supersede/contest/resolve/retract/expire/delete queries and stable pagination in `packages/persistence/src/repositories/shared-memory.ts` and export them from `packages/persistence/src/repositories/index.ts`
+- [X] T077 [US5] Implement memory entry/revision/conflict state policy, source validation, and explicit lifecycle transitions in `packages/domain/src/shared-memory.ts` and export it from `packages/domain/src/index.ts`
+- [X] T078 [US5] Add migration v3 memory entry/revision/conflict tables, FTS5 virtual table/triggers, scope indexes, quotas, and deletion invariants in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
+- [X] T079 [US5] Implement transactional scoped publish/search/get/supersede/contest/resolve/retract/expire/delete queries and stable pagination in `packages/persistence/src/repositories/shared-memory.ts` and export them from `packages/persistence/src/repositories/index.ts`
 - [ ] T080 [US5] Implement authenticated memory scope derivation, deliberate publication, conflict handling, deletion disclosures, and content-free events in `apps/desktop/src/main/coordination/memory.ts`
 - [ ] T081 [US5] Add versioned `memory_search`, `memory_get`, and `memory_propose_revision` bridge tools with worker scope enforcement in `apps/desktop/src/main/coordination/bridge.ts` and `native/windows-supervisor/src/bin/threadhelm-coordination-bridge.rs`
 - [ ] T082 [US5] Add strict memory desktop contracts, named IPC handlers, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`

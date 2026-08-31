@@ -9,6 +9,7 @@ import {
 import { api, call, errorCode } from '../../api.js';
 import { AgentAuthoringError } from './AgentAuthoringError.js';
 import { ModalDialog } from './ModalDialog.js';
+import { templateLabel } from './template-label.js';
 
 type Draft = OperationResponse<'agentWizard.getDraft'>;
 type Template = OperationResponse<'agentTemplates.list'>['templates'][number];
@@ -49,10 +50,6 @@ const MODELS = {
   codex: ['gpt-5.6-terra', 'gpt-5.6-sol', 'gpt-5.6-luna'],
   claude: ['claude-sonnet-5', 'claude-opus-5'],
 };
-
-export function templateLabel(template: Template): string {
-  return `${template.name.charAt(0).toUpperCase()}${template.name.slice(1)} (${template.origin === 'bundled' ? 'bundled' : 'local'})`;
-}
 
 export function AgentProfileWizard({
   draftId,

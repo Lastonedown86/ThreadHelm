@@ -13,14 +13,22 @@ that ships with each release; the MVP run is recorded in
 Releases publish per-user Squirrel installers (`ThreadHelm-Setup-x64.exe`, and `-arm64` when
 ARM64 hardware has been validated) together with a `.sha256` file for each artifact.
 
+ThreadHelm is distributed **unsigned**. The installer does not establish a trusted publisher, and
+Windows may display an unknown-publisher or reputation warning. Download only from the project's
+release page and compare the checksum with that release's published value. A matching checksum
+confirms the downloaded bytes match the published artifact; it does not replace publisher signing.
+
 Verify before running:
 
 ```powershell
 Get-FileHash .\ThreadHelm-Setup-x64.exe -Algorithm SHA256   # compare with the published .sha256
-Get-AuthenticodeSignature .\ThreadHelm-Setup-x64.exe        # Status should be Valid
+Get-AuthenticodeSignature .\ThreadHelm-Setup-x64.exe        # NotSigned is expected for unsigned releases
 ```
 
-ThreadHelm has no automatic updater. The About area links to the signed releases page; download a
+Reject an invalid signature such as `HashMismatch` or `NotTrusted`; it is not the same as an unsigned
+file. A future signed artifact may report `Valid`, but signing is not required by this release policy.
+
+ThreadHelm has no automatic updater. The About area links to the releases page; download a
 newer version deliberately and verify it the same way.
 
 ## Prerequisites for launching agents

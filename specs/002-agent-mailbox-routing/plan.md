@@ -547,3 +547,14 @@ authoring/failure analysis recommends the lowest-cost capable approved model at 
 High-cost/high-effort requires explicit selection or recorded escalation. Planning providers are
 ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers are Codex CLI and Claude Code. Effort
 and permission policy stay outside the Munder hire schema.
+
+## Distribution decision — 2026-08-30
+
+The owner confirmed that ThreadHelm will be an unsigned app. Trusted Authenticode signing is
+therefore not a release prerequisite. Optional paired signing inputs remain supported, but the
+normal release and acceptance path requires no certificate or unsigned-test override. Accept
+only `NotSigned` or `Valid`; reject invalid or unknown signature states. Record publisher-trust
+status honestly and disclose possible Windows unknown-publisher/reputation warnings. Checksums,
+production fuses, ASAR integrity, architecture checks, installed cleanup, and private-persona
+exclusion remain required. This decision does not waive provider, performance, or owner-acceptance
+gates.

@@ -421,11 +421,13 @@ work, or installed mission integration. The expanded `provider-coordination-smok
 deterministic main/SQLite/bridge coverage; `THREADHELM_PACKAGED_APP` adds packaged bridge lookup only.
 Keep those evidence categories separate when recording T148/T149/T157.
 
-Artifact acceptance requires valid Authenticode signatures on the app and every unpacked
-native executable, DLL and addon by default. For an explicitly local, unsigned test build only,
-set `$env:THREADHELM_ALLOW_UNSIGNED_ARTIFACTS = '1'` before acceptance and remove it afterwards.
-The report records each unsigned file and `signatureReleaseReady: false`; that override does
-not satisfy the production signing gate. Invalid signatures fail even with the local override.
+ThreadHelm will be distributed unsigned, per the owner's 2026-08-30 decision. Artifact acceptance
+allows `NotSigned` or `Valid` on the app and every unpacked native executable, DLL and addon;
+invalid or unrecognized signature states still fail. No unsigned-test override is required.
+The report records `distributionPolicy: unsigned`, each unsigned file, and whether publisher trust
+was verified for the app. Passing this policy does not establish a trusted publisher: Windows may
+show an unknown-publisher or reputation warning. Published SHA-256 checksums, production fuses,
+ASAR integrity, architecture, private-persona exclusion, and install/uninstall checks remain required.
 
 For each provider proof, record:
 
@@ -447,7 +449,7 @@ For each provider proof, record:
 Codex and Claude are separate statuses. If only one provider passes the lifecycle proof, only that
 provider/version may advertise `structured_safe_point`; the other remains `manual_only`.
 
-Release records must also distinguish a locally built x64 artifact from signing verification, an
+Release records must also distinguish a locally built x64 artifact from its signature status, an
 ARM64 installed run, uninstall cleanup, hosted CI, named model review, and owner acceptance. Scan the
 actual ASAR and unpacked resources for private persona material; inspecting source imports alone is
 insufficient. User-selected local Marvel profiles remain personal data and must never become bundled

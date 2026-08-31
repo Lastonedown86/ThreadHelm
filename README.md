@@ -88,6 +88,9 @@ pnpm test:e2e                       # Playwright Electron user journeys + access
 
 Packaging and installed-artifact acceptance:
 
+Releases are intentionally unsigned and include SHA-256 checksums. See
+[installation guidance](docs/install.md) for publisher-trust limitations and verification.
+
 ```powershell
 pnpm package:win                                      # x64 Squirrel installer + .sha256 files
 $env:THREADHELM_ARTIFACT = 'C:\path\to\ThreadHelm.exe'; pnpm test:acceptance:installed

@@ -9,17 +9,15 @@ import { MemoryList } from './features/coordination/MemoryList.js';
 import { MissionList } from './features/coordination/MissionList.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
 import { RecoveryPanel } from './features/recovery/RecoveryPanel.js';
-import { TerminalPane } from './features/session/Terminal.js';
-import { getTerminal } from './features/session/terminals.js';
+import { LazyTerminalPane } from './features/session/LazyTerminal.js';
+import { terminalSize } from './features/session/terminal-loader.js';
 import { SessionList } from './features/sessions/SessionList.js';
 import { ProviderReadiness } from './features/workspaces/ProviderReadiness.js';
 import { WorkspacePanel } from './features/workspaces/WorkspacePanel.js';
 import { StoreProvider, useStore } from './store.js';
 
 function currentTerminalSize(sessionId: string | null): { columns: number; rows: number } {
-  const entry = sessionId ? getTerminal(sessionId) : undefined;
-  if (entry?.opened) return { columns: entry.term.cols, rows: entry.term.rows };
-  return { columns: 120, rows: 30 };
+  return (sessionId ? terminalSize(sessionId) : undefined) ?? { columns: 120, rows: 30 };
 }
 
 function Shell() {
@@ -73,7 +71,7 @@ function Shell() {
                 </h1>
                 <ControlBar session={selected} />
               </header>
-              <TerminalPane
+              <LazyTerminalPane
                 session={selected}
                 truncationCount={state.truncation[selected.id] ?? selected.truncationCount}
                 streamFailure={state.streamFailed[selected.id] ?? null}

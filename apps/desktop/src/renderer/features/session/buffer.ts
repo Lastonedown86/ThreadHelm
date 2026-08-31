@@ -4,7 +4,7 @@
  * terminal bytes are ever stored here.
  */
 
-import { SCROLLBACK_LINES } from '@threadhelm/contracts';
+import { SCROLLBACK_LINES } from '@threadhelm/contracts/limits';
 
 export const scrollbackLimit = SCROLLBACK_LINES;
 

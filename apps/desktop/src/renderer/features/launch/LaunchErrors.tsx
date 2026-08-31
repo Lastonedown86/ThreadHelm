@@ -3,7 +3,7 @@
  * Every contract error code has an entry; the test enforces it.
  */
 
-import { ErrorCode } from '@threadhelm/contracts';
+import type { ErrorCode } from '@threadhelm/contracts';
 import { RendererError } from '../../errors.js';
 
 export const ERROR_MESSAGES: Record<ErrorCode, string> = {
@@ -133,5 +133,3 @@ export function LaunchError({ error }: { error: unknown | null }) {
     </p>
   );
 }
-
-export const allErrorCodes = ErrorCode.options;

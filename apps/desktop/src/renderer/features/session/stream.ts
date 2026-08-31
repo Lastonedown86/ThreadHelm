@@ -4,7 +4,7 @@
  * an ack is posted only from the writer's completion callback, never before.
  */
 
-import { StreamFrame, type OutputAck } from '@threadhelm/contracts';
+import { StreamFrame, type OutputAck } from '@threadhelm/contracts/stream';
 
 /** The slice of a DOM MessagePort the client touches; tests fake exactly this. */
 export type StreamPort = Pick<MessagePort, 'postMessage' | 'onmessage' | 'close' | 'start'>;

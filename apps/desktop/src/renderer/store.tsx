@@ -26,7 +26,7 @@ import type {
 } from '@threadhelm/contracts';
 import { api, call } from './api.js';
 import { recordTruncation, type TruncationState } from './features/session/buffer.js';
-import { installTerminalHooks, subscribeOutput } from './features/session/terminals.js';
+import { installTerminalHooks, subscribeOutput } from './features/session/terminal-loader.js';
 import { describeError } from './features/launch/LaunchErrors.js';
 
 export interface LaunchRequest {

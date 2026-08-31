@@ -4,7 +4,7 @@
  * Runs against a PACKAGED ThreadHelm, never the dev tree:
  *   pnpm test:acceptance:installed            (THREADHELM_ARTIFACT=<path to packaged ThreadHelm.exe>)
  *
- * Validates: Authenticode signatures (required unless explicitly testing unsigned locally), published
+ * Validates: Authenticode status under the owner-approved unsigned policy, published
  * checksum, production fuses, ASAR integrity, native module loading through a
  * real launch, and the displayed version. Records the Windows release and
  * architecture actually exercised so a report can only claim what it tested.
@@ -25,9 +25,9 @@ import {
   assertProductionPersonaBoundary,
 } from '../../apps/desktop/src/packaging/release-personas.js';
 import { assertNativeArchitecture } from '../../apps/desktop/src/packaging/native-architecture.js';
+import { assertReleaseSignatureStatus } from '../../apps/desktop/src/packaging/signature-policy.js';
 
 const artifact = process.env.THREADHELM_ARTIFACT;
-const allowUnsigned = process.env.THREADHELM_ALLOW_UNSIGNED_ARTIFACTS === '1';
 const describeInstalled = artifact ? describe : describe.skip;
 
 function logEvent(text: string, event: string): Record<string, unknown> | undefined {
@@ -108,14 +108,15 @@ describeInstalled('installed artifact acceptance', () => {
     scenarios.checksum = 'verified';
   });
 
-  it('requires valid artifact and unpacked native signatures unless local unsigned testing is explicit', () => {
+  it('accepts unsigned distribution and rejects invalid signatures on the app and native payload', () => {
     const status = powershell(`(Get-AuthenticodeSignature -LiteralPath ${literalExe}).Status`);
     report.signatureStatus = status;
-    report.localUnsignedOverride = allowUnsigned;
+    report.distributionPolicy = 'unsigned';
+    report.trustedPublisherVerified = status === 'Valid';
     const unsigned: string[] = [];
     const check = (file: string, signature: string) => {
-      if (signature === 'NotSigned' && allowUnsigned) unsigned.push(file);
-      else expect(signature, `Authenticode signature: ${file}`).toBe('Valid');
+      assertReleaseSignatureStatus(signature, file);
+      if (signature === 'NotSigned') unsigned.push(file);
     };
     check(exe, status);
     const nativeRoot = join(dirname(exe), 'resources', 'app.asar.unpacked');
@@ -136,9 +137,9 @@ describeInstalled('installed artifact acceptance', () => {
       check(file, powershell(`(Get-AuthenticodeSignature -LiteralPath ${literal}).Status`));
     }
     report.unsignedNativeOrAppFiles = unsigned;
-    report.signatureReleaseReady = unsigned.length === 0;
+    report.signaturePolicyPassed = true;
     scenarios.signature = unsigned.length
-      ? `LOCAL ONLY: ${unsigned.length} unsigned files; production signature gate NOT passed`
+      ? `unsigned distribution policy passed: ${unsigned.length} unsigned files; publisher trust not established for these files`
       : `valid artifact and ${files.length} unpacked native signatures`;
   });
 

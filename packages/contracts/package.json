@@ -10,6 +10,14 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./limits": {
+      "types": "./dist/limits.d.ts",
+      "default": "./dist/limits.js"
+    },
+    "./stream": {
+      "types": "./dist/stream.d.ts",
+      "default": "./dist/stream.js"
+    },
     "./protocol": {
       "types": "./dist/protocol.d.ts",
       "default": "./dist/protocol.js"

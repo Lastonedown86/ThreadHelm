@@ -1229,3 +1229,80 @@ Read-only installed-proof assessment clarified the remaining work:
 Task count remains161/166; T148/T149/T154/T157/T158 and the memory blocker remain open. Keep PR17
 draft and Feature002 active. Verified Mission Delegation has not started. The preload follow-up
 requires its own final-head hosted check result; `da3dc66` CI must not be attributed to a later SHA.
+
+## Closure follow-up: unsigned distribution and remaining evidence
+
+On 2026-08-30 the owner explicitly confirmed: "This will be a unsigned app". This supersedes
+the earlier trusted-signing blocker and local-only unsigned exception above; those earlier
+observations are retained as historical evidence, not current release policy. The normal artifact
+acceptance path now accepts `NotSigned` or `Valid`, records unsigned files and publisher-trust
+status, and rejects invalid or unrecognized signatures. No certificate, self-signed certificate,
+or local unsigned override is needed. Checksums, private Marvel exclusion, production fuses,
+native architecture, installed cleanup, and all other gates remain in force.
+
+The installed Claude Code 2.1.251 no-prompt initialization interface does not provide the fresh
+positive organization-policy attestation required by the launch contract. Controlled probes
+reported `current_permission_mode: auto` even with feature-flag fetching disabled. The CLI implementation
+defaults missing/unrecognized remote eligibility to enabled, while its initialization response
+does not expose that provenance or freshness. Unsupported-model and explicit-disable controls
+returned default mode. These observations demonstrate why mode, model support, authentication,
+or absence of denial must not authorize auto. No user/model frames were submitted, no global or
+project settings changed, and no credential values were recorded. Production remains held on
+unknown organization policy; a future supported attestation interface is required to close that
+portion of T148/T149.
+
+The follow-up removes the initial renderer's xterm, wizard, and full validation-schema imports.
+Terminal limits and stream schemas now have narrow contract exports; main validation is unchanged.
+Real in-memory bundle tests proved the eager dependency regression before the change and the
+deferred graph afterward. Early transferred ports remain unstarted until the terminal loads, with
+bounded host buffering and ACK-after-write preserved. Replaced, failed, unsolicited, and abandoned
+ports close. The initial main entry now handles Squirrel events independently of native/coordinator
+imports, so a damaged native addon cannot prevent shortcut removal or obsolete-version exit.
+Actual bundled-entry tests reproduced and then closed that failure, including fixed fatal reporting.
+
+Initial verification on the deferred renderer passed all 41 E2Es and 29 focused Windows cases,
+with the same preexisting database-lock harness skip. After the isolated lifecycle entry and
+diagnostic runner changes, formatting, lint, typecheck, 342 unit cases, 264 contracts, and all three
+real architecture proofs passed. Later review tightened descendant identity against host/root PID
+reuse; its focused regression and final artifact/hosted results are recorded below when completed.
+
+The new disposable hosted workflow builds the actual Squirrel Setup on x64 and ARM64, checks its
+SHA-256, installs only on a fresh GitHub-hosted account, and runs actual installed-artifact acceptance.
+It additionally exercises the installed N-API/bridge and the installed Electron main/session-host/
+ConPTY path using an explicit standalone Node diagnostic helper. This grants no normal provider
+eligibility, uses no provider account/model work, and changes no production fuses. Uninstall uses
+only that installation's bounded Update.exe path in `finally`; remaining payload, registration,
+shortcuts, processes, or session credentials fail rather than being manually removed. Reports
+distinguish real installed containment from live provider missions, which this workflow does not run.
+No installer was executed on the developer's account. Windows Server x64 evidence, if produced by
+the hosted image, is not promoted to Windows 11 client acceptance.
+
+Final local follow-up source verification passed formatting, lint, typecheck, 349 unit tests,
+264 contracts, and all three real architecture proofs. The stale-host/root-PID regressions both
+reproduced the false-positive path and passed after rejection was added. Independent review of
+the diagnostic and installer boundaries found no other actionable issue. Staged Gitleaks reported
+no leaks.
+
+Normal x64 packaging succeeded without signing inputs or any unsigned override. All 26 artifact/
+deterministic coordination acceptance cases passed under the default unsigned policy. The actual
+ASAR and unpacked resources exclude private Marvel material. The fresh packaged Electron
+main/session-host/ConPTY proof passed with the real packaged bridge: dormant scope empty, exact
+host/root/bridge membership, empty scope after termination, and host/root/bridge death on handle
+close. It used an explicit standalone diagnostic helper, not a live provider mission, and did not
+install Squirrel on the developer's account. Evidence: `tmp/us8/closure3-packaged-proof.json`,
+`closure2-x64-acceptance.json`, and `closure2-artifact-checks.json`.
+
+Fresh package identities (matching published SHA-256 sidecars):
+
+- Setup: 156149248 bytes, `db18af7d3f55649f93fd38334adeb5de73e27e748351913f57c386b36139a175`.
+- nupkg: 155404263 bytes, `626d7234bd93c93afe22b888f22fd3cbe1156e67d7fe431593c70fa8737fd286`.
+- ASAR: `64c825445616d3342b4651bf124cda073cfec1454990528e67ea980aa41124a8`.
+
+Fresh packaged idle measurement at 22:39 EDT: **380.324 MiB peak**, median CPU **0%**, twelve
+approximately five-second windows, four application processes, visible app, no sessions/inspector,
+fresh user data. CPU passes; memory still fails the unchanged 250 MiB gate. The previous observation
+was 399.844 MiB; this single before/after run does not attribute the entire difference to deferred
+loading. No graphics, sandbox, metric, budget, or working-set trimming changed. The required shell
+reassessment is recorded in `docs/architecture/desktop-shell-reassessment.md`; it recommends a bounded
+nonshipping comparison and does not approve a migration or claim an unmeasured alternative passes.
+Task count remains 161/166 pending hosted installed proof, exact provider evidence, and owner closure.

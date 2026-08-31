@@ -7,6 +7,12 @@
  */
 
 import { z } from 'zod';
+import { Bytes, Uuid } from './primitives.js';
+export { Bytes, Uuid } from './primitives.js';
+import { MAX_COLUMNS, MAX_ROWS, MAX_INPUT_BYTES } from './limits.js';
+export * from './limits.js';
+export { OutputFrame, OutputAck, OutputTruncated, StreamFrame } from './stream.js';
+
 import type { EventName, OperationName } from './protocol.js';
 import { isSafeAuthoredText } from './content-text.js';
 export { isSafeAuthoredText } from './content-text.js';
@@ -23,14 +29,6 @@ export {
 // ---------------------------------------------------------------------------
 
 export const PROTOCOL_VERSION = 1;
-export const SCROLLBACK_LINES = 10_000;
-export const MAX_UNACKED_BYTES = 8 * 1024 * 1024;
-export const HIGH_WATERMARK_BYTES = 6 * 1024 * 1024;
-export const LOW_WATERMARK_BYTES = 2 * 1024 * 1024;
-export const MAX_FRAME_BYTES = 64 * 1024;
-export const MAX_INPUT_BYTES = 64 * 1024;
-export const MAX_COLUMNS = 1000;
-export const MAX_ROWS = 500;
 /** Candidate, preview, stop, and force-stop tokens all expire after this. */
 export const TOKEN_TTL_MS = 120_000;
 /** Bounded grace period for a clean stop before force stop is offered. */
@@ -377,7 +375,6 @@ export function serializeError(error: unknown): SerializedError {
 // Primitive schemas
 // ---------------------------------------------------------------------------
 
-export const Uuid = z.uuid();
 export const ConversationId = z.uuid().brand<'ConversationId'>();
 export type ConversationId = z.infer<typeof ConversationId>;
 export const HandoffId = z.uuid().brand<'HandoffId'>();
@@ -391,8 +388,6 @@ export const ProfileId = z.uuid().brand<'ProfileId'>();
 export type ProfileId = z.infer<typeof ProfileId>;
 export const ProfileRevisionId = z.uuid().brand<'ProfileRevisionId'>();
 export type ProfileRevisionId = z.infer<typeof ProfileRevisionId>;
-/** Plain `Uint8Array` (any buffer kind) — structured-clone safe across IPC. */
-export const Bytes = z.custom<Uint8Array>((value) => value instanceof Uint8Array, 'expected bytes');
 export const Timestamp = z.iso.datetime();
 export const OpaqueToken = z.string().min(16).max(128);
 export const SafeSummary = z.string().max(300);
@@ -2605,34 +2600,6 @@ export type EventPayload<N extends EventName> = z.output<(typeof events)[N]>;
 // ---------------------------------------------------------------------------
 // Terminal stream frames (host ↔ renderer over a session MessagePort)
 // ---------------------------------------------------------------------------
-
-export const OutputFrame = z.object({
-  kind: z.literal('output'),
-  sessionId: Uuid,
-  sequence: z.number().int().min(1),
-  bytes: Bytes.refine((b) => b.byteLength <= MAX_FRAME_BYTES, {
-    message: 'frame exceeds MAX_FRAME_BYTES',
-  }),
-});
-export type OutputFrame = z.infer<typeof OutputFrame>;
-
-export const OutputAck = z.object({
-  kind: z.literal('ack'),
-  sessionId: Uuid,
-  throughSequence: z.number().int().min(0),
-});
-export type OutputAck = z.infer<typeof OutputAck>;
-
-/** Sent by the host when output had to be discarded; count is cumulative. */
-export const OutputTruncated = z.object({
-  kind: z.literal('truncated'),
-  sessionId: Uuid,
-  truncationCount: z.number().int().min(1),
-});
-export type OutputTruncated = z.infer<typeof OutputTruncated>;
-
-export const StreamFrame = z.discriminatedUnion('kind', [OutputFrame, OutputAck, OutputTruncated]);
-export type StreamFrame = z.infer<typeof StreamFrame>;
 
 // ---------------------------------------------------------------------------
 // Provider adapter data (contracts/provider-adapter.md)

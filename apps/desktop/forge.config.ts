@@ -2,7 +2,7 @@
  * Packaging (T027 fuses, T087 installers).
  *
  * x64 and ARM64 per-user Squirrel installers, ASAR with integrity validation,
- * production fuses, native addons unpacked, Authenticode signing driven by
+ * production fuses, native addons unpacked, optional Authenticode signing driven by
  * environment (keys never live in the repository), and SHA-256 checksums
  * written next to every artifact.
  */

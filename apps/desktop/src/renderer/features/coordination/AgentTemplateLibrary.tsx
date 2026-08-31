@@ -3,7 +3,8 @@ import type { OperationResponse } from '@threadhelm/contracts';
 import { api, call } from '../../api.js';
 import { useStore } from '../../store.js';
 import { AgentAuthoringError } from './AgentAuthoringError.js';
-import { AgentProfileWizard, templateLabel } from './AgentProfileWizard.js';
+import { LazyAgentProfileWizard } from './LazyAgentProfileWizard.js';
+import { templateLabel } from './template-label.js';
 import { ModalDialog } from './ModalDialog.js';
 
 type Template = OperationResponse<'agentTemplates.list'>['templates'][number];
@@ -250,7 +251,7 @@ export function AgentTemplateLibrary() {
         </section>
       ) : null}
       {dialog?.kind === 'wizard' ? (
-        <AgentProfileWizard
+        <LazyAgentProfileWizard
           {...(dialog.draftId ? { draftId: dialog.draftId } : {})}
           {...(dialog.sourceRevisionId ? { sourceRevisionId: dialog.sourceRevisionId } : {})}
           onClose={() => {

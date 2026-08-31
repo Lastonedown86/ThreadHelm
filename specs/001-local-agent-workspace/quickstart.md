@@ -175,7 +175,8 @@ removed, trigger the documented Tauri/Rust shell reassessment rather than silent
 - Build separate x64 and ARM64 per-user Squirrel installers.
 - Enable ASAR integrity and production fuses; unpack only required native artifacts.
 - Disable RunAsNode, `NODE_OPTIONS`, CLI inspection, and loading application code outside ASAR.
-- Authenticode-sign release artifacts and publish SHA-256 checksums.
+- Publish SHA-256 checksums. Per the owner's 2026-08-30 unsigned-distribution decision, accept
+  `NotSigned` or `Valid` and reject invalid signatures; trusted signing is not a release prerequisite.
 - Run the installed acceptance suite on every claimed Windows release/architecture combination.
 - Run real Codex CLI and Claude Code smoke tests separately with recording/logging disabled.
 - Confirm no auto-update, routing, long-term memory/MemPalace, scheduling, remote control, `.hires`,

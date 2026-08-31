@@ -17,6 +17,8 @@ const root = resolve(__dirname, '../..');
 const workspaceAliases = {
   '@threadhelm/test-fixtures/desktop': resolve(root, 'packages/test-fixtures/src/desktop.ts'),
   '@threadhelm/contracts/protocol': resolve(root, 'packages/contracts/src/protocol.ts'),
+  '@threadhelm/contracts/limits': resolve(root, 'packages/contracts/src/limits.ts'),
+  '@threadhelm/contracts/stream': resolve(root, 'packages/contracts/src/stream.ts'),
   '@threadhelm/contracts': resolve(root, 'packages/contracts/src/index.ts'),
   '@threadhelm/domain': resolve(root, 'packages/domain/src/index.ts'),
   '@threadhelm/persistence': resolve(root, 'packages/persistence/src/index.ts'),
@@ -103,7 +105,9 @@ export default defineConfig({
           index: resolve(__dirname, 'src/main/index.ts'),
           'session-host': resolve(__dirname, 'src/session-host/index.ts'),
         },
-        output: cjs,
+        // Runtime fixtures resolve beside their module. Keep deferred main
+        // chunks adjacent to the copied fake-agent and fixed host entry.
+        output: { ...cjs, chunkFileNames: '[name]-[hash].cjs' },
       },
     },
   },

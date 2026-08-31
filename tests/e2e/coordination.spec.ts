@@ -318,16 +318,20 @@ test('safe lifecycle presents once while unproved evidence keeps the visible man
       'Keep this visible when draft safety is unknown.',
     );
 
-    await app.emitProviderLifecycle({
+    const accepted = await app.emitProviderLifecycle({
       sessionId: sessions[1]!.id,
       providerId: 'claude-code',
       providerVersion: '1.0.0',
       eventKind: 'safe_point',
       providerEventId: 'e2e-safe-point-1',
       turnId: 'e2e-turn-1',
-      occurredAt: new Date().toISOString(),
       safePoint: true,
       inputSafety: 'proved_no_pending_draft',
+    });
+    expect(accepted).toMatchObject({
+      status: 'accepted',
+      safePoint: true,
+      presentation: { presented: true, reasonCode: null },
     });
     await expect(first).toContainText('Delivered — outcome pending', { timeout: 30_000 });
 
@@ -338,7 +342,6 @@ test('safe lifecycle presents once while unproved evidence keeps the visible man
       eventKind: 'safe_point',
       providerEventId: 'e2e-safe-point-2',
       turnId: 'e2e-turn-2',
-      occurredAt: new Date().toISOString(),
       safePoint: true,
       inputSafety: 'unknown',
     });
@@ -382,22 +385,81 @@ test('bounded coordination requires disclosure before one eligible provider repl
     });
     expect(reply.deliveryState).toBe('queued');
 
-    await app.emitProviderLifecycle({
+    const accepted = await app.emitProviderLifecycle({
       sessionId: sessions[0]!.id,
       providerId: 'codex-cli',
       providerVersion: '1.0.0',
       eventKind: 'safe_point',
       providerEventId: 'us4-e2e-safe-point',
       turnId: 'us4-e2e-turn',
-      occurredAt: new Date().toISOString(),
       safePoint: true,
       inputSafety: 'proved_no_pending_draft',
+    });
+    expect(accepted).toMatchObject({
+      status: 'accepted',
+      safePoint: true,
+      presentation: { presented: true, reasonCode: null },
     });
 
     await press(conversations.getByRole('button', { name: 'Refresh' }));
     await press(conversations.getByRole('listitem').first());
     await expect(detail).toContainText('This reply is eligible only inside the reviewed bounds.');
     await expect(detail.locator(`[data-handoff-id="${reply.id}"]`)).toContainText('Delivered');
+  } finally {
+    await teardown(app, ...dirs);
+  }
+});
+
+test('fresh lifecycle fixture uses main clock while explicit future evidence stays rejected', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' });
+  const { dirs, sessions } = await launchThree(app);
+  try {
+    const handoff = await createHandoffByKeyboard(
+      app.page,
+      'Clock boundary delivery',
+      'Only a fresh safe point may deliver this once.',
+    );
+    const evidence = {
+      sessionId: sessions[1]!.id,
+      providerId: 'claude-code' as const,
+      providerVersion: '1.0.0',
+      eventKind: 'safe_point' as const,
+      providerEventId: 'clock-boundary-event',
+      turnId: 'clock-boundary-turn',
+      safePoint: true,
+      inputSafety: 'proved_no_pending_draft' as const,
+    };
+    const future = await app.emitProviderLifecycle({
+      ...evidence,
+      occurredAt: '2099-01-01T00:00:00.000Z',
+    });
+    expect(future).toMatchObject({
+      status: 'rejected',
+      reasonCode: 'LIFECYCLE_EVIDENCE_STALE',
+      presentation: null,
+    });
+    await expect(handoff).toContainText('Queued — not delivered');
+
+    const SystemDate = globalThis.Date;
+    let pending: ReturnType<LaunchedApp['emitProviderLifecycle']>;
+    try {
+      // Only the runner's synchronous fixture-call construction sees this
+      // clock. Electron main and its real freshness checks remain unchanged.
+      globalThis.Date = class extends SystemDate {
+        constructor() {
+          super('2099-01-01T00:00:00.000Z');
+        }
+      } as DateConstructor;
+      pending = app.emitProviderLifecycle(evidence);
+    } finally {
+      globalThis.Date = SystemDate;
+    }
+    expect(await pending).toMatchObject({
+      status: 'accepted',
+      safePoint: true,
+      presentation: { presented: true, reasonCode: null },
+    });
+    await expect(handoff).toContainText('Delivered — outcome pending');
   } finally {
     await teardown(app, ...dirs);
   }

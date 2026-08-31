@@ -3,14 +3,7 @@
  */
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { isolatedProof } from './helpers/isolated-proof.js';
@@ -302,6 +295,7 @@ describe.skipIf(!enabled)(
           plan.reportRoot,
         );
         // Existing production-fuse, archive, architecture, startup, native-load and second-instance checks.
+        const artifactReport = join(plan.reportRoot, 'artifact-acceptance.json');
         report.artifactAcceptanceExitCode = await run(
           process.execPath,
           [
@@ -312,11 +306,13 @@ describe.skipIf(!enabled)(
             'tests/acceptance/installed-app.test.ts',
           ],
           240_000,
-          { ...process.env, THREADHELM_ARTIFACT: installed },
+          {
+            ...process.env,
+            THREADHELM_ARTIFACT: installed,
+            THREADHELM_ARTIFACT_REPORT: artifactReport,
+          },
         );
-        const artifactReport = join(dirname(installed), 'threadhelm-acceptance-report.json');
         if (existsSync(artifactReport)) {
-          copyFileSync(artifactReport, join(plan.reportRoot, 'artifact-acceptance.json'));
           const artifact = JSON.parse(readFileSync(artifactReport, 'utf8'));
           report.installedArtifactSignature = {
             status: artifact.signatureStatus,

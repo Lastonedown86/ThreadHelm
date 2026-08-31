@@ -52,6 +52,16 @@ and disposable bridge credential files are not uploaded. GitHub disposes of the 
 Failed nested acceptance cases retain bounded scenario/error codes and native relative paths without
 raw assertion values. Uninstall diagnostics include at most 256 remaining relative paths, entry types
 and file sizes, never file contents; reparse points are listed without following them.
+The nested suite writes its report directly to the disposable runner report directory through
+`THREADHELM_ARTIFACT_REPORT`; it must not add diagnostic files to the installation being tested.
+
+The first two hosted runs exposed a remaining vendor cleanup limitation: the shipped Squirrel
+`2.0.1+eef37460ae` leaves `Update.exe` and the versioned `squirrel.exe` after uninstall. The current
+acceptance deliberately fails for those files. Its in-place uninstaller suppresses deletion failures
+and has no supported post-exit cleanup switch. Repair requires a reviewed production updater or
+installer change; do not substitute a harness cleanup script or a longer wait for that repair.
+See the [exact shipped uninstall implementation](https://github.com/Squirrel/Squirrel.Windows/blob/eef37460ae/src/Squirrel/UpdateManager.ApplyReleases.cs#L96-L143)
+and [supported arguments](https://github.com/Squirrel/Squirrel.Windows/blob/eef37460ae/src/Update/StartupOption.cs#L36-L65).
 
 The standard x64 hosted image may be Windows Server rather than Windows 11. Record its actual edition;
 do not claim a supported Windows 11 x64 end-user workflow from that result alone. ARM64 runs on the

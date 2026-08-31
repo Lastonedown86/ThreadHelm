@@ -101,7 +101,8 @@ describeInstalled('installed artifact acceptance', () => {
   afterAll(() => {
     report.finishedAt = new Date().toISOString();
     writeFileSync(
-      resolve(dirname(exe), 'threadhelm-acceptance-report.json'),
+      process.env.THREADHELM_ARTIFACT_REPORT ??
+        resolve(dirname(exe), 'threadhelm-acceptance-report.json'),
       JSON.stringify(report, null, 2),
     );
   });

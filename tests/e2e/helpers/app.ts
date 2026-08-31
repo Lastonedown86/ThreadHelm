@@ -70,7 +70,7 @@ export interface LaunchedApp {
     input: Parameters<TestHooks['replyFromProvider']>[0],
   ): Promise<ReturnType<TestHooks['replyFromProvider']>>;
   emitProviderLifecycle(
-    evidence: ProviderLifecycleEvidence,
+    evidence: Omit<ProviderLifecycleEvidence, 'occurredAt'> & { occurredAt?: string },
   ): ReturnType<TestHooks['emitProviderLifecycle']>;
   /** Authenticated request through the real main-owned named pipe, not direct dispatch. */
   bridgeRequest<T = unknown>(
@@ -174,7 +174,13 @@ export async function launchApp(options: LaunchOptions = {}): Promise<LaunchedAp
     proposeProviderMemory: (sessionId, input) =>
       hooks('hooks.proposeProviderMemory(arg.sessionId, arg.input)', { sessionId, input }),
     replyFromProvider: (input) => hooks('hooks.replyFromProvider(arg)', input),
-    emitProviderLifecycle: (evidence) => hooks('hooks.emitProviderLifecycle(arg)', evidence),
+    // Create fresh fixture evidence on main's clock, inside the queued callback.
+    // Keep explicit timestamps intact so stale/future evidence still fails closed.
+    emitProviderLifecycle: (evidence) =>
+      hooks(
+        'hooks.emitProviderLifecycle({ ...arg, occurredAt: arg.occurredAt ?? new Date().toISOString() })',
+        evidence,
+      ),
     bridgeRequest: (sessionId, method, params) =>
       hooks('hooks.bridgeRequest(arg.sessionId,arg.method,arg.params)', {
         sessionId,

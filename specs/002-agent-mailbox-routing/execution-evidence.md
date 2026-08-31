@@ -1348,3 +1348,73 @@ Local follow-up verification at 22:57 EDT passed 360 unit tests, 264 contracts, 
 and lint. The queued coordination fix passed the full 41-case E2E suite before the subsequent
 keyboard/wizard readiness assertions. Hosted installation and CI must be rerun on the new commit;
 the previous failed runs are retained as failed evidence, not retrospectively marked green.
+
+### Hosted installed retry and closure review — 2026-08-30 23:12 EDT
+
+This checkpoint supersedes earlier current-status claims. Source head `56d86095b5933e24160e06527526edde6339ed1c`
+passed a fresh full local E2E suite, **41/41**, and CodeQL run `33352516733`.
+Installed run `33352518762` tested merge checkout `f4867af772ad7ddf52f0a10e88ecc2f3d66def67`.
+Both Windows Server 2025 x64 and Windows 11 Enterprise 26200 ARM64 passed the actual installed
+artifact suite, default unsigned policy, exact maker-updater identity, private-persona exclusion,
+native proof with subprocess closure, and installed Electron main/session-host/ConPTY/bridge proof.
+Reports explicitly leave publisher trust unverified and live provider missions `NOT_RUN`.
+
+**Uninstall still fails on both architectures.** Registration, shortcuts, application/native payload,
+processes and session credentials are removed, but `Update.exe` and `app-0.0.0/squirrel.exe` remain
+beside the allowed `.dead` tombstone. ARM64 also retained the harness-generated acceptance report.
+No residue was manually deleted or added to a passing allowlist. The narrowed result confirms the
+native-DLL harness fix but does not close the remaining updater cleanup failure. Curated reports:
+`tmp/us8/closure6-hosted-x64` and `tmp/us8/closure6-hosted-arm64`. T154 remains open for cleanup and
+supported Windows 11 x64 installed evidence; signing is not a blocker.
+
+Windows CI run `33352518772` initially failed two x64 database cases solely on the unchanged
+five-second test limit (358/360 passed), while ARM64 continued. A focused local rerun of those
+two files passed 7/7 without code, assertion, retry or timeout changes. The original hosted failure
+is retained in `tmp/us8/closure6-ci-x64-failed.log`; any hosted retry must be recorded separately.
+
+The bounded independent follow-up review found no important assertion weakening or privacy defect.
+T158 remains open: the spec explicitly requires final closure approval, not merely review with
+blockers. It also retains a scope reconciliation: the original task note protects session-host files,
+whereas the later content-free byte-meter integration was approved by a root-agent implementation
+ruling. No explicit owner exception was found; that ruling is not presented as owner approval and
+the preserve-only instruction was not rewritten to excuse the change. No further host edits or
+restoration of the separately preserved concurrent changes were made during this review.
+
+Feature 002 remains active at **161/166**. T148/T149/T154/T157/T158, the unchanged **250 MiB** memory
+gate (latest measured **380.324 MiB**, median CPU **0%**), exact installed provider/Claude auto-policy
+evidence, required independent reviews and human acceptance remain unresolved. PR17 stays draft;
+no merge, production release, local Squirrel install or next-feature specification occurred.
+
+The shipped vendor identifies as Squirrel `2.0.1+eef37460ae`. At that exact revision,
+[Uninstall](https://github.com/Squirrel/Squirrel.Windows/blob/eef37460ae/src/Update/Program.cs#L255-L264)
+runs in place and has no post-exit retry; [FullUninstall](https://github.com/Squirrel/Squirrel.Windows/blob/eef37460ae/src/Squirrel/UpdateManager.ApplyReleases.cs#L96-L143)
+suppresses directory-deletion failures before writing `.dead`. The root updater is running during
+deletion. Its [executable detector](https://github.com/Squirrel/Squirrel.Windows/blob/eef37460ae/src/Squirrel/SquirrelAwareExecutableDetector.cs#L33-L55)
+also reads the versioned helper with Mono.Cecil without disposing the assembly, supporting the
+second-file lock explanation; no direct handle trace was captured. No supported existing command
+repairs the cleanup gap. A reviewed updater repair or installer change is required, not a test waiver.
+Separately, the nested acceptance report now goes directly to the runner report directory instead of
+polluting the installation. That hygiene fix does not claim to repair either updater residue.
+The report-path fix passed all seven local packaged-artifact cases, typecheck and lint. Its report
+was written outside the package at `tmp/us8/closure7-artifact-acceptance.json`; no installer ran.
+
+The initial ARM64 CI job subsequently finished with 39/41 E2E passes: the repaired keyboard and
+wizard cases passed, but two coordination lifecycle cases remained queued after a synthetic safe
+point. All preceding ARM64 gates, including Windows integration, passed. Those two failures are
+retained in `tmp/us8/closure6-ci-failed.log` and are investigated separately from the x64 timeouts.
+
+The exact failed-uninstall Setup artifacts from run `33352518762` are retained by CI (not published
+as a release): x64 SHA-256 `d9d70ea113454a7d416944befdd27151cd36ea10de9390c8afaf6b6e5a9d03a1`;
+ARM64 SHA-256 `805d368a426bbe415863a790979e6a83fc5e1d66612f88999b6657c1a59aea75`.
+
+The lifecycle investigation found that the queued test-helper conversion also moved fresh event
+timestamps from Electron main to the runner process. Main correctly rejects future evidence without
+a tolerance. A new real-app regression reproduced rejection/queued delivery with the runner clock
+ahead, then passed after the default timestamp moved inside the queued main callback. Explicit
+timestamps remain untouched: a deliberate future timestamp is still rejected and cannot deliver.
+Both original journeys now assert the ingestion/presentation result before checking UI delivery.
+No production freshness rule, safety condition, timeout or retry count changed. This establishes
+the harness defect and its correction; no hosted trace was available to prove the precise clock
+offset in the failed ARM64 run.
+The three affected journeys passed three independent runs each (9/9, retries disabled) after the
+focused red/green regression. Typecheck, lint and formatting passed for the final follow-up.

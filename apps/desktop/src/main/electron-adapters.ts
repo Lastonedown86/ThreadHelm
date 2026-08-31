@@ -6,6 +6,7 @@
 import { dialog, MessageChannelMain, utilityProcess, type BrowserWindow } from 'electron';
 import type {
   DirectoryPicker,
+  AgentExportTargetPicker,
   HostHandle,
   HostSpawner,
   ProfileFilePicker,
@@ -83,6 +84,25 @@ export function electronProfileFilePicker(
         : await dialog.showOpenDialog(options);
       if (result.canceled || result.filePaths.length !== 1) return null;
       return result.filePaths[0] ?? null;
+    },
+  };
+}
+
+export function electronAgentExportTargetPicker(
+  getWindow: () => BrowserWindow | null,
+): AgentExportTargetPicker {
+  return {
+    async pickTarget() {
+      const window = getWindow();
+      const options = {
+        title: 'Export agent profile',
+        defaultPath: 'agent.hire.json',
+        filters: [{ name: 'ThreadHelm hire manifests', extensions: ['hire.json'] }],
+      };
+      const result = window
+        ? await dialog.showSaveDialog(window, options)
+        : await dialog.showSaveDialog(options);
+      return result.canceled ? null : (result.filePath ?? null);
     },
   };
 }

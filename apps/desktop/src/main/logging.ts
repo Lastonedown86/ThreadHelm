@@ -8,6 +8,8 @@
  * counts and codes, not content.
  */
 
+import { isSafeAuthoredText } from '@threadhelm/contracts';
+
 export type LogValue = string | number | boolean | null | undefined;
 export type LogFields = Record<string, LogValue>;
 
@@ -29,10 +31,18 @@ const SECRET_SHAPED =
   /(sk-[A-Za-z0-9_-]{8,}|ghp_|gho_|github_pat_|AKIA[0-9A-Z]{16}|xox[baprs]-|Bearer\s+\S+|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|[A-Fa-f0-9]{32,}|[A-Za-z0-9+/=]{40,})/;
 // eslint-disable-next-line no-control-regex
 const CONTROL_CHARS = /[\x00-\x1f\x7f]/;
+const RESERVED_FIELDS = new Set(['ts', 'level', 'event']);
+const CONTENT_FIELD =
+  /(?:body|goal|prompt|transcript|stdout|stderr|environment|credential|password|secret|path|rationale|manifest|variable|stack)/i;
 
 export function sanitizeLogValue(value: LogValue): LogValue {
   if (typeof value !== 'string') return value;
-  if (value.length > MAX_STRING || CONTROL_CHARS.test(value) || SECRET_SHAPED.test(value)) {
+  if (
+    value.length > MAX_STRING ||
+    CONTROL_CHARS.test(value) ||
+    SECRET_SHAPED.test(value) ||
+    !isSafeAuthoredText(value)
+  ) {
     return '[redacted]';
   }
   return value;
@@ -44,7 +54,8 @@ export function createLogger(sink: LogSink, base: LogFields = {}, now = () => ne
     const record: Record<string, LogValue> = { ts: now().toISOString(), level, event: name };
     for (const [key, value] of Object.entries({ ...base, ...fields })) {
       if (!/^[a-zA-Z][a-zA-Z0-9_]{0,40}$/.test(key)) continue;
-      record[key] = sanitizeLogValue(value);
+      if (RESERVED_FIELDS.has(key)) continue;
+      record[key] = CONTENT_FIELD.test(key) ? '[redacted]' : sanitizeLogValue(value);
     }
     sink.write(JSON.stringify(record));
   };

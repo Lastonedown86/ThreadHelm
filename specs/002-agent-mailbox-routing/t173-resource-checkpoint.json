@@ -1,0 +1,231 @@
+{
+  "Status": "PARTIAL: extended idle and one pilot cycle; complete five-cycle series remains open",
+  "RuntimeCommit": "0745294c08ed5bb618eb078fbb791dfbe4eac0ad",
+  "SourceHead": "3c574fb19db4ea0a1af2fdffc8b8c1ee8ced3e56",
+  "ExecutableSha256": "74B8C016B96CBDA9BE7A3EFDDE5F527AA06A2545A64DCF5613E8D9C17963D1E1",
+  "AsarSha256": "7C650DF1251129A35F0E98C97DBD9E0054F77792277F701EB7BE50E8AF1AB393",
+  "FixtureSha256": "5CDD7622AB8F5F95B4D0495592E174558E1C2B80D415BA11BF4C80D1B6DBF3C9",
+  "Idle": {
+    "RootProcessId": 39356,
+    "RuntimeCommit": "0745294c08ed5bb618eb078fbb791dfbe4eac0ad",
+    "ExecutableSha256": "74B8C016B96CBDA9BE7A3EFDDE5F527AA06A2545A64DCF5613E8D9C17963D1E1",
+    "AsarSha256": "7C650DF1251129A35F0E98C97DBD9E0054F77792277F701EB7BE50E8AF1AB393",
+    "StartedAt": "2026-08-31T13:09:26.730995-04:00",
+    "CompletedAt": "2026-08-31T13:25:24.2928047-04:00",
+    "DurationSeconds": 957.4813065000008,
+    "ProcessCount": 4,
+    "MedianCpuPercentOneCore": 0.0,
+    "PeakWorkingSetMiB": 347.86328125,
+    "InitialWorkingSetMiB": 345.7578125,
+    "FinalWorkingSetMiB": 347.86328125,
+    "InitialPrivateCommitMiB": 256.6796875,
+    "FinalPrivateCommitMiB": 256.73046875,
+    "PeakPrivateCommitMiB": 256.86328125,
+    "CpuBlocks": [
+      {
+        "Block": 1,
+        "Seconds": 63.979058599999995,
+        "MedianCpuPercentOneCore": 0.5852606146011807
+      },
+      {
+        "Block": 2,
+        "Seconds": 63.7540225,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 3,
+        "Seconds": 63.949530499999995,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 4,
+        "Seconds": 63.72739700000001,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 5,
+        "Seconds": 64.00944600000001,
+        "MedianCpuPercentOneCore": 0.29181258289786016
+      },
+      {
+        "Block": 6,
+        "Seconds": 63.7242965,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 7,
+        "Seconds": 63.7396468,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 8,
+        "Seconds": 63.743103299999994,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 9,
+        "Seconds": 63.98461360000001,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 10,
+        "Seconds": 63.706778299999996,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 11,
+        "Seconds": 63.908686100000004,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 12,
+        "Seconds": 63.929094799999994,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 13,
+        "Seconds": 63.7369573,
+        "MedianCpuPercentOneCore": 0.0
+      },
+      {
+        "Block": 14,
+        "Seconds": 63.841326499999994,
+        "MedianCpuPercentOneCore": 0.5853025914726151
+      },
+      {
+        "Block": 15,
+        "Seconds": 63.747348699999996,
+        "MedianCpuPercentOneCore": 0.0
+      }
+    ],
+    "Scope": "Installed owner instance, no sessions, all four processes; no UI inspection during the observation. Read-only static artifact checks ran separately during this interval."
+  },
+  "IdleReportSha256": "85CABD09BF70C5B15B7C37449286BC4A14D6AEADF853F4D2130AF170CA39D156",
+  "PilotMeasurements": [
+    {
+      "Report": "tmp/us8/t173-fixtures-f6fdb216171e487a8ab8a05b55f7064a/pre-cycle-resource.json",
+      "Sha256": "3661E717DB2FE81A26E1086B452C0F577F58D018C2A31155BAAECA9D88FE30C7",
+      "StartedAt": "2026-08-31T13:38:44.5702812-04:00",
+      "CompletedAt": "2026-08-31T13:39:12.5741797-04:00",
+      "DurationSeconds": 27.967372299999997,
+      "ProcessCount": 4,
+      "PeakWorkingSetMiB": 567.98828125,
+      "InitialPrivateCommitMiB": 300.24609375,
+      "FinalPrivateCommitMiB": 300.10546875,
+      "FinalWorkingSetMiB": 567.80078125,
+      "MedianCpuPercentOneCore": 0.0,
+      "CpuBudgetPassed": null,
+      "MemoryBudgetPassed": false
+    },
+    {
+      "Report": "tmp/us8/t173-fixtures-f6fdb216171e487a8ab8a05b55f7064a/cycle-1-active-resource.json",
+      "Sha256": "5F328A6643B0ECBEE65020E1BC74F5C1D68809D721A51C3BF570373AA00B76C0",
+      "StartedAt": "2026-08-31T13:43:59.1487695-04:00",
+      "CompletedAt": "2026-08-31T13:44:27.1986881-04:00",
+      "DurationSeconds": 28.0147561,
+      "ProcessCount": 16,
+      "PeakWorkingSetMiB": 1079.375,
+      "InitialPrivateCommitMiB": 481.39453125,
+      "FinalPrivateCommitMiB": 479.609375,
+      "FinalWorkingSetMiB": 1077.59375,
+      "MedianCpuPercentOneCore": 0.33100126261358426,
+      "CpuBudgetPassed": null,
+      "MemoryBudgetPassed": false
+    },
+    {
+      "Report": "tmp/us8/t173-fixtures-f6fdb216171e487a8ab8a05b55f7064a/cycle-1-stopped-resource.json",
+      "Sha256": "F1CE36E092183E13F603EAAC20256651142A324031EEA75289ECC7D2FA85AE66",
+      "StartedAt": "2026-08-31T13:46:23.747657-04:00",
+      "CompletedAt": "2026-08-31T13:46:51.5226356-04:00",
+      "DurationSeconds": 27.732540800000002,
+      "ProcessCount": 4,
+      "PeakWorkingSetMiB": 571.84375,
+      "InitialPrivateCommitMiB": 310.8984375,
+      "FinalPrivateCommitMiB": 311.04296875,
+      "FinalWorkingSetMiB": 571.1171875,
+      "MedianCpuPercentOneCore": 0.0,
+      "CpuBudgetPassed": null,
+      "MemoryBudgetPassed": false
+    },
+    {
+      "Report": "tmp/us8/t173-fixtures-f6fdb216171e487a8ab8a05b55f7064a/cycle-1-settled-60s-resource.json",
+      "Sha256": "3FE45D233C9465C02A07E729B74F8A12E4672F9C0FB66AD0E7A1CA4F5A868CF8",
+      "StartedAt": "2026-08-31T13:47:33.1010226-04:00",
+      "CompletedAt": "2026-08-31T13:48:37.1314083-04:00",
+      "DurationSeconds": 63.984099300000004,
+      "ProcessCount": 4,
+      "PeakWorkingSetMiB": 581.765625,
+      "InitialPrivateCommitMiB": 311.1484375,
+      "FinalPrivateCommitMiB": 311.03515625,
+      "FinalWorkingSetMiB": 581.734375,
+      "MedianCpuPercentOneCore": 0.14753171370043794,
+      "CpuBudgetPassed": true,
+      "MemoryBudgetPassed": false
+    }
+  ],
+  "PilotSessions": [
+    {
+      "id": "6245597b-aec7-40bf-9430-7d59f301c1fe",
+      "lifecycle_state": "stopped",
+      "host_pid": 29332,
+      "root_pid": 3556,
+      "started_at": "2026-08-31T17:34:13.948Z",
+      "ended_at": "2026-08-31T17:35:04.837Z",
+      "exit_code": 0,
+      "stop_kind": "clean"
+    },
+    {
+      "id": "c2f07c77-9a87-47fd-9008-43f2e7d6f3d2",
+      "lifecycle_state": "stopped",
+      "host_pid": 47416,
+      "root_pid": 10884,
+      "started_at": "2026-08-31T17:39:58.437Z",
+      "ended_at": "2026-08-31T17:46:09.738Z",
+      "exit_code": 0,
+      "stop_kind": "clean"
+    },
+    {
+      "id": "bf69e578-aa43-423d-bc2d-7ac8316cfac7",
+      "lifecycle_state": "stopped",
+      "host_pid": 40072,
+      "root_pid": 38208,
+      "started_at": "2026-08-31T17:41:01.284Z",
+      "ended_at": "2026-08-31T17:45:45.979Z",
+      "exit_code": 0,
+      "stop_kind": "clean"
+    },
+    {
+      "id": "747b4209-f6e6-4032-afb6-83238f1b8574",
+      "lifecycle_state": "stopped",
+      "host_pid": 36284,
+      "root_pid": 42108,
+      "started_at": "2026-08-31T17:42:05.61Z",
+      "ended_at": "2026-08-31T17:45:24.815Z",
+      "exit_code": 0,
+      "stop_kind": "clean"
+    },
+    {
+      "id": "5338d9b4-ff31-4985-9e22-ded0333d43ab",
+      "lifecycle_state": "stopped",
+      "host_pid": 9400,
+      "root_pid": 46884,
+      "started_at": "2026-08-31T17:43:24.728Z",
+      "ended_at": "2026-08-31T17:44:49.405Z",
+      "exit_code": 0,
+      "stop_kind": "clean"
+    }
+  ],
+  "PilotSessionResidualCount": 0,
+  "FinalFamilyResidualCount": 0,
+  "OwnerAppStillRunning": true,
+  "LiveProviderStarted": false,
+  "ProductionAcceptance": false,
+  "Notes": [
+    "An initial single-session smoke preceded the four-session pilot.",
+    "Only sample-window peaks were recorded, not continuous launch/stop maxima.",
+    "UI inspection was disconnected during every resource sample.",
+    "The pilot instance was closed normally; repeat the full five-cycle series on one fresh coordinator.",
+    "The current source head differs from runtime only in documentation.",
+    "No low-memory support or leak-freedom claim is established."
+  ]
+}

@@ -8,6 +8,9 @@ import { ApprovedWorkspaceRepository } from './workspaces.js';
 import { CoordinationRepository } from './coordination.js';
 import { SharedMemoryRepository } from './shared-memory.js';
 import { AgentProfileRepository } from './agent-profiles.js';
+import { AgentTemplateRepository } from './agent-templates.js';
+import { AgentProfileExportRepository } from './agent-profile-exports.js';
+import { SupervisorRepository } from './supervisor.js';
 
 export interface Repositories {
   workspaces: ApprovedWorkspaceRepository;
@@ -19,6 +22,9 @@ export interface Repositories {
   coordination: CoordinationRepository;
   memory: SharedMemoryRepository;
   agentProfiles: AgentProfileRepository;
+  agentTemplates: AgentTemplateRepository;
+  agentProfileExports: AgentProfileExportRepository;
+  supervisor: SupervisorRepository;
   /** Runs `fn` atomically; nested calls become savepoints. */
   transaction<T>(fn: () => T): T;
 }
@@ -34,6 +40,9 @@ export function createRepositories(db: Db): Repositories {
     coordination: new CoordinationRepository(db),
     memory: new SharedMemoryRepository(db),
     agentProfiles: new AgentProfileRepository(db),
+    agentTemplates: new AgentTemplateRepository(db),
+    agentProfileExports: new AgentProfileExportRepository(db),
+    supervisor: new SupervisorRepository(db),
     transaction: <T>(fn: () => T): T => db.transaction(fn)(),
   };
 }
@@ -45,3 +54,6 @@ export * from './workspaces.js';
 export * from './coordination.js';
 export * from './shared-memory.js';
 export * from './agent-profiles.js';
+export * from './agent-templates.js';
+export * from './agent-profile-exports.js';
+export * from './supervisor.js';

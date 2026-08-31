@@ -18,6 +18,7 @@ export function invalidateAutomaticPresentationEvidence(ctx: Context, sessionId:
 
 export function reconcileCoordinationAtStartup(ctx: Context): CoordinationRecoveryResult {
   if (!ctx.storage || ctx.health.degraded) return { recoveredUnknown: 0 };
+  ctx.storage.repositories.supervisor.recover(ctx.clock().toISOString());
   const repository = ctx.storage.repositories.coordination;
   let recoveredUnknown = 0;
   for (const attempt of repository.listInFlightAttempts()) {

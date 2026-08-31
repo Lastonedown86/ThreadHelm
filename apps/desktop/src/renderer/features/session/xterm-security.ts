@@ -5,7 +5,7 @@
  */
 
 import type { ITerminalOptions, Terminal } from '@xterm/xterm';
-import { SCROLLBACK_LINES } from '@threadhelm/contracts';
+import { SCROLLBACK_LINES } from '@threadhelm/contracts/limits';
 
 /** OSC identifiers that could reach outside the terminal. */
 export const SWALLOWED_OSC = [

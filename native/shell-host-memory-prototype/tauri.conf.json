@@ -1,0 +1,14 @@
+{
+  "productName": "ThreadHelm Memory Prototype - NONSHIPPING",
+  "version": "0.0.0",
+  "identifier": "local.threadhelm.memory-prototype",
+  "build": { "frontendDist": "ui" },
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-src 'none'",
+      "capabilities": []
+    }
+  },
+  "bundle": { "active": false, "icon": [] }
+}

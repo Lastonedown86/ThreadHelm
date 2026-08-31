@@ -43,6 +43,22 @@ function manifestText(overrides: Record<string, unknown> = {}): string {
 }
 
 describe('hire manifest strict schema and normalization', () => {
+  it.each(['threadhelm/agent-profile@1', 'munder-difflin/hire@1'])(
+    'accepts %s without changing the imported schema identifier',
+    (spec) => {
+      expect(parseHireManifest(manifestText({ spec })).spec).toBe(spec);
+    },
+  );
+
+  it.each(['threadhelm/agent-profile@2', 'munder-difflin/hire@2', 'other/profile@1'])(
+    'rejects unsupported format %s',
+    (spec) => {
+      expect(() => parseHireManifest(manifestText({ spec }))).toThrowError(
+        expect.objectContaining({ code: 'PROFILE_SCHEMA_INVALID' }),
+      );
+    },
+  );
+
   it('parses a valid manifest and trims normalized text fields', () => {
     const raw = JSON.stringify({
       spec: 'munder-difflin/hire@1',

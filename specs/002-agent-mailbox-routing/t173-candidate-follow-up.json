@@ -1,0 +1,432 @@
+{
+  "SchemaVersion": 1,
+  "RecordedAt": "2026-08-31T22:19:17.349Z",
+  "Status": "T173 complete evidence; P04 CPU acceptance failed and is carried by T174",
+  "Source": {
+    "BaseCommit": "3c574fb19db4ea0a1af2fdffc8b8c1ee8ced3e56",
+    "SourceState": "measured as final worktree renderer fixes; identical application source committed at d23d297",
+    "Files": [
+      {
+        "Path": "apps/desktop/src/renderer/App.tsx",
+        "Sha256": "4F10945C39053BE705774F1919BBEABA6BCCBA469F4B29CA0599316C1906F2E7"
+      },
+      {
+        "Path": "apps/desktop/src/renderer/features/control/ControlBar.tsx",
+        "Sha256": "258EB825BDAE1A1028A90E947844971DD4C15EF86B5671B19E2A7161B2EF5256"
+      },
+      {
+        "Path": "apps/desktop/src/renderer/features/session/Terminal.tsx",
+        "Sha256": "8A634AEEE704B559E37D6A91A1C9FCB467DE261F2203B15E7DC5D89580090692"
+      }
+    ]
+  },
+  "Candidate": {
+    "Kind": "packaged-x64",
+    "ExecutableSha256": "5B2ACF93BAEADAE29C3CAD4A500F38D2CEC9FC885A724CF35D9E45EA820FC358",
+    "AsarSha256": "5AAE9BD88CEFEB3D0054EAB7247D36AD16CE209573AC3F2F326196C77C2E26FE",
+    "FixtureSha256": "D1767AE1C79E8242AF5635F90F125C18AAC2F2303647D2105E5D0C793967388C",
+    "SetupSha256": "56BECE9651851B668D9EFC2689F2AADDA566BBB13DDC7D896C6D825B5D290F97",
+    "IdentityVerified": true
+  },
+  "Hardware": {
+    "WindowsEdition": "Microsoft Windows 11 Home",
+    "WindowsBuild": "26200",
+    "Arch": "x64",
+    "Cpu": "AMD Ryzen 7 5700U with Radeon Graphics         ",
+    "Cores": 8,
+    "LogicalProcessors": 16,
+    "PhysicalMemoryBytes": 33700167680
+  },
+  "Validation": {
+    "InitialFullE2E": 43,
+    "InitialFocusRepetitions": 10,
+    "UnitContract": 647,
+    "FinalAffectedE2E": 16,
+    "FinalTypecheck": "passed",
+    "FinalFocusedLint": "passed",
+    "FinalStaticCasesPassed": 6,
+    "FinalStaticScenarios": {
+      "checksum": "skipped: no .sha256 next to artifact",
+      "signature": "unsigned distribution policy passed: 9 unsigned files; publisher trust not established for these files",
+      "fuses": "verified",
+      "asar": "present with app.asar.unpacked",
+      "privatePersonas": "absent from packaged archive and unpacked text assets",
+      "nativeArchitecture": "Application native files match x64; no installer helper present"
+    },
+    "IndependentRendererReview": "no actionable defects; read-only review, no tests run by reviewer",
+    "HostedFinalCandidate": {
+      "ApplicationCommit": "d23d297",
+      "PrHead": "ea3307622e0c01e616e1c9357bf3a6e7ec904ffc",
+      "TestedMerge": "f80d60b3ae5c40627d2e20284217c875175e63ef",
+      "CiRun": "33451269519",
+      "CodeQlRun": "33451267094",
+      "InstalledAcceptanceRun": "33451269522",
+      "X64SetupSha256": "2EEF36569824BB35C009E8D58C605C5D64EEDB0A899FAF13A8DACD394C8369A7",
+      "X64": "passed",
+      "Arm64Diagnostic": "passed"
+    }
+  },
+  "Resource": {
+    "FinalIdle": {
+      "DurationSeconds": 949.4200685,
+      "CpuMedian": 0,
+      "CpuBudgetPassed": true,
+      "PeakWorkingSetMiB": 381.796875,
+      "InitialWorkingSetMiB": 381.796875,
+      "FinalWorkingSetMiB": 381.2578125,
+      "InitialPrivateMiB": 231.05859375,
+      "FinalPrivateMiB": 226.37109375,
+      "PeakPrivateMiB": 231.05859375,
+      "ProcessCount": 4,
+      "Processes": [
+        {
+          "ProcessId": 6416,
+          "ParentProcessId": 11368,
+          "Name": "ThreadHelm.exe",
+          "Created": "2026-08-31T15:50:50.836524-04:00",
+          "CpuMs": 1625,
+          "WorkingSetMiB": 115.5,
+          "PrivateCommitMiB": 78.41015625
+        },
+        {
+          "ProcessId": 46336,
+          "ParentProcessId": 6416,
+          "Name": "ThreadHelm.exe",
+          "Created": "2026-08-31T15:50:51.063216-04:00",
+          "CpuMs": 703.125,
+          "WorkingSetMiB": 123.390625,
+          "PrivateCommitMiB": 107.2265625
+        },
+        {
+          "ProcessId": 34364,
+          "ParentProcessId": 6416,
+          "Name": "ThreadHelm.exe",
+          "Created": "2026-08-31T15:50:51.202034-04:00",
+          "CpuMs": 109.375,
+          "WorkingSetMiB": 54.88671875,
+          "PrivateCommitMiB": 12.0546875
+        },
+        {
+          "ProcessId": 31012,
+          "ParentProcessId": 6416,
+          "Name": "ThreadHelm.exe",
+          "Created": "2026-08-31T15:50:51.221818-04:00",
+          "CpuMs": 203.125,
+          "WorkingSetMiB": 88.01953125,
+          "PrivateCommitMiB": 33.3671875
+        }
+      ],
+      "StartedAt": "2026-08-31T15:51:44.1415111-04:00",
+      "CompletedAt": "2026-08-31T16:07:33.6255282-04:00",
+      "Windows": 180
+    },
+    "MinuteBlocks": [
+      {
+        "DurationSeconds": 63.249098499999995,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.3105073,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.3232466,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.208418099999996,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.275353100000004,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.3438746,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.3104612,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.179424700000006,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.3739042,
+        "MedianCpuPercentOneCore": 0.44177595328747965
+      },
+      {
+        "DurationSeconds": 63.37106270000001,
+        "MedianCpuPercentOneCore": 0.14786686270200766
+      },
+      {
+        "DurationSeconds": 63.15261449999999,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.2109215,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.2692392,
+        "MedianCpuPercentOneCore": 0.44351964607274985
+      },
+      {
+        "DurationSeconds": 63.411387600000005,
+        "MedianCpuPercentOneCore": 0
+      },
+      {
+        "DurationSeconds": 63.43055470000001,
+        "MedianCpuPercentOneCore": 0
+      }
+    ],
+    "AllMinuteBlocksPassed": true,
+    "Cleanup": {
+      "RecordedAt": "2026-08-31T16:08:58.903592-04:00",
+      "ClosedNormally": true,
+      "CandidateOwnedProcessCount": 4,
+      "CandidateRemainingProcessCount": 0,
+      "OwnerProcessId": 39356,
+      "OwnerInstalledHashesUnchanged": true,
+      "CandidateProcesses": [
+        {
+          "ProcessId": 6416,
+          "ParentProcessId": 11368,
+          "Name": "ThreadHelm.exe",
+          "Created": "2026-08-31T15:50:50.836524-04:00",
+          "CpuMs": 1625,
+          "WorkingSetMiB": 115.5,
+          "PrivateCommitMiB": 78.41015625
+        },
+        {
+          "ProcessId": 46336,
+          "ParentProcessId": 6416,
+          "Name": "ThreadHelm.exe",
+          "Created": "2026-08-31T15:50:51.063216-04:00",
+          "CpuMs": 703.125,
+          "WorkingSetMiB": 123.390625,
+          "PrivateCommitMiB": 107.2265625
+        },
+        {
+          "ProcessId": 34364,
+          "ParentProcessId": 6416,
+          "Name": "ThreadHelm.exe",
+          "Created": "2026-08-31T15:50:51.202034-04:00",
+          "CpuMs": 109.375,
+          "WorkingSetMiB": 54.88671875,
+          "PrivateCommitMiB": 12.0546875
+        },
+        {
+          "ProcessId": 31012,
+          "ParentProcessId": 6416,
+          "Name": "ThreadHelm.exe",
+          "Created": "2026-08-31T15:50:51.221818-04:00",
+          "CpuMs": 203.125,
+          "WorkingSetMiB": 88.01953125,
+          "PrivateCommitMiB": 33.3671875
+        }
+      ]
+    },
+    "FiveCycles": {
+      "Completed": true,
+      "RunRoot": "tmp/us8/t173-fixtures-5990af64e5a04edba85b6df181491a42",
+      "CycleCount": 5,
+      "SessionCount": 20,
+      "Cycles": [
+        {
+          "Cycle": 1,
+          "ActiveMedianCpuPercentOneCore": 0.876410721671846,
+          "ActivePeakWorkingSetMiB": 993.078125,
+          "CpuBudgetPassed": true,
+          "PostStopMedianCpuPercentOneCore": 0.29374256332921067,
+          "PostStopPeakWorkingSetMiB": 473.453125,
+          "SessionOwnedProcessesGone": true,
+          "SessionsStoppedCleanly": true,
+          "Paths": {
+            "Active": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-1-active-resource.json",
+            "Stopped": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-1-stopped-resource.json",
+            "Cleanup": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-1-cleanup.json"
+          }
+        },
+        {
+          "Cycle": 2,
+          "ActiveMedianCpuPercentOneCore": 1.0285275788166774,
+          "ActivePeakWorkingSetMiB": 991.09375,
+          "CpuBudgetPassed": false,
+          "PostStopMedianCpuPercentOneCore": 0.43961306048786997,
+          "PostStopPeakWorkingSetMiB": 471.3671875,
+          "SessionOwnedProcessesGone": true,
+          "SessionsStoppedCleanly": true,
+          "Paths": {
+            "Active": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-2-active-resource.json",
+            "Stopped": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-2-stopped-resource.json",
+            "Cleanup": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-2-cleanup.json"
+          }
+        },
+        {
+          "Cycle": 3,
+          "ActiveMedianCpuPercentOneCore": 0.4399690390323251,
+          "ActivePeakWorkingSetMiB": 935.40625,
+          "CpuBudgetPassed": true,
+          "PostStopMedianCpuPercentOneCore": 0,
+          "PostStopPeakWorkingSetMiB": 424.1484375,
+          "SessionOwnedProcessesGone": true,
+          "SessionsStoppedCleanly": true,
+          "Paths": {
+            "Active": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-3-active-resource.json",
+            "Stopped": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-3-stopped-resource.json",
+            "Cleanup": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-3-cleanup.json"
+          }
+        },
+        {
+          "Cycle": 4,
+          "ActiveMedianCpuPercentOneCore": 1.756162550209466,
+          "ActivePeakWorkingSetMiB": 941.56640625,
+          "CpuBudgetPassed": false,
+          "PostStopMedianCpuPercentOneCore": 0,
+          "PostStopPeakWorkingSetMiB": 426.64453125,
+          "SessionOwnedProcessesGone": true,
+          "SessionsStoppedCleanly": true,
+          "Paths": {
+            "Active": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-4-active-resource.json",
+            "Stopped": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-4-stopped-resource.json",
+            "Cleanup": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-4-cleanup.json"
+          }
+        },
+        {
+          "Cycle": 5,
+          "ActiveMedianCpuPercentOneCore": 1.4713454022245256,
+          "ActivePeakWorkingSetMiB": 936.53125,
+          "CpuBudgetPassed": false,
+          "PostStopMedianCpuPercentOneCore": 0.29291292737446856,
+          "PostStopPeakWorkingSetMiB": 429.74609375,
+          "SessionOwnedProcessesGone": true,
+          "SessionsStoppedCleanly": true,
+          "Paths": {
+            "Active": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-5-active-resource.json",
+            "Stopped": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-5-stopped-resource.json",
+            "Cleanup": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-5-cleanup.json"
+          }
+        }
+      ],
+      "CpuCyclesPassed": 2,
+      "CpuCyclesFailed": 3,
+      "AccumulatingWorkingSetGrowthObserved": false,
+      "AllSessionOwnedProcessesGone": true,
+      "AllSessionsStoppedCleanly": true,
+      "Verdict": "CPU FAIL; cleanup and non-accumulating-growth evidence pass; D05 memory target remains deferred",
+      "Attribution": "Sustained CPU was mainly Electron renderer/GPU with occasional utility/session-host increments; inert fixture and console processes were effectively idle."
+    },
+    "LiveProviderStarted": false,
+    "OwnerInstallChanged": false,
+    "Limitations": "Packaged candidate, not installation acceptance. Three of five active cycles failed the retained 1% CPU limit. D01/D05 defer memory ceilings only. No low-memory or leak-freedom claim."
+  },
+  "Reports": [
+    {
+      "Path": "tmp/us8/t173-full-e2e.log",
+      "Sha256": "14099BEC0ED1EEA0C65DDFFD8E8479BDC7DC7DB9C7EE190B53DD72FBA37799CD"
+    },
+    {
+      "Path": "tmp/us8/t173-focus-repetitions.log",
+      "Sha256": "A29CE457D4A3ED099181053712EFC505F7EE068CFF5B459F50F1E68F59B7A0E7"
+    },
+    {
+      "Path": "tmp/us8/t173-unit-contract.log",
+      "Sha256": "B34B8AEC45E8585FA9143C00EBB66DA84CAB73F2F699A677C46869A859975627"
+    },
+    {
+      "Path": "tmp/us8/t173-interrupt-stop-red.log",
+      "Sha256": "5EFA400BCE6C71A2ADF12B525834D0F56503D24F406C0F2AEC80EF197896031E"
+    },
+    {
+      "Path": "tmp/us8/t173-final-renderer-green.log",
+      "Sha256": "2F88C550BFE28092859EDE71C4C2A40B48BEDD39FF190D43232A762DE9A4FA08"
+    },
+    {
+      "Path": "tmp/us8/t173-final-package.log",
+      "Sha256": "8A7EBF9C69A3CE72366579AF80B257CD4B796B511C01FA6452AB3289A23E6485"
+    },
+    {
+      "Path": "tmp/us8/t173-final-candidate-static.json",
+      "Sha256": "116B29A2BA16EBE163C7ED49CFFEBDE69F71A87A07FA7E28FE13E968F7C5FC98"
+    },
+    {
+      "Path": "tmp/us8/t173-final-candidate-identity.json",
+      "Sha256": "E742E1374901F89AC2913941C28C85EFC6FC757929E92A3531AEB2E191115F93"
+    },
+    {
+      "Path": "tmp/us8/t173-fixtures-6fe5e0a6ad684ce9998e8e134f14a0a2/baseline-resource.json",
+      "Sha256": "47C94475DC0BA2B1C5E1375773D0256766C05990A46AEC7BFB234AC183CA9E4E"
+    },
+    {
+      "Path": "tmp/us8/t173-fixtures-6fe5e0a6ad684ce9998e8e134f14a0a2/final-lifecycle.json",
+      "Sha256": "B2A16881E51D805532AF90E094E145DEADDC43DD327D918F7383FEFD013EB4BB"
+    },
+    {
+      "Path": "tmp/us8/t173-fixtures-6fe5e0a6ad684ce9998e8e134f14a0a2/final-cleanup.json",
+      "Sha256": "38763999C359BE464AF82F9B520CD75ED2FEC86FDD0A8A7432604A083A3A9F8C"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-1-active-resource.json",
+      "Sha256": "BE8735709A7E43E7D15418821F30C1EBCFD11C9AA8F5CA8E4D6EF98AD2FF2BA6"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-1-stopped-resource.json",
+      "Sha256": "A8570496C617B98F3B762B7FBD7D8261F6CBBABAAB2233272A860C89EC424DD3"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-1-cleanup.json",
+      "Sha256": "A7DC5A33F5E0FAD65F4673BD073FD82591698213DDF772381309A495D88BBC3B"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-2-active-resource.json",
+      "Sha256": "C13BDC9DBF4FC285F43BFA9FF0528A984FC32581D74544BE6B9D228B58A5B2E3"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-2-stopped-resource.json",
+      "Sha256": "D070D3C332CC50008FF9372629F418F6F68EAB76E8BE34F929DAEFDE105136E1"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-2-cleanup.json",
+      "Sha256": "EB4BFA3F9C4B28CE5F4D92FA4AC284D48F31AAC9C685FB82E27A1A1FD7C2A366"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-3-active-resource.json",
+      "Sha256": "92A9833EE5036705555C1633CD48E10E2EDDC283DDA8F82E72479154914EBA43"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-3-stopped-resource.json",
+      "Sha256": "55BEEFA65C781F3AB6A312C9AF72439F42BE6CF137811A805F444FB40B8BDB7B"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-3-cleanup.json",
+      "Sha256": "52AD3A4E1EE0C30D38B9A3B90663F0259E7019385549D9F15070B8675C5D6240"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-4-active-resource.json",
+      "Sha256": "0C38A8E1CE572AD900772FB1C15EA384925C221A67C65F856BF677B9452F6A06"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-4-stopped-resource.json",
+      "Sha256": "6141B0011F73D58AF72C2C01D1CE4F99DFA17315811BA2A0B4F501690BAE07E5"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-4-cleanup.json",
+      "Sha256": "A73C6078C99028CE7787B11D77A71606B952E204066A3CA6A8C831A264E8488E"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-5-active-resource.json",
+      "Sha256": "FBEAA98930CBADE4DA571319B291E0D3850156D0C382EA95E971C91EA2B233EF"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-5-stopped-resource.json",
+      "Sha256": "CAC958BD718690FD46FC4F42FBF401A5A4528AC64B9817BECF69EA0E61CED015"
+    },
+    {
+      "Path": "tmp\\us8\\t173-fixtures-5990af64e5a04edba85b6df181491a42\\cycle-5-cleanup.json",
+      "Sha256": "3C0EE283F93697DA9EE33E9ACFECBE775205CF1E9F9EF44A20DB1D7E574F6CBD"
+    }
+  ]
+}

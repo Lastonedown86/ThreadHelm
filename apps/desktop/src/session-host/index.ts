@@ -24,6 +24,7 @@ import {
 import { OutputStream } from './backpressure.js';
 import { createPty, type SessionPty } from './pty.js';
 import { ControlQueue, type ControlOp } from './resize.js';
+import { HostOutputMeter, forwardMeteredOutput } from './output-meter.js';
 
 type Phase = 'awaiting_bootstrap' | 'dormant' | 'launched' | 'stopping' | 'exited';
 
@@ -42,6 +43,7 @@ let queue: ControlQueue | undefined;
 let exitCode: number | null | undefined;
 let stopDeadline: ReturnType<typeof setTimeout> | undefined;
 let stopSequence: number | undefined;
+let outputMeter: HostOutputMeter | undefined;
 
 function send(message: HostToMainMessage): void {
   parentPort.postMessage(message);
@@ -55,6 +57,7 @@ function fail(code: HostFailureCode, detail?: string, fatal = true): void {
 function shutdown(code: number): void {
   if (stopDeadline) clearTimeout(stopDeadline);
   stream?.close();
+  outputMeter?.close();
   try {
     pty?.kill();
   } catch {
@@ -105,10 +108,15 @@ function launch(
   phase = 'launched';
   const id = sessionId!;
   const livePty = pty;
+  outputMeter = new HostOutputMeter(id, send, () => livePty.pause());
+  if (message.outputBudget)
+    outputMeter.setBudget(message.outputBudget.attemptId, message.outputBudget.maxOutputBytes);
 
   stream = new OutputStream(id, port, {
     pause: () => livePty.pause(),
-    resume: () => livePty.resume(),
+    resume: () => {
+      if (!outputMeter?.limitReached) livePty.resume();
+    },
     onTruncated: (truncationCount) =>
       send({ type: 'host.outputTruncated', sessionId: id, truncationCount }),
     onViolation: (code, detail) => fail(code, detail),
@@ -122,8 +130,12 @@ function launch(
       fail('HOST_INVALID_MESSAGE', `control ${controlSequence} out of order`),
   });
 
-  livePty.onData((chunk) => stream?.push(chunk));
+  livePty.onData((chunk) => {
+    if (outputMeter && stream) forwardMeteredOutput(outputMeter, stream, chunk);
+  });
   livePty.onExit((code) => {
+    outputMeter?.flush();
+    outputMeter?.close();
     exitCode = code;
     if (stopDeadline) clearTimeout(stopDeadline);
     // Dispose the pseudoconsole now: its helper process (OpenConsole/conhost)
@@ -195,6 +207,18 @@ parentPort.on('message', (event: { data: unknown; ports: MessagePortMain[] }) =>
   if (message.sessionId !== sessionId) return fail('HOST_IDENTITY_MISMATCH');
 
   switch (message.type) {
+    case 'host.setOutputBudget':
+      if (!outputMeter) return fail('HOST_INVALID_MESSAGE');
+      try {
+        outputMeter.setBudget(message.attemptId, message.maxOutputBytes);
+      } catch {
+        return fail('HOST_INVALID_MESSAGE');
+      }
+      return;
+    case 'host.clearOutputBudget':
+      outputMeter?.clearBudget(message.attemptId);
+      if (phase === 'launched' && !outputMeter?.limitReached) pty?.resume();
+      return;
     case 'host.launch':
       launch(message, event.ports);
       return;
@@ -224,7 +248,7 @@ parentPort.on('message', (event: { data: unknown; ports: MessagePortMain[] }) =>
       pty?.pause();
       return;
     case 'host.resumeOutput':
-      pty?.resume();
+      if (!outputMeter?.limitReached) pty?.resume();
       return;
     case 'host.shutdown':
       // Main only sends this after the Job Object is verified empty.

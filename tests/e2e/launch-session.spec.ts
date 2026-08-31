@@ -81,15 +81,35 @@ test('approve → disclose → launch journey', async () => {
     await expect(dialog.locator('.facts')).toContainText('Low');
     await expect(launch).toBeEnabled();
     await expect(dialog).toContainText(BOUNDARY_WARNING);
+    const processLimit = dialog.getByRole('spinbutton', {
+      name: 'Contained process limit',
+      exact: true,
+    });
+    await expect(processLimit).toHaveValue('1');
+    await processLimit.fill('8');
+    await expect(dialog.locator('.facts')).toContainText('8 contained processes');
+    await expect(dialog.locator('.facts')).toContainText('8388608 output bytes');
+    await expect(launch).toBeEnabled();
+    // The starting record is emitted before a stream port exists. Hold host
+    // readiness so a premature renderer subscription reliably reaches main.
+    await app.delayNextHostReady(1_000);
     await launch.click();
     await expect(dialog).toBeHidden({ timeout: 30_000 });
 
     const [live] = await app.liveSessions();
+    const eligible = await app.call<
+      { sessionId: string; executionBounds: { maxConcurrentProcesses: number } }[]
+    >('missions.eligibleSessions');
+    expect(
+      eligible.find((session) => session.sessionId === live!.id)?.executionBounds
+        .maxConcurrentProcesses,
+    ).toBe(8);
     const option = sessionOption(page, live!.id);
     await expect(option).toContainText('Codex CLI');
     await expect(option).toContainText(displayPath);
     await expect(option).toContainText('Running');
     await expect(terminalRows(page)).toContainText('FAKE_AGENT_READY', { timeout: 30_000 });
+    await expect(page.getByText(/The output stream for this session failed/)).toHaveCount(0);
 
     // One-writer rule: same effective workspace while live → WRITE_LEASE_HELD.
     await page
@@ -114,6 +134,7 @@ test('approve → disclose → launch journey', async () => {
       .getByRole('button', { name: `Launch ${PROVIDER_NAME['codex-cli']} in ${displayPath}` })
       .click();
     await expect(dialog.getByRole('checkbox')).not.toBeChecked();
+    await expect(processLimit).toHaveValue('1');
     await expect(dialog.getByRole('button', { name: 'Launch session' })).toBeDisabled();
     await dialog.getByRole('button', { name: 'Cancel' }).click();
     await expect(dialog).toBeHidden();

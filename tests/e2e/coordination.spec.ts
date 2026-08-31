@@ -92,33 +92,6 @@ async function createDeliveredConversation(
   return handoff;
 }
 
-async function replyFromProvider(
-  app: LaunchedApp,
-  input: {
-    sessionId: string;
-    inReplyToId: string;
-    kind: 'response' | 'inform' | 'completion' | 'refusal' | 'failure';
-    purpose: string;
-    body: string;
-    authorityRequired: boolean;
-  },
-): Promise<{ id: string; deliveryState: string; holdReasonCode: string | null }> {
-  return app.app.evaluate((_electron, value) => {
-    const hooks = (
-      globalThis as unknown as {
-        __threadhelmTest: {
-          replyFromProvider(input: Record<string, unknown>): {
-            id: string;
-            deliveryState: string;
-            holdReasonCode: string | null;
-          };
-        };
-      }
-    ).__threadhelmTest;
-    return hooks.replyFromProvider(value);
-  }, input);
-}
-
 test('keyboard-only user flow creates and manually presents one exact handoff', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' });
   const { dirs } = await launchThree(app);
@@ -345,48 +318,33 @@ test('safe lifecycle presents once while unproved evidence keeps the visible man
       'Keep this visible when draft safety is unknown.',
     );
 
-    await app.app.evaluate((_electron, sessionId) => {
-      const hooks = (
-        globalThis as unknown as {
-          __threadhelmTest: {
-            emitProviderLifecycle(evidence: Record<string, unknown>): Promise<unknown>;
-          };
-        }
-      ).__threadhelmTest;
-      return hooks.emitProviderLifecycle({
-        sessionId,
-        providerId: 'claude-code',
-        providerVersion: '1.0.0',
-        eventKind: 'safe_point',
-        providerEventId: 'e2e-safe-point-1',
-        turnId: 'e2e-turn-1',
-        occurredAt: new Date().toISOString(),
-        safePoint: true,
-        inputSafety: 'proved_no_pending_draft',
-      });
-    }, sessions[1]!.id);
+    const accepted = await app.emitProviderLifecycle({
+      sessionId: sessions[1]!.id,
+      providerId: 'claude-code',
+      providerVersion: '1.0.0',
+      eventKind: 'safe_point',
+      providerEventId: 'e2e-safe-point-1',
+      turnId: 'e2e-turn-1',
+      safePoint: true,
+      inputSafety: 'proved_no_pending_draft',
+    });
+    expect(accepted).toMatchObject({
+      status: 'accepted',
+      safePoint: true,
+      presentation: { presented: true, reasonCode: null },
+    });
     await expect(first).toContainText('Delivered — outcome pending', { timeout: 30_000 });
 
-    const result = await app.app.evaluate((_electron, sessionId) => {
-      const hooks = (
-        globalThis as unknown as {
-          __threadhelmTest: {
-            emitProviderLifecycle(evidence: Record<string, unknown>): Promise<unknown>;
-          };
-        }
-      ).__threadhelmTest;
-      return hooks.emitProviderLifecycle({
-        sessionId,
-        providerId: 'claude-code',
-        providerVersion: '1.0.0',
-        eventKind: 'safe_point',
-        providerEventId: 'e2e-safe-point-2',
-        turnId: 'e2e-turn-2',
-        occurredAt: new Date().toISOString(),
-        safePoint: true,
-        inputSafety: 'unknown',
-      }) as Promise<{ status: string }>;
-    }, sessions[1]!.id);
+    const result = await app.emitProviderLifecycle({
+      sessionId: sessions[1]!.id,
+      providerId: 'claude-code',
+      providerVersion: '1.0.0',
+      eventKind: 'safe_point',
+      providerEventId: 'e2e-safe-point-2',
+      turnId: 'e2e-turn-2',
+      safePoint: true,
+      inputSafety: 'unknown',
+    });
     expect(result.status).toBe('manual_only');
     await expect(second).toContainText('Manual action required');
     await expect(second.getByRole('button', { name: 'Present…' })).toBeVisible();
@@ -417,7 +375,7 @@ test('bounded coordination requires disclosure before one eligible provider repl
     await expect(disclosure).toBeHidden();
     await expect(detail).toContainText('Automatic continuation enabled');
 
-    const reply = await replyFromProvider(app, {
+    const reply = await app.replyFromProvider({
       sessionId: sessions[1]!.id,
       inReplyToId: root.id,
       kind: 'response',
@@ -427,31 +385,81 @@ test('bounded coordination requires disclosure before one eligible provider repl
     });
     expect(reply.deliveryState).toBe('queued');
 
-    await app.app.evaluate((_electron, sessionId) => {
-      const hooks = (
-        globalThis as unknown as {
-          __threadhelmTest: {
-            emitProviderLifecycle(evidence: Record<string, unknown>): Promise<unknown>;
-          };
-        }
-      ).__threadhelmTest;
-      return hooks.emitProviderLifecycle({
-        sessionId,
-        providerId: 'codex-cli',
-        providerVersion: '1.0.0',
-        eventKind: 'safe_point',
-        providerEventId: 'us4-e2e-safe-point',
-        turnId: 'us4-e2e-turn',
-        occurredAt: new Date().toISOString(),
-        safePoint: true,
-        inputSafety: 'proved_no_pending_draft',
-      });
-    }, sessions[0]!.id);
+    const accepted = await app.emitProviderLifecycle({
+      sessionId: sessions[0]!.id,
+      providerId: 'codex-cli',
+      providerVersion: '1.0.0',
+      eventKind: 'safe_point',
+      providerEventId: 'us4-e2e-safe-point',
+      turnId: 'us4-e2e-turn',
+      safePoint: true,
+      inputSafety: 'proved_no_pending_draft',
+    });
+    expect(accepted).toMatchObject({
+      status: 'accepted',
+      safePoint: true,
+      presentation: { presented: true, reasonCode: null },
+    });
 
     await press(conversations.getByRole('button', { name: 'Refresh' }));
     await press(conversations.getByRole('listitem').first());
     await expect(detail).toContainText('This reply is eligible only inside the reviewed bounds.');
     await expect(detail.locator(`[data-handoff-id="${reply.id}"]`)).toContainText('Delivered');
+  } finally {
+    await teardown(app, ...dirs);
+  }
+});
+
+test('fresh lifecycle fixture uses main clock while explicit future evidence stays rejected', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' });
+  const { dirs, sessions } = await launchThree(app);
+  try {
+    const handoff = await createHandoffByKeyboard(
+      app.page,
+      'Clock boundary delivery',
+      'Only a fresh safe point may deliver this once.',
+    );
+    const evidence = {
+      sessionId: sessions[1]!.id,
+      providerId: 'claude-code' as const,
+      providerVersion: '1.0.0',
+      eventKind: 'safe_point' as const,
+      providerEventId: 'clock-boundary-event',
+      turnId: 'clock-boundary-turn',
+      safePoint: true,
+      inputSafety: 'proved_no_pending_draft' as const,
+    };
+    const future = await app.emitProviderLifecycle({
+      ...evidence,
+      occurredAt: '2099-01-01T00:00:00.000Z',
+    });
+    expect(future).toMatchObject({
+      status: 'rejected',
+      reasonCode: 'LIFECYCLE_EVIDENCE_STALE',
+      presentation: null,
+    });
+    await expect(handoff).toContainText('Queued — not delivered');
+
+    const SystemDate = globalThis.Date;
+    let pending: ReturnType<LaunchedApp['emitProviderLifecycle']>;
+    try {
+      // Only the runner's synchronous fixture-call construction sees this
+      // clock. Electron main and its real freshness checks remain unchanged.
+      globalThis.Date = class extends SystemDate {
+        constructor() {
+          super('2099-01-01T00:00:00.000Z');
+        }
+      } as DateConstructor;
+      pending = app.emitProviderLifecycle(evidence);
+    } finally {
+      globalThis.Date = SystemDate;
+    }
+    expect(await pending).toMatchObject({
+      status: 'accepted',
+      safePoint: true,
+      presentation: { presented: true, reasonCode: null },
+    });
+    await expect(handoff).toContainText('Delivered — outcome pending');
   } finally {
     await teardown(app, ...dirs);
   }
@@ -472,7 +480,7 @@ test('authority escalation can close a conversation and later provider messages 
       autoContinueConfirmation: true,
     });
 
-    const held = await replyFromProvider(app, {
+    const held = await app.replyFromProvider({
       sessionId: sessions[1]!.id,
       inReplyToId: root.id,
       kind: 'response',
@@ -492,7 +500,7 @@ test('authority escalation can close a conversation and later provider messages 
     await press(escalation.getByRole('button', { name: 'Close conversation' }));
     await expect(detail).toContainText('closed');
 
-    const late = await replyFromProvider(app, {
+    const late = await app.replyFromProvider({
       sessionId: sessions[1]!.id,
       inReplyToId: root.id,
       kind: 'inform',

@@ -68,6 +68,7 @@ export function identity(n: number): { volumeSerial: string; fileId: string } {
 export class FakeNative implements NativeSupervisor {
   readonly dirs = new Map<string, FakeDir>();
   readonly jobs = new Map<number, Set<number>>();
+  readonly sessionJobTokens = new Map<string, number>();
   readonly calls: { op: string; args: unknown[] }[] = [];
   stubbornJobs = new Set<number>();
   verifyResult: boolean | null = null;
@@ -95,9 +96,10 @@ export class FakeNative implements NativeSupervisor {
     };
   }
 
-  createKillOnCloseJob(): number {
+  createKillOnCloseJob(sessionId?: string): number {
     const token = this.#next++;
     this.jobs.set(token, new Set());
+    if (sessionId) this.sessionJobTokens.set(sessionId, token);
     this.#record('createKillOnCloseJob', token);
     return token;
   }
@@ -124,6 +126,12 @@ export class FakeNative implements NativeSupervisor {
     this.#record('inspectJob', token);
     const job = this.#job(token);
     return { activeProcessCount: job.size, processIds: [...job], truncated: false };
+  }
+  inspectSessionScope(sessionId: string): JobSnapshot {
+    const token = this.sessionJobTokens.get(sessionId);
+    return token && this.jobs.has(token)
+      ? this.inspectJob(token)
+      : { activeProcessCount: 0, processIds: [], truncated: false };
   }
 
   terminateJob(token: number, exitCode: number): JobSnapshot {
@@ -160,6 +168,7 @@ export class FakeHost implements HostHandle {
   /** When set, `host.launch` is answered with this failure instead of launched. */
   failOnLaunch: HostFailureCode | null = null;
   #secret = '';
+  #outputSequence = 0;
   #listeners: ((message: unknown) => void)[] = [];
   #exitListeners: ((code: number) => void)[] = [];
   #native: FakeNative;
@@ -215,8 +224,29 @@ export class FakeHost implements HostHandle {
         const token = this.#native.jobOf(this.pid);
         if (token !== undefined) this.#native.jobs.get(token)!.add(this.rootPid);
         this.emit({ type: 'host.launched', sessionId: this.sessionId, rootPid: this.rootPid });
+        if (message.outputBudget)
+          this.emit({
+            type: 'host.outputProgress',
+            sessionId: this.sessionId,
+            attemptId: message.outputBudget.attemptId,
+            outputBytes: 0,
+            totalOutputBytes: 0,
+            sequence: ++this.#outputSequence,
+            limitReached: false,
+          });
         return;
       }
+      case 'host.setOutputBudget':
+        this.emit({
+          type: 'host.outputProgress',
+          sessionId: this.sessionId,
+          attemptId: message.attemptId,
+          outputBytes: 0,
+          totalOutputBytes: 0,
+          sequence: ++this.#outputSequence,
+          limitReached: false,
+        });
+        return;
       case 'host.input':
       case 'host.resize':
       case 'host.interrupt':
@@ -448,6 +478,7 @@ export function createWorld(options: { degraded?: boolean; noStorage?: boolean }
       },
       picker: { pickDirectory: async () => world.pickerPath },
       profilePicker: { pickFile: async () => null },
+      agentExportPicker: { pickTarget: async () => null },
       events: rendererEvents,
       storage,
       health,

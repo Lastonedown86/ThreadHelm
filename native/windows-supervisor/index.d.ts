@@ -8,7 +8,7 @@ export declare function closeJob(token: number): void
  * Create the session's containment scope. Main must retain the returned token
  * for the whole session lifetime.
  */
-export declare function createKillOnCloseJob(): number
+export declare function createKillOnCloseJob(sessionId?: string | undefined | null): number
 
 export interface DirectoryIdentity {
   selectedPath: string
@@ -21,6 +21,8 @@ export interface DirectoryIdentity {
 }
 
 export declare function inspectJob(token: number): JobSnapshot
+
+export declare function inspectSessionScope(sessionId: string): JobSnapshot
 
 export interface JobSnapshot {
   activeProcessCount: number

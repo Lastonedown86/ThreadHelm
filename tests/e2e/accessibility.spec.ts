@@ -83,6 +83,9 @@ test('keyboard-only journey with visible focus and accessible names', async () =
     await tabTo(page, /cannot confine/);
     await page.keyboard.press('Space');
     await expect(dialog.getByRole('checkbox')).toBeChecked();
+    // Keyboard traversal skips disabled controls. Wait for the async preview
+    // and React confirmation update before trying to reach the launch button.
+    await expect(dialog.getByRole('button', { name: 'Launch session', exact: true })).toBeEnabled();
     await tabTo(page, /^Launch session$/);
     await page.keyboard.press('Enter');
     await expect(dialog).toBeHidden({ timeout: 30_000 });
@@ -105,18 +108,34 @@ test('keyboard can leave the terminal to reach Stop and confirm it', async () =>
     await page.locator('.status-bar').click();
     await tabTo(page, /^Choose folder/);
     await page.keyboard.press('Enter');
+    const approve = page.getByRole('dialog', { name: 'Approve this folder?' });
+    await expect(approve).toBeVisible();
     await tabTo(page, /^Approve folder$/);
     await page.keyboard.press('Enter');
+    await expect(approve).toBeHidden();
     await tabTo(page, /^Launch Codex CLI in /);
     await page.keyboard.press('Enter');
     const dialog = page.getByRole('dialog', { name: 'Review this launch' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('checkbox')).toBeVisible();
     await tabTo(page, /cannot confine/);
     await page.keyboard.press('Space');
+    await expect(dialog.getByRole('checkbox')).toBeChecked();
+    await expect(dialog.getByRole('button', { name: 'Launch session', exact: true })).toBeEnabled();
     await tabTo(page, /^Launch session$/);
     await page.keyboard.press('Enter');
     await expect(dialog).toBeHidden({ timeout: 30_000 });
     const [live] = await app.liveSessions();
+    const interrupt = page.locator('.control-bar').getByRole('button', {
+      name: 'Interrupt',
+      exact: true,
+    });
+    await expect(interrupt).toBeEnabled();
+    // Launch completion precedes the lazy terminal's mount and automatic focus.
+    // Exercise F6 from xterm itself; do not send it to a loading/previous control.
+    await expect(page.locator('.terminal-host .xterm-helper-textarea')).toBeFocused();
     await page.keyboard.press('F6');
+    await expect(interrupt).toBeFocused();
     await tabTo(page, /^Stop…$/);
     await page.keyboard.press('Enter');
     const stop = page.getByRole('dialog', { name: 'Stop this session?' });
@@ -202,6 +221,41 @@ test('text scaling, contrast, reduced motion, and idle rendering', async () => {
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
     );
     expect(overflow).toBe(false);
+  } finally {
+    await teardown(app);
+  }
+});
+
+test('mission form has named visible-focus controls, stable idle content and 200 percent reflow', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const page = app.page;
+  try {
+    await page.getByRole('button', { name: 'New mission…', exact: true }).focus();
+    await page.keyboard.press('Enter');
+    const dialog = page.getByRole('dialog', { name: 'Create mission', exact: true });
+    await expect(dialog.getByLabel('Objective', { exact: true })).toBeFocused();
+    // Traverse the real form, checking each enabled focus target rather than
+    // asserting accessibility from the source markup alone.
+    for (let index = 0; index < 18; index++) {
+      const control = await focused(page);
+      expect(control.name, `accessible name for ${control.html}`).not.toBe('');
+      expect(control.outlineStyle !== 'none' && control.outlineWidth !== '0px').toBe(true);
+      await page.keyboard.press('Tab');
+    }
+    await expect(dialog.locator('canvas,svg,img,video')).toHaveCount(0);
+    const before = await dialog.innerHTML();
+    await page.waitForTimeout(2000);
+    expect(await dialog.innerHTML()).toBe(before);
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '200%';
+    });
+    const overflow = await dialog.evaluate(
+      (element) => element.scrollWidth > element.clientWidth + 1,
+    );
+    expect(overflow).toBe(false);
+    await expect(dialog.getByLabel('Objective', { exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
   } finally {
     await teardown(app);
   }

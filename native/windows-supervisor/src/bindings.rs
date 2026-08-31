@@ -59,8 +59,19 @@ pub fn resolve_directory(selected_path: String) -> Result<DirectoryIdentity> {
 /// Create the session's containment scope. Main must retain the returned token
 /// for the whole session lifetime.
 #[napi(catch_unwind)]
-pub fn create_kill_on_close_job() -> Result<u32> {
-    job::create_kill_on_close_job().map_err(to_napi)
+pub fn create_kill_on_close_job(session_id: Option<String>) -> Result<u32> {
+    match session_id {
+        Some(id) => job::create_named_session_job(&id),
+        None => job::create_kill_on_close_job(),
+    }
+    .map_err(to_napi)
+}
+
+#[napi(catch_unwind)]
+pub fn inspect_session_scope(session_id: String) -> Result<JobSnapshot> {
+    job::inspect_session_scope(&session_id)
+        .map(Into::into)
+        .map_err(to_napi)
 }
 
 #[napi(catch_unwind)]

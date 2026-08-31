@@ -5,6 +5,15 @@ description: "Dependency-ordered implementation tasks for durable hive coordinat
 
 # Tasks: Durable Hive Coordination
 
+**Current milestone (owner-approved 2026-08-31): unsigned Windows 11 x64 preview.**
+See [approved deferrals D01-D06 and retained preview gates P01-P05](preview-release.md).
+The full-feature task list below remains intact: deferred work is not complete and its checkbox
+stays open. T148 is deferred from the preview; T149/T154/T157 mix deferred and retained work;
+T158 still represents full feature closure. Do not use the aggregate full-feature count as the preview
+release checklist or require deferred ARM64/auto-provider work to accept the limited preview.
+The subsequently approved [next-feature handoff](transition-to-next-feature.md) carries D01-D06
+forward after retained acceptance, required review and main integration; it is separate from T158.
+
 **Input**: Design documents from `specs/002-agent-mailbox-routing/`
 
 **Prerequisites**: `plan.md`, `spec.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`
@@ -298,34 +307,34 @@ invalid-variable, overwrite, cancellation, and write-failure behavior without an
 
 ### Model gate for User Story 7
 
-- [ ] T107 [US7] Verify Antigravity `gemini-3.7-flash-medium`, fallback `gemini-3.6-flash-medium`, and Claude `claude-sonnet-5` at `high` verifier availability; record wizard/template UX, schema, cost, and export-safety ownership in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T107 [US7] Verify OpenAI `gpt-5.6-terra` at `high`, fallback `gpt-5.6-sol` at `high`, for the current implementation assignment; record wizard/template UX, schema, cost, and export-safety ownership in `specs/002-agent-mailbox-routing/execution-evidence.md`. Claude `claude-sonnet-5` at `high` remains an approval-gated independent verifier, and Antigravity is unassigned: do not start, probe, or otherwise invoke either external provider without first asking the owner.
 
 ### Tests for User Story 7
 
-- [ ] T108 [P] [US7] Write failing template/draft state, copy-on-create provenance, literal-variable, validation, bounds, and non-authority tests in `tests/unit/domain/agent-template.test.ts`
-- [ ] T109 [P] [US7] Write failing template revision, draft recovery, stale version, quota, deletion, and completed-draft immutability tests in `tests/unit/persistence/agent-templates.test.ts`
-- [ ] T110 [P] [US7] Write failing wizard step, exact JSON, save-as-profile, export token, target-change, overwrite, unknown-field, and non-executable-template contract tests in `tests/contract/agent-templates.test.ts`
-- [ ] T111 [P] [US7] Write failing Windows restart, atomic export, collision, write-failure, local-template, and profile-parity cases in `tests/integration/windows/agent-profile-wizard.test.ts`
-- [ ] T112 [P] [US7] Write failing keyboard step/back/resume/cancel/review/save/template/export journeys with visible errors and no graphics dependency in `tests/e2e/agent-profile-wizard.spec.ts`
+- [X] T108 [P] [US7] Write failing template/draft state, copy-on-create provenance, literal-variable, validation, bounds, and non-authority tests in `tests/unit/domain/agent-template.test.ts`
+- [X] T109 [P] [US7] Write failing template revision, draft recovery, stale version, quota, deletion, and completed-draft immutability tests in `tests/unit/persistence/agent-templates.test.ts`
+- [X] T110 [P] [US7] Write failing wizard step, exact JSON, save-as-profile, export token, target-change, overwrite, unknown-field, and non-executable-template contract tests in `tests/contract/agent-templates.test.ts`
+- [X] T111 [P] [US7] Write failing Windows restart, atomic export, collision, write-failure, local-template, and profile-parity cases in `tests/integration/windows/agent-profile-wizard.test.ts`
+- [X] T112 [P] [US7] Write failing keyboard step/back/resume/cancel/review/save/template/export journeys with visible errors and no graphics dependency in `tests/e2e/agent-profile-wizard.spec.ts`
 
 ### Implementation for User Story 7
 
 **Dependency**: T164 and T165 MUST complete before T122. T107-T121 may proceed independently because
 profiles, templates, and drafts intentionally own no runtime permission field.
 
-- [ ] T113 [P] [US7] Add versioned generic investigator, implementer, reviewer, quality, documentation, and release-gate starter fixtures without Marvel/project content in `packages/test-fixtures/src/agent-templates.ts` and export them from `packages/test-fixtures/src/index.ts`
-- [ ] T114 [US7] Implement template/draft state, strict field ownership, copy-on-create provenance, literal-variable substitution, validation, and completion policy in `packages/domain/src/agent-template.ts` and export it from `packages/domain/src/index.ts`
-- [ ] T115 [US7] Extend migration v3 with template/revision/draft/provenance/digest/current-state indexes and quotas in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
-- [ ] T116 [US7] Implement transactional template revision, duplicate, enable/disable/delete, draft autosave/recovery/delete, and completion repositories in `packages/persistence/src/repositories/agent-templates.ts` and export them from `packages/persistence/src/repositories/index.ts`
-- [ ] T117 [US7] Implement wizard draft lifecycle, per-step/final validation, exact JSON preview tokens, save-as-profile delegation, export intent, atomic write, collision/change recheck, and safe failure evidence in `apps/desktop/src/main/coordination/profile-wizard.ts`
-- [ ] T118 [US7] Add strict wizard/template views, named draft/template/save/export IPC operations, content-free events, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
-- [ ] T119 [P] [US7] Build the keyboard-accessible step shell, progress text, field ownership help, validation summary, back/resume/cancel controls, and exact JSON review in `apps/desktop/src/renderer/features/coordination/AgentProfileWizard.tsx`
-- [ ] T120 [P] [US7] Build the compact generic/user template library with provenance, revisions, duplicate, enable/disable, and delete controls in `apps/desktop/src/renderer/features/coordination/AgentTemplateLibrary.tsx`
-- [ ] T121 [US7] Integrate wizard drafts, template events, explicit detail loading, and profile completion into `apps/desktop/src/renderer/store.tsx`, `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`, and `apps/desktop/src/renderer/App.tsx`
-- [ ] T122 [US7] Add a final launch-settings disclosure handoff proving generated provider/model/effort/permission/isolation/budget/tool/workspace values remain separately resolved and no persona/template field selects permission mode in `packages/providers/src/adapter.ts` and `apps/desktop/src/main/coordination/profile-wizard.ts`
-- [ ] T123 [US7] Add manual acceptance that creates a local Marvel-themed template from one reviewed profile and verifies no Marvel/project content appears in bundled starters in `specs/002-agent-mailbox-routing/execution-evidence.md`
-- [ ] T124 [US7] Run the US7 domain, persistence, contract, Windows, E2E, and export slices; capture final exits, Antigravity implementation evidence, Claude review, and deterministic schema/overwrite/privacy results in `specs/002-agent-mailbox-routing/execution-evidence.md`
-- [ ] T125 [US7] Verify all bundled templates are generic, narrow, provider-neutral where possible, bounded, non-executable, and accessible, and record their exact version/digest inventory in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T113 [P] [US7] Add versioned generic investigator, implementer, reviewer, quality, documentation, and release-gate starter fixtures without Marvel/project content in `packages/test-fixtures/src/agent-templates.ts` and export them from `packages/test-fixtures/src/index.ts`
+- [X] T114 [US7] Implement template/draft state, strict field ownership, copy-on-create provenance, literal-variable substitution, validation, and completion policy in `packages/domain/src/agent-template.ts` and export it from `packages/domain/src/index.ts`
+- [X] T115 [US7] Extend migration v3 with template/revision/draft/provenance/digest/current-state indexes and quotas in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
+- [X] T116 [US7] Implement transactional template revision, duplicate, enable/disable/delete, draft autosave/recovery/delete, and completion repositories in `packages/persistence/src/repositories/agent-templates.ts` and export them from `packages/persistence/src/repositories/index.ts`
+- [X] T117 [US7] Implement wizard draft lifecycle, per-step/final validation, exact JSON preview tokens, save-as-profile delegation, export intent, atomic write, collision/change recheck, and safe failure evidence in `apps/desktop/src/main/coordination/profile-wizard.ts`
+- [X] T118 [US7] Add strict wizard/template views, named draft/template/save/export IPC operations, content-free events, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
+- [X] T119 [P] [US7] Build the keyboard-accessible step shell, progress text, field ownership help, validation summary, back/resume/cancel controls, and exact JSON review in `apps/desktop/src/renderer/features/coordination/AgentProfileWizard.tsx`
+- [X] T120 [P] [US7] Build the compact generic/user template library with provenance, revisions, duplicate, enable/disable, and delete controls in `apps/desktop/src/renderer/features/coordination/AgentTemplateLibrary.tsx`
+- [X] T121 [US7] Integrate wizard drafts, template events, explicit detail loading, and profile completion into `apps/desktop/src/renderer/store.tsx`, `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`, and `apps/desktop/src/renderer/App.tsx`
+- [X] T122 [US7] Add a final launch-settings disclosure handoff proving generated provider/model/effort/permission/isolation/budget/tool/workspace values remain separately resolved and no persona/template field selects permission mode in `packages/providers/src/adapter.ts` and `apps/desktop/src/main/coordination/profile-wizard.ts`
+- [X] T123 [US7] Add manual acceptance that creates a local Marvel-themed template from one reviewed profile and verifies no Marvel/project content appears in bundled starters in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T124 [US7] Run the US7 domain, persistence, contract, Windows, E2E, and export slices; capture final exits, OpenAI implementation evidence, deterministic schema/overwrite/privacy results, and any separately owner-authorized Claude review in `specs/002-agent-mailbox-routing/execution-evidence.md`. Do not start Antigravity or Claude runs for this task without asking the owner first.
+- [X] T125 [US7] Verify all bundled templates are generic, narrow, provider-neutral where possible, bounded, non-executable, and accessible, and record their exact version/digest inventory in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 **Checkpoint**: US7 creates portable agents without hand-edited JSON while templates remain local,
 versioned, non-executable scaffolds and completion never launches or authorizes an agent.
@@ -344,34 +353,34 @@ scope-changing request, and verify bounded autonomy and recovery.
 
 ### Model gate for User Story 8
 
-- [ ] T126 [US8] Verify OpenAI `gpt-5.6-sol` at `max`, fallback `gpt-5.6-terra` at `max`, Claude `claude-opus-5` at `xhigh`, human owner, and Antigravity `gemini-3.1-pro-high` adversarial reviewer availability; verify the exact Claude CLI/model/provider/organization auto-mode capability surface and record the complete authority/concurrency/permission gate in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T126 [US8] Verify OpenAI `gpt-5.6-sol` at `max`, fallback `gpt-5.6-terra` at `max`, Claude `claude-opus-5` at `xhigh`, human owner, and Antigravity `gemini-3.1-pro-high` adversarial reviewer availability; verify the exact Claude CLI/model/provider/organization auto-mode capability surface and record the complete authority/concurrency/permission gate in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
 ### Tests for User Story 8
 
-- [ ] T127 [P] [US8] Write failing mission, work-DAG, profile-revision, exact automatic-start binding, runtime permission/capability evidence, dependency, lease, attempt, decision-loop, elapsed/turn/no-progress/resource bound, budget, authority, and recovery state tests in `tests/unit/domain/supervisor.test.ts`
-- [ ] T128 [P] [US8] Write failing mission/version, profile pin, automatic-start permission snapshot, work-item/decision/attempt/start disposition, reserved-to-active lease uniqueness, typed permission/timeout/cancel/unknown result return link, rollback, unknown recovery, and content-deletion tests in `tests/unit/persistence/supervisor.test.ts`
-- [ ] T129 [P] [US8] Write failing mission disclosure, exact worker automatic-start authorization, static-persona non-authority, auto capability failure, bypass exclusion, launch drift/substitution denial, supervisor-role registry, persona self-appointment, envelope escape, worker denial, idempotency, bounds, and consequential-action tests in `tests/contract/supervisor.test.ts`
-- [ ] T130 [P] [US8] Write failing three-worker mission, pre-authorized Claude auto worker start, permission block, unavailable-auto hold, no-bypass fallback, start failure/drift, known-safe reassignment, write-lease conflict, timeout/cancel/no-progress/budget/unknown attempt, crash, loop, power, and no-recovery-autostart cases in `tests/integration/windows/supervisor-mission.test.ts`
-- [ ] T131 [P] [US8] Write failing keyboard mission creation/detail/pause/resume/cancel/escalation and minimal-status UI journeys in `tests/e2e/supervisor-mission.spec.ts`
+- [X] T127 [P] [US8] Write failing mission, work-DAG, profile-revision, exact automatic-start binding, runtime permission/capability evidence, dependency, lease, attempt, decision-loop, elapsed/turn/no-progress/resource bound, budget, authority, and recovery state tests in `tests/unit/domain/supervisor.test.ts`
+- [X] T128 [P] [US8] Write failing mission/version, profile pin, automatic-start permission snapshot, work-item/decision/attempt/start disposition, reserved-to-active lease uniqueness, typed permission/timeout/cancel/unknown result return link, rollback, unknown recovery, and content-deletion tests in `tests/unit/persistence/supervisor.test.ts`
+- [X] T129 [P] [US8] Write failing mission disclosure, exact worker automatic-start authorization, static-persona non-authority, auto capability failure, bypass exclusion, launch drift/substitution denial, supervisor-role registry, persona self-appointment, envelope escape, worker denial, idempotency, bounds, and consequential-action tests in `tests/contract/supervisor.test.ts`
+- [X] T130 [P] [US8] Write failing three-worker mission, pre-authorized Claude auto worker start, permission block, unavailable-auto hold, no-bypass fallback, start failure/drift, known-safe reassignment, write-lease conflict, timeout/cancel/no-progress/budget/unknown attempt, crash, loop, power, and no-recovery-autostart cases in `tests/integration/windows/supervisor-mission.test.ts`
+- [X] T131 [P] [US8] Write failing keyboard mission creation/detail/pause/resume/cancel/escalation and minimal-status UI journeys in `tests/e2e/supervisor-mission.spec.ts`
 
 ### Implementation for User Story 8
 
-- [ ] T132 [US8] Implement mission envelope, pinned-profile revision, automatic-start runtime-permission/capability binding, work-DAG, decision, typed permission/timeout/cancel/no-progress/budget/unknown attempt, lease, bound, structured result-return, and consequential-authority state policy in `packages/domain/src/supervisor.ts` and export it from `packages/domain/src/index.ts`
-- [ ] T133 [US8] Extend migration v3 with mission automatic-start bindings, profile-revision eligibility, work-item, dependency, supervisor-decision, work-attempt/start/result links, reservable worker leases, event-sequence, and partial-unique indexes in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
-- [ ] T134 [US8] Implement transactional mission/version, profile pins/start bindings, DAG, decision, attempt/start/result links, reserved-to-active lease, event, budget, and recovery repositories in `packages/persistence/src/repositories/supervisor.ts` and export them from `packages/persistence/src/repositories/index.ts`
-- [ ] T135 [US8] Implement exact mission-envelope preview/confirmation and envelope-revision disclosures, including per-worker automatic-start permission policy/source/provider mapping, capability evidence, elapsed/turn/no-progress/resource bounds, bypass exclusion, and one-time target-bound tokens, in `apps/desktop/src/main/coordination/disclosures.ts`
-- [ ] T136 [US8] Implement mission lifecycle, supervisor binding, typed decision validation, task decomposition, assignment, pre-authorized auto/allowlist worker startup, permission/classifier/timeout/cancel/no-progress/budget outcome handling, completion, structured result return, and escalation in `apps/desktop/src/main/coordination/supervisor.ts`
-- [ ] T137 [US8] Implement acyclic dependency evaluation, 64-item/depth-eight limits, completion evidence, and blocked-to-ready transitions in `apps/desktop/src/main/coordination/supervisor.ts` and `packages/domain/src/supervisor.ts`
-- [ ] T138 [US8] Implement main-owned read/write worker leases, exact workspace/profile-revision eligibility, conflicting-write denial, expiry, release, and unknown-lease holds in `apps/desktop/src/main/sessions/lease.ts` and `apps/desktop/src/main/coordination/supervisor.ts`
-- [ ] T139 [US8] Implement the event-driven supervisor wake loop, structured provider progress, three-attempt known-safe retry/reassignment, three-of-eight decision-loop stop, elapsed/turn/resource/no-progress bounds, cancellation, and no-unknown-replay policy in `apps/desktop/src/main/coordination/supervisor.ts`
-- [ ] T140 [US8] Implement mission recovery that preserves work/memory/decisions/profile pins, moves unsafe missions/leases to recovery-required/unknown, and launches or resumes nothing in `apps/desktop/src/main/coordination/recovery.ts`
-- [ ] T141 [US8] Add versioned supervisor-only mission/work bridge methods and reject every worker or cross-mission invocation in `apps/desktop/src/main/coordination/bridge.ts` and `native/windows-supervisor/src/bin/threadhelm-coordination-bridge.rs`
-- [ ] T142 [US8] Add supervisor/worker role capability generation and exact runtime permission mapping to per-session Codex and Claude configurations, mapping supported Claude workers to real `--permission-mode auto`, holding unavailable auto, and excluding bypass without trusting persona fields, persisting mission content/permission, or editing global/project settings in `packages/providers/src/adapter.ts`, `packages/providers/src/codex.ts`, and `packages/providers/src/claude-code.ts`
-- [ ] T143 [US8] Add strict mission/work/lease/decision/start/result-return views, named IPC operations/events, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
-- [ ] T144 [P] [US8] Build the compact keyboard-accessible mission list, bound/status badges, filters, and recovery states in `apps/desktop/src/renderer/features/coordination/MissionList.tsx`
-- [ ] T145 [P] [US8] Build mission-envelope confirmation with exact worker automatic-start permission/source/capability/bound disclosures, pinned roster, work DAG table, decision/attempt/start/result history, lease state, and exact escalation controls in `apps/desktop/src/renderer/features/coordination/MissionDetail.tsx`
-- [ ] T146 [US8] Integrate content-free mission events and explicit details into `apps/desktop/src/renderer/store.tsx`, `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`, and `apps/desktop/src/renderer/App.tsx`
-- [ ] T147 [US8] Add deterministic supervisor/worker fixture behaviors for valid DAGs, offline start, launch drift, structured result return, failures, refusals, loops, persona self-appointment, envelope escape, and consequential requests in `packages/test-fixtures/src/supervisor.ts` and export them from `packages/test-fixtures/src/index.ts`
+- [X] T132 [US8] Implement mission envelope, pinned-profile revision, automatic-start runtime-permission/capability binding, work-DAG, decision, typed permission/timeout/cancel/no-progress/budget/unknown attempt, lease, bound, structured result-return, and consequential-authority state policy in `packages/domain/src/supervisor.ts` and export it from `packages/domain/src/index.ts`
+- [X] T133 [US8] Extend migration v3 with mission automatic-start bindings, profile-revision eligibility, work-item, dependency, supervisor-decision, work-attempt/start/result links, reservable worker leases, event-sequence, and partial-unique indexes in `packages/persistence/src/schema.ts` and `packages/persistence/src/migrate.ts`
+- [X] T134 [US8] Implement transactional mission/version, profile pins/start bindings, DAG, decision, attempt/start/result links, reserved-to-active lease, event, budget, and recovery repositories in `packages/persistence/src/repositories/supervisor.ts` and export them from `packages/persistence/src/repositories/index.ts`
+- [X] T135 [US8] Implement exact mission-envelope preview/confirmation and envelope-revision disclosures, including per-worker automatic-start permission policy/source/provider mapping, capability evidence, elapsed/turn/no-progress/resource bounds, bypass exclusion, and one-time target-bound tokens, in `apps/desktop/src/main/coordination/disclosures.ts`
+- [X] T136 [US8] Implement mission lifecycle, supervisor binding, typed decision validation, task decomposition, assignment, pre-authorized auto/allowlist worker startup, permission/classifier/timeout/cancel/no-progress/budget outcome handling, completion, structured result return, and escalation in `apps/desktop/src/main/coordination/supervisor.ts`
+- [X] T137 [US8] Implement acyclic dependency evaluation, 64-item/depth-eight limits, completion evidence, and blocked-to-ready transitions in `apps/desktop/src/main/coordination/supervisor.ts` and `packages/domain/src/supervisor.ts`
+- [X] T138 [US8] Implement main-owned read/write worker leases, exact workspace/profile-revision eligibility, conflicting-write denial, expiry, release, and unknown-lease holds in `apps/desktop/src/main/sessions/lease.ts` and `apps/desktop/src/main/coordination/supervisor.ts`
+- [X] T139 [US8] Implement the event-driven supervisor wake loop, structured provider progress, three-attempt known-safe retry/reassignment, three-of-eight decision-loop stop, elapsed/turn/resource/no-progress bounds, cancellation, and no-unknown-replay policy in `apps/desktop/src/main/coordination/supervisor.ts`
+- [X] T140 [US8] Implement mission recovery that preserves work/memory/decisions/profile pins, moves unsafe missions/leases to recovery-required/unknown, and launches or resumes nothing in `apps/desktop/src/main/coordination/recovery.ts`
+- [X] T141 [US8] Add versioned supervisor-only mission/work bridge methods and reject every worker or cross-mission invocation in `apps/desktop/src/main/coordination/bridge.ts` and `native/windows-supervisor/src/bin/threadhelm-coordination-bridge.rs`
+- [X] T142 [US8] Add supervisor/worker role capability generation and exact runtime permission mapping to per-session Codex and Claude configurations, mapping supported Claude workers to real `--permission-mode auto`, holding unavailable auto, and excluding bypass without trusting persona fields, persisting mission content/permission, or editing global/project settings in `packages/providers/src/adapter.ts`, `packages/providers/src/codex.ts`, and `packages/providers/src/claude-code.ts`
+- [X] T143 [US8] Add strict mission/work/lease/decision/start/result-return views, named IPC operations/events, and least-privilege preload methods in `packages/contracts/src/index.ts`, `apps/desktop/src/main/ipc/router.ts`, and `apps/desktop/src/preload/index.ts`
+- [X] T144 [P] [US8] Build the compact keyboard-accessible mission list, bound/status badges, filters, and recovery states in `apps/desktop/src/renderer/features/coordination/MissionList.tsx`
+- [X] T145 [P] [US8] Build mission-envelope confirmation with exact worker automatic-start permission/source/capability/bound disclosures, pinned roster, work DAG table, decision/attempt/start/result history, lease state, and exact escalation controls in `apps/desktop/src/renderer/features/coordination/MissionDetail.tsx`
+- [X] T146 [US8] Integrate content-free mission events and explicit details into `apps/desktop/src/renderer/store.tsx`, `apps/desktop/src/renderer/features/coordination/CoordinationPanel.tsx`, and `apps/desktop/src/renderer/App.tsx`
+- [X] T147 [US8] Add deterministic supervisor/worker fixture behaviors for valid DAGs, offline start, launch drift, structured result return, failures, refusals, loops, persona self-appointment, envelope escape, and consequential requests in `packages/test-fixtures/src/supervisor.ts` and export them from `packages/test-fixtures/src/index.ts`
 - [ ] T148 [US8] Extend installed provider proof with worker-versus-supervisor registries, pinned profile revisions, one bounded mission, one disposable pre-authorized Claude auto worker start, harmless read/edit/test progress, classifier denial, unavailable-auto/no-bypass hold, timeout/cancel/no-progress result return, launch-substitution denial, known-safe reassignment, envelope denial, human escalation, crash recovery, usage evidence, and cleanup in `tests/acceptance/provider-coordination-smoke.test.ts`
 - [ ] T149 [US8] Run the US8 domain, persistence, contract, Windows, E2E, and provider-proof slices; capture final exits, OpenAI implementation evidence, exact Claude auto-mode/version/usage evidence, Claude/Antigravity adversarial reviews, and explicit human acceptance in `specs/002-agent-mailbox-routing/execution-evidence.md`
 
@@ -385,15 +394,23 @@ supervisor remains replaceable intelligence with no blanket machine authority.
 **Purpose**: Prove privacy, accessibility, performance, packaging, provider isolation, and full
 Windows readiness across the selected milestones.
 
-- [ ] T150 [P] Add malformed Unicode, ANSI/OSC, credential-like content, oversized frame/manifest/draft, unknown-field/variable, role-confusion, scope-confusion, persona self-appointment, and envelope-escape fuzz cases in `tests/contract/desktop-ipc-coordination.test.ts`, `tests/contract/provider-coordination.test.ts`, `tests/contract/agent-profiles.test.ts`, `tests/contract/agent-templates.test.ts`, `tests/contract/shared-memory.test.ts`, and `tests/contract/supervisor.test.ts`
-- [ ] T151 [P] Add four-worker-plus-supervisor, 100-profile, 100-template, 20-draft, 1,000-handoff retry/duplicate, 10,000-memory-revision, mission-bound, recovery-under-five-seconds, operation-under-one-second, and search-under-500-ms measurements in `tests/integration/windows/performance.test.ts`
-- [ ] T152 [P] Add full keyboard, visible-focus, accessible-name, text-scaling, WCAG 2.2 AA, bounded-live-region, and no-idle-polling/no-animation coverage in `tests/e2e/accessibility.spec.ts`
-- [ ] T153 Audit and harden content-free logging, renderer events, profile/template/draft/export handling, bridge stderr, database metadata, and crash errors in `apps/desktop/src/main/logging.ts`, `apps/desktop/src/main/coordination/service.ts`, `apps/desktop/src/main/coordination/profiles.ts`, `apps/desktop/src/main/coordination/profile-wizard.ts`, `apps/desktop/src/main/coordination/memory.ts`, and `apps/desktop/src/main/coordination/supervisor.ts`
-- [ ] T154 Verify bridge packaging, signing inputs, x64/ARM64 installed lookup, Job Object containment, and uninstall cleanup in `apps/desktop/forge.config.ts`, `native/windows-supervisor/package.json`, and `tests/acceptance/installed-app.test.ts`
-- [ ] T155 Update runnable commands, expected evidence, roster import, wizard/template/export, rollback/recovery notes, and separate local/hosted/provider status reporting in `specs/002-agent-mailbox-routing/quickstart.md`
-- [ ] T156 Run `pnpm format`, `pnpm lint`, `pnpm rust:fmt`, `pnpm rust:check`, `pnpm rust:test`, `pnpm typecheck`, `pnpm test:unit`, `pnpm test:contract`, `pnpm desktop:build`, `pnpm proof:windows-supervision`, `pnpm test:integration:windows`, and `pnpm test:e2e` sequentially and record every final exit/summary in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T150 [P] Add malformed Unicode, ANSI/OSC, credential-like content, oversized frame/manifest/draft, unknown-field/variable, role-confusion, scope-confusion, persona self-appointment, and envelope-escape fuzz cases in `tests/contract/desktop-ipc-coordination.test.ts`, `tests/contract/provider-coordination.test.ts`, `tests/contract/agent-profiles.test.ts`, `tests/contract/agent-templates.test.ts`, `tests/contract/shared-memory.test.ts`, and `tests/contract/supervisor.test.ts`
+- [X] T151 [P] Add four-worker-plus-supervisor, 100-profile, 100-template, 20-draft, 1,000-handoff retry/duplicate, 10,000-memory-revision, mission-bound, recovery-under-five-seconds, operation-under-one-second, and search-under-500-ms measurements in `tests/integration/windows/performance.test.ts`
+- [X] T152 [P] Add full keyboard, visible-focus, accessible-name, text-scaling, WCAG 2.2 AA, bounded-live-region, and no-idle-polling/no-animation coverage in `tests/e2e/accessibility.spec.ts`
+- [X] T153 Audit and harden content-free logging, renderer events, profile/template/draft/export handling, bridge stderr, database metadata, and crash errors in `apps/desktop/src/main/logging.ts`, `apps/desktop/src/main/coordination/service.ts`, `apps/desktop/src/main/coordination/profiles.ts`, `apps/desktop/src/main/coordination/profile-wizard.ts`, `apps/desktop/src/main/coordination/memory.ts`, and `apps/desktop/src/main/coordination/supervisor.ts`
+- [ ] T154 Verify bridge packaging, the owner-approved unsigned distribution policy (reject invalid signatures; optional signing inputs remain supported), x64/ARM64 installed lookup, Job Object containment, and uninstall cleanup in `apps/desktop/forge.config.ts`, `native/windows-supervisor/package.json`, and `tests/acceptance/installed-app.test.ts`
+  Preview checkpoint 2026-08-31: the exact changed unsigned x64 package passed owner-machine
+  installation, identity, installed bridge lookup, native containment and single-instance checks;
+  x64 uninstall cleanup was already green in hosted acceptance. T154 remains open because its full
+  ARM64 obligation is deferred under D02 rather than completed.
+- [X] T155 Update runnable commands, expected evidence, roster import, wizard/template/export, rollback/recovery notes, and separate local/hosted/provider status reporting in `specs/002-agent-mailbox-routing/quickstart.md`
+- [X] T156 Run `pnpm format`, `pnpm lint`, `pnpm rust:fmt`, `pnpm rust:check`, `pnpm rust:test`, `pnpm typecheck`, `pnpm test:unit`, `pnpm test:contract`, `pnpm desktop:build`, `pnpm proof:windows-supervision`, `pnpm test:integration:windows`, and `pnpm test:e2e` sequentially and record every final exit/summary in `specs/002-agent-mailbox-routing/execution-evidence.md`
 - [ ] T157 Run packaged installed-artifact acceptance plus separate exact-version Codex and Claude provider proofs, preserving optional/credentialed status and recording results in `specs/002-agent-mailbox-routing/execution-evidence.md`
-- [ ] T158 Perform final spec/plan/contracts/tasks/constitution drift review, confirm the reviewed Marvel roster, generic/user template boundary, wizard non-authority, all adopted Munder mechanics, and minimal-graphics exclusions, and record approval or blockers in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T158 Perform final spec/plan/contracts/tasks/constitution drift review, confirm the reviewed Marvel roster, generic/user template boundary, wizard non-authority, all adopted Munder mechanics, and minimal-graphics exclusions, and record approval or blockers in `specs/002-agent-mailbox-routing/execution-evidence.md`
+  Review completed 2026-08-31 with no constitution conflict or uncovered feature requirement.
+  Private persona inputs remain local acceptance/import data and are absent from production artifacts;
+  current bundled starters use `threadhelm/agent-profile@1`. The review records open execution gates
+  rather than approving release or feature completion.
 
 ---
 
@@ -562,3 +579,108 @@ later autonomy, memory, provider, hosted-CI, packaging, or production gate.
 - [X] T164 [P] Add failing runtime-permission resolution, persona non-authority, exact Claude auto mapping, unavailable-auto/manual-or-allowlist hold, bypass non-persistence, preview-binding, capability-drift, and typed provider-outcome tests in `tests/unit/domain/launch-policy.test.ts`, `tests/contract/provider-adapter.test.ts`, `tests/contract/desktop-ipc-launch.test.ts`, and `tests/integration/windows/provider-permission-policy.test.ts`
 - [X] T165 Implement main-owned runtime permission resolution and source disclosure, exact provider capability evidence, per-process Claude auto mapping, bounded allowlist/manual fallback action, and isolated one-run break-glass validation requiring fresh process/filesystem containment, disposable-workspace-only writes, no unrelated credential/environment inheritance, bounded network destinations, and verified cleanup; add elapsed/turn/no-progress/resource bounds, structured progress/cancel, and typed provider outcomes without editing provider/profile/template settings in `apps/desktop/src/main/sessions/launch-policy.ts`, `apps/desktop/src/main/sessions/preview.ts`, `apps/desktop/src/main/sessions/launch.ts`, `packages/contracts/src/index.ts`, `packages/providers/src/adapter.ts`, `packages/providers/src/codex.ts`, `packages/providers/src/claude-code.ts`, and `apps/desktop/src/renderer/features/launch/LaunchDialog.tsx`
 - [X] T166 Run one disposable installed Claude auto-mode compatibility proof covering harmless read/edit/test work, classifier denial, unavailable-auto/no-bypass behavior, progress, timeout/cancel/no-progress, usage accounting, fresh process/filesystem containment, disposable-workspace-only writes, bounded credential/environment/network exposure, verified cleanup, and exact CLI/model/provider evidence recorded separately from deterministic tests in `specs/002-agent-mailbox-routing/execution-evidence.md`; MUST complete before T126
+
+### Owner follow-up — native template branding
+
+- [X] T167 Remove other-product identifiers from generated template content: use native
+  `threadhelm/agent-profile@1` for bundled starters, new drafts/copies, and wizard save/export;
+  preserve legacy imports and immutable source digests, upgrade existing bundled records safely,
+  and verify pre-upgrade draft completion without weakening stale-source or launch boundaries.
+
+- [X] T168 Synchronize keyboard-only acceptance with asynchronous launch-dialog readiness in
+  `tests/e2e/accessibility.spec.ts`; retain keyboard traversal, visible focus, the existing tab bound,
+  explicit boundary confirmation and F6/Stop assertions. Record local repetitions, independent
+  review, the unreproduced historical ARM64 failure and separate hosted confirmation in
+  `specs/002-agent-mailbox-routing/execution-evidence.md`.
+
+- [X] T169 Delay renderer output subscription until host launch has created the stream port.
+  Reproduce the installed `SUBSCRIPTION_FAILED` warning with delayed host readiness, retain
+  one-time port ownership and genuine failure reporting, and verify the launch/keyboard journeys.
+  Installed four-session resource acceptance remains a separate P04 gate.
+
+- [X] T170 Diagnose the installed idle CPU observation and correct resource measurement.
+  Disconnect the UI inspection client before sampling; preserve accessibility and all process
+  accounting. Add the guarded read-only observer and procedure under `tests/acceptance/helpers/`.
+  Repeat installed no-session and four-session observations, verify normal probe cleanup, and
+  distinguish the passing CPU results from the retained 700 MiB memory failure. This task does
+  not complete P04 or authorize shell/session-host replacement.
+
+- [X] T171 Run the owner-authorized isolated shell/session-host memory prototype.
+  Build a nonshipping Rust/WebView2 shell and four dormant native hosts using a separate copy
+  of the audited containment core. Measure three fresh blank and three combined UI/host launches,
+  count the complete process family and verify normal cleanup. Record the failed blank-shell
+  budget and promising but non-equivalent dormant-host footprint in the architectural assessment.
+  Do not port production authority, start providers, change the installed app or close P04.
+
+- [X] T172 Record the owner-directed preview memory-budget reassessment after T171.
+  Add D05 for the 700 MiB aggregate preview ceiling alongside D01; preserve failed measurements,
+  full optimization targets, CPU/latency, runtime resource bounds and private-persona exclusion.
+  Record extended resource evidence and calibration work without inventing a replacement ceiling,
+  approving production migration or marking P04/P05 complete.
+
+- [X] T173 Complete the retained extended resource evidence on the exact preview candidate.
+  Follow `memory-budget-review.md`: 15-minute idle observation, five four-fixture start/stop cycles,
+  complete process accounting, post-stop settled memory and cleanup. Investigate repeatable
+  accumulating growth or responsiveness failures before P04 acceptance. No live provider or
+  destructive owner-machine install/uninstall is implied by this task.
+  Final 2026-08-31 result: the changed unsigned x64 candidate completed the 15m49s no-session
+  observation and all five four-fixture start/stop cycles. Every one of the 20 fixture sessions
+  stopped cleanly with exit code 0; all 12 session-owned processes disappeared after every cycle,
+  and the series showed no accumulating working-set growth. Active median one-core CPU was
+  0.88%, 1.03%, 0.44%, 1.76% and 1.47%, so three cycles failed the retained 1% limit. Attribution
+  places the steady work in Electron renderer/GPU/utility processes rather than the inert fixture
+  or console processes. T173 is complete evidence with a failed CPU verdict; it does not complete
+  P04. See `t173-candidate-follow-up.md`.
+
+- [ ] T174 Remediate and repeat the retained four-session CPU acceptance on the exact preview
+  candidate. Profile the Electron renderer/GPU/utility wakeups without UI automation attached,
+  preserve terminal responsiveness, security, full-family accounting and the 1% limit, then repeat
+  the complete five-cycle series. Do not weaken the observer, discard windows or treat D01/D05 as
+  CPU deferrals. P04 remains blocked until the exact candidate passes or the owner explicitly
+  changes that separate CPU requirement.
+  Diagnostic checkpoint 2026-08-31: an isolated four-fixture source harness with a 60-second settle
+  reproduced terminal-focus sensitivity (1.09% median focused versus 0.16% with the session list
+  focused). Transparent caret color produced the same 1.09% focused median; disabling native caret
+  animation worsened it to 2.03%. Both speculative CSS candidates were reverted. No production CPU
+  change or weakened acceptance method was retained.
+  Owner decision 2026-08-31: D06 defers the fixed 1% threshold from this preview after the focused
+  diagnosis found no safe improvement. T174 remains an incomplete Feature 002 performance and
+  calibration backlog item. Preserve the five-cycle failures, full-family accounting, terminal
+  focus/accessibility/input/security behavior, responsiveness, cleanup and future representative
+  calibration; do not relabel the original measurements as passes. D06 removes T174 as a P04
+  preview blocker but does not itself pass P04.
+
+### Deferred preview targets — aggregate idle memory (D01/D05)
+
+T151 is complete for measurement coverage, not for release performance acceptance. The fresh
+x64 package measured380.324 MiB peak after deferred renderer loading (399.844 MiB after the preload
+follow-up; 413.367 and435.293 MiB on earlier checkpoints) against the unchanged250 MiB limit on
+Windows11 Home26200. Median idle CPU
+passed. Graphics and blank-runtime diagnostic comparisons
+did not meet the memory target; no metric, budget or security boundary was relaxed. Keep this
+full-release target open until a fresh packaged measurement passes. The owner-approved D01
+deferral removes only this 250 MiB threshold from the preview gate; it is not a passing result,
+a new memory ceiling, or permission to weaken other resource bounds. Preview acceptance follows
+P01-P05 in [preview-release.md](preview-release.md); the full-feature tasks remain incomplete.
+See the21:13 diagnosis,21:30 checkpoint and21:52 draft-PR follow-up in `execution-evidence.md`.
+
+The later D05 decision also defers the 700 MiB four-session aggregate ceiling for preview. The
+1,427.305 MiB observation remains a failure against that optimization target, not a new ceiling
+or a passing result. T173 and all other retained P01-P05 evidence remain required. Replacement
+ceiling calibration is a Feature 002 performance backlog item described in
+[memory-budget-review.md](memory-budget-review.md); no production enforcement constant changes.
+
+### Recorded implementation deviation — US8 trusted output bounds
+
+The original host-file restriction above is retained for traceability. During the authorized
+Feature 002 remainder implementation, exact per-attempt output bounds required a narrow addition
+to `session-host/index.ts` and its backpressure/output-meter helper: count bytes in the trusted host,
+forward only content-free usage/truncation evidence to main, and preserve raw terminal bytes on the
+existing renderer stream. The scope decision is recorded in `execution-evidence.md`; it does not
+permit general host refactoring or changing `resize.ts`. Existing host edits, ordered controls,
+Job-before-create containment, and bootstrap behavior remain preserved. Native/host source review
+and Windows regressions verify this bounded deviation; it is not an exception to permission or
+process containment requirements. The current independent review requires explicit owner
+reconciliation before P03 passes: the earlier root-agent scope ruling was not owner approval.
+Unrelated keystroke work is preserved separately on the recovery branch recorded in
+[transition-to-next-feature.md](transition-to-next-feature.md), not present in this candidate.

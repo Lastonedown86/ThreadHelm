@@ -2,6 +2,7 @@
 
 import type { CleanStopAction, LaunchDescriptor } from '@threadhelm/contracts';
 import {
+  assertSessionRoleLaunch,
   interactiveLaunch,
   profileLaunchDisclosure,
   runProbe,
@@ -61,8 +62,8 @@ export const claudeCodeAdapter: ProviderAdapter = {
       inputSafety: 'unknown',
     },
     automaticPresentation: 'manual_only',
-    memoryTools: 'unsupported',
-    supervisorTools: 'unsupported',
+    memoryTools: 'scoped_revisioned_memory',
+    supervisorTools: 'bound_supervisor',
     configurationFailureBehavior: 'manual_only',
     supervisorConfigurationFailureBehavior: 'held',
     permissionPolicies: ['manual', 'auto', 'bounded_allowlist', 'break_glass_bypass'],
@@ -82,6 +83,7 @@ export const claudeCodeAdapter: ProviderAdapter = {
     });
   },
   buildLaunch(ctx: LaunchContext): LaunchDescriptor {
+    assertSessionRoleLaunch('claude-code', ctx);
     return interactiveLaunch(ctx, launchArgs(ctx));
   },
   buildLaunchDisclosure(ctx: LaunchContext) {

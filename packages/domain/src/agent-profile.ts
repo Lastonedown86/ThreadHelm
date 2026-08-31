@@ -50,7 +50,7 @@ function findTopLevelKeys(text: string): string[] {
       if (depth === 1) {
         let k = i;
         while (k < n && /\s/.test(text[k] ?? '')) k++;
-        if (text[k] === ':') keys.push(value);
+        if (text[k] === ':') keys.push(JSON.parse(`"${value}"`) as string);
       }
       continue;
     }
@@ -62,8 +62,13 @@ function findTopLevelKeys(text: string): string[] {
 }
 
 function hasDuplicateTopLevelKey(text: string): boolean {
-  const keys = findTopLevelKeys(text);
-  return new Set(keys).size !== keys.length;
+  try {
+    const keys = findTopLevelKeys(text);
+    return new Set(keys).size !== keys.length;
+  } catch {
+    // The full JSON parser below converts malformed escapes to a stable error.
+    return false;
+  }
 }
 
 /**

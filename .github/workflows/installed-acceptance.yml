@@ -1,0 +1,95 @@
+name: Installed Windows acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/installed-acceptance.yml'
+      - 'apps/desktop/**'
+      - 'native/windows-supervisor/**'
+      - 'packages/**'
+      - 'tests/acceptance/**'
+      - 'tests/e2e/helpers/**'
+      - 'tests/unit/packaging/**'
+      - 'vitest.config.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: installed-acceptance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  installed:
+    name: nsis-install-uninstall-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-latest
+            rust_target: x86_64-pc-windows-msvc
+          - arch: arm64
+            runner: windows-11-arm
+            rust_target: aarch64-pc-windows-msvc
+    # Never substitute self-hosted runners: Setup/uninstall modify this disposable user's profile.
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_target }}
+      - run: pnpm install --frozen-lockfile
+      - name: Installer safety boundary tests
+        run: pnpm exec vitest run --project unit tests/unit/packaging/squirrel-safety.test.ts tests/unit/packaging/proof-options.test.ts tests/unit/packaging/proof-descendant.test.ts tests/unit/packaging/isolated-proof.test.ts tests/unit/packaging/installed-native-architecture.test.ts tests/unit/packaging/acceptance-failure.test.ts
+      - name: Build native addon and real bridge
+        run: pnpm native:build
+      - name: Build production desktop
+        run: pnpm desktop:build
+      - name: Make actual NSIS installer from audited Forge package
+        run: pnpm --filter @threadhelm/desktop make --arch ${{ matrix.arch }}
+      - name: Select exact freshly built installer
+        shell: pwsh
+        run: |
+          $matches = @(Get-ChildItem -LiteralPath apps/desktop/release/make/nsis/${{ matrix.arch }} -File -Filter 'ThreadHelm-Setup-${{ matrix.arch }}.exe')
+          if ($matches.Count -ne 1) { throw 'Expected exactly one freshly built architecture-specific Setup executable.' }
+          "THREADHELM_INSTALLER=$($matches[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Real per-user install, installed acceptance, and uninstall
+        env:
+          THREADHELM_INSTALLER_ACCEPTANCE: '1'
+        run: pnpm exec vitest run --project acceptance tests/acceptance/squirrel-install.test.ts
+      - name: Preserve bounded acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installed-evidence-${{ matrix.arch }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/threadhelm-install-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.arch }}/installation-report.json
+            ${{ runner.temp }}/threadhelm-install-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.arch }}/artifact-acceptance.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve exact unsigned Setup and published checksum
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installed-setup-${{ matrix.arch }}-${{ github.sha }}
+          path: |
+            apps/desktop/release/make/**/ThreadHelm-Setup-${{ matrix.arch }}.exe
+            apps/desktop/release/make/**/ThreadHelm-Setup-${{ matrix.arch }}.exe.sha256
+            apps/desktop/release/make/**/ThreadHelm-Setup-${{ matrix.arch }}.exe.identity.json
+            apps/desktop/release/make/**/ThreadHelm-Setup-${{ matrix.arch }}.exe.identity.json.sha256
+          if-no-files-found: warn
+          retention-days: 7

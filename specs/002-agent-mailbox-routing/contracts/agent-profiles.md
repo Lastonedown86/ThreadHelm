@@ -1,8 +1,12 @@
 # Contract: Reviewed Agent Profiles
 
-This contract imports portable `munder-difflin/hire@1` manifests into a local roster. A manifest is
+This contract imports native `threadhelm/agent-profile@1` manifests and legacy
+`munder-difflin/hire@1` manifests into a local roster. A manifest is
 untrusted data, not an instruction to ThreadHelm, and import is never equivalent to launching or
 authorizing an agent.
+
+Imports preserve their original schema identifier and digest. New wizard output uses the native
+ThreadHelm identifier; neither format grants additional launch authority.
 
 ## Supported manifest
 

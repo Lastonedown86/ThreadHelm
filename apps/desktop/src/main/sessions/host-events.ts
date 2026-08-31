@@ -31,6 +31,9 @@ export function attachHost(ctx: Context, live: LiveSession, waiters: LaunchWaite
       return;
     }
     switch (message.type) {
+      case 'host.outputProgress':
+        ctx.supervisor?.onHostOutput(live.id, message);
+        return;
       case 'host.ready':
         waiters.ready(message);
         return;

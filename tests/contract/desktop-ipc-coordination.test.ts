@@ -34,6 +34,7 @@ import {
 } from '@threadhelm/contracts';
 import { CoordinationDisclosureStore } from '../../apps/desktop/src/main/coordination/disclosures.js';
 import { describe, expect, it } from 'vitest';
+import { createWorld, identity } from './helpers/fake-context.js';
 
 const ID_A = '11111111-1111-4111-8111-111111111111';
 const ID_B = '22222222-2222-4222-8222-222222222222';
@@ -146,6 +147,49 @@ describe('coordination errors and events', () => {
 });
 
 describe('US1 directed-handoff contracts', () => {
+  it('fuzzes unsafe content and role fields through the real main IPC handler without durable effects', async () => {
+    const world = createWorld();
+    world.addDir('C:\\projects\\fuzz-a', identity(801));
+    world.addDir('C:\\projects\\fuzz-b', identity(802));
+    const a = await world.approve('C:\\projects\\fuzz-a');
+    const b = await world.approve('C:\\projects\\fuzz-b');
+    const source = await world.launch(a.id);
+    const recipient = await world.launch(b.id);
+    const base = {
+      sourceSessionId: source.id,
+      recipientSessionId: recipient.id,
+      kind: 'request',
+      purpose: 'Review',
+      body: 'Bounded work',
+      responseExpected: true,
+    };
+    for (const body of [
+      '\ud800',
+      '\udfff',
+      '\u001b]52;c;synthetic\u0007',
+      '\u009b31m',
+      'API_TOKEN=synthetic',
+      '界'.repeat(5_462),
+    ]) {
+      const result = await world.call('coordination.previewHandoff', { ...base, body });
+      expect(result.ok, JSON.stringify(body).slice(0, 80)).toBe(false);
+      expect(JSON.stringify(result)).not.toContain(body);
+    }
+    for (const extra of [
+      { role: 'supervisor' },
+      { workspaceId: a.id },
+      { authority: 'approved' },
+      { recipientSessionId: [recipient.id] },
+    ]) {
+      expect((await world.call('coordination.previewHandoff', { ...base, ...extra })).ok).toBe(
+        false,
+      );
+    }
+    expect(
+      world.ctx.storage!.db.prepare('SELECT count(*) AS count FROM coordination_handoffs').get(),
+    ).toEqual({ count: 0 });
+  });
+
   const previewRequest = {
     sourceSessionId: ID_A,
     recipientSessionId: ID_B,

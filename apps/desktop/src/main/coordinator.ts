@@ -10,6 +10,7 @@ import {
   PreviewAutoContinueRequest,
   PreviewRetargetRequest,
   ResolveEscalationRequest,
+  ThreadHelmError,
   type ConversationState,
   type CoordinationEventEnvelope,
 } from '@threadhelm/contracts';
@@ -18,7 +19,12 @@ import type { Context } from './context.js';
 import { createCoordinationService, type CoordinationService } from './coordination/service.js';
 import { createMemoryService, type MemoryService } from './coordination/memory.js';
 import { createProfileService, type ProfileService } from './coordination/profiles.js';
+import {
+  createAgentWizardService,
+  type AgentWizardService,
+} from './coordination/profile-wizard.js';
 import { deliverHandoff } from './coordination/delivery.js';
+import { createSupervisorService } from './coordination/supervisor.js';
 import { requestClose, stopAllAndClose } from './lifecycle/close.js';
 import { listReadiness } from './providers/readiness.js';
 import { resolveRecovery } from './recovery/reconcile.js';
@@ -38,7 +44,31 @@ export function createHandlers(ctx: Context): Handlers {
   const coordination = startCoordination(ctx);
   const memory = startMemory(ctx);
   const profiles = startProfiles(ctx);
+  const supervisor = ctx.supervisor ?? createSupervisorService(ctx);
+  ctx.supervisor = supervisor;
+  ctx.coordinationBridge?.setSupervisorAuthority(supervisor);
+  const agentWizard = ctx.storage && !ctx.health.degraded ? startAgentWizard(ctx, profiles) : null;
+  const requireAgentWizard = () => {
+    if (!agentWizard || !ctx.storage || ctx.health.degraded) {
+      throw new ThreadHelmError('STORAGE_UNAVAILABLE', 'Agent-template storage is unavailable.');
+    }
+    return agentWizard;
+  };
   return {
+    'missions.eligibleSessions': () => supervisor.eligibleSessions(),
+    'missions.preview': (request) => supervisor.preview(request),
+    'missions.confirm': (request) => supervisor.confirm(request),
+    'missions.list': (request) => supervisor.list(request),
+    'missions.detail': ({ missionId }) => supervisor.detail(missionId),
+    'missions.pause': ({ missionId }) => supervisor.pause(missionId),
+    'missions.resume': (request) => supervisor.resume(request),
+    'missions.cancel': ({ missionId }) => supervisor.cancel(missionId),
+    'missions.previewRevision': (request) => supervisor.preview(request),
+    'missions.confirmRevision': (request) => supervisor.confirm(request, true),
+    'missions.workItem': (request) => supervisor.workItem(request),
+    'missions.resolveEscalation': (request) => supervisor.resolveEscalation(request),
+    'missions.previewDelete': ({ missionId }) => supervisor.previewDelete(missionId),
+    'missions.confirmDelete': ({ previewToken }) => supervisor.confirmDelete(previewToken),
     'workspaces.choose': () => chooseWorkspace(ctx),
     'workspaces.approve': ({ candidateToken }) => approveWorkspace(ctx, candidateToken),
     'workspaces.list': () => listWorkspaces(ctx),
@@ -146,6 +176,24 @@ export function createHandlers(ctx: Context): Handlers {
     'profiles.setEnabled': (request) => profiles.setEnabled(request),
     'profiles.previewDelete': (request) => profiles.previewDelete(request),
     'profiles.confirmDelete': (request) => profiles.confirmDelete(request),
+    'agentWizard.createDraft': (request) => requireAgentWizard().createDraft(request),
+    'agentWizard.listDrafts': (request) => requireAgentWizard().listDrafts(request),
+    'agentWizard.getDraft': (request) => requireAgentWizard().getDraft(request),
+    'agentWizard.updateStep': (request) => requireAgentWizard().updateStep(request),
+    'agentWizard.previewCompletion': (request) => requireAgentWizard().previewCompletion(request),
+    'agentWizard.confirmProfile': (request) => requireAgentWizard().confirmProfile(request),
+    'agentWizard.chooseExportTarget': () => requireAgentWizard().chooseExportTarget(),
+    'agentWizard.previewExport': (request) => requireAgentWizard().previewExport(request),
+    'agentWizard.confirmExport': (request) => requireAgentWizard().confirmExport(request),
+    'agentWizard.deleteDraft': (request) => requireAgentWizard().deleteDraft(request),
+    'agentTemplates.list': (request) => requireAgentWizard().listTemplates(request),
+    'agentTemplates.get': (request) => requireAgentWizard().getTemplate(request),
+    'agentTemplates.saveRevision': (request) => requireAgentWizard().saveRevision(request),
+    'agentTemplates.duplicate': (request) => requireAgentWizard().duplicate(request),
+    'agentTemplates.setEnabled': (request) => requireAgentWizard().setEnabled(request),
+    'agentTemplates.previewDelete': (request) =>
+      requireAgentWizard().previewDeleteTemplate(request),
+    'agentTemplates.delete': (request) => requireAgentWizard().deleteTemplate(request),
     'application.requestClose': () => requestClose(ctx),
     'application.stopAllAndClose': () => stopAllAndClose(ctx),
     'application.getInfo': () => ({ ...ctx.appInfo, storageDegraded: ctx.health.degraded }),
@@ -156,6 +204,13 @@ export function createHandlers(ctx: Context): Handlers {
 export function startProfiles(ctx: Context): ProfileService {
   const service = ctx.profiles ?? createProfileService(ctx);
   ctx.profiles = service;
+  return service;
+}
+
+/** Compose one non-executable wizard/template authority after profiles exist. */
+export function startAgentWizard(ctx: Context, profiles = startProfiles(ctx)): AgentWizardService {
+  const service = ctx.agentWizard ?? createAgentWizardService(ctx, profiles);
+  ctx.agentWizard = service;
   return service;
 }
 
@@ -202,6 +257,7 @@ export function startCoordination(ctx: Context): CoordinationService {
 }
 
 export function stopCoordination(ctx: Context): void {
+  ctx.supervisor?.stop();
   ctx.coordination?.stop();
 }
 

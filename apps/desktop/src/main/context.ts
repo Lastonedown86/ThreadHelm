@@ -30,6 +30,8 @@ import type { CoordinationService } from './coordination/service.js';
 import type { BridgeSessionManager } from './coordination/bridge.js';
 import type { MemoryService } from './coordination/memory.js';
 import type { ProfileService } from './coordination/profiles.js';
+import type { AgentWizardService } from './coordination/profile-wizard.js';
+import type { SupervisorService } from './coordination/supervisor.js';
 
 // --- native boundary (contracts/windows-supervisor.md) ----------------------
 
@@ -51,7 +53,8 @@ export interface JobSnapshot {
 
 export interface NativeSupervisor {
   resolveDirectory(selectedPath: string): DirectoryIdentity;
-  createKillOnCloseJob(): number;
+  createKillOnCloseJob(sessionId?: string): number;
+  inspectSessionScope(sessionId: string): JobSnapshot;
   assignProcess(token: number, pid: number): void;
   verifyProcessInJob(token: number, pid: number): boolean;
   inspectJob(token: number): JobSnapshot;
@@ -90,6 +93,19 @@ export interface ProfileFilePicker {
   pickFile(): Promise<string | null>;
 }
 
+/** Main-owned Save dialog for a portable hire manifest export. */
+export interface AgentExportTargetPicker {
+  pickTarget(): Promise<string | null>;
+}
+
+/** Test-only deterministic failures at the export boundary. Production leaves
+ * this absent; it is not reachable through renderer IPC. */
+export interface AgentExportFailureInjector {
+  consumeBeforeWriteFailure(): boolean;
+  consumeAfterReplaceFailure(): boolean;
+  consumeTempCleanupFailure(): boolean;
+}
+
 // --- provider probing ---------------------------------------------------------
 
 export interface ProbeRunner {
@@ -100,6 +116,8 @@ export interface ProbeRunner {
 // --- live session state (volatile; never sufficient for reattachment) ---------
 
 export interface LiveSession {
+  /** Exact main-resolved launch tuple. Absent for sessions predating this coordinator. */
+  launchSnapshot?: Readonly<PreviewPayload>;
   id: string;
   workspaceId: string;
   identity: WorkspaceIdentity;
@@ -179,6 +197,8 @@ export interface Context {
   channels: StreamChannelFactory;
   picker: DirectoryPicker;
   profilePicker: ProfileFilePicker;
+  agentExportPicker: AgentExportTargetPicker;
+  agentExportFailureInjector?: AgentExportFailureInjector;
   events: RendererEvents;
   storage: Storage | null;
   health: StorageHealth;
@@ -195,6 +215,10 @@ export interface Context {
   memory?: MemoryService;
   /** Main-owned reviewed-profile import and roster authority. */
   profiles?: ProfileService;
+  /** Main-owned wizard/template authority; drafts remain non-executable. */
+  agentWizard?: AgentWizardService;
+  /** Main-owned mission authority. No renderer/provider receives this object. */
+  supervisor?: SupervisorService;
   /** Session-scoped provider bridge authority; absent in degraded/test compositions. */
   coordinationBridge?: BridgeSessionManager;
   appInfo: AppInfo;

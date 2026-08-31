@@ -24,7 +24,7 @@ import type {
   ProviderInputSafety,
   TerminalSize,
 } from '@threadhelm/contracts';
-import { ProviderAttemptOutcome, ThreadHelmError } from '@threadhelm/contracts';
+import { MissionRole, Uuid, ProviderAttemptOutcome, ThreadHelmError } from '@threadhelm/contracts';
 
 export type ExecutableRoot = 'LOCALAPPDATA' | 'APPDATA' | 'PROGRAMFILES' | 'USERPROFILE';
 export type ExecutableKind = 'native' | 'cmd_shim';
@@ -92,6 +92,74 @@ export interface SessionBridgeConfig {
   providerConfigPath?: string;
   /** Exact per-process overrides for providers that expose no config-file option. */
   codexConfigOverrides?: readonly string[];
+  /** Volatile main-owned launch disclosure. Never written to provider config. */
+  roleCapability?: SessionRoleCapability;
+}
+
+export interface SessionRoleCapability {
+  version: 1;
+  missionId: string;
+  role: MissionRole;
+  tools: readonly string[];
+}
+export const SUPERVISOR_ROLE_TOOLS = [
+  'threadhelm_mission_inspect',
+  'threadhelm_work_decompose',
+  'threadhelm_work_assign',
+  'threadhelm_work_reassign',
+  'threadhelm_work_pause',
+  'threadhelm_mission_complete',
+  'threadhelm_mission_escalate',
+] as const;
+/** Inputs are main's authenticated binding, never profile/persona capability text. */
+export function sessionRoleCapability(missionId: string, role: MissionRole): SessionRoleCapability {
+  return {
+    version: 1,
+    missionId: Uuid.parse(missionId),
+    role: MissionRole.parse(role),
+    tools: role === 'supervisor' ? [...SUPERVISOR_ROLE_TOOLS] : ['threadhelm_work_result'],
+  };
+}
+
+/** Closed role and exact effective launch limits are checked before child argv. */
+export function assertSessionRoleLaunch(providerId: ProviderId, ctx: LaunchContext): void {
+  const capability = ctx.bridgeConfig?.roleCapability;
+  if (!capability) return;
+  const expected = sessionRoleCapability(capability.missionId, capability.role);
+  const profile = ctx.profileBinding;
+  const permission = ctx.permissionResolution;
+  const bounds = ctx.executionBounds;
+  if (
+    capability.version !== 1 ||
+    ctx.bridgeConfig?.sessionId !== ctx.sessionId ||
+    JSON.stringify(capability.tools) !== JSON.stringify(expected.tools) ||
+    !profile ||
+    JSON.stringify(profile.toolRegistry) !== JSON.stringify(expected.tools) ||
+    !permission ||
+    permission.disposition !== 'ready' ||
+    permission.policy === 'break_glass_bypass' ||
+    permission.providerMapping === 'claude_bypass' ||
+    permission.providerMapping === 'codex_bypass' ||
+    !bounds ||
+    profile.effectiveResourceBudget.maxElapsedMs > bounds.maxElapsedMs ||
+    profile.effectiveResourceBudget.maxConcurrentProcesses > bounds.maxConcurrentProcesses
+  )
+    throw new ThreadHelmError('WORKER_AUTOSTART_PREFLIGHT_FAILED');
+  if (permission.policy === 'auto') {
+    const proof = permission.capabilityEvidence;
+    if (
+      !proof ||
+      proof.providerId !== providerId ||
+      proof.providerVersion !== ctx.version ||
+      proof.model !== ctx.runtimeSelection.model ||
+      proof.organizationPolicy !== 'allowed' ||
+      !proof.supportedPolicies.includes('auto') ||
+      !Number.isFinite(Date.parse(proof.expiresAt)) ||
+      Date.parse(proof.expiresAt) <= Date.now()
+    )
+      throw new ThreadHelmError('WORKER_AUTOSTART_PREFLIGHT_FAILED');
+  }
+  profileLaunchDisclosure(providerId, ctx);
 }
 
 export interface LaunchContext {

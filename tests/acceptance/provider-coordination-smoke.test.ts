@@ -14,6 +14,8 @@ import {
   type BridgeResponse,
 } from '../../apps/desktop/src/main/coordination/bridge.js';
 import { codexAdapter, claudeCodeAdapter } from '@threadhelm/providers';
+import type { MissionDetailView } from '@threadhelm/contracts';
+import { decision, supervisorWorld } from '../contract/helpers/supervisor-world.js';
 import { createRepositories, migrate, openDatabase } from '@threadhelm/persistence';
 import {
   COORDINATION_FIXTURE_IDS,
@@ -23,6 +25,9 @@ import {
   bridgeReportOutcomeRequest,
   createCoordinationClock,
   fixtureAdapter,
+  supervisorFixtureDag,
+  supervisorFixtureResult,
+  supervisorFixtureScenarios,
 } from '@threadhelm/test-fixtures';
 
 function resultOf(response: BridgeResponse): Record<string, unknown> {
@@ -30,6 +35,155 @@ function resultOf(response: BridgeResponse): Record<string, unknown> {
   expect(response.result).toBeTypeOf('object');
   return response.result as Record<string, unknown>;
 }
+
+// These run the actual main authority and persistence with deterministic host
+// fixtures. They do not certify installed providers, Claude's live classifier,
+// real file edits, provider billing, or owner acceptance (the remaining T148 gate).
+describe('bounded supervisor coordination acceptance fixtures (T147/T148)', () => {
+  it('runs a pinned three-worker DAG with distinct registries, offline starts and exact structured return routes', async () => {
+    const fixture = await supervisorWorld(3);
+    try {
+      const { world, call, supervisor } = fixture;
+      let mission = await fixture.confirm();
+      const workers = mission.envelope!.bindings.filter((item) => item.role === 'worker');
+      const items = supervisorFixtureDag(workers.map((item) => item.workspaceId));
+      await call(supervisor.id, 'threadhelm_work_decompose', decision(mission.id, { items }));
+      for (const [index, item] of items.entries()) {
+        const binding = workers[index]!;
+        await call(
+          supervisor.id,
+          'threadhelm_work_assign',
+          decision(mission.id, {
+            workItemId: item.id,
+            bindingId: binding.bindingId,
+          }),
+        );
+        mission = await world.ok<MissionDetailView>('missions.detail', { missionId: mission.id });
+        const attempt = mission.attempts.find((value) => value.workItemId === item.id)!;
+        expect(attempt.workerStartDisposition).toBe('started');
+        expect(attempt.profileRevisionId).toBe(binding.profileRevisionId);
+        const registry = resultOf(await call(attempt.sessionId!, 'threadhelm_tool_registry', {}));
+        expect((registry.tools as { name: string }[]).map((tool) => tool.name)).toEqual([
+          'threadhelm_work_result',
+        ]);
+        await call(attempt.sessionId!, 'threadhelm_work_result', supervisorFixtureResult(attempt));
+        mission = await world.ok('missions.detail', { missionId: mission.id });
+        const result = mission.attempts.find((value) => value.id === attempt.id)!;
+        const handoff = world.ctx.storage!.repositories.coordination.findHandoffById(
+          result.resultHandoffId!,
+        )!;
+        expect(handoff.recipientSessionId).toBe(supervisor.id);
+        expect(handoff.inReplyToId).toBe(attempt.handoffId);
+      }
+      await call(
+        supervisor.id,
+        'threadhelm_mission_complete',
+        decision(mission.id, {
+          evidenceRefs: items.map((item) => ({ kind: 'work_item', id: item.id })),
+        }),
+      );
+      expect(world.ctx.storage!.repositories.supervisor.mission(mission.id).state).toBe(
+        'completed',
+      );
+      expect(world.hosts).toHaveLength(4);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  it.each([
+    'refusal',
+    'failure',
+    'permission_blocked',
+    'classifier_failed',
+    'timed_out',
+    'cancelled',
+    'no_progress',
+    'budget_exhausted',
+    'unknown',
+  ] as const)(
+    'returns a bounded %s outcome to the originating supervisor without implicit reassignment',
+    async (disposition) => {
+      const fixture = await supervisorWorld();
+      try {
+        const { world, call, supervisor } = fixture;
+        const mission = await fixture.confirm();
+        const binding = mission.envelope!.bindings.find((item) => item.role === 'worker')!;
+        const item = supervisorFixtureDag([binding.workspaceId])[0]!;
+        await call(
+          supervisor.id,
+          'threadhelm_work_decompose',
+          decision(mission.id, { items: [item] }),
+        );
+        await call(
+          supervisor.id,
+          'threadhelm_work_assign',
+          decision(mission.id, { workItemId: item.id, bindingId: binding.bindingId }),
+        );
+        const attempt = world.ctx.storage!.repositories.supervisor.attempts(mission.id)[0]!;
+        await call(
+          attempt.sessionId!,
+          'threadhelm_work_result',
+          supervisorFixtureResult(attempt, disposition),
+        );
+        const result = world.ctx.storage!.repositories.supervisor.attempt(attempt.id);
+        expect(result.disposition).toBe(disposition);
+        expect(result.resultHandoffId).not.toBeNull();
+        expect(world.hosts).toHaveLength(2);
+        if (disposition === 'unknown')
+          expect(world.ctx.storage!.repositories.supervisor.leases(mission.id)[0]!.state).toBe(
+            'unknown',
+          );
+      } finally {
+        fixture.cleanup();
+      }
+    },
+  );
+
+  it('holds persona self-appointment, envelope escape and consequential requests before any worker starts', async () => {
+    const fixture = await supervisorWorld();
+    try {
+      const { world, call, supervisor } = fixture;
+      const mission = await fixture.confirm();
+      const binding = mission.envelope!.bindings.find((item) => item.role === 'worker')!;
+      const cases = supervisorFixtureScenarios(binding.workspaceId);
+      await expect(
+        call(
+          supervisor.id,
+          'threadhelm_work_decompose',
+          decision(mission.id, { items: [cases.envelopeEscape] }),
+        ),
+      ).rejects.toMatchObject({ code: 'MISSION_AUTHORITY_REQUIRED' });
+      await world.ok('missions.resume', {
+        missionId: mission.id,
+        supervisorSessionId: supervisor.id,
+      });
+      await call(
+        supervisor.id,
+        'threadhelm_work_decompose',
+        decision(mission.id, { items: [cases.consequentialRequest] }),
+      );
+      await expect(
+        call(
+          supervisor.id,
+          'threadhelm_work_assign',
+          decision(mission.id, {
+            workItemId: cases.consequentialRequest.id,
+            bindingId: binding.bindingId,
+          }),
+        ),
+      ).rejects.toBeDefined();
+      expect(
+        mission.envelope!.bindings.find(
+          (item) => item.profileId === fixture.profiles[1]!.profileId,
+        )!.role,
+      ).toBe('worker');
+      expect(world.hosts).toHaveLength(1);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+});
 
 describe('Provider coordination acceptance smoke (T047)', () => {
   const SESSION_1 = COORDINATION_FIXTURE_IDS.senderSession;

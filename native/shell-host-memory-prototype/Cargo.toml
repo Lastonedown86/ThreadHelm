@@ -1,0 +1,26 @@
+[package]
+name = "threadhelm-memory-prototype"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+tauri = { version = "=2.11.5", features = [] }
+serde_json = "1"
+rusqlite = { version = "0.37", features = ["bundled"] }
+uuid = { version = "1", features = ["v4"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_System_SystemServices", "Win32_System_WindowsProgramming"] }
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+default = ["custom-protocol"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"

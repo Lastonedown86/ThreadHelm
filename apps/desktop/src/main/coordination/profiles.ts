@@ -57,6 +57,12 @@ export interface ProfileService {
   setEnabled(request: OperationRequest<'profiles.setEnabled'>): AgentProfileSummaryView;
   previewDelete(request: OperationRequest<'profiles.previewDelete'>): ProfileDeletionDisclosureView;
   confirmDelete(request: OperationRequest<'profiles.confirmDelete'>): AgentProfileSummaryView;
+  /** Reuses the exact digest-bound import path for wizard completion. */
+  saveReviewedManifest(
+    manifest: HireManifestV1,
+    digest: string,
+    sourceBasename: string,
+  ): AgentProfileSummaryView;
 }
 
 async function readBounded(path: string): Promise<{ raw: string; digest: string }> {
@@ -116,6 +122,43 @@ export function createProfileService(ctx: Context): ProfileService {
         occurredAt: ctx.clock().toISOString(),
       }),
     );
+  };
+
+  const saveReviewedManifest = (
+    manifest: HireManifestV1,
+    digest: string,
+    sourceBasename: string,
+  ): AgentProfileSummaryView => {
+    const available = Object.fromEntries(
+      ctx.adapters.map((adapter) => [adapter.id, TESTED_MODELS[adapter.id]]),
+    );
+    const compatibilityResult = evaluateProfileCompatibility({
+      requestedProvider: manifest.provider,
+      requestedModel: manifest.model,
+      availableProviderModels: available,
+    });
+    const input: ImportProfileManifestInput = {
+      manifestKey: sourceBasename.toLocaleLowerCase('en-US'),
+      digest,
+      displayName: manifest.name,
+      description: manifest.description,
+      requestedProvider: manifest.provider,
+      requestedModel: manifest.model,
+      capabilities: manifest.capabilities,
+      isolateRequested: manifest.isolate,
+      tokenCapRequested: manifest.tokenCap,
+      author: manifest.author,
+      goal: manifest.goal,
+      manifestSpec: manifest.spec,
+      compatibility: compatibilityResult.compatibility,
+      compatibilityReasons: compatibilityResult.reasons,
+      sourceBasename,
+      createdAt: ctx.clock().toISOString(),
+    };
+    const imported = repository().importManifest(input);
+    const summary = AgentProfileSummaryView.parse(repository().getSummary(imported.profileId)!);
+    emit(summary, 'imported');
+    return summary;
   };
 
   return {
@@ -196,28 +239,7 @@ export function createProfileService(ctx: Context): ProfileService {
           'The profile file changed after review.',
         );
       }
-      const input: ImportProfileManifestInput = {
-        manifestKey: snapshot.basename.toLocaleLowerCase('en-US'),
-        digest: snapshot.digest,
-        displayName: snapshot.manifest.name,
-        description: snapshot.manifest.description,
-        requestedProvider: snapshot.manifest.provider,
-        requestedModel: snapshot.manifest.model,
-        capabilities: snapshot.manifest.capabilities,
-        isolateRequested: snapshot.manifest.isolate,
-        tokenCapRequested: snapshot.manifest.tokenCap,
-        author: snapshot.manifest.author,
-        goal: snapshot.manifest.goal,
-        manifestSpec: snapshot.manifest.spec,
-        compatibility: snapshot.compatibility,
-        compatibilityReasons: snapshot.compatibilityReasons,
-        sourceBasename: snapshot.basename,
-        createdAt: ctx.clock().toISOString(),
-      };
-      const imported = repository().importManifest(input);
-      const summary = AgentProfileSummaryView.parse(repository().getSummary(imported.profileId)!);
-      emit(summary, 'imported');
-      return summary;
+      return saveReviewedManifest(snapshot.manifest, snapshot.digest, snapshot.basename);
     },
 
     list(request) {
@@ -288,5 +310,6 @@ export function createProfileService(ctx: Context): ProfileService {
       emit(deleted, 'deleted');
       return deleted;
     },
+    saveReviewedManifest,
   };
 }

@@ -1,6 +1,7 @@
 /** Main-owned shared-memory orchestration, disclosure tokens, scope derivation, and events. */
 
 import {
+  isSafeAuthoredText,
   MemoryDeletionDisclosureView,
   MemoryPublishDisclosureView,
   MemorySupersedeDisclosureView,
@@ -16,6 +17,7 @@ import {
 import type { SharedMemoryRepository, Storage } from '@threadhelm/persistence';
 import type { Context } from '../context.js';
 import { TokenStore } from '../tokens.js';
+import { revalidateWorkspace } from '../workspaces/identity.js';
 
 interface PublishSnapshot {
   request: OperationRequest<'memory.previewPublish'>;
@@ -361,19 +363,61 @@ class MainMemoryService implements MemoryService {
         'The authenticated session workspace is not approved.',
       );
     }
+    revalidateWorkspace(this.#ctx, workspace);
+    const role = this.#storage().repositories.supervisor.roleForSession(sessionId);
+    if (role) {
+      const scope = { missionId: role.missionId };
+      this.#assertScope(scope);
+      const envelope = this.#storage().repositories.supervisor.envelope(role.missionId);
+      if (
+        !envelope?.bindings.some(
+          (binding) =>
+            binding.bindingId === role.bindingId && binding.workspaceId === session.workspaceId,
+        ) ||
+        this.#ctx.live.get(sessionId)?.state !== 'running'
+      )
+        throw new ThreadHelmError('MEMORY_SCOPE_UNAUTHORIZED');
+      return scope;
+    }
     return { workspaceId: session.workspaceId };
   }
 
   #assertContent(title: string | null, body: string): void {
-    if (credentialLike(`${title ?? ''}\n${body}`)) {
+    if (
+      !body.trim() ||
+      Buffer.byteLength(body.trim(), 'utf8') > 16_384 ||
+      !isSafeAuthoredText(title ?? '') ||
+      !isSafeAuthoredText(body) ||
+      credentialLike(`${title ?? ''}\n${body}`)
+    ) {
       throw new ThreadHelmError(
         'MEMORY_CONTENT_INVALID',
-        'Credential-like content cannot be published to shared memory.',
+        'Shared-memory content did not pass validation.',
       );
     }
   }
 
   #assertScope(scope: MemoryScope): void {
+    if ('missionId' in scope && scope.missionId) {
+      const mission = this.#storage()
+        .db.prepare('SELECT state FROM supervisor_missions WHERE id=?')
+        .get(scope.missionId) as { state: string } | undefined;
+      if (!mission || mission.state === 'deleted')
+        throw new ThreadHelmError('MEMORY_SCOPE_UNAUTHORIZED');
+      const envelope = this.#storage().repositories.supervisor.envelope(scope.missionId);
+      if (!envelope) throw new ThreadHelmError('MEMORY_SCOPE_UNAUTHORIZED');
+      for (const binding of envelope.bindings) {
+        const workspace = this.#storage().repositories.workspaces.findById(binding.workspaceId);
+        if (!workspace || workspace.revokedAt)
+          throw new ThreadHelmError('MEMORY_SCOPE_UNAUTHORIZED');
+        const current = revalidateWorkspace(this.#ctx, workspace);
+        if (
+          current.identity.volumeSerial !== binding.identity.volumeSerial ||
+          current.identity.fileId !== binding.identity.fileId
+        )
+          throw new ThreadHelmError('MEMORY_SCOPE_UNAUTHORIZED');
+      }
+    }
     if ('workspaceId' in scope && scope.workspaceId) {
       const workspace = this.#storage().repositories.workspaces.findById(scope.workspaceId);
       if (!workspace || workspace.revokedAt) {

@@ -10,6 +10,7 @@ import {
   operations,
 } from '@threadhelm/contracts';
 import { BridgeSessionManager } from '../../apps/desktop/src/main/coordination/bridge.js';
+import { createWorld, identity } from './helpers/fake-context.js';
 
 const WORKSPACE_ID = '00000000-0000-4000-8000-000000000001';
 const ENTRY_ID = '00000000-0000-4000-8000-000000000010';
@@ -36,6 +37,44 @@ const summary = {
 };
 
 describe('shared-memory desktop and provider contracts', () => {
+  it('rejects adversarial content and scope/role extensions before publication', async () => {
+    const world = createWorld();
+    const path = 'C:\\projects\\memory-fuzz';
+    world.addDir(path, identity(901));
+    const workspace = await world.approve(path);
+    const base = {
+      scope: { workspaceId: workspace.id },
+      kind: 'fact',
+      title: 'Bounded fact',
+      body: 'Deliberate text',
+      sourceRefs: [],
+      confidence: 'unknown',
+    };
+    for (const body of [
+      '\ud800',
+      '\udfff',
+      '\u001b]52;c;synthetic\u0007',
+      '\u009b31m',
+      'ghp_' + 'synthetic'.repeat(4),
+      '界'.repeat(16_384),
+    ]) {
+      const result = await world.call('memory.previewPublish', { ...base, body });
+      expect(result.ok, JSON.stringify(body).slice(0, 80)).toBe(false);
+      expect(JSON.stringify(result)).not.toContain(body);
+    }
+    for (const extra of [
+      { role: 'supervisor' },
+      { authorSessionId: ENTRY_ID },
+      { scope: { workspaceId: workspace.id, missionId: ENTRY_ID } },
+      { transcript: 'not allowed' },
+    ]) {
+      expect((await world.call('memory.previewPublish', { ...base, ...extra })).ok).toBe(false);
+    }
+    expect(
+      world.ctx.storage!.db.prepare('SELECT count(*) AS count FROM shared_memory_revisions').get(),
+    ).toEqual({ count: 0 });
+  });
+
   it('accepts exactly one strict scope and rejects arbitrary fields', () => {
     const search = operations['memory.search'].request;
     expect(
@@ -50,6 +89,25 @@ describe('shared-memory desktop and provider contracts', () => {
     expect(() =>
       search.parse({ scope: { workspaceId: WORKSPACE_ID }, query: 'authority', rawSql: true }),
     ).toThrow();
+  });
+
+  it('rejects terminal controls and credentials hidden in citation identifiers', () => {
+    for (const id of [
+      '\ud800',
+      '\u001b]52;c;synthetic\u0007',
+      'API_TOKEN=synthetic',
+      'password: syntheticexample',
+    ]) {
+      expect(
+        ProviderMemoryProposeRevisionInput.safeParse({
+          kind: 'fact',
+          title: 'Cited fact',
+          body: 'Deliberate text',
+          sourceRefs: [{ kind: 'artifact', id }],
+          confidence: 'unknown',
+        }).success,
+      ).toBe(false);
+    }
   });
 
   it('bounds queries, results, excerpts, and strict cursors', () => {

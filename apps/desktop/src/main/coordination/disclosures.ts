@@ -19,6 +19,40 @@ import {
 import type { LiveSession, Selection } from '../context.js';
 import type { StorageHealth } from '../storage-health.js';
 import { TokenStore } from '../tokens.js';
+import type { MissionEnvelopeInput, MissionEnvelopeView } from '@threadhelm/contracts';
+
+export interface MissionDisclosureSnapshot {
+  missionId: string;
+  expectedVersion: number | null;
+  input: MissionEnvelopeInput;
+  envelope: MissionEnvelopeView;
+}
+/** Mission envelope confirmation alone authorizes the disclosed unchanged worker tuple. */
+export class MissionDisclosures {
+  readonly #store: CoordinationDisclosureStore<MissionDisclosureSnapshot>;
+  constructor(clock: () => Date) {
+    this.#store = new CoordinationDisclosureStore(() => clock().getTime());
+  }
+  issue(snapshot: MissionDisclosureSnapshot) {
+    return this.#store.issue(
+      snapshot.expectedVersion === null ? 'mission.create' : 'mission.revise',
+      snapshot,
+    );
+  }
+  take(token: string, revision: boolean): MissionDisclosureSnapshot {
+    const snapshot = this.#store.takeBound(
+      token,
+      revision ? 'mission.revise' : 'mission.create',
+      () => true,
+    );
+    if (!snapshot)
+      throw new ThreadHelmError(
+        'MISSION_ENVELOPE_STALE',
+        'Mission review expired, changed or was already used.',
+      );
+    return snapshot;
+  }
+}
 
 /** Coordination disclosure tokens are valid for exactly two minutes. */
 export const COORDINATION_DISCLOSURE_TTL_MS = 120_000;

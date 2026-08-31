@@ -23,6 +23,7 @@ import { presentNextAtSafePoint, publishLatest } from './coordination/delivery.j
 import { reconcileCoordinationAtStartup } from './coordination/recovery.js';
 import {
   electronChannels,
+  electronAgentExportTargetPicker,
   electronHostSpawner,
   electronPicker,
   electronProfileFilePicker,
@@ -138,6 +139,7 @@ export function bootstrap(paths: BootstrapPaths): void {
       channels: electronChannels,
       picker: electronPicker(getWindow),
       profilePicker: electronProfileFilePicker(getWindow),
+      agentExportPicker: electronAgentExportTargetPicker(getWindow),
       events,
       storage,
       health: degradedHealth,

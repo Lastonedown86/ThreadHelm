@@ -26,6 +26,65 @@ The upstream behavior was reviewed at upstream commit
 Because upstream behavior may change, each planning cycle MUST compare its proposed milestone with
 the current upstream source and record any intentional divergence.
 
+## Approved preview milestone
+
+On 2026-08-31 the owner approved an **unsigned Windows 11 x64 preview** with the explicit
+[preview scope and retained release checklist](preview-release.md). The 250 MiB no-session memory,
+700 MiB four-session memory and fixed 1% four-session CPU thresholds, ARM64 distribution and
+unproved autonomous-provider capabilities are deferred from this preview. Their measured failures
+remain recorded and calibration work stays open. Substantive independent safety review and human acceptance remain required;
+obtaining every originally named AI-provider review does not. Missing provider authority must
+still fail closed. No runtime permission, containment, privacy or unknown-outcome rule is relaxed.
+
+Windows 11 x64 installed acceptance, actual installer cleanup and review of the session-host
+scope discrepancy are retained. The approved scope does not itself approve a candidate, merge
+or distribution. Deferred obligations remain incomplete for full Feature 002 closure. The owner
+subsequently authorized preparing the preview handoff below so those deferrals can carry forward.
+
+## Feature completion and next specification
+
+The approved cross-feature sequence is maintained in
+[Verified Mission OS: implementation roadmap](../../docs/roadmaps/verified-mission-os.md).
+That document records future product direction; it does not expand this feature's requirements,
+replace its task ledger, grant new runtime/external authority, or declare implementation complete.
+
+Feature 002 remains the active specification through US7 (agent wizard/templates), US8 (bounded
+autonomous supervisor), and Phase 11 (cross-cutting release gates). Finishing US7 does not finish
+the feature, and merging US8 does not replace release validation. The existing US8 scope already
+includes mission envelopes, decomposition, assignment, exact pre-authorized worker starts,
+structured result return, dependency tracking, bounds, known-safe retry, and honest recovery.
+Those capabilities MUST be reused rather than recreated by the next feature.
+
+**Trigger for a new `$speckit-specify`:** Either full Feature 002 closure is accepted, or the
+owner-approved limited preview handoff in [transition-to-next-feature.md](transition-to-next-feature.md)
+passes: P01-P05 retained gates, substantive independent safety review, required repository review,
+exact candidate acceptance and integration on `main` with passing applicable hosted checks and
+no unresolved blocking safety findings. Carry D01-D04 forward as explicit unmet dependencies;
+the next feature cannot advertise or rely on unproved provider capability. This sequencing
+decision does not turn deferred tests into passes or make T148/T149/T154/T157/T158 complete.
+T158 still records full closure only when its full obligations are satisfied. A merge or a
+preview-scope decision alone establishes neither handoff acceptance nor full feature completion.
+
+Keep `.specify/feature.json` pointing to this feature until that explicit transition. Before
+invoking `$speckit-specify`, inspect the current task ledger, execution evidence, checkout, and
+existing feature directories. Allocate the next available feature number at that time and create
+only one feature per invocation; do not pre-create follow-on directories or switch another active
+task's selector as part of documenting the roadmap.
+
+The next specification covers the incremental high-level mission/delegation experience,
+criterion-level verification, Capability Passports, progress accountability, Mission Receipts,
+and the approved Mission Focus interface. It MUST distinguish locally verified completion from
+an externally confirmed verified PR and MUST NOT add GitHub intake or delivery to Feature 002.
+After that feature is accepted and integrated, run a second `$speckit-specify` for **GitHub Mission
+Intake**, covering draft-only issue intake, explicit mission approval, authorized branch/PR
+delivery, individually approved clarification/final issue comments, and quiet communication.
+Automatic issue activation, merge, and deployment are excluded from that first GitHub feature.
+
+The [roadmap](../../docs/roadmaps/verified-mission-os.md#sequence-and-specification-triggers)
+defines the ordered entry/exit gates, future specification requests, and unresolved connector
+planning decisions. Any earlier transition or changed dependency order requires an explicit
+owner decision with recorded impact; documentation approval alone does not waive a release gate.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Send a Directed Agent Handoff (Priority: P1 — MVP)
@@ -213,7 +272,7 @@ confirm that no import launches an agent or changes authority.
 
 A user creates an agent through a compact step-by-step wizard, starts from a safe generic or
 user-saved template, customizes the agent's identity and role, reviews the exact resulting
-`munder-difflin/hire@1` manifest, and then saves, exports, or imports it without launching anything.
+`threadhelm/agent-profile@1` manifest, and then saves, exports, or imports it without launching anything.
 
 **Why this priority**: Importing existing hires preserves the user's roster; a guided creator makes
 that roster maintainable without requiring hand-edited JSON or turning persona design into authority.
@@ -433,7 +492,7 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
 - **FR-046**: Roster, shared-memory, and supervisor status MUST use compact lists, tables, text detail, badges,
   filters, and confirmations; topology graphs, avatars, animated workspaces, and continuous visual
   activity are not required and are outside this roadmap.
-- **FR-047**: ThreadHelm MUST support reviewed import of `munder-difflin/hire@1` JSON manifests and
+- **FR-047**: ThreadHelm MUST support reviewed import of native `threadhelm/agent-profile@1` and legacy `munder-difflin/hire@1` JSON manifests and
   MUST parse them as untrusted data without executing or obeying their goal/persona text.
 - **FR-048**: Before import, ThreadHelm MUST display the exact supported fields, source filename,
   SHA-256 digest, validation result, compatibility result, normalization changes, and warnings, and
@@ -467,6 +526,9 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
 - **FR-059**: ThreadHelm MUST provide versioned generic starter templates and local user-saved
   templates. Shipped templates MUST be provider-neutral where possible, use narrow role scaffolds,
   and MUST NOT bundle the user's Marvel names or project-specific goals as product defaults.
+  The owner's Marvel personas are private custom content and MUST NOT enter production bundles or
+  release packages, including indirectly through test-fixture imports. User-selected local imports
+  remain supported; test-only persona fixtures are not product content.
 - **FR-060**: Applying a template MUST create an independent draft with template identity, revision,
   provenance, and compatibility warnings; later template changes MUST NOT silently mutate the draft.
 - **FR-061**: Wizard drafts MUST be local, recoverable after restart, explicitly deletable, bounded,

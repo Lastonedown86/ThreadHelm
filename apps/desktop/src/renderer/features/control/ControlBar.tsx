@@ -30,10 +30,20 @@ export function ControlBar({ session }: { session: SessionView }) {
   const [status, setStatus] = useState<string | null>(null);
   const lifecycle = session.lifecycleState;
   const outcome = state.interruptResults[session.id];
-  // An observed interrupt outcome replaces the pending "requested" status.
+  // A new interrupt outcome replaces its pending request, not later stop requests.
   useEffect(() => {
     if (outcome) setStatus(null);
   }, [outcome]);
+  // Observed completion replaces pending requests; selection remounts this bar.
+  useEffect(() => {
+    if (lifecycle === 'stopped' || lifecycle === 'failed' || lifecycle === 'recovery_required') {
+      setStatus(null);
+    }
+  }, [lifecycle]);
+  const visibleOutcome =
+    lifecycle === 'running' || lifecycle === 'interrupting' || outcome === 'exited'
+      ? outcome
+      : undefined;
 
   const run = async (work: () => Promise<unknown>, pending: string) => {
     setStatus(pending);
@@ -86,7 +96,7 @@ export function ControlBar({ session }: { session: SessionView }) {
         Force stop…
       </button>
       <span className="control-status" aria-live="polite">
-        {status || (outcome ? INTERRUPT_LABEL[outcome] : '')}
+        {status || (visibleOutcome ? INTERRUPT_LABEL[visibleOutcome] : '')}
       </span>
       {stop ? (
         <ConfirmStopDialog

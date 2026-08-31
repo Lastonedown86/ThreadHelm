@@ -10,7 +10,38 @@ import {
   teardown,
   tempWorkspace,
   terminalRows,
+  stopViaUi,
 } from './helpers/ui.js';
+
+test('stop status clears on completion and never follows selection to another session', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'ignore-interrupt' });
+  const dirA = tempWorkspace('stop-status-a');
+  const dirB = tempWorkspace('stop-status-b');
+  const page = app.page;
+  try {
+    const a = await launchViaUi(app, 'codex-cli', await approveViaUi(app, dirA));
+    const b = await launchViaUi(app, 'claude-code', await approveViaUi(app, dirB));
+    await page.getByRole('button', { name: 'Stop…', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Stop this session?' })
+      .getByRole('button', { name: 'Stop session', exact: true })
+      .click();
+    await expect(page.locator('.control-status')).toContainText('Stop requested');
+    await sessionOption(page, a).click();
+    await expect(page.locator('.control-status')).toBeEmpty();
+    await expect(sessionOption(page, a)).toContainText('Running');
+    await expect(terminalRows(page)).toContainText('FAKE_AGENT_READY');
+    await page.getByRole('button', { name: 'Interrupt', exact: true }).click();
+    await expect(page.locator('.control-status')).toContainText('returned to an interactive state');
+    await stopViaUi(app, a);
+    await expect(page.locator('.control-status')).toBeEmpty();
+    await expect(page.getByRole('button', { name: 'Stop…', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Force stop…', exact: true })).toBeDisabled();
+    await expect(sessionOption(page, b)).toContainText('Stopping');
+  } finally {
+    await teardown(app, dirA, dirB);
+  }
+});
 
 test('interrupt, stop, force stop act on the displayed target only; close is blocked', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'ignore-interrupt' });
@@ -38,10 +69,7 @@ test('interrupt, stop, force stop act on the displayed target only; close is blo
         { timeout: 15_000 },
       )
       .toContain('INTERRUPT_HANDLED');
-    // fixme(renderer): ControlBar.tsx renders `status || outcome`; the pending
-    // "Interrupt requested…" status is never cleared, so the interruptResult
-    // label ("returned to an interactive state") is masked. Assert it once fixed:
-    // await expect(page.locator('.control-status')).toContainText('returned to an interactive state');
+    await expect(page.locator('.control-status')).toContainText('returned to an interactive state');
     await expect(sessionOption(page, a)).toContainText('Running');
     await expect(sessionOption(page, b)).toContainText('Running');
 
@@ -64,6 +92,7 @@ test('interrupt, stop, force stop act on the displayed target only; close is blo
     await expect(forceDialog).toContainText(pathB);
     await forceDialog.getByRole('button', { name: 'Force stop now' }).click();
     await expect(sessionOption(page, b)).toContainText('Stopped', { timeout: 20_000 });
+    await expect(page.locator('.control-status')).toBeEmpty();
     const list = await app.call<{ sessions: { id: string; stopKind: string | null }[] }>(
       'sessions.list',
     );

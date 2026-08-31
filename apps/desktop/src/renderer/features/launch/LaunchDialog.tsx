@@ -10,6 +10,7 @@ import type {
   LaunchPreviewView,
   LaunchWorkType,
   RuntimePermissionPolicy,
+  ProviderExecutionBounds,
   SessionView,
 } from '@threadhelm/contracts';
 import { api, call } from '../../api.js';
@@ -80,6 +81,7 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
   const [runtimeEscalationReason, setRuntimeEscalationReason] = useState('');
   const [permission, setPermission] = useState<RuntimePermissionPolicy | ''>('');
   const [allowlist, setAllowlist] = useState('');
+  const [executionBounds, setExecutionBounds] = useState<ProviderExecutionBounds | undefined>();
 
   useEffect(() => {
     setPreview(null);
@@ -91,6 +93,7 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
     setRuntimeEscalationReason('');
     setPermission('');
     setAllowlist('');
+    setExecutionBounds(undefined);
   }, [request.workspaceId, request.providerId]);
 
   const selectedModel = model === CUSTOM_MODEL ? customModel : model;
@@ -130,6 +133,7 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
               policy: permission || null,
               boundedAllowlist: permission === 'bounded_allowlist' ? boundedAllowlist : [],
             },
+            executionBounds,
           }),
         )
           .then((view) => {
@@ -165,6 +169,7 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
     permission,
     allowlist,
     permissionReady,
+    executionBounds,
   ]);
 
   const launch = async () => {
@@ -273,6 +278,32 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
             />
           </label>
         ) : null}
+        <label className="field">
+          Contained process limit
+          <input
+            type="number"
+            min={1}
+            max={16}
+            value={
+              executionBounds?.maxConcurrentProcesses ??
+              preview?.executionBounds.maxConcurrentProcesses ??
+              1
+            }
+            disabled={busy || (!preview && !executionBounds)}
+            onChange={(event) => {
+              const prior = executionBounds ?? preview?.executionBounds;
+              if (prior)
+                setExecutionBounds({
+                  ...prior,
+                  maxConcurrentProcesses: Number(event.target.value),
+                });
+            }}
+          />
+        </label>
+        <p className="hint">
+          This limit includes the provider and its terminal/bridge helpers. Mission workers commonly
+          need more than one process; review and authorize the exact limit before launching.
+        </p>
         <p className="hint">
           Permission is resolved for this launch by ThreadHelm, never by the agent persona.
           Automatic mode starts only with exact provider capability evidence. Break-glass bypass is
@@ -346,6 +377,10 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
               {Math.round(preview.executionBounds.maxElapsedMs / 60_000)} min ·{' '}
               {preview.executionBounds.maxTurns} turns ·{' '}
               {Math.round(preview.executionBounds.maxNoProgressMs / 60_000)} min without progress
+              {' · '}
+              {preview.executionBounds.maxOutputBytes} output bytes
+              {' · '}
+              {preview.executionBounds.maxConcurrentProcesses} contained processes
             </dd>
             <dt>Effective folder</dt>
             <dd className="mono">{preview.workspace.displayPath}</dd>

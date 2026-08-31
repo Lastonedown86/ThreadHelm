@@ -29,6 +29,14 @@ game-like presentation.
 
 ## What the current MVP does
 
+The next distribution milestone is an **unsigned Windows 11 x64 preview**, not a completed US8
+autonomy release. The owner has deferred the 250 MiB idle-memory target (latest measurement:
+380.324 MiB), ARM64 distribution and unproved autonomous-provider capabilities. Claude auto
+starts remain held when capability/policy proof is unavailable. ARM64 CI builds are validation
+artifacts, not supported preview downloads. The preview installer is **not yet approved for
+distribution**: x64 client installed acceptance, uninstall cleanup, independent review and owner
+acceptance remain open. See the [approved preview scope](specs/002-agent-mailbox-routing/preview-release.md).
+
 - **Approve a workspace** through the native folder picker. Identity is taken from the opened
   directory handle (volume serial + file id), so aliases, junctions, and different spellings of the
   same folder are the same workspace. Only fixed local drives are supported.
@@ -88,13 +96,16 @@ pnpm test:e2e                       # Playwright Electron user journeys + access
 
 Packaging and installed-artifact acceptance:
 
+Releases are intentionally unsigned and include SHA-256 checksums. See
+[installation guidance](docs/install.md) for publisher-trust limitations and verification.
+
 ```powershell
-pnpm package:win                                      # x64 Squirrel installer + .sha256 files
+pnpm package:win                                      # x64 NSIS installer + .sha256 files
 $env:THREADHELM_ARTIFACT = 'C:\path\to\ThreadHelm.exe'; pnpm test:acceptance:installed
 $env:THREADHELM_PROVIDER_SMOKE = '1'; pnpm test:smoke:providers   # real Codex/Claude, non-recording
 ```
 
-Signing is driven by `THREADHELM_SIGN_CERT` / `THREADHELM_SIGN_PASSWORD` at package time; keys are
+Optional signing is driven by `THREADHELM_SIGN_CERT` / `THREADHELM_SIGN_PASSWORD` at package time; keys are
 never stored in the repository. Fixture-based tests need a `node.exe` on `PATH`.
 
 ## Development workflow

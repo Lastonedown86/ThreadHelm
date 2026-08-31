@@ -3,7 +3,7 @@
  * Every contract error code has an entry; the test enforces it.
  */
 
-import { ErrorCode } from '@threadhelm/contracts';
+import type { ErrorCode } from '@threadhelm/contracts';
 import { RendererError } from '../../errors.js';
 
 export const ERROR_MESSAGES: Record<ErrorCode, string> = {
@@ -87,6 +87,32 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   PROFILE_REVISION_STALE: 'That agent profile changed after review. Reload it before continuing.',
   PROFILE_MISSION_PINNED:
     'That agent profile is pinned by an active mission and cannot be removed.',
+  MISSION_NOT_FOUND: 'That mission is no longer available. Refresh the mission list.',
+  MISSION_ENVELOPE_STALE:
+    'The mission or its launch settings changed. Review the exact envelope again.',
+  MISSION_BOUND_REACHED:
+    'A mission limit was reached. Review its bounds and held work before continuing.',
+  SUPERVISOR_NOT_BOUND: 'Select a live, eligible supervisor session before resuming this mission.',
+  SUPERVISOR_ROLE_REQUIRED:
+    'Only the supervisor session bound to this mission can make that decision.',
+  WORK_ITEM_NOT_FOUND: 'That work item is no longer available in this mission.',
+  WORK_DAG_INVALID: 'The work dependencies are invalid or cyclic. Review the work plan.',
+  WORK_LEASE_CONFLICT:
+    'This work conflicts with an existing workspace lease. Resolve the lease or use another approved workspace.',
+  WORK_ATTEMPT_UNKNOWN:
+    'The previous attempt has an unknown outcome. Inspect its effects before taking an explicit recovery action; it will not be replayed automatically.',
+  WORKER_AUTOSTART_NOT_AUTHORIZED:
+    'Automatic startup was not authorized for this exact worker. Review a new mission envelope to change its binding.',
+  WORKER_AUTOSTART_PREFLIGHT_FAILED:
+    'The exact worker launch is unavailable or changed. The assignment is held without substitution or bypass.',
+  SUPERVISOR_DECISION_LOOP:
+    'Repeated equivalent decisions paused this mission. Review the work before resuming.',
+  MISSION_AUTHORITY_REQUIRED:
+    'This action exceeds the confirmed mission authority. Use the separate control for that exact action; supervisor text cannot approve it.',
+  TEMPLATE_VARIABLE_UNRESOLVED:
+    'Resolve every declared template variable before reviewing the generated agent.',
+  TEMPLATE_DRAFT_INCOMPLETE:
+    'Complete every required wizard value before saving or exporting the generated agent.',
   ACTIVE_SESSIONS: 'Sessions are still active. Cancel closing or stop all sessions first.',
   INVALID_REQUEST: 'The request was rejected as invalid.',
   UNAUTHORIZED_SENDER: 'The request came from an unauthorized source.',
@@ -107,5 +133,3 @@ export function LaunchError({ error }: { error: unknown | null }) {
     </p>
   );
 }
-
-export const allErrorCodes = ErrorCode.options;

@@ -10,6 +10,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   ThreadHelmError,
+  type AgentProfileManifestSpec,
   type AgentProfileDetailView,
   type AgentProfileSummaryView,
   type ProfileCompatibility,
@@ -42,7 +43,7 @@ interface RevisionRow {
   token_cap_requested: number;
   author: string;
   goal: string;
-  manifest_spec: 'munder-difflin/hire@1';
+  manifest_spec: AgentProfileManifestSpec;
   compatibility: ProfileCompatibility;
   compatibility_reasons: string;
   source_basename: string;
@@ -61,7 +62,7 @@ export interface ImportProfileManifestInput {
   tokenCapRequested: number;
   author: string;
   goal: string;
-  manifestSpec: 'munder-difflin/hire@1';
+  manifestSpec: AgentProfileManifestSpec;
   compatibility: ProfileCompatibility;
   compatibilityReasons?: readonly string[];
   sourceBasename: string;
@@ -329,6 +330,12 @@ export class AgentProfileRepository {
     return toDetail(profile, revision, this.#history(profileId));
   }
 
+  getDetailByRevision(revisionId: string): AgentProfileDetailView | undefined {
+    const revision = this.#revision(revisionId);
+    const profile = revision ? this.#profile(revision.profile_id) : null;
+    return revision && profile ? toDetail(profile, revision, this.#history(profile.id)) : undefined;
+  }
+
   list(options: ProfileListOptions = {}): ProfileListPage {
     const limit = Math.max(1, Math.min(options.limit ?? 50, 100));
     const where = ["p.state <> 'deleted'"];
@@ -379,7 +386,7 @@ export class AgentProfileRepository {
         token_cap_requested: row.r_token_cap_requested as number,
         author: row.r_author as string,
         goal: row.r_goal as string,
-        manifest_spec: row.r_manifest_spec as 'munder-difflin/hire@1',
+        manifest_spec: row.r_manifest_spec as AgentProfileManifestSpec,
         compatibility: row.r_compatibility as ProfileCompatibility,
         compatibility_reasons: row.r_compatibility_reasons as string,
         source_basename: row.r_source_basename as string,

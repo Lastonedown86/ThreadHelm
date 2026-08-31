@@ -15,7 +15,7 @@ import type {
   ReadinessResult,
 } from '@threadhelm/providers';
 import { profileLaunchDisclosure } from '@threadhelm/providers';
-import { FAKE_AGENT_PATH, type FakeAgentMode } from './index.js';
+import { FAKE_AGENT_PATH, type FakeAgentMode } from './runtime.js';
 
 export interface FixtureAdapterOptions {
   id: ProviderId;
@@ -27,6 +27,8 @@ export interface FixtureAdapterOptions {
   readiness?: Partial<ReadinessResult>;
   /** Deterministic test-only lifecycle seam; never used by built-in adapters. */
   structuredSafePoint?: boolean;
+  /** Explicit simulation only; never inferred from a provider version or login. */
+  permissionCapability?: 'allowed' | 'denied' | 'unknown';
 }
 
 export function fixtureAdapter(options: FixtureAdapterOptions): ProviderAdapter {
@@ -48,7 +50,7 @@ export function fixtureAdapter(options: FixtureAdapterOptions): ProviderAdapter 
         ? {
             mode: 'structured_event',
             exactVersions: ['1.0.0'],
-            eventKinds: ['safe_point'],
+            eventKinds: ['safe_point', 'turn_completed'],
             maxAgeMs: 30_000,
             inputSafety: 'proved_no_pending_draft',
           }
@@ -103,6 +105,22 @@ export function fixtureAdapter(options: FixtureAdapterOptions): ProviderAdapter 
     },
     parseStructuredActivity(): ActivityEvidence | null {
       return null;
+    },
+    permissionCapabilityEvidence({ providerVersion, model, observedAt }) {
+      if (options.permissionCapability === undefined) return null;
+      return {
+        providerId: options.id,
+        providerVersion,
+        model,
+        providerSurface: options.id,
+        organizationPolicy: options.permissionCapability,
+        supportedPolicies:
+          options.permissionCapability === 'allowed'
+            ? ['manual', 'auto', 'bounded_allowlist']
+            : ['manual', 'bounded_allowlist'],
+        observedAt,
+        expiresAt: new Date(Date.parse(observedAt) + 5 * 60_000).toISOString(),
+      };
     },
   };
 }

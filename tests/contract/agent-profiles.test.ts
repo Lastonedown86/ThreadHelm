@@ -26,6 +26,7 @@ import {
 } from '@threadhelm/contracts';
 import { CoordinationDisclosureStore } from '../../apps/desktop/src/main/coordination/disclosures.js';
 import { describe, expect, it } from 'vitest';
+import { parseHireManifest } from '@threadhelm/domain';
 
 const ID_A = '11111111-1111-4111-8111-111111111111';
 const ID_B = '22222222-2222-4222-8222-222222222222';
@@ -63,6 +64,47 @@ describe('profile identifiers are stable UUIDs, never persona names', () => {
 });
 
 describe('hire manifest strict schema (unknown fields never grant authority)', () => {
+  it('rejects credentials even when shaped like valid model or capability identifiers', () => {
+    for (const value of ['sk-ant-syntheticexample', 'ghp_syntheticexample']) {
+      expect(HireManifestV1.safeParse({ ...VALID_MANIFEST, model: value }).success).toBe(false);
+      expect(HireManifestV1.safeParse({ ...VALID_MANIFEST, capabilities: [value] }).success).toBe(
+        false,
+      );
+    }
+  });
+  it('rejects escaped duplicate JSON keys rather than accepting a hidden replacement', () => {
+    const raw = JSON.stringify(VALID_MANIFEST);
+    for (const replacement of ['"\\u0067oal":"hidden"', '"\\u006eame":"hidden"']) {
+      expect(() => parseHireManifest(raw.slice(0, -1) + ',' + replacement + '}')).toThrow();
+    }
+  });
+
+  it('rejects malformed Unicode, terminal controls, and credential-shaped content in every free-text field', () => {
+    const unsafe = [
+      '\ud800',
+      '\udfff',
+      '\u001b]52;c;clipboard\u0007',
+      '\u009b31m',
+      'sk-ant-' + 'synthetic'.repeat(3),
+      'Bearer ' + 'synthetic'.repeat(3),
+      '-----BEGIN PRIVATE KEY-----',
+      '-----BEGIN RSA PRIVATE KEY-----',
+      'api_key: syntheticexample',
+    ];
+    for (const field of ['name', 'description', 'goal', 'author']) {
+      for (const value of unsafe) {
+        expect(
+          HireManifestV1.safeParse({ ...VALID_MANIFEST, [field]: value }).success,
+          `${field}: ${JSON.stringify(value)}`,
+        ).toBe(false);
+      }
+    }
+    expect(
+      HireManifestV1.parse({ ...VALID_MANIFEST, goal: 'Review 😀\nThen report.\tNo execution.' })
+        .goal,
+    ).toBe('Review 😀\nThen report.\tNo execution.');
+  });
+
   it('accepts the exact supported field set', () => {
     expect(HireManifestV1.parse(VALID_MANIFEST)).toEqual(VALID_MANIFEST);
   });

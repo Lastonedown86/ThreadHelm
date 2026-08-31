@@ -11,6 +11,7 @@
 
 import { app } from 'electron';
 import { createConnection } from 'node:net';
+import { randomUUID } from 'node:crypto';
 import {
   ProviderLifecycleEvidence,
   CoordinationEventEnvelope,
@@ -26,7 +27,7 @@ import {
   fixtureAdapter,
   resolveFixtureRuntime,
   type FakeAgentMode,
-} from '@threadhelm/test-fixtures';
+} from '@threadhelm/test-fixtures/desktop';
 import type { Context, HostHandle } from './context.js';
 import type { Envelope, Router } from './ipc/router.js';
 import type { LifecycleIngestionResult } from './coordination/bridge.js';
@@ -39,7 +40,15 @@ export interface TestHooks {
   dispatch(name: string, payload?: unknown): Promise<Envelope<unknown>>;
   setPickerPath(path: string | null): void;
   setProfileFilePickerPath(path: string | null): void;
-  useFixtureAdapters(modes: Partial<Record<ProviderId, FakeAgentMode>>, lines?: number): void;
+  setAgentExportPickerPath(path: string | null): void;
+  failNextAgentExportBeforeWrite(): void;
+  failNextAgentExportAfterReplace(): void;
+  failNextAgentExportTempCleanup(): void;
+  useFixtureAdapters(
+    modes: Partial<Record<ProviderId, FakeAgentMode>>,
+    lines?: number,
+    permissionCapabilities?: Partial<Record<ProviderId, 'allowed' | 'denied' | 'unknown'>>,
+  ): void;
   liveSessions(): { id: string; state: string; hostPid: number; rootPid: number | null }[];
   jobSnapshot(sessionId: string): { activeProcessCount: number; processIds: number[] } | null;
   simulatePower(event: PowerEvent): void;
@@ -65,6 +74,11 @@ export interface TestHooks {
     authorityRequired: boolean;
   }): { id: string; deliveryState: string; holdReasonCode: string | null };
   emitProviderLifecycle(evidence: unknown): Promise<LifecycleIngestionResult>;
+  bridgeRequest(
+    sessionId: string,
+    method: string,
+    params: Record<string, unknown>,
+  ): Promise<unknown>;
   dropProviderPipe(sessionId: string): Promise<void>;
   storagePath(): string;
   breakStorage(): void;
@@ -78,6 +92,10 @@ export function testHooksEnabled(): boolean {
 export function installTestHooks(ctx: Context, router: Router, allowedOrigin: () => string): void {
   let pickerPath: string | null = null;
   let profileFilePickerPath: string | null = null;
+  let agentExportPickerPath: string | null = null;
+  let failNextAgentExportBeforeWrite = false;
+  let failNextAgentExportAfterReplace = false;
+  let failNextAgentExportTempCleanup = false;
   let nextHostReadyDelayMs = 0;
   let nextControlAppliedDelayMs = 0;
   let rejectNextHostInput = false;
@@ -121,6 +139,24 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
   };
   ctx.picker = { pickDirectory: async () => pickerPath };
   ctx.profilePicker = { pickFile: async () => profileFilePickerPath };
+  ctx.agentExportPicker = { pickTarget: async () => agentExportPickerPath };
+  ctx.agentExportFailureInjector = {
+    consumeBeforeWriteFailure: () => {
+      const fail = failNextAgentExportBeforeWrite;
+      failNextAgentExportBeforeWrite = false;
+      return fail;
+    },
+    consumeAfterReplaceFailure: () => {
+      const fail = failNextAgentExportAfterReplace;
+      failNextAgentExportAfterReplace = false;
+      return fail;
+    },
+    consumeTempCleanupFailure: () => {
+      const fail = failNextAgentExportTempCleanup;
+      failNextAgentExportTempCleanup = false;
+      return fail;
+    },
+  };
 
   const hooks: TestHooks = {
     dispatch: (name, payload) =>
@@ -131,7 +167,19 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
     setProfileFilePickerPath: (path) => {
       profileFilePickerPath = path;
     },
-    useFixtureAdapters: (modes, lines) => {
+    setAgentExportPickerPath: (path) => {
+      agentExportPickerPath = path;
+    },
+    failNextAgentExportBeforeWrite: () => {
+      failNextAgentExportBeforeWrite = true;
+    },
+    failNextAgentExportAfterReplace: () => {
+      failNextAgentExportAfterReplace = true;
+    },
+    failNextAgentExportTempCleanup: () => {
+      failNextAgentExportTempCleanup = true;
+    },
+    useFixtureAdapters: (modes, lines, permissionCapabilities) => {
       ctx.adapters = ctx.adapters.map((adapter) => {
         const mode = modes[adapter.id];
         if (!mode) return adapter;
@@ -141,6 +189,9 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
           executable: resolveFixtureRuntime() ?? process.execPath,
           ...(lines !== undefined ? { lines } : {}),
           structuredSafePoint: true,
+          ...(permissionCapabilities?.[adapter.id]
+            ? { permissionCapability: permissionCapabilities[adapter.id] }
+            : {}),
         });
       });
       ctx.coordinationBridge?.setAdapters(ctx.adapters);
@@ -241,6 +292,47 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
       const token = manager?.testCredential(evidence.sessionId);
       if (!manager || !token) throw new Error('TEST_BRIDGE_NOT_AVAILABLE');
       return manager.ingestLifecycleEvidence(evidence.sessionId, token, evidence);
+    },
+    bridgeRequest: async (sessionId, method, params) => {
+      const manager = ctx.coordinationBridge;
+      const credential = manager?.testCredential(sessionId);
+      const pipeName = manager?.testPipeName(sessionId);
+      if (!credential || !pipeName) throw new Error('TEST_BRIDGE_NOT_AVAILABLE');
+      const response = await new Promise<{
+        error?: unknown;
+        result?: { isError?: boolean; structuredContent?: unknown };
+      }>((resolve, reject) => {
+        const socket = createConnection(pipeName);
+        let buffer = '';
+        socket.setEncoding('utf8');
+        socket.setTimeout(30_000, () => socket.destroy(new Error('TEST_BRIDGE_TIMEOUT')));
+        socket.once('error', reject);
+        socket.once('connect', () =>
+          socket.write(
+            `${JSON.stringify({ sessionId, credential, payload: { jsonrpc: '2.0', id: randomUUID(), method: 'tools/call', params: { name: method, arguments: params } } })}\n`,
+          ),
+        );
+        socket.on('data', (chunk: string) => {
+          buffer += chunk;
+          if (Buffer.byteLength(buffer) > 32 * 1024) {
+            socket.destroy(new Error('TEST_BRIDGE_FRAME_TOO_LARGE'));
+            return;
+          }
+          const newline = buffer.indexOf('\n');
+          if (newline < 0) return;
+          try {
+            resolve(JSON.parse(buffer.slice(0, newline)));
+            socket.end();
+          } catch {
+            socket.destroy(new Error('TEST_BRIDGE_RESPONSE_INVALID'));
+          }
+        });
+      });
+      if (response.error || response.result?.isError)
+        throw new Error(
+          `TEST_BRIDGE_REJECTED ${JSON.stringify(response.result?.structuredContent ?? {})}`,
+        );
+      return response.result?.structuredContent;
     },
     dropProviderPipe: async (sessionId) => {
       if (!ctx.live.has(sessionId)) throw new Error('TEST_SESSION_NOT_LIVE');

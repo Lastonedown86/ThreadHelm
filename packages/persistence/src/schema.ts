@@ -3,6 +3,7 @@
  * from the contracts enums so the database and the wire types cannot drift.
  */
 
+import { V3_SUPERVISOR } from './supervisor-schema.js';
 import {
   AccessMode,
   ActivityState,
@@ -423,6 +424,117 @@ CREATE TABLE mission_profile_pins (
 CREATE INDEX mission_profile_pins_profile ON mission_profile_pins (profile_id);
 `;
 
+const V3_AGENT_TEMPLATES = `
+CREATE TABLE agent_profile_templates (
+  id TEXT PRIMARY KEY,
+  template_key TEXT NOT NULL UNIQUE,
+  origin TEXT NOT NULL CHECK (origin IN ('bundled', 'user')),
+  state TEXT NOT NULL CHECK (state IN ('active', 'disabled', 'superseded', 'deleted')),
+  current_revision_id TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE agent_profile_template_revisions (
+  id TEXT PRIMARY KEY,
+  template_id TEXT NOT NULL REFERENCES agent_profile_templates (id) ON DELETE RESTRICT,
+  revision INTEGER NOT NULL CHECK (revision >= 1),
+  name TEXT NOT NULL,
+  manifest_json TEXT NOT NULL,
+  digest TEXT NOT NULL CHECK (length(digest) = 64),
+  created_at TEXT NOT NULL,
+  UNIQUE (template_id, revision),
+  UNIQUE (digest)
+);
+CREATE TABLE agent_profile_drafts (
+  id TEXT PRIMARY KEY,
+  source_template_revision_id TEXT REFERENCES agent_profile_template_revisions (id) ON DELETE RESTRICT,
+  state TEXT NOT NULL CHECK (state IN ('editing', 'invalid', 'ready_for_review', 'completed', 'deleted')),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  completed_at TEXT
+);
+CREATE INDEX agent_profile_drafts_source_state
+  ON agent_profile_drafts (source_template_revision_id, state, updated_at);
+`;
+
+// Upgrade the earlier unreleased v3 foundation in the same migration transaction.
+// Copy both related tables before rebuilding so foreign keys remain enabled.
+// No persisted draft values existed in that foundation; seed them from provenance.
+const V3_TEMPLATE_LIFECYCLE = `
+CREATE TEMP TABLE template_revision_upgrade AS SELECT * FROM agent_profile_template_revisions;
+CREATE TEMP TABLE template_draft_upgrade AS SELECT * FROM agent_profile_drafts;
+DROP TABLE agent_profile_drafts;
+DROP TABLE agent_profile_template_revisions;
+CREATE TABLE agent_profile_template_revisions (
+  id TEXT PRIMARY KEY,
+  template_id TEXT NOT NULL REFERENCES agent_profile_templates (id) ON DELETE RESTRICT,
+  revision INTEGER NOT NULL CHECK (revision >= 1),
+  name TEXT NOT NULL CHECK (length(name) <= 200),
+  manifest_json TEXT NOT NULL CHECK (length(CAST(manifest_json AS BLOB)) <= 65536),
+  digest TEXT NOT NULL CHECK (length(digest) = 64),
+  variables_json TEXT NOT NULL DEFAULT '[]',
+  source_profile_revision_id TEXT REFERENCES agent_profile_revisions (id) ON DELETE RESTRICT,
+  created_by_user INTEGER NOT NULL CHECK (created_by_user IN (0, 1)),
+  created_at TEXT NOT NULL,
+  UNIQUE (template_id, revision)
+);
+CREATE INDEX agent_template_revision_digest ON agent_profile_template_revisions (template_id, digest);
+INSERT INTO agent_profile_template_revisions
+  (id, template_id, revision, name, manifest_json, digest, created_by_user, created_at)
+SELECT r.id, r.template_id, r.revision, r.name, r.manifest_json, r.digest,
+  CASE WHEN t.origin = 'user' THEN 1 ELSE 0 END, r.created_at
+FROM template_revision_upgrade r JOIN agent_profile_templates t ON t.id = r.template_id;
+CREATE TABLE agent_profile_drafts (
+  id TEXT PRIMARY KEY,
+  source_template_revision_id TEXT REFERENCES agent_profile_template_revisions (id) ON DELETE RESTRICT,
+  source_profile_revision_id TEXT REFERENCES agent_profile_revisions (id) ON DELETE RESTRICT,
+  state TEXT NOT NULL CHECK (state IN ('editing', 'invalid', 'ready_for_review', 'completed', 'deleted')),
+  version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
+  current_step TEXT NOT NULL DEFAULT 'identity' CHECK (current_step IN ('start', 'identity', 'role', 'capabilities', 'runtime', 'review')),
+  field_values TEXT NOT NULL DEFAULT '{}' CHECK (length(CAST(field_values AS BLOB)) <= 65536),
+  variable_values TEXT NOT NULL DEFAULT '{}',
+  validation_issues TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  completed_at TEXT,
+  deleted_at TEXT,
+  CHECK (source_template_revision_id IS NULL OR source_profile_revision_id IS NULL)
+);
+INSERT INTO agent_profile_drafts
+  (id, source_template_revision_id, state, field_values, created_at, updated_at, completed_at, deleted_at)
+SELECT d.id, d.source_template_revision_id, d.state,
+  CASE WHEN d.state = 'deleted' THEN '{}' ELSE COALESCE(r.manifest_json, '{}') END,
+  d.created_at, d.updated_at, d.completed_at,
+  CASE WHEN d.state = 'deleted' THEN d.updated_at ELSE NULL END
+FROM template_draft_upgrade d LEFT JOIN template_revision_upgrade r ON r.id = d.source_template_revision_id;
+CREATE INDEX agent_profile_drafts_source_state ON agent_profile_drafts (source_template_revision_id, state, updated_at);
+CREATE INDEX agent_profile_drafts_state ON agent_profile_drafts (state, updated_at, id);
+CREATE INDEX agent_profile_templates_state ON agent_profile_templates (origin, state, updated_at, id);
+DROP TABLE template_draft_upgrade;
+DROP TABLE template_revision_upgrade;
+CREATE TABLE agent_template_storage_v1 (version INTEGER PRIMARY KEY CHECK (version = 1));
+INSERT INTO agent_template_storage_v1 VALUES (1);
+`;
+
+const V3_AGENT_EXPORT_INTENTS = `
+CREATE TABLE agent_profile_export_intents (
+  id TEXT PRIMARY KEY,
+  draft_id TEXT NOT NULL REFERENCES agent_profile_drafts (id) ON DELETE RESTRICT,
+  draft_version INTEGER NOT NULL CHECK (draft_version >= 1),
+  digest TEXT NOT NULL CHECK (length(digest) = 64),
+  target_basename TEXT NOT NULL CHECK (length(target_basename) BETWEEN 1 AND 255),
+  target_identity TEXT NOT NULL CHECK (length(target_identity) <= 512),
+  state TEXT NOT NULL CHECK (state IN ('prepared', 'writing', 'completed', 'failed', 'unknown')),
+  reason_code TEXT,
+  created_at TEXT NOT NULL,
+  completed_at TEXT,
+  CHECK ((state = 'completed' AND completed_at IS NOT NULL)
+      OR (state <> 'completed'))
+);
+CREATE INDEX agent_profile_export_intents_draft_created
+  ON agent_profile_export_intents (draft_id, created_at DESC);
+`;
+
 export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 1, sql: V1 },
   { version: 2, sql: V2 },
@@ -432,4 +544,8 @@ export const MIGRATIONS: readonly { version: number; sql: string }[] = [
 /** Additive slices intentionally delivered under the still-unreleased v3 schema. */
 export const CURRENT_SCHEMA_EXTENSIONS: readonly { table: string; sql: string }[] = [
   { table: 'agent_profiles', sql: V3_AGENT_PROFILES },
+  { table: 'agent_profile_templates', sql: V3_AGENT_TEMPLATES },
+  { table: 'agent_template_storage_v1', sql: V3_TEMPLATE_LIFECYCLE },
+  { table: 'agent_profile_export_intents', sql: V3_AGENT_EXPORT_INTENTS },
+  { table: 'supervisor_missions', sql: V3_SUPERVISOR },
 ];

@@ -3,23 +3,22 @@
  *
  * One named method per approved operation, including the coordination
  * namespace, generated from the contract's
- * operation table so nothing unlisted can be reached. No `ipcRenderer`,
+ * dependency-free protocol list, exhaustively checked against main's schemas.
+ * Nothing unlisted can be reached. No `ipcRenderer`,
  * channel name, filesystem, environment, shell, or executable access crosses
  * into the renderer. Results travel as `{ ok, value | error }` envelopes so
  * stable error codes survive the context bridge.
  */
 
 import { contextBridge, ipcRenderer } from 'electron';
-import {
-  eventNames,
-  operationNames,
-  STREAM_PORT_CHANNEL,
-  type EventName,
-  type EventPayload,
-  type OperationName,
-  type OperationRequest,
-  type OperationResponse,
-  type SerializedError,
+import { eventNames, operationNames, STREAM_PORT_CHANNEL } from '@threadhelm/contracts/protocol';
+import type {
+  EventName,
+  EventPayload,
+  OperationName,
+  OperationRequest,
+  OperationResponse,
+  SerializedError,
 } from '@threadhelm/contracts';
 
 export type Envelope<T> = { ok: true; value: T } | { ok: false; error: SerializedError };

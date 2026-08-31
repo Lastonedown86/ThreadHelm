@@ -38,6 +38,11 @@ const HOST_LAUNCH_TIMEOUT_MS = 20_000;
 
 type Ready = Extract<HostToMainMessage, { type: 'host.ready' }>;
 type Launched = Extract<HostToMainMessage, { type: 'host.launched' }>;
+export interface MissionLaunchAuthorization {
+  missionId: string;
+  leaseId: string;
+  sessionId: string;
+}
 
 function deferred<T>(timeoutMs: number, code: string) {
   let resolve!: (value: T) => void;
@@ -66,6 +71,7 @@ export async function launchSession(
   ctx: Context,
   previewToken: string,
   boundaryConfirmation: boolean,
+  missionAuthorization?: MissionLaunchAuthorization,
 ): Promise<SessionView> {
   const preview = ctx.tokens.previews.take(previewToken);
   if (!preview) {
@@ -79,13 +85,18 @@ export async function launchSession(
   }
   ctx.health.assertWritable();
   const storage = storageOf(ctx);
+  if (missionAuthorization) {
+    if (!ctx.supervisor) throw new ThreadHelmError('WORKER_AUTOSTART_NOT_AUTHORIZED');
+    ctx.supervisor.assertLaunchAuthorized(missionAuthorization, preview);
+  }
   const { workspace, readiness, result } = await revalidatePreview(ctx, preview);
+  if (missionAuthorization) ctx.supervisor!.assertLaunchAuthorized(missionAuthorization, preview);
   const adapter = ctx.adapters.find((candidate) => candidate.id === preview.providerId);
   if (!adapter || !result.resolvedExecutable || !result.executableKind || !readiness.version) {
     throw new ThreadHelmError('PROVIDER_UNAVAILABLE', 'The provider is not ready to launch.');
   }
 
-  const sessionId = randomUUID();
+  const sessionId = missionAuthorization?.sessionId ?? randomUUID();
   acquireLease(ctx, workspace.identity, sessionId);
 
   // 4. durable starting record before any OS process exists
@@ -112,6 +123,7 @@ export async function launchSession(
           rows: preview.terminal.rows,
           createdAt,
         });
+        if (missionAuthorization) ctx.supervisor!.bindStartingSession(missionAuthorization);
         storage.repositories.events.append(sessionId, {
           kind: 'launch_requested',
           fromState: null,
@@ -139,6 +151,7 @@ export async function launchSession(
     const jobToken = ctx.jobs.create(sessionId);
     const host = ctx.hosts.spawn(sessionId);
     live = {
+      launchSnapshot: structuredClone(preview),
       id: sessionId,
       workspaceId: preview.workspaceId,
       identity: workspace.identity,
@@ -217,8 +230,11 @@ export async function launchSession(
           sessionId,
           reasonCode: 'COORDINATION_BRIDGE_UNAVAILABLE',
         });
+        if (missionAuthorization) throw new ThreadHelmError('WORKER_AUTOSTART_PREFLIGHT_FAILED');
       }
     }
+    if (missionAuthorization && !bridgeConfig)
+      throw new ThreadHelmError('WORKER_AUTOSTART_PREFLIGHT_FAILED');
     const descriptor = LaunchDescriptor.parse(
       adapter.buildLaunch({
         sessionId,
@@ -233,12 +249,19 @@ export async function launchSession(
         permissionResolution: preview.permissionResolution,
         executionBounds: preview.executionBounds,
         ...(bridgeConfig ? { bridgeConfig } : {}),
+        ...(missionAuthorization
+          ? { profileBinding: ctx.supervisor!.profileLaunchBinding(missionAuthorization) }
+          : {}),
       }),
     );
     if (descriptor.cwd !== workspace.displayPath) throw new Error('DESCRIPTOR_CWD_MISMATCH');
 
     const channel = ctx.channels.create();
     live.rendererPort = channel.rendererPort;
+    if (missionAuthorization) {
+      ctx.supervisor!.assertLaunchAuthorized(missionAuthorization, preview);
+      ctx.supervisor!.markLaunchDispatched(missionAuthorization);
+    }
     host.postMessage(
       {
         type: 'host.launch',
@@ -246,6 +269,9 @@ export async function launchSession(
         protocolVersion: PROTOCOL_VERSION,
         bootstrapSecret,
         descriptor,
+        ...(missionAuthorization
+          ? { outputBudget: ctx.supervisor!.outputLaunchBudget(missionAuthorization) }
+          : {}),
       },
       [channel.hostPort],
     );
@@ -263,7 +289,16 @@ export async function launchSession(
       patch: { hostPid: live.hostPid, rootPid: live.rootPid, startedAt: now(ctx) },
     });
   } catch (error) {
-    const reason = error instanceof Error ? error.message.split(' ')[0]! : 'UNKNOWN';
+    const candidate = error instanceof Error ? error.message.split(' ')[0]! : '';
+    // Typed errors carry a fixed code. Their user-facing sentence is never an
+    // event reason: a word such as "The" would fail the strict event schema
+    // after the lifecycle write and could interrupt cleanup.
+    const reason =
+      error instanceof ThreadHelmError
+        ? error.code
+        : /^[A-Z][A-Z0-9_]{2,63}$/.test(candidate)
+          ? candidate
+          : 'SUPERVISION_FAILED';
     ctx.log.error('session.launch_failed', { sessionId, reason });
     if (live) {
       failSession(ctx, live, reason);

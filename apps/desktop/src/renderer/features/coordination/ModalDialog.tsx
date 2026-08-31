@@ -14,6 +14,7 @@ export function ModalDialog({
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     dialog.showModal();
     const first = dialog.querySelector<HTMLElement>(
       'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])',
@@ -21,6 +22,11 @@ export function ModalDialog({
     first?.focus();
     return () => {
       if (dialog.open) dialog.close();
+      // React removes the dialog before passive cleanup; native close alone then
+      // cannot restore focus. Do not steal focus from a replacement dialog.
+      queueMicrotask(() => {
+        if (opener?.isConnected && !document.querySelector('dialog[open]')) opener.focus();
+      });
     };
   }, []);
 

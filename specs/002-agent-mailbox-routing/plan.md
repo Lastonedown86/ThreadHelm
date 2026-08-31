@@ -1,5 +1,14 @@
 # Implementation Plan: Durable Hive Coordination
 
+**Preview repair decision, 2026-08-31:** Replace only the Squirrel installer stage with pinned
+electron-builder NSIS consuming the existing Forge package. Forge retains ASAR/fuse/native/persona
+ownership; no Electron shell migration, updater service, automatic publication, elevation or
+application-data deletion is added. The shipped Squirrel updater's in-place uninstall cannot remove
+its own executable and has no supported post-exit cleanup switch. Actual hosted install/uninstall
+must verify the replacement; a successful make is not acceptance. See
+[installer acceptance](../../tests/acceptance/INSTALLER.md) and the
+[next-feature transition](transition-to-next-feature.md).
+
 **Branch**: `002-agent-mailbox-routing` | **Date**: 2026-08-28 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/002-agent-mailbox-routing/spec.md`
@@ -35,7 +44,19 @@ sequential Windows mission/fault integration tests with fixture agents and bridg
 Electron end-to-end tests, Cargo tests for the packaged bridge, and separate credentialed
 Codex/Claude smoke tests
 
-**Target Platform**: Supported Windows 11 client releases, x64 and ARM64 installed artifacts
+**Target Platform**: Windows 11 x64 for the approved preview; ARM64 implementation/validation
+retained but distribution deferred. Full target: supported Windows 11 x64 and ARM64 installed artifacts.
+
+**Approved preview exception (2026-08-31)**: [preview-release.md](preview-release.md) governs the
+limited unsigned x64 milestone. D01/D05 defer the 250 MiB no-session and 700 MiB four-session
+aggregate memory ceilings; D06 defers the fixed 1% four-session CPU ceiling. Original targets and
+measurements remain recorded as failures and replacement ceilings require calibration. See
+`memory-budget-review.md` for extended idle/session-cycle evidence. Defer ARM64
+distribution and unproved autonomous-provider capabilities/proofs. Retain other performance and
+resource bounds, x64 client installed acceptance, cleanup, independent safety/scope review and
+owner acceptance. The named multi-provider review roster below is no longer a requirement to
+obtain every listed review for this preview; it neither authorizes provider runs nor replaces
+substantive independent review. No production authority check or full-feature completion claim changes.
 
 **Project Type**: Windows desktop application with typed renderer/main IPC, one utility process and
 PTY per agent session, a main-owned local database, and a small session-scoped native stdio bridge
@@ -341,7 +362,10 @@ All assignments stay within ChatGPT/OpenAI, Anthropic Claude, and Google Antigra
 availability is rechecked immediately before a story starts: current Codex app inventory for OpenAI,
 `/model` and `/status` for Claude Code, and `agy models` for Antigravity. A missing approved model
 leaves the story unassigned until its listed in-ecosystem fallback is verified; no fourth ecosystem
-is substituted.
+is substituted. For the current US7 cycle, do not start, probe, or otherwise invoke an external
+Claude or Antigravity run without asking the owner first. That approval must be specific to the
+provider, model, and intended role; a recorded historical availability result is not current-run
+authorization.
 
 | Story | Primary owner and effort | In-ecosystem fallback | Role and rationale | Usage/cost tradeoff | Independent verification responsibility |
 |---|---|---|---|---|---|
@@ -351,7 +375,7 @@ is substituted.
 | P4 Bounded coordination | OpenAI `gpt-5.6-sol`, `max` | `gpt-5.6-terra`, `max` | Own loop bounds, held-message policy, escalation, and authority invariants. Max is restricted to the highest-risk policy slice. | Highest planned OpenAI usage. Do not use `ultra` unless a later task explicitly authorizes isolated subagents; `ultra` changes execution topology. | Claude `claude-opus-5`, `xhigh`, plus the human owner, adversarially reviews depth/loop/failure/conflict/authority cases. Google `gemini-3.1-pro-high` may provide a second independent review when quota permits. |
 | P5 Shared hive memory | Google Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Own the revision/provenance model, FTS retrieval, conflict lifecycle, deletion, and compact memory UI. Pro High is used for the architecture slice; Flash Medium is suitable once contracts are fixed. | Higher Antigravity quota use than Flash, bounded to memory architecture and acceptance. No embedding/API spend is introduced by the product design. | Claude `claude-opus-5`, `high`, reviews isolation, provenance, conflict/deletion behavior, and secret/transcript exclusion; deterministic relevance/privacy tests remain authoritative. |
 | P6 Reviewed agent roster | Anthropic `claude-sonnet-5`, `high` | `claude-opus-5`, `high` | Own Munder schema compatibility, untrusted-persona boundaries, digest/revision import, and compact roster UX. Sonnet matches the supplied ecosystem while keeping Opus for difficult compatibility review. | Moderate Claude usage; deterministic schema/digest fixtures carry correctness, so Opus is only fallback/review. | OpenAI `gpt-5.6-sol`, `high`, verifies authority separation, changed-after-preview handling, and all ten manifest acceptance results. |
-| P7 Agent wizard and templates | Google Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Own accessible step flow, draft/template lifecycle, literal variables, exact JSON review, and safe export UX. Flash Medium fits broad but bounded UI/domain work. | Moderate Antigravity quota use; no generation API or product runtime integration is introduced. | Claude `claude-sonnet-5`, `high`, verifies schema parity, draft recovery, template provenance, overwrite safety, and keyboard completion. |
+| P7 Agent wizard and templates | OpenAI `gpt-5.6-terra`, `high` | `gpt-5.6-sol`, `high` | Own the accessible step flow, draft/template lifecycle, literal variables, exact JSON review, and safe export UX for this cycle. The slice is bounded local UI/domain work, so Terra at high effort is sufficient while deterministic tests remain the correctness authority. | Moderate OpenAI usage is bounded to US7. Antigravity is not assigned to an execution run for this cycle; it may be reconsidered only with a new owner-approved run. | Claude `claude-sonnet-5`, `high`, may verify schema parity, draft recovery, template provenance, overwrite safety, and keyboard completion only after a separate owner-approved Claude run. |
 | P8 Autonomous supervisor | OpenAI `gpt-5.6-sol`, `max` | `gpt-5.6-terra`, `max` | Own mission-envelope policy, work DAG/leases, event-driven supervisor tools, bounded retry/reassignment, recovery, and human escalation. Max is justified by the authority/concurrency risk. | Highest single-story OpenAI usage; split mechanical fixture generation to lower-cost approved models only after policy contracts freeze. | Claude `claude-opus-5`, `xhigh`, the human owner, and Antigravity `gemini-3.1-pro-high` adversarially review envelope escape, loop, lease, recovery, and consequential-action cases. |
 
 Model exclusions for this plan:
@@ -544,3 +568,14 @@ authoring/failure analysis recommends the lowest-cost capable approved model at 
 High-cost/high-effort requires explicit selection or recorded escalation. Planning providers are
 ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers are Codex CLI and Claude Code. Effort
 and permission policy stay outside the Munder hire schema.
+
+## Distribution decision — 2026-08-30
+
+The owner confirmed that ThreadHelm will be an unsigned app. Trusted Authenticode signing is
+therefore not a release prerequisite. Optional paired signing inputs remain supported, but the
+normal release and acceptance path requires no certificate or unsigned-test override. Accept
+only `NotSigned` or `Valid`; reject invalid or unknown signature states. Record publisher-trust
+status honestly and disclose possible Windows unknown-publisher/reputation warnings. Checksums,
+production fuses, ASAR integrity, architecture checks, installed cleanup, and private-persona
+exclusion remain required. This decision does not waive provider, performance, or owner-acceptance
+gates.

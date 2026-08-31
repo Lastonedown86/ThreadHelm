@@ -9,8 +9,9 @@
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { api, call } from '../../api.js';
-import { StreamClient, type StreamFailure } from './stream.js';
+import { StreamClient, type StreamPort } from './stream.js';
 import { createSecureTerminalOptions, hardenTerminal } from './xterm-security.js';
+import type { TerminalHooks } from './terminal-controller.js';
 
 export interface TerminalEntry {
   term: Terminal;
@@ -20,35 +21,11 @@ export interface TerminalEntry {
   stream: StreamClient | null;
 }
 
-export interface TerminalHooks {
-  isSelected(sessionId: string): boolean;
-  onOutput(sessionId: string): void;
-  onTruncated(sessionId: string, count: number): void;
-  onStreamFailure(sessionId: string, reason: StreamFailure): void;
-  onInputRejected(sessionId: string, code: string): void;
-}
-
 const entries = new Map<string, TerminalEntry>();
-const subscribed = new Set<string>();
 let hooks: TerminalHooks | null = null;
 
-export function installTerminalHooks(next: TerminalHooks): () => void {
+export function setTerminalHooks(next: TerminalHooks | null): void {
   hooks = next;
-  window.addEventListener('message', onWindowMessage);
-  return () => {
-    window.removeEventListener('message', onWindowMessage);
-    hooks = null;
-  };
-}
-
-function onWindowMessage(event: MessageEvent): void {
-  const data: unknown = event.data;
-  if (!data || typeof data !== 'object') return;
-  const { type, sessionId } = data as { type?: unknown; sessionId?: unknown };
-  if (type !== api.streamPortChannel || typeof sessionId !== 'string') return;
-  const port = event.ports[0];
-  if (!port) return;
-  attachStream(sessionId, port);
 }
 
 export function ensureTerminal(sessionId: string): TerminalEntry {
@@ -87,15 +64,7 @@ export function ensureTerminal(sessionId: string): TerminalEntry {
   return entry;
 }
 
-/** Request the session's output port once; the host delivers it via postMessage. */
-export function subscribeOutput(sessionId: string): void {
-  if (subscribed.has(sessionId)) return;
-  subscribed.add(sessionId);
-  ensureTerminal(sessionId);
-  void call(api.sessions.subscribeOutput({ sessionId })).catch(() => subscribed.delete(sessionId));
-}
-
-function attachStream(sessionId: string, port: MessagePort): void {
+export function attachStream(sessionId: string, port: StreamPort): void {
   const entry = ensureTerminal(sessionId);
   entry.stream?.close();
   entry.stream = new StreamClient(
@@ -110,8 +79,17 @@ function attachStream(sessionId: string, port: MessagePort): void {
   );
 }
 
-export function getTerminal(sessionId: string): TerminalEntry | undefined {
-  return entries.get(sessionId);
+export function terminalSize(sessionId: string): { columns: number; rows: number } | undefined {
+  const entry = entries.get(sessionId);
+  if (entry?.opened) return { columns: entry.term.cols, rows: entry.term.rows };
+  return undefined;
+}
+
+export function closeStream(sessionId: string): void {
+  const entry = entries.get(sessionId);
+  if (!entry) return;
+  entry.stream?.close();
+  entry.stream = null;
 }
 
 export function disposeTerminal(sessionId: string): void {
@@ -121,5 +99,8 @@ export function disposeTerminal(sessionId: string): void {
   entry.term.dispose();
   entry.element.remove();
   entries.delete(sessionId);
-  subscribed.delete(sessionId);
+}
+
+export function disposeTerminals(): void {
+  for (const sessionId of entries.keys()) disposeTerminal(sessionId);
 }

@@ -1731,3 +1731,25 @@ acceptance, P03 owner host-scope exception, P04 retained resource proof, and P05
 remain open. PR17 remains draft and review-required. The evidence update changes documentation
 only; it does not grant an exception, close the five deferred/mixed full-feature tasks, change the
 feature selector, authorize live provider sessions, merge, or distribute an installer.
+
+### 2026-08-31 — authorized four-session measurement preparation
+
+The owner approved four idle Codex CLI sessions in disposable folders, without prompts or other
+providers. Four empty folders were prepared under local `ThreadHelmAcceptance/idle-four-20260831`.
+The first folder was approved through the installed app; its preview resolved Codex CLI 0.151.0,
+manual permissions and CLI-default model/effort. The Windows app-package path redirection was
+explicitly displayed and reviewed. No source workspace was selected for a new session.
+
+The automation safety tool rejected increasing the contained-process allowance from one to eight,
+requiring specific approval for that allowance. It also rejected the subsequent stricter default-
+limit launch because the authorization did not explicitly acknowledge the folder non-confinement
+and potential file/network access disclosure. Neither rejection was bypassed; the dialog was
+canceled. The app still showed only the two historical stopped sessions. No test provider process,
+prompt, CPU measurement or four-session acceptance result was produced.
+
+The local measurement script `tmp/us8/measure-installed-four-idle.ps1` is prepared and passes
+PowerShell syntax parsing only. It requires exactly four identified native Codex descendants of
+the installed app, records all descendants without trimming/exclusions over twelve five-second
+windows, and refuses a verdict if process identities change. It starts/stops no process and sends
+no input. Runtime measurement and the retained resource gate remain pending explicit authorization
+of the displayed access disclosure and the proposed eight-process allowance per test session.

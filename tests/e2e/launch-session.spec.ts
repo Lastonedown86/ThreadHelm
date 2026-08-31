@@ -90,6 +90,9 @@ test('approve → disclose → launch journey', async () => {
     await expect(dialog.locator('.facts')).toContainText('8 contained processes');
     await expect(dialog.locator('.facts')).toContainText('8388608 output bytes');
     await expect(launch).toBeEnabled();
+    // The starting record is emitted before a stream port exists. Hold host
+    // readiness so a premature renderer subscription reliably reaches main.
+    await app.delayNextHostReady(1_000);
     await launch.click();
     await expect(dialog).toBeHidden({ timeout: 30_000 });
 
@@ -106,6 +109,7 @@ test('approve → disclose → launch journey', async () => {
     await expect(option).toContainText(displayPath);
     await expect(option).toContainText('Running');
     await expect(terminalRows(page)).toContainText('FAKE_AGENT_READY', { timeout: 30_000 });
+    await expect(page.getByText(/The output stream for this session failed/)).toHaveCount(0);
 
     // One-writer rule: same effective workspace while live → WRITE_LEASE_HELD.
     await page

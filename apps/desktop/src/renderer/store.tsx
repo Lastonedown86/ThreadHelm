@@ -295,8 +295,9 @@ export interface Actions {
 
 const StoreContext = createContext<{ state: State; actions: Actions } | null>(null);
 
-const LIVE: ReadonlySet<SessionView['lifecycleState']> = new Set([
-  'starting',
+// A durable starting record precedes host readiness and creation of the output
+// port. Subscribe only after launch; control transitions keep the same stream.
+const STREAM_READY: ReadonlySet<SessionView['lifecycleState']> = new Set([
   'running',
   'interrupting',
   'stopping',
@@ -330,7 +331,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         handoffs: coordination.handoffs,
       });
       for (const session of list.sessions) {
-        if (LIVE.has(session.lifecycleState)) subscribeOutput(session.id);
+        if (STREAM_READY.has(session.lifecycleState)) subscribeOutput(session.id);
       }
     } catch (error) {
       dispatch({ type: 'notice', notice: describeError(error) });
@@ -373,7 +374,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ),
       api.on('session.changed', ({ session }) => {
         dispatch({ type: 'session', session });
-        if (LIVE.has(session.lifecycleState)) subscribeOutput(session.id);
+        if (STREAM_READY.has(session.lifecycleState)) subscribeOutput(session.id);
       }),
       api.on('session.activityChanged', (payload) =>
         dispatch({
@@ -446,7 +447,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       dismissCloseBlocked: () => dispatch({ type: 'closeBlocked', sessions: null }),
       sessionAdded: (session) => {
         dispatch({ type: 'session', session });
-        subscribeOutput(session.id);
+        if (STREAM_READY.has(session.lifecycleState)) subscribeOutput(session.id);
       },
       recoveryChanged: (record) => dispatch({ type: 'recovery', record }),
       workspaceChanged: (workspace) => dispatch({ type: 'workspace', workspace }),

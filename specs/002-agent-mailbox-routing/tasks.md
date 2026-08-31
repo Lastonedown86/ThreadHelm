@@ -585,6 +585,11 @@ later autonomy, memory, provider, hosted-CI, packaging, or production gate.
   review, the unreproduced historical ARM64 failure and separate hosted confirmation in
   `specs/002-agent-mailbox-routing/execution-evidence.md`.
 
+- [X] T169 Delay renderer output subscription until host launch has created the stream port.
+  Reproduce the installed `SUBSCRIPTION_FAILED` warning with delayed host readiness, retain
+  one-time port ownership and genuine failure reporting, and verify the launch/keyboard journeys.
+  Installed four-session resource acceptance remains a separate P04 gate.
+
 ### Deferred preview target — packaged idle memory (D01)
 
 T151 is complete for measurement coverage, not for release performance acceptance. The fresh

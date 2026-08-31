@@ -1753,3 +1753,24 @@ the installed app, records all descendants without trimming/exclusions over twel
 windows, and refuses a verdict if process identities change. It starts/stops no process and sends
 no input. Runtime measurement and the retained resource gate remain pending explicit authorization
 of the displayed access disclosure and the proposed eight-process allowance per test session.
+
+### 2026-08-31 — T169 starting-state output subscription race
+
+The owner explicitly approved the file/network access disclosure and eight contained processes
+per idle Codex session. The first launch succeeded on installed `f53441e` with manual permissions
+and no prompts, but the renderer displayed `SUBSCRIPTION_FAILED`. Session
+`88ef6db2-fcbe-4284-9555-c480dad5bba9` was stopped normally with exit zero before further launches.
+
+The starting lifecycle event precedes host readiness and stream-port creation. The renderer
+subscribed to that event, received a rejection, and retained the failure banner even when the
+running-state subscription subsequently delivered output. The existing Electron launch journey,
+with host readiness delayed by one second, reproduced the banner while fixture output was visible.
+T169 gates all three renderer subscription callers on post-launch lifecycle states. Main's
+one-time port ownership, genuine stream failure handling, session-host code and launch authority
+are unchanged. This corrects a premature subscription; it does not infer provider readiness from
+terminal text or silence.
+
+The regression failed before the fix and passed afterward. The launch/accessibility slice passed
+five E2E cases; terminal controller/stream coverage passed thirteen unit cases; build, typecheck
+and scoped lint passed. Independent static review found no actionable issues. Full E2E, updated
+installer identity and the approved four-session measurement are recorded separately when complete.

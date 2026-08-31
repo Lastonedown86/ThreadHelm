@@ -34,7 +34,8 @@ application processes. The four-idle-session 700 MiB budget and median idle CPU 
 ## Retained preview release checklist
 
 - [ ] **P01 — Windows 11 x64 installed acceptance:** Exercise the exact candidate installer on a
-  disposable supported Windows 11 x64 client. Record artifact identity, launch/native loading,
+  supported Windows 11 x64 client. The owner's explicit 2026-08-31 request authorizes normal
+  installation on their machine with app-data backup instead of a VM. Record artifact identity, launch/native loading,
   installed bridge lookup, containment, single-instance behavior and applicable preview/manual
   workflows. Windows Server CI cannot satisfy this client-platform requirement.
 - [x] **P02 — Installer cleanup:** Actual x64 uninstall verified for candidate `88d1b41` in
@@ -55,8 +56,11 @@ application processes. The four-idle-session 700 MiB budget and median idle CPU 
   after P01-P04. Obtain required repository review before merging; distribution remains a separate
   deliberate action.
 
-No installer has been run on the owner's account. Use the existing disposable-runner safety rules;
-do not relax them to obtain Windows 11 x64 evidence.
+The owner explicitly requested installation on their existing machine on 2026-08-31. The tested
+x64 candidate was installed normally after a verified app-data backup; the older Squirrel
+installation was left intact. This exception does not enable the destructive CI acceptance
+harness on a personal account: its disposable-runner guards remain unchanged. No local uninstall
+or agent/provider session was run. This is not final candidate acceptance or release approval.
 
 ## Full-feature task mapping
 

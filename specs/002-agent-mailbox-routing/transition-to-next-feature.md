@@ -29,7 +29,7 @@ Populate these fields from completed evidence, not from intended actions:
 | Required record | Current state |
 | --- | --- |
 | Candidate source commit and installer SHA-256 | Source 88d1b41e9d9b9fbbaef5525647d09e8741e875c2; x64 Setup 6452f3a870b45aef46c0822f35a729ade2dd5857843937ec892fa9b44cd71634 |
-| P01: disposable Windows 11 x64 installed/manual acceptance | Pending supported client environment and exact candidate proof |
+| P01: Windows 11 x64 installed/manual acceptance | Owner authorized their existing machine instead of a VM. Exact candidate installed, launched and passed installed containment/single-instance checks on Windows 11 Home x64; manual workflows remain pending. |
 | P02: actual uninstall with no executable residue | Passed for candidate 88d1b41 on Server x64 in run 33364588605, without manual deletion. Independent evidence review also passed. |
 | P03: independent safety review and host scope reconciliation | Worker-bound/recovery fixes passed independent review. Owner exception remains pending. |
 | P04: x64 candidate controls and applicable CI | Installed controls, CI run 33364588606 and CodeQL passed for candidate 88d1b41. Retained supported-client resource proof remains pending. |
@@ -54,10 +54,11 @@ checkout: `3d6fe256ee455dbdf7af1a1568b4df7104fd26ae`. The x64 Setup digest is ab
 Setup digest is `bd46ca08313fd5d6af46b12d07177e075dc8c99a1abe49cba00e150c5b14cbf4`.
 Both reports explicitly leave provider mission proof unrun. ARM success does not expand distribution.
 
-Standard hosted x64 installer evidence is from Windows Server and does not satisfy P01's Windows 11
-x64 client requirement. No disposable client environment is confirmed yet. Do not run the destructive
-install/remove harness on the owner's normal account, spoof hosted-runner metadata, or provision a
-paid runner without separate authorization.
+Standard hosted x64 installer evidence is from Windows Server and alone does not satisfy P01's Windows 11
+x64 client requirement. The owner subsequently authorized normal installation on their Windows 11 Home
+x64 machine instead of a VM. The app-data backup and installed checks are recorded in the execution
+record; manual workflow/resource acceptance is still separate. The destructive install/remove harness
+was not used and its guards remain unchanged. No runner metadata was spoofed or paid runner provisioned.
 
 The proposed bounded host exception for review is the content-free output meter, its budget
 messages, resume guards and truncation disclosure. It does not authorize other host refactoring,

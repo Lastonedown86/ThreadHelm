@@ -1609,3 +1609,31 @@ passed in the full Windows suite on both architectures. Default CI records rathe
 packaged release resource limits; these green results do not close the retained 700 MiB gate.
 This final evidence-record update changes documentation only, not the tested candidate's code,
 dependencies, packaging configuration, installer bytes or approved scope.
+
+## 2026-08-31 owner-authorized Windows 11 x64 installation
+
+The owner explicitly requested installing on their existing machine rather than setting up a VM.
+That request authorizes a normal local install with data preservation, not the destructive CI harness,
+automatic uninstall, external agent sessions, final acceptance or release. The P01 environment wording
+now reflects this owner choice; the CI harness and its disposable-runner guards were not changed.
+
+Downloaded the exact x64 artifact from run 33364588605, source `88d1b41`, Setup SHA-256
+`6452f3a870b45aef46c0822f35a729ade2dd5857843937ec892fa9b44cd71634`. Verified the Setup and identity-sidecar
+checksums and intentional `NotSigned` status before execution. An older Squirrel installation existed
+but was not running. Both existing app-data locations were copied to a private local backup and all
+47 files were hash-verified before installation. Backup contents and user data remain outside the
+repository. The legacy installation was not uninstalled or migrated; its updater hash is unchanged.
+
+Normal per-user NSIS installation returned exit code zero on Windows 11 Home x64 build 26200.
+Installed EXE, ASAR and uninstaller hashes exactly matched the tested artifact's identity record.
+Desktop and Start menu shortcuts target the new installation. The installed Electron/session-host/
+ConPTY/native-bridge diagnostic passed dormant-host, descendant-containment, termination and handle-
+close checks without opening personal app storage or starting a provider. The normal app then opened
+a ThreadHelm window and remained running. A second invocation exited zero while the original window
+remained active. No local uninstall was performed; hosted cleanup evidence remains the P02 proof.
+
+Local reports: `tmp/us8/owner-install-backup.json`, `owner-install-result.json`,
+`owner-installed-proof.json`, `owner-installed-launch.json`, and `owner-installed-single-instance.json`.
+P01 manual workflows and P04 retained resource acceptance are still open. The app is left installed
+and open for the owner's use; the old installation is preserved separately. No new feature, merge,
+release, scope-exception approval or full-feature completion is claimed by this installation.

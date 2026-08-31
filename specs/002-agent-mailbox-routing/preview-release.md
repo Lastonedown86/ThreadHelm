@@ -89,9 +89,16 @@ workflows. Windows Server CI cannot satisfy this client-platform requirement.
   ConPTY containment, single-instance behavior and actual uninstall cleanup passed without manual
   deletion. All CodeQL analyses and both CI architectures passed. ARM64 installed evidence also
   passed but remains diagnostic under D02 and does not expand distribution.
-- [ ] **P05 — Owner acceptance:** Accept the exact preview candidate and its disclosed limitations
+- [x] **P05 — Owner acceptance:** Accept the exact preview candidate and its disclosed limitations
   after P01-P04. Obtain required repository review before merging; distribution remains a separate
   deliberate action.
+  **Complete on 2026-08-31:** the owner directed starting the recommended sequence after reviewing
+  the exact P05 decision. Accepted application candidate `d23d297` / tested PR head `ea33076` for
+  the limited unsigned Windows 11 x64 preview. Acceptance includes the disclosed absence of
+  publisher trust, x64-only distribution boundary, private-persona production exclusion, unproved
+  autonomous-provider capability, and the failed/deferred D01/D05/D06 memory and CPU targets.
+  T174 and all other deferred tasks remain open. This acceptance does not distribute an installer
+  or waive required repository review and main integration.
 
 The owner explicitly requested installation on their existing machine on 2026-08-31. The tested
 x64 candidate was installed normally after a verified app-data backup; the older Squirrel

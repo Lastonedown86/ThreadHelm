@@ -2260,3 +2260,20 @@ remain diagnostic under D02 and do not expand preview distribution. P04 uses the
 ARM64 success is recorded without relabeling the support boundary. D01/D05/D06 measurements and
 limitations remain unchanged. P05 owner acceptance, required repository review, main integration
 and any later distribution remain separate.
+
+### 2026-08-31 — P05 owner acceptance
+
+After receiving the exact candidate identity, green P04 evidence and disclosed limitations, the
+owner directed starting the recommended sequence. This accepts application candidate `d23d297` /
+tested PR head `ea33076` for the limited unsigned Windows 11 x64 preview. P01-P05 are complete.
+
+The acceptance retains: no publisher trust for unsigned files; x64-only preview distribution;
+private Marvel personas excluded from production; no claim of installed autonomous-provider
+mission capability; D01/D05/D06 memory and CPU failures recorded rather than relabeled; T174 and
+the other deferred full-feature tasks remaining open; and ARM64 results remaining diagnostic.
+It does not authorize automatic publication or distribute an installer.
+
+PR 17 must now receive required repository review and integrate the accepted baseline on `main`
+before the feature selector advances. Production UI/UX changes are outside this frozen candidate;
+isolated discovery/prototyping may run while review is pending, but implementation must start from
+the accepted merged baseline so it does not invalidate P04/P05 artifact identity.

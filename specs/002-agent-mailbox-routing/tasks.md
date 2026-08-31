@@ -572,6 +572,13 @@ later autonomy, memory, provider, hosted-CI, packaging, or production gate.
 - [X] T165 Implement main-owned runtime permission resolution and source disclosure, exact provider capability evidence, per-process Claude auto mapping, bounded allowlist/manual fallback action, and isolated one-run break-glass validation requiring fresh process/filesystem containment, disposable-workspace-only writes, no unrelated credential/environment inheritance, bounded network destinations, and verified cleanup; add elapsed/turn/no-progress/resource bounds, structured progress/cancel, and typed provider outcomes without editing provider/profile/template settings in `apps/desktop/src/main/sessions/launch-policy.ts`, `apps/desktop/src/main/sessions/preview.ts`, `apps/desktop/src/main/sessions/launch.ts`, `packages/contracts/src/index.ts`, `packages/providers/src/adapter.ts`, `packages/providers/src/codex.ts`, `packages/providers/src/claude-code.ts`, and `apps/desktop/src/renderer/features/launch/LaunchDialog.tsx`
 - [X] T166 Run one disposable installed Claude auto-mode compatibility proof covering harmless read/edit/test work, classifier denial, unavailable-auto/no-bypass behavior, progress, timeout/cancel/no-progress, usage accounting, fresh process/filesystem containment, disposable-workspace-only writes, bounded credential/environment/network exposure, verified cleanup, and exact CLI/model/provider evidence recorded separately from deterministic tests in `specs/002-agent-mailbox-routing/execution-evidence.md`; MUST complete before T126
 
+### Owner follow-up — native template branding
+
+- [X] T167 Remove other-product identifiers from generated template content: use native
+  `threadhelm/agent-profile@1` for bundled starters, new drafts/copies, and wizard save/export;
+  preserve legacy imports and immutable source digests, upgrade existing bundled records safely,
+  and verify pre-upgrade draft completion without weakening stale-source or launch boundaries.
+
 ### Deferred preview target — packaged idle memory (D01)
 
 T151 is complete for measurement coverage, not for release performance acceptance. The fresh

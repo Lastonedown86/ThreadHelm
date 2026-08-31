@@ -4,7 +4,7 @@ export interface AgentTemplateFixture {
   readonly key: string;
   readonly version: 1;
   readonly manifest: {
-    readonly spec: 'munder-difflin/hire@1';
+    readonly spec: 'threadhelm/agent-profile@1';
     readonly name: string;
     readonly description: string;
     readonly provider: 'codex';
@@ -27,7 +27,7 @@ function fixture(
     key,
     version: 1,
     manifest: {
-      spec: 'munder-difflin/hire@1',
+      spec: 'threadhelm/agent-profile@1',
       name: `${key} specialist`,
       description,
       provider: 'codex',

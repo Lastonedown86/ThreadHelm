@@ -38,6 +38,45 @@ function seedInput(key = 'quality', goal = MANIFEST.goal) {
 }
 
 describe('agent-template persistence', () => {
+  it('does not treat changed goals or variables as a bundled format-only upgrade', () => {
+    const { templates } = setup();
+    const manifestJson = JSON.stringify({ ...MANIFEST, spec: 'munder-difflin/hire@1' });
+    const source = templates.createBundled({
+      ...seedInput(),
+      manifestJson,
+      digest: createHash('sha256').update(manifestJson).digest('hex'),
+    });
+    expect(() => templates.createBundled(seedInput('quality', 'Different goal'))).toThrow();
+    expect(() =>
+      templates.createBundled({
+        ...seedInput(),
+        variables: [{ name: 'new_variable', type: 'text', maxLength: 32 }],
+      }),
+    ).toThrow();
+    expect(templates.getTemplate(source.templateId).currentRevisionId).toBe(source.revisionId);
+  });
+
+  it('duplicates a legacy template into native format while preserving source bytes and authored text', () => {
+    const { templates } = setup();
+    const legacy = { ...MANIFEST, spec: 'munder-difflin/hire@1', goal: '  Preserve this text.  ' };
+    const manifestJson = JSON.stringify(legacy);
+    const digest = createHash('sha256').update(manifestJson).digest('hex');
+    const source = templates.saveRevision({ ...seedInput('legacy'), manifestJson, digest });
+    const copy = templates.duplicate({
+      templateRevisionId: source.revisionId,
+      key: 'native-copy',
+      name: 'Copy',
+      createdAt: AT,
+    });
+    const revision = templates.getRevision(copy.revisionId);
+    expect(JSON.parse(revision.manifestJson)).toEqual({
+      ...legacy,
+      spec: 'threadhelm/agent-profile@1',
+    });
+    expect(revision.digest).toBe(createHash('sha256').update(revision.manifestJson).digest('hex'));
+    expect(templates.getRevision(source.revisionId)).toMatchObject({ manifestJson, digest });
+  });
+
   it('retains an explicitly cleared field as an invalid resumable draft', () => {
     const { templates } = setup();
     const draft = templates.createDraft({ createdAt: AT });
@@ -145,7 +184,11 @@ describe('agent-template persistence', () => {
     expect(templates.getDraft(draft.draftId)).toMatchObject({
       sourceProfileRevisionId: profile.revisionId,
       sourceTemplateRevisionId: null,
-      fieldValues: { name: 'Quality', goal: 'Untrusted persona goal' },
+      fieldValues: {
+        spec: 'threadhelm/agent-profile@1',
+        name: 'Quality',
+        goal: 'Untrusted persona goal',
+      },
     });
     expect(templates.getDraft(draft.draftId).fieldValues).not.toHaveProperty('permissionMode');
     expect(db.prepare('SELECT COUNT(*) AS count FROM agent_sessions').get()).toEqual({ count: 0 });

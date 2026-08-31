@@ -1388,8 +1388,16 @@ const ProfileDigest = z.string().regex(/^[0-9a-f]{64}$/, 'expected a SHA-256 hex
 const ProfileDigestPrefix = z.string().regex(/^[0-9a-f]{12}$/, 'expected a 12-hex digest prefix');
 const AuthoredText = z.string().refine(isSafeAuthoredText, 'unsafe authored text');
 
+/** Native output format; the legacy identifier remains readable without rewriting imports. */
+export const AGENT_PROFILE_MANIFEST_SPEC = 'threadhelm/agent-profile@1';
+export const AgentProfileManifestSpec = z.enum([
+  AGENT_PROFILE_MANIFEST_SPEC,
+  'munder-difflin/hire@1',
+]);
+export type AgentProfileManifestSpec = z.infer<typeof AgentProfileManifestSpec>;
+
 export const HireManifestV1 = strictObject({
-  spec: z.literal('munder-difflin/hire@1'),
+  spec: AgentProfileManifestSpec,
   name: AuthoredText.trim().min(1).max(200),
   description: AuthoredText.trim().min(1).max(MAX_GOAL_LENGTH),
   provider: ProfileProviderId,
@@ -1427,7 +1435,7 @@ export const AgentProfileDetailView = strictObject({
   ...AgentProfileSummaryFields,
   goal: z.string().min(1).max(MAX_GOAL_LENGTH),
   digest: ProfileDigest,
-  manifestSpec: z.literal('munder-difflin/hire@1'),
+  manifestSpec: AgentProfileManifestSpec,
   compatibilityReasons: z.array(z.string().max(300)).max(20),
   revisionHistory: z
     .array(
@@ -1547,7 +1555,7 @@ export type AgentTemplateVariable = z.infer<typeof AgentTemplateVariable>;
 /** Draft storage accepts incomplete and deliberately cleared values; final
  * completion always re-parses the exact HireManifestV1 schema. */
 const WizardFieldValues = strictObject({
-  spec: z.literal('munder-difflin/hire@1').optional(),
+  spec: AgentProfileManifestSpec.optional(),
   name: AuthoredText.max(200).optional(),
   description: AuthoredText.max(MAX_GOAL_LENGTH).optional(),
   provider: ProfileProviderId.optional(),

@@ -315,7 +315,7 @@ Immutable digest-bound result of one confirmed import or explicit local edit.
 |---|---|---|
 | `id`, `profileId` | UUID | Primary key and owning profile. |
 | `revision` | integer | Starts at 1; unique and monotonic per profile. |
-| `manifestSpec` | `munder-difflin/hire@1` | No implicit schema upgrade. |
+| `manifestSpec` | `threadhelm/agent-profile@1` or legacy `munder-difflin/hire@1` | Imports preserve the original identifier; new wizard output uses the native identifier. |
 | `name`, `description`, `goal`, `author` | bounded strings | Goal is untrusted context, at most 4,000 Unicode scalars. |
 | `requestedProvider`, `requestedModel` | normalized strings | Availability resolved separately; no silent substitution. |
 | `requestedCapabilities` | bounded string array | Labels only, never tool or role authority. |

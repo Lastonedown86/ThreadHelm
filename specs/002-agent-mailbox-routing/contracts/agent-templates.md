@@ -1,8 +1,18 @@
 # Contract: Agent Creation Wizard and Templates
 
-The wizard produces reviewed `munder-difflin/hire@1` data through bounded local forms. Templates and
+The wizard produces reviewed `threadhelm/agent-profile@1` data through bounded local forms. Templates and
 drafts are non-executable scaffolds; they cannot launch providers, read workspaces, grant tools, or
 assign mission roles.
+
+Bundled starters, new drafts, duplicated templates, and wizard save/export output use the native
+ThreadHelm identifier. The legacy `munder-difflin/hire@1` identifier remains accepted for imports
+and persisted drafts. Completing a legacy draft produces native data for exact JSON review before
+confirmation; it does not rewrite the source revision, its digest, or historical draft fields.
+Existing imported template content remains exact until the user creates a new copy or revision.
+Both identifiers use the same strict fields and authority boundaries; other identifiers fail closed.
+On an existing installation, bundled starters receive an immutable new revision only when the
+identifier is the sole content change. Drafts pinned to the equivalent legacy bundled revision
+remain reviewable; changes to goals, variables, or other content still enforce stale-source rules.
 
 ## Wizard steps
 

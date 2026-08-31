@@ -1,5 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import {
+  AGENT_PROFILE_MANIFEST_SPEC,
+  AgentProfileManifestSpec,
   HireManifestV1,
   isSafeAuthoredText,
   MAX_GOAL_LENGTH,
@@ -91,6 +93,33 @@ function boundedJson(value: unknown): string {
   if (!json || Buffer.byteLength(json, 'utf8') > 65_536) invalid();
   return json;
 }
+/** The only automatic bundled revision upgrade: identical content under our native identifier. */
+function isNativeFormatUpgrade(
+  source: TemplateRevision,
+  next: {
+    manifestJson: string;
+    name: string;
+    variables?: readonly TemplateVariable[];
+    sourceProfileRevisionId?: string | null;
+  },
+): boolean {
+  const before = JSON.parse(source.manifestJson) as HireManifestV1;
+  const after = JSON.parse(next.manifestJson) as HireManifestV1;
+  return (
+    before.spec === 'munder-difflin/hire@1' &&
+    after.spec === AGENT_PROFILE_MANIFEST_SPEC &&
+    source.name === next.name &&
+    source.sourceProfileRevisionId === (next.sourceProfileRevisionId ?? null) &&
+    JSON.stringify(source.variables) === JSON.stringify(next.variables ?? []) &&
+    Object.keys(before).length === Object.keys(after).length &&
+    Object.keys(before).every(
+      (key) =>
+        key === 'spec' ||
+        JSON.stringify(before[key as keyof HireManifestV1]) ===
+          JSON.stringify(after[key as keyof HireManifestV1]),
+    )
+  );
+}
 function fields(value: unknown): Partial<HireManifestV1> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) invalid();
   boundedJson(value);
@@ -116,7 +145,7 @@ function fields(value: unknown): Partial<HireManifestV1> {
   }
   const result: Record<string, unknown> = {};
   if (candidate.spec !== undefined) {
-    if (candidate.spec !== 'munder-difflin/hire@1') invalid();
+    if (!AgentProfileManifestSpec.safeParse(candidate.spec).success) invalid();
     result.spec = candidate.spec;
     delete candidate.spec;
   }
@@ -374,6 +403,22 @@ export class AgentTemplateRepository {
     return revision;
   }
 
+  /** Old drafts may retain an exact bundled source after the identifier-only upgrade. */
+  getDraftSource(revisionId: string): TemplateRevision {
+    const source = this.getRevision(revisionId);
+    const owner = this.row(source.templateId);
+    if (owner.state !== 'active')
+      throw new ThreadHelmError('INVALID_STATE', 'The template is not active.');
+    if (owner.current_revision_id !== revisionId) {
+      const current = owner.current_revision_id
+        ? this.getRevision(owner.current_revision_id)
+        : null;
+      if (owner.origin !== 'bundled' || !current || !isNativeFormatUpgrade(source, current))
+        stale();
+    }
+    return source;
+  }
+
   private editable(templateId: string, revisionId: string): TemplateRow {
     const row = this.row(templateId);
     if (row.origin !== 'user')
@@ -437,7 +482,7 @@ export class AgentTemplateRepository {
       ) {
         return { templateId: existing.id, revisionId: current.revisionId };
       }
-      if (origin === 'bundled')
+      if (origin === 'bundled' && !isNativeFormatUpgrade(current, input))
         throw new ThreadHelmError(
           'INVALID_STATE',
           'Bundled template versions cannot be overwritten.',
@@ -529,12 +574,22 @@ export class AgentTemplateRepository {
   duplicate(input: { templateRevisionId: string; key: string; name: string; createdAt: string }) {
     return this.db.transaction(() => {
       const source = this.current(input.templateRevisionId);
+      // A duplicate is a new scaffold. Preserve the immutable source revision.
+      const manifest = parseHireManifest(source.manifestJson);
+      const manifestJson =
+        manifest.spec === AGENT_PROFILE_MANIFEST_SPEC
+          ? source.manifestJson
+          : JSON.stringify(
+              { ...JSON.parse(source.manifestJson), spec: AGENT_PROFILE_MANIFEST_SPEC },
+              null,
+              2,
+            ) + '\n';
       return this.writeRevision(
         {
           key: input.key,
           name: input.name,
-          manifestJson: source.manifestJson,
-          digest: source.digest,
+          manifestJson,
+          digest: createHash('sha256').update(manifestJson).digest('hex'),
           variables: source.variables,
           createdAt: input.createdAt,
           ...(source.sourceProfileRevisionId
@@ -620,7 +675,9 @@ export class AgentTemplateRepository {
         ? fields(JSON.parse(source.manifestJson))
         : input.profileRevisionId
           ? fields(this.profileSource(input.profileRevisionId))
-          : { spec: 'munder-difflin/hire@1', isolate: false };
+          : { spec: AGENT_PROFILE_MANIFEST_SPEC, isolate: false };
+      // New drafts use our format; source revision content and digest stay untouched.
+      fieldValues.spec = AGENT_PROFILE_MANIFEST_SPEC;
       const variableValues = Object.fromEntries(
         (source?.variables ?? [])
           .filter((item) => item.defaultValue !== undefined)
@@ -749,7 +806,7 @@ export class AgentTemplateRepository {
   completeDraft(input: DraftMutation & { completedAt: string }): void {
     this.db.transaction(() => {
       const draft = this.mutableDraft(input);
-      if (draft.sourceTemplateRevisionId) this.current(draft.sourceTemplateRevisionId);
+      if (draft.sourceTemplateRevisionId) this.getDraftSource(draft.sourceTemplateRevisionId);
       this.finalManifest(draft);
       this.db
         .prepare(

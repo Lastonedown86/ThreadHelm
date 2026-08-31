@@ -1637,3 +1637,23 @@ Local reports: `tmp/us8/owner-install-backup.json`, `owner-install-result.json`,
 P01 manual workflows and P04 retained resource acceptance are still open. The app is left installed
 and open for the owner's use; the old installation is preserved separately. No new feature, merge,
 release, scope-exception approval or full-feature completion is claimed by this installation.
+
+### 2026-08-31 — owner follow-up: native template branding (T167)
+
+The owner requested removal of other-product references from template content. New bundled
+templates, drafts, copies, and wizard completion output now use `threadhelm/agent-profile@1`.
+Legacy imports remain readable without changing their identifier or digest. Existing bundled
+databases append an immutable revision only for the identifier-only conversion; historical drafts
+retain their exact source and remain reviewable. Other template changes still fail stale-source
+checks. No SQLite schema migration, provider invocation, or permission expansion is involved.
+
+Independent review caught and then cleared an existing-database startup failure in the first patch.
+The regression seeds all six old bundled records before new service initialization, completes a
+legacy-source draft, verifies original bytes/digests/provenance, and verifies restart idempotence.
+Local validation passed: 647 unit/contract tests, 7 Electron wizard E2E tests, 13 Windows profile
+import/export integration tests, TypeScript build, lint and production desktop build. The opt-in
+private-roster acceptance test was skipped; no private files or live providers were used.
+
+This is a local follow-up candidate. It does not inherit the prior installer's checksum or hosted
+acceptance result, close P01/P04/P05, or authorize a release/merge. The owner installation remains
+unchanged until the running app can be closed and a fresh backup verified before updating it.

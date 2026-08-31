@@ -308,7 +308,10 @@ test('blank creation preserves capability typing and a custom model through revi
     await wizard.getByLabel('Custom model', { exact: true }).fill('gpt-5.6-terra');
     await wizard.getByLabel('Requested token cap').fill('250000');
     await navigate(wizard, 'Runtime requests', 'Review');
-    await expect(wizard.getByLabel('Exact manifest JSON')).toContainText('munder-difflin/hire@1');
+    await expect(wizard.getByLabel('Exact manifest JSON')).toContainText(
+      'threadhelm/agent-profile@1',
+    );
+    await expect(wizard.getByLabel('Exact manifest JSON')).not.toContainText('munder-difflin');
     await expect(wizard.getByLabel('Exact manifest JSON')).toContainText('documentation');
     await press(wizard.getByRole('checkbox', { name: 'I reviewed this exact manifest' }), 'Space');
     await press(wizard.getByRole('button', { name: 'Save profile', exact: true }));

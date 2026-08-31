@@ -9,8 +9,169 @@ import {
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { createWorld, eventsNamed } from './helpers/fake-context.js';
+import { openStorage } from '@threadhelm/persistence';
+import { GENERIC_AGENT_TEMPLATE_FIXTURES } from '@threadhelm/test-fixtures/desktop';
+import { createAgentWizardService } from '../../apps/desktop/src/main/coordination/profile-wizard.js';
+import { createProfileService } from '../../apps/desktop/src/main/coordination/profiles.js';
 
 describe('agent wizard contracts', () => {
+  it('upgrades an old bundled database and completes its pinned draft without changing historical content', () => {
+    const world = createWorld({ noStorage: true });
+    const storage = openStorage(':memory:');
+    world.ctx.storage = storage;
+    try {
+      const templates = storage.repositories.agentTemplates;
+      const before = GENERIC_AGENT_TEMPLATE_FIXTURES.map((fixture) => {
+        const fields = { ...fixture.manifest, spec: 'munder-difflin/hire@1' };
+        const manifestJson = `${JSON.stringify(fields, null, 2)}\n`;
+        const digest = createHash('sha256').update(manifestJson).digest('hex');
+        const source = templates.createBundled({
+          key: fixture.key,
+          name: fixture.manifest.name,
+          manifestJson,
+          digest,
+          createdAt: '2026-08-28T12:00:00.000Z',
+        });
+        return { ...source, fields, manifestJson, digest };
+      });
+      const source = before[0]!;
+      const draft = templates.createDraft({
+        templateRevisionId: source.revisionId,
+        createdAt: '2026-08-28T12:00:00.000Z',
+      });
+      templates.updateDraft({
+        draftId: draft.draftId,
+        expectedVersion: 1,
+        fieldValues: source.fields,
+        currentStep: 'review',
+        updatedAt: '2026-08-28T12:00:00.000Z',
+      });
+      const service = createAgentWizardService(world.ctx, createProfileService(world.ctx));
+      expect(service.listTemplates({}).templates).toHaveLength(6);
+      for (const old of before) {
+        const current = templates.getTemplate(old.templateId).currentRevisionId!;
+        expect(current).not.toBe(old.revisionId);
+        expect(JSON.parse(templates.getRevision(current).manifestJson).spec).toBe(
+          'threadhelm/agent-profile@1',
+        );
+        expect(templates.getRevision(old.revisionId)).toMatchObject({
+          manifestJson: old.manifestJson,
+          digest: old.digest,
+        });
+      }
+      const preview = service.previewCompletion({
+        draftId: draft.draftId,
+        version: 2,
+        action: 'profile',
+      });
+      expect(preview.manifest.spec).toBe('threadhelm/agent-profile@1');
+      service.confirmProfile({
+        completionToken: preview.completionToken,
+        profileConfirmation: true,
+      });
+      expect(templates.getDraft(draft.draftId)).toMatchObject({
+        state: 'completed',
+        sourceTemplateRevisionId: source.revisionId,
+        fieldValues: source.fields,
+      });
+      const revisions = service.listTemplates({}).templates.map((item) => item.currentRevisionId);
+      const restarted = createAgentWizardService(world.ctx, createProfileService(world.ctx));
+      expect(restarted.listTemplates({}).templates.map((item) => item.currentRevisionId)).toEqual(
+        revisions,
+      );
+    } finally {
+      storage.db.close();
+    }
+  });
+
+  it('reviews a resumed legacy draft as native data without rewriting its source or saved fields', async () => {
+    const world = createWorld();
+    const templates = world.ctx.storage!.repositories.agentTemplates;
+    const source = templates.listTemplates().items[0]!;
+    const original = templates.getRevision(source.currentRevisionId!);
+    const legacyFields = { ...JSON.parse(original.manifestJson), spec: 'munder-difflin/hire@1' };
+    const manifestJson = JSON.stringify(legacyFields);
+    const legacy = templates.saveRevision({
+      key: 'legacy',
+      name: 'Legacy source',
+      manifestJson,
+      digest: createHash('sha256').update(manifestJson).digest('hex'),
+      createdAt: '2026-08-28T12:00:00.000Z',
+    });
+    const draft = templates.createDraft({
+      templateRevisionId: legacy.revisionId,
+      createdAt: '2026-08-28T12:00:00.000Z',
+    });
+    expect(templates.getDraft(draft.draftId).fieldValues.spec).toBe('threadhelm/agent-profile@1');
+    // Simulate a persisted draft created by an earlier app version.
+    templates.updateDraft({
+      draftId: draft.draftId,
+      expectedVersion: 1,
+      fieldValues: legacyFields,
+      currentStep: 'review',
+      updatedAt: '2026-08-28T12:00:00.000Z',
+    });
+    const resumed = await world.ok<{ version: number; fieldValues: { spec: string } }>(
+      'agentWizard.getDraft',
+      { draftId: draft.draftId },
+    );
+    expect(resumed.fieldValues.spec).toBe('munder-difflin/hire@1');
+    const preview = await world.ok<{
+      manifest: { spec: string };
+      manifestJson: string;
+      digest: string;
+      completionToken: string;
+    }>('agentWizard.previewCompletion', {
+      draftId: draft.draftId,
+      version: resumed.version,
+      action: 'profile',
+    });
+    expect(preview.manifest.spec).toBe('threadhelm/agent-profile@1');
+    expect(JSON.parse(preview.manifestJson)).toEqual(preview.manifest);
+    expect(preview.digest).toBe(createHash('sha256').update(preview.manifestJson).digest('hex'));
+    await world.ok('agentWizard.confirmProfile', {
+      completionToken: preview.completionToken,
+      profileConfirmation: true,
+    });
+    expect(templates.getDraft(draft.draftId)).toMatchObject({
+      state: 'completed',
+      sourceTemplateRevisionId: legacy.revisionId,
+      fieldValues: legacyFields,
+    });
+    expect(templates.getRevision(legacy.revisionId).manifestJson).toBe(manifestJson);
+  });
+
+  it('uses ThreadHelm content in every bundled template and completion preview', async () => {
+    const world = createWorld();
+    const listed = await world.ok<{
+      templates: { templateId: string; currentRevisionId: string }[];
+    }>('agentTemplates.list');
+    expect(listed.templates).toHaveLength(6);
+    for (const template of listed.templates) {
+      const detail = await world.ok<{ manifestJson: string }>('agentTemplates.get', {
+        templateId: template.templateId,
+      });
+      expect(JSON.parse(detail.manifestJson).spec).toBe('threadhelm/agent-profile@1');
+      expect(detail.manifestJson).not.toMatch(/munder|difflin/i);
+      const draft = await world.ok<{ draftId: string; version: number }>(
+        'agentWizard.createDraft',
+        {
+          source: { kind: 'template', templateRevisionId: template.currentRevisionId },
+        },
+      );
+      const preview = await world.ok<{ manifestJson: string; digest: string }>(
+        'agentWizard.previewCompletion',
+        {
+          draftId: draft.draftId,
+          version: draft.version,
+          action: 'export',
+        },
+      );
+      expect(JSON.parse(preview.manifestJson).spec).toBe('threadhelm/agent-profile@1');
+      expect(preview.digest).toBe(createHash('sha256').update(preview.manifestJson).digest('hex'));
+    }
+  });
+
   it('rejects unsafe draft text and variables without persisting or echoing rejected content', async () => {
     const world = createWorld();
     const draft = await world.ok<{ draftId: string; version: number }>('agentWizard.createDraft', {
@@ -133,7 +294,7 @@ describe('agent wizard contracts', () => {
     const blank = await world.ok<{ fieldValues: Record<string, unknown> }>('agentWizard.getDraft', {
       draftId: created.draftId,
     });
-    expect(blank.fieldValues.spec).toBe('munder-difflin/hire@1');
+    expect(blank.fieldValues.spec).toBe('threadhelm/agent-profile@1');
     await world.ok('agentWizard.deleteDraft', {
       draftId: created.draftId,
       version: updated.version,

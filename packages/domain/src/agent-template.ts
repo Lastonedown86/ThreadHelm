@@ -5,6 +5,7 @@
  */
 
 import {
+  AGENT_PROFILE_MANIFEST_SPEC,
   HireManifestV1,
   ThreadHelmError,
   type HireManifestV1 as HireManifest,
@@ -139,5 +140,7 @@ export function completeTemplateDraft(draft: TemplateDraft): HireManifest {
       'All template variables must be resolved before review.',
     );
   }
-  return manifest;
+  // Completion produces newly reviewed ThreadHelm data, including resumed legacy drafts.
+  // Parsing imports and reading historical revisions must preserve their original identifier.
+  return { ...manifest, spec: AGENT_PROFILE_MANIFEST_SPEC };
 }

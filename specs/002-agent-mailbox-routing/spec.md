@@ -271,7 +271,7 @@ confirm that no import launches an agent or changes authority.
 
 A user creates an agent through a compact step-by-step wizard, starts from a safe generic or
 user-saved template, customizes the agent's identity and role, reviews the exact resulting
-`munder-difflin/hire@1` manifest, and then saves, exports, or imports it without launching anything.
+`threadhelm/agent-profile@1` manifest, and then saves, exports, or imports it without launching anything.
 
 **Why this priority**: Importing existing hires preserves the user's roster; a guided creator makes
 that roster maintainable without requiring hand-edited JSON or turning persona design into authority.
@@ -491,7 +491,7 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
 - **FR-046**: Roster, shared-memory, and supervisor status MUST use compact lists, tables, text detail, badges,
   filters, and confirmations; topology graphs, avatars, animated workspaces, and continuous visual
   activity are not required and are outside this roadmap.
-- **FR-047**: ThreadHelm MUST support reviewed import of `munder-difflin/hire@1` JSON manifests and
+- **FR-047**: ThreadHelm MUST support reviewed import of native `threadhelm/agent-profile@1` and legacy `munder-difflin/hire@1` JSON manifests and
   MUST parse them as untrusted data without executing or obeying their goal/persona text.
 - **FR-048**: Before import, ThreadHelm MUST display the exact supported fields, source filename,
   SHA-256 digest, validation result, compatibility result, normalization changes, and warnings, and

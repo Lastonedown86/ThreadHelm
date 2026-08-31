@@ -8,6 +8,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { link, lstat, realpath, rename, unlink, writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
 import {
+  AGENT_PROFILE_MANIFEST_SPEC,
   AgentTemplateDeletePreviewView,
   AgentTemplateDetailView,
   AgentTemplateSummaryView,
@@ -106,7 +107,7 @@ export interface AgentWizardService {
 }
 
 function canonicalManifest(manifest: HireManifestV1): string {
-  return `${JSON.stringify(manifest, null, 2)}\n`;
+  return `${JSON.stringify({ ...manifest, spec: AGENT_PROFILE_MANIFEST_SPEC }, null, 2)}\n`;
 }
 function digest(value: string): string {
   return createHash('sha256').update(value, 'utf8').digest('hex');
@@ -133,18 +134,7 @@ function manifestOf(
   draft: TemplateDraftDetail,
   templates: ReturnType<typeof storage>['agentTemplates'],
 ): HireManifestV1 {
-  const source = draft.sourceTemplateRevisionId
-    ? templates.getRevision(draft.sourceTemplateRevisionId)
-    : undefined;
-  if (source) {
-    const owner = templates.getTemplate(source.templateId);
-    if (owner.currentRevisionId !== source.revisionId || owner.state !== 'active') {
-      throw new ThreadHelmError(
-        'PROFILE_REVISION_STALE',
-        'The template changed after this draft started.',
-      );
-    }
-  }
+  if (draft.sourceTemplateRevisionId) templates.getDraftSource(draft.sourceTemplateRevisionId);
   try {
     return completeTemplateDraft(
       createTemplateDraft({
@@ -177,7 +167,7 @@ type VariableField = (typeof VARIABLE_FIELDS)[number];
 
 function fieldAcceptsExpandedValue(field: VariableField, value: string): boolean {
   return HireManifestV1.safeParse({
-    spec: 'munder-difflin/hire@1',
+    spec: AGENT_PROFILE_MANIFEST_SPEC,
     name: 'Agent',
     description: 'Bounded description',
     provider: 'codex',

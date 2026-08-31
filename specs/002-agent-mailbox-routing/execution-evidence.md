@@ -2224,3 +2224,8 @@ contract rerun passed. The prototype's generated minified UI assets remain ignor
 and are excluded from repository lint and the staged candidate. A redacted staged Gitleaks scan
 found no leaks. These local checks support committing the candidate; exact-commit hosted checks
 and repository review remain required for P04 and integration.
+
+The application, prototype, test helpers and evidence were committed as `d23d297` on
+`codex/us7-template-persistence`. This commit contains the exact renderer application source whose
+hashes were packaged and measured in T173. The following identity correction changes only evidence
+metadata. P04 remains pending fresh PR-head hosted checks and required repository review.

@@ -36,7 +36,7 @@ Populate these fields from completed evidence, not from intended actions:
 
 | Required record | Current state |
 | --- | --- |
-| Candidate source commit and installer SHA-256 | Worktree candidate based on 3c574fb19db4ea0a1af2fdffc8b8c1ee8ced3e56 plus recorded renderer changes; unsigned x64 Setup 56bece9651851b668d9efc2689f2aadda566bbb13ddc7d896c6d825b5d290f97. |
+| Candidate source commit and installer SHA-256 | Application/evidence candidate committed at `d23d297` from base `3c574fb19db4ea0a1af2fdffc8b8c1ee8ced3e56`; unsigned x64 Setup `56bece9651851b668d9efc2689f2aadda566bbb13ddc7d896c6d825b5d290f97`. A documentation-only identity follow-up may become the PR head without changing application bytes. |
 | P01: Windows 11 x64 installed/manual acceptance | Complete. Exact changed candidate installed after a fresh verified backup; installed identity, bridge lookup, native containment, single-instance behavior and visible current generic template content passed. No provider mission was started or counted as evidence. |
 | P02: actual uninstall with no executable residue | Passed for source 0745294 / tested merge 5e96e73ca968f5a6651048f95ca1e2239245c23a in run 33406139286. Tested hosted x64 Setup 47271ee3bc7ba5a16006cd332f924f6c07b4c5477801651a26865e97b4d2fb17; no manual deletion. This is distinct from the locally installed Setup. |
 | P03: independent safety review and host scope reconciliation | Complete. Technical review passed and the owner approved the exact bounded three-file host exception on 2026-08-31. |

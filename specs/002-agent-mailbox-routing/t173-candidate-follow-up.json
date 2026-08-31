@@ -4,7 +4,7 @@
   "Status": "T173 complete evidence; P04 CPU acceptance failed and is carried by T174",
   "Source": {
     "BaseCommit": "3c574fb19db4ea0a1af2fdffc8b8c1ee8ced3e56",
-    "SourceState": "final worktree renderer fixes; not a committed or hosted candidate",
+    "SourceState": "measured as final worktree renderer fixes; identical application source committed at d23d297",
     "Files": [
       {
         "Path": "apps/desktop/src/renderer/App.tsx",

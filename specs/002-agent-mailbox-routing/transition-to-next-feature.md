@@ -29,10 +29,10 @@ Populate these fields from completed evidence, not from intended actions:
 | Required record | Current state |
 | --- | --- |
 | Candidate source commit and installer SHA-256 | Local installed runtime f53441ee58b9326cfb5d615d34adeb7da80b0e22; x64 Setup 06c0284d2fa39aa0bea196c1f7b23c2f911b519c872b541226e5b74971c567ef. Later T168 changes tests/documentation only. |
-| P01: Windows 11 x64 installed/manual acceptance | Updated on the owner's machine after a verified backup. Exact installed identity, native-template UI and containment diagnostic passed on Windows 11 Home x64. Earlier single-instance evidence belongs to 88d1b41; broader manual workflow acceptance remains pending. |
-| P02: actual uninstall with no executable residue | Earlier 88d1b41 passed in run 33364588605 without manual deletion. Current artifact does not inherit that result; fresh hosted artifact acceptance pending. |
+| P01: Windows 11 x64 installed/manual acceptance | Local f53441e updated after a verified backup. Installed identity, native-template UI, containment diagnostic and a fresh single-instance check passed on Windows 11 Home x64. Broader manual workflows and exact selected release-artifact acceptance remain pending. |
+| P02: actual uninstall with no executable residue | Passed for source 4160352 / tested merge e13e2fe816c11d04cc17714467908c455551c462 in run 33402598472. Tested hosted x64 Setup 78b34f99339e0765ef7846c3027a20fbb10fdb84d29206d4804c48a6cc06aeb0; no manual deletion. This is distinct from the locally installed Setup. |
 | P03: independent safety review and host scope reconciliation | Worker-bound/recovery fixes passed independent review. Owner exception remains pending. |
-| P04: x64 candidate controls and applicable CI | f53441e static installed controls and containment diagnostic passed; Setup/installed identity independently verified. Fresh hosted CI and retained four-session supported-client resource proof remain pending. |
+| P04: x64 candidate controls and applicable CI | f53441e static installed controls and containment diagnostic passed; Setup/installed identity independently verified. Source 4160352 passed CI and installer acceptance on both architectures plus CodeQL. Retained four-session supported-client resource proof remains pending. |
 | P05: owner acceptance of exact candidate and limitations | Pending P01-P04 |
 | Required repository review and main integration | PR17 draft; no approval or merge recorded |
 
@@ -50,7 +50,8 @@ to the maintained v26 backport, 26.15.7; fresh artifact results are tracked in P
 
 The maintained-backport run 33364588605 subsequently passed both architectures, including actual
 installed native and Electron/session-host/ConPTY containment and clean uninstall. Tested merge
-checkout: `3d6fe256ee455dbdf7af1a1568b4df7104fd26ae`. The x64 Setup digest is above; diagnostic ARM64
+checkout: `3d6fe256ee455dbdf7af1a1568b4df7104fd26ae`. Its historical x64 Setup digest is
+`6452f3a870b45aef46c0822f35a729ade2dd5857843937ec892fa9b44cd71634`; diagnostic ARM64
 Setup digest is `bd46ca08313fd5d6af46b12d07177e075dc8c99a1abe49cba00e150c5b14cbf4`.
 Both reports explicitly leave provider mission proof unrun. ARM success does not expand distribution.
 
@@ -65,6 +66,16 @@ messages, resume guards and truncation disclosure. It does not authorize other h
 resize changes, permission expansion or recovery replay. The original unrelated keystroke work
 is preserved separately on `codex/recovery-002-pre-scope-split` at
 `ef448067dd0b554127e6bf17605e596e7f2c0d60`, not incorporated into this candidate.
+
+**Proposed owner exception — not approved:** Permit only the reviewed content-free output-meter
+changes in `apps/desktop/src/session-host/index.ts`, `backpressure.ts`, and `output-meter.ts` as
+present at runtime commit `f53441e` (unchanged by T168). The purpose is to enforce per-attempt output
+bounds inside the trusted host, prevent resume from bypassing an exhausted bound, and report
+truncation without sending terminal content to main. `resize.ts` remains unchanged from main.
+This proposal is limited to integrating this Feature 002 preview candidate: it grants no standing
+permission for future host edits and expires for new work when this candidate is merged or
+superseded. Any broader/different change requires fresh owner review. This exception would not
+approve provider starts, merge, distribution, final candidate acceptance, or the deferred capabilities.
 
 ## Next-spec request after acceptance
 

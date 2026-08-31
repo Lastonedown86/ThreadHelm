@@ -1694,3 +1694,40 @@ actionable issues and explicitly retained the uncertainty about the original ARM
 is test synchronization hardening, not a proven production defect fix; fresh hosted ARM64 evidence
 is required. D01-D04 and the five full-feature tasks remain open as previously recorded. No new
 provider run, host-scope exception, final owner acceptance, merge or distribution is authorized.
+
+### 2026-08-31 — fresh native-template candidate CI and local observation
+
+Source `416035236b400f97f656ae2c643d00584f7af4f6` passed
+[CI run 33402598473](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33402598473)
+on x64 and ARM64. Each architecture passed 42 E2E cases and 97 Windows integration cases, with one
+opt-in integration case skipped; formatting, lint, Rust checks, typecheck, builds, unit and contract
+suites also passed. CodeQL run `33402594832` passed. Local validation independently passed 647
+unit/contract cases and twelve repeated accessibility cases. The newly successful ARM64 keyboard
+journey validates this candidate without proving the historical intermittent failure's root cause.
+
+[Installed acceptance run 33402598472](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33402598472)
+tested merge `e13e2fe816c11d04cc17714467908c455551c462` and passed both architectures. Hosted x64
+Setup SHA-256 is `78b34f99339e0765ef7846c3027a20fbb10fdb84d29206d4804c48a6cc06aeb0`; diagnostic
+ARM64 Setup SHA-256 is `3ab56c20ea1ec08405e82a0fbf637fbb605ed1fb76a9e8f5d248c20fb22b0ff1`.
+Both reports record successful installation, installed containment/artifact controls, and
+`PASSED_WITHOUT_MANUAL_DELETION` uninstall cleanup with zero remaining entries, processes,
+credentials, registrations or shortcuts. Provider mission proof remains `NOT_RUN`. The x64 runner
+is Windows Server 2025, not the required Windows 11 x64 manual-acceptance client. These Setup bytes
+are distinct from the owner's locally built and installed `f53441e` candidate; no local uninstall
+was performed and ARM64 distribution remains deferred.
+
+A read-only observation of the already-open local installed owner instance recorded 420.199 MiB
+peak aggregate working set and 0% median one-core CPU across twelve approximately five-second
+windows. Its same four app processes remained throughout; the database contained two stopped
+session records before and after. No provider was launched or app settings changed. This is not a
+controlled fresh baseline or the required four-idle-session measurement. A separate normal second
+invocation exited zero while the original responsive ThreadHelm instance retained its process
+identity. Reports are `tmp/us8/native-template-observed-idle.json` and
+`tmp/us8/native-template-single-instance.json`; downloaded hosted reports are under
+`tmp/us8/native-template-hosted-x64` and `tmp/us8/native-template-hosted-arm64`.
+
+P02 now records the exact newly tested hosted artifact. P01 manual/exact-selected-artifact
+acceptance, P03 owner host-scope exception, P04 retained resource proof, and P05 owner acceptance
+remain open. PR17 remains draft and review-required. The evidence update changes documentation
+only; it does not grant an exception, close the five deferred/mixed full-feature tasks, change the
+feature selector, authorize live provider sessions, merge, or distribute an installer.

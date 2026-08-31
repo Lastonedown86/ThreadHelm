@@ -38,10 +38,11 @@ application processes. The four-idle-session 700 MiB budget and median idle CPU 
   installation on their machine with app-data backup instead of a VM. Record artifact identity, launch/native loading,
   installed bridge lookup, containment, single-instance behavior and applicable preview/manual
   workflows. Windows Server CI cannot satisfy this client-platform requirement.
-- [ ] **P02 — Installer cleanup:** Actual x64 uninstall verified for earlier candidate `88d1b41` in
-  [run 33364588605](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33364588605).
-  The installed native-template candidate `f53441e` has different Setup bytes and does not inherit
-  this pass. Fresh hosted acceptance is pending. The earlier run had no remaining executable
+- [x] **P02 — Installer cleanup:** Actual x64 uninstall verified for source `4160352`, tested merge
+  `e13e2fe816c11d04cc17714467908c455551c462`, in
+  [run 33402598472](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33402598472).
+  Tested x64 Setup SHA-256 is `78b34f99339e0765ef7846c3027a20fbb10fdb84d29206d4804c48a6cc06aeb0`.
+  This hosted artifact is distinct from the owner's locally built installer. There was no remaining executable
   payload, registration, shortcuts, app/bridge processes or session credentials; the documented
   NSIS candidate permits no retained installation entries, including a legacy `.dead` tombstone.
   Do not manually delete residue to manufacture a passing result.
@@ -88,8 +89,20 @@ resource acceptance was performed. Historical results below are not evidence for
 
 The previous PR head `0758483` passed x64 CI, CodeQL and both installed-acceptance jobs, but ARM64 CI
 failed one keyboard-navigation E2E case (41 passed). T168 adds observable readiness waits; the
-original failure did not reproduce in twelve x64 repetitions. Independent review passed and fresh
-hosted confirmation is pending. This test-only change does not alter the installed application.
+original failure did not reproduce in twelve x64 repetitions. Independent review passed. Fresh
+CI run `33402598473` at `4160352` passed on x64 and ARM64: each passed 42 E2E cases and 97 Windows
+integration cases (one opt-in case skipped). CodeQL also passed. This test-only change does not
+alter the installed application or establish the original intermittent failure's root cause.
+
+Fresh installer acceptance for source `4160352` passed on both architectures in run `33402598472`:
+installation, installed native/session-host containment, signature/fuses/private-persona controls,
+and actual uninstall with no executable entries, registrations, shortcuts, processes or credentials
+left behind. No manual residue deletion was used. ARM64 remains diagnostic; both reports leave
+provider mission proof `NOT_RUN`. The x64 runner is Windows Server, so the hosted run does not
+establish Windows 11 x64 manual or resource acceptance. Local installed observation separately
+recorded 420.199 MiB peak and 0% median one-core CPU across twelve approximately five-second windows;
+the same four app processes remained, with only two stopped session records before and after.
+This owner-instance observation does not replace the retained four-idle-session 700 MiB check.
 
 Candidate `88d1b41` with the NSIS decoder backport passed actual x64 and ARM64 installation,
 installed artifact/containment checks and uninstall without manual deletion in run 33364588605.

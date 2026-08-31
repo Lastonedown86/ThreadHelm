@@ -30,7 +30,7 @@ Populate these fields from completed evidence, not from intended actions:
 | --- | --- |
 | Candidate source commit and installer SHA-256 | Pending final reviewed build |
 | P01: disposable Windows 11 x64 installed/manual acceptance | Pending supported client environment and exact candidate proof |
-| P02: actual uninstall with no executable residue | Pending corrected NSIS harness run; initial hosted run 33362482111 missed the package-name directory and GUID registration. No cleanup pass claimed. |
+| P02: actual uninstall with no executable residue | Source 19752c4 passed actual x64 cleanup on Server in run 33363402143, without manual deletion. The builder compression backport changes installer bytes and awaits fresh artifact proof. |
 | P03: independent safety review and host scope reconciliation | Worker-bound/recovery fixes passed independent review. Owner exception remains pending. |
 | P04: x64 candidate controls and applicable CI | Revalidate after runtime and installer changes |
 | P05: owner acceptance of exact candidate and limitations | Pending P01-P04 |
@@ -42,6 +42,11 @@ explicit stable installer GUID and the pinned builder's package-name rule. Hoste
 exceeded a five-second disk-reopen test timeout; that persistence test now allows fifteen seconds
 without changing its recovery or stale-write assertions. Fresh hosted results must replace these
 failed runs before acceptance.
+
+The corrected identity run passed x64 installed/cleanup checks. ARM64 installed data files but
+omitted native binaries, matching a vendor extractor bug. Both builder packages are now pinned
+to the maintained v26 backport, 26.15.7; fresh artifact results are tracked in PR17 and the
+[execution record](execution-evidence.md). ARM64 distribution remains deferred.
 
 Standard hosted x64 installer evidence is from Windows Server and does not satisfy P01's Windows 11
 x64 client requirement. No disposable client environment is confirmed yet. Do not run the destructive

@@ -1508,3 +1508,61 @@ file discovery. Full E2E and hosted candidate checks remain pending at this chec
 release output and temporary evidence/dependency backups are excluded from lint, without excluding
 application or test source. The prior dependency installation was preserved while regenerating a
 clean installation after pnpm repeatedly omitted a declared dependency.
+
+## 2026-08-31 NSIS identity, cleanup evidence and compression backport
+
+Full local E2E completed with 42/42 passing after the worker-bound repair. The first hosted NSIS
+run, [33362482111](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33362482111), failed because
+the acceptance harness assumed a product-name install directory and registration. The pinned
+builder instead uses `Programs/@threadhelmdesktop` for one-click per-user installation and the
+stable appId-derived GUID. Commit `19752c4` corrected these identities, preserved that GUID
+explicitly, and added a regression exercising the real builder naming rule.
+
+The corrected [x64 job](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33363402143/job/99399078238)
+passed on Windows Server 2025, merge checkout `64db4ab4018f4ea930e3ff4f9b6f6f42a5e8ad64` from source
+head `19752c4`. Unsigned Setup SHA-256:
+`5e8c45583ea860d5eb0689f8c9cf857ab6b49cb917a65d4d8d817fd2fc1a2519`.
+Installed native/real-bridge and Electron-main/session-host/ConPTY proof passed, as did audited
+EXE/ASAR identity, production fuses, private-persona exclusion and native architecture. Normal
+uninstall left no observed payload, registration, shortcuts, app/helper processes or session
+credentials. The relocated helper was observed and then absent. No manual deletion was used.
+Reports are retained locally under `tmp/us8/handoff-identity-x64/` and in that run's artifacts.
+This does not establish Windows 11 x64 client acceptance or a live provider mission.
+
+The corresponding ARM64 install omitted native binaries; cleanup nevertheless passed. Its report
+is under `tmp/us8/handoff-identity-arm64/`. The symptom matches the vendor's
+[NSIS extractor fix](https://github.com/electron-userland/electron-builder/pull/9988),
+[backported to maintained v26](https://github.com/electron-userland/electron-builder/pull/9989).
+Both builder packages are now pinned to 26.15.7, whose NSIS archive path forces a decoder-compatible
+filter. Independent review confirmed the signing callback, helper filename, application identity
+and prepackaged behavior remain compatible. No custom filter, vendor patch, signing claim or ARM64
+distribution approval was added. This changes installer bytes, so both new artifacts require fresh
+actual acceptance; the prior x64 pass must not be attributed to a later artifact.
+
+Initial hosted CI also failed a five-second disk-reopen test and an ARM helper fixture that queried
+CIM before proving copied-runtime readiness. The former now allows fifteen seconds with the same
+durability/stale-write assertions. Commit `0e9ec1b` adds bounded readiness/exit diagnostics and
+parent-requested shutdown to the helper fixture while retaining exact PID/hash and cleanup checks.
+Local focused tests, typecheck, lint, formatting and independent review passed. Neither original
+failure is relabeled green. Fresh hosted CI and installed results are maintained in PR17.
+
+Readiness succeeded on the next hosted run, but both architectures still missed the live helper
+in CIM. A local reproduction with an 8.3 TEMP alias failed identically. Node's regular
+`realpathSync` preserves those aliases; `realpathSync.native` expands them to CIM's long image
+path. The fixture now canonicalizes its temporary base and root using the native resolver and
+validates cleanup against that same base. `realChild` uses the native resolver while retaining
+its original lexical and resolved-boundary checks. The exact short-path reproduction then passed
+without changing any observation assertion. Logs: `tmp/us8/handoff-helper-short-path-red.log` and
+`handoff-helper-short-path-native-green.log`. Hosted verification remains separate.
+
+Fresh local packaged x64 idle measurement at 02:28 EDT: **382.609 MiB peak**, median CPU **0%**
+over twelve approximately five-second windows, four application processes, no sessions or inspector
+and fresh user data. The executable SHA-256 was
+`e8e4becb18348f6ccf08996bcca45f7bb4f52b31b85fbd73ee01413f0f62dfd0`.
+CPU passes; memory still exceeds the deferred 250 MiB target. This is not installed acceptance,
+four-worker measurement, or a newly approved memory ceiling. Evidence:
+`tmp/us8/handoff-packaged-idle-performance.json`.
+
+The selector and five full-feature task checkboxes are unchanged. Retained supported-client proof,
+current resource/candidate checks, owner host-scope reconciliation, exact-candidate acceptance and
+required repository review remain prerequisites for the next-feature handoff.

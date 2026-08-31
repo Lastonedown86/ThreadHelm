@@ -1,5 +1,5 @@
 import { execFileSync, spawn } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -11,7 +11,12 @@ it.skipIf(process.platform !== 'win32')(
   'observes a relocated helper outside the empty installation until it exits',
   async () => {
     // A benign copied Node process tests observation only, never installation or deletion of an app.
-    const root = mkdtempSync(join(tmpdir(), 'threadhelm-helper-observation-'));
+    // Hosted ARM can expose TEMP via an 8.3 alias while CIM reports the long image path.
+    // Match the install harness's verified real paths, including the cleanup boundary.
+    const temporaryBase = realpathSync.native(tmpdir());
+    const root = realpathSync.native(
+      mkdtempSync(join(temporaryBase, 'threadhelm-helper-observation-')),
+    );
     const helperRoot = join(root, 'temporary-helpers');
     mkdirSync(helperRoot);
     const executable = join(helperRoot, 'fixture-helper.exe');
@@ -110,7 +115,7 @@ it.skipIf(process.platform !== 'win32')(
     } finally {
       if (child.exitCode === null && !child.killed) child.kill();
       await closed;
-      inside(tmpdir(), root);
+      inside(temporaryBase, root);
       rmSync(root, { recursive: true, force: true });
     }
   },

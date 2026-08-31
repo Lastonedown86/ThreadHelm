@@ -105,5 +105,5 @@ export function inside(root: string, candidate: string): string {
 export function realChild(root: string, candidate: string): string {
   inside(root, candidate);
   // A replaced root junction must not redefine which installation we may execute.
-  return inside(root, realpathSync(candidate));
+  return inside(root, realpathSync.native(candidate));
 }

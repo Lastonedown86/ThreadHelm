@@ -1,4 +1,4 @@
-param([Parameter(Mandatory = $true)][string]$InstallRoot, [switch]$IncludeTree)
+param([Parameter(Mandatory = $true)][string]$InstallRoot, [switch]$IncludeTree, [string]$HelperRoot)
 $ErrorActionPreference = 'Stop'
 $prefix = [IO.Path]::GetFullPath($InstallRoot).TrimEnd('\') + '\'
 $registrations = @()
@@ -18,9 +18,20 @@ foreach ($folder in @([Environment]::GetFolderPath('DesktopDirectory'), [Environ
         $shortcuts += @(Get-ChildItem -LiteralPath $folder -Filter '*ThreadHelm*.lnk' -File -Recurse | Select-Object -ExpandProperty FullName)
     }
 }
-$processIds = @(Get-CimInstance Win32_Process | Where-Object {
-    $_.ExecutablePath -and $_.ExecutablePath.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)
-} | ForEach-Object { [int]$_.ProcessId })
+$helperPrefix = if ($HelperRoot) { [IO.Path]::GetFullPath($HelperRoot).TrimEnd('\') + '\' } else { $null }
+$helperProcesses = @()
+$processIds = @()
+foreach ($process in Get-CimInstance Win32_Process) {
+    if (-not $process.ExecutablePath) { continue }
+    $inInstall = $process.ExecutablePath.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)
+    $inHelper = $helperPrefix -and $process.ExecutablePath.StartsWith($helperPrefix, [StringComparison]::OrdinalIgnoreCase)
+    if ($inInstall -or $inHelper) { $processIds += [int]$process.ProcessId }
+    if ($inHelper) {
+        $digest = $null
+        try { $digest = (Get-FileHash -LiteralPath $process.ExecutablePath -Algorithm SHA256).Hash.ToLowerInvariant() } catch { }
+        $helperProcesses += @{ processId = [int]$process.ProcessId; parentProcessId = [int]$process.ParentProcessId; createdAt = $process.CreationDate; sha256 = $digest }
+    }
+}
 $credentialFiles = @()
 # Electron's package name may be normalized differently by its platform runtime.
 foreach ($name in @('ThreadHelm', '@threadhelm/desktop', 'threadhelm')) {
@@ -59,6 +70,7 @@ if (Test-Path -LiteralPath $InstallRoot) {
     registrationDetails = $registrations
     shortcuts = @($shortcuts | Sort-Object -Unique)
     processIds = $processIds
+    helperProcesses = $helperProcesses
     credentialFiles = @($credentialFiles | Sort-Object -Unique)
     windows = @{ caption = (Get-CimInstance Win32_OperatingSystem).Caption; build = [Environment]::OSVersion.Version.ToString() }
 } | ConvertTo-Json -Depth 6 -Compress

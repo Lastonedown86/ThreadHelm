@@ -4,7 +4,9 @@
 
 **Preview scope decision, 2026-08-31:** The owner approved a limited unsigned Windows 11 x64
 preview with [explicit deferrals and retained gates](../../specs/002-agent-mailbox-routing/preview-release.md).
-That milestone does not complete Feature 002, enable unproved autonomy, or trigger the next spec.
+That milestone does not complete Feature 002 or enable unproved autonomy. The subsequent owner
+request to reach the next feature authorizes a limited handoff after the retained gates and main
+integration, with deferrals carried forward; see the gate below.
 
 **Status:** Product direction approved; follow-on features not yet specified or implemented.
 **Audience:** Windows power users and solo developers using local coding agents.
@@ -65,15 +67,28 @@ still open. This is a dated baseline, not a claim about another task's unmerged 
 
 | Stage                                | Dependency and entry                                                                                                                                           | Exit evidence                                                                                                                                                                      | Next specification action                                                                                        |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| 0. Finish Feature 002                | Continue the existing feature: US7 (T107-T125), then US8 (T126-T149), then Phase 11 (T150-T158); preserve all earlier acceptance and supplemental obligations. | US1-US8 and supplemental requirements delivered; required validation and human acceptance recorded; integrated on main; no unresolved blocking gate.                               | Only when the Feature 002 closure gate below passes, run `$speckit-specify` for **Verified Mission Delegation**. |
-| 1. Verified Mission Delegation       | Feature 002 closure accepted; inspect the actual US8 implementation before defining additions.                                                                 | Mission contract, attributable delegation, verification/receipt, and Mission Focus acceptance pass on Windows; evidence and required reviews recorded; feature integrated on main. | Run a separate `$speckit-specify` for **GitHub Mission Intake** after this feature's closure is accepted.        |
+| 0. Finish Feature 002                | Continue the existing feature: US7 (T107-T125), then US8 (T126-T149), then Phase 11 (T150-T158); preserve all earlier acceptance and supplemental obligations. | Full closure or accepted P01-P05 preview handoff; deferrals tracked; required review and acceptance recorded; integrated on main.                                                  | Only when the Feature 002 handoff gate below passes, run `$speckit-specify` for **Verified Mission Delegation**. |
+| 1. Verified Mission Delegation       | Feature 002 handoff accepted; inspect the actual US8 implementation before defining additions.                                                                 | Mission contract, attributable delegation, verification/receipt, and Mission Focus acceptance pass on Windows; evidence and required reviews recorded; feature integrated on main. | Run a separate `$speckit-specify` for **GitHub Mission Intake** after this feature's closure is accepted.        |
 | 2. GitHub Mission Intake             | Stage 1 accepted; connector ingress, authentication, privacy, and authority decisions resolved during specification/planning.                                  | Selected-repository draft intake, approved clarification, issue/mission/PR linkage, verified-PR delivery, and quiet final update pass acceptance; recovery and revocation proved.  | No automatic next feature. Obtain a separate owner decision before specifying bounded issue auto-start.          |
 | 3. Optional bounded issue auto-start | Stage 2 accepted and explicit owner approval of this additional scope.                                                                                         | Future spec must prove trusted triggers, templates, quotas, concurrency, pause/recovery, and the same PR-review boundary.                                                          | Deferred; neither specified nor authorized for implementation by this roadmap.                                   |
 
-### Feature 002 closure gate
+### Feature 002 handoff gate
+
+The owner-approved preview route is now an alternative to full closure: pass P01-P05 in
+[preview-release.md](../../specs/002-agent-mailbox-routing/preview-release.md), obtain required
+repository review, integrate the accepted candidate on main, and record the exact handoff in
+[transition-to-next-feature.md](../../specs/002-agent-mailbox-routing/transition-to-next-feature.md).
+Carry D01-D04 into the next specification as unmet constraints and tracked backlog. Do not
+start the next specification on the strength of deferred test counts or a merge alone. This
+route does not waive Windows 11 x64 installed acceptance, cleanup, safety review or owner acceptance.
+
+The stage table's Feature 002 entry/exit uses this handoff gate: an accepted preview baseline is
+eligible for Stage 1 without claiming every full-feature obligation below is complete.
+
+For **full Feature 002 closure**, the original obligations remain:
 
 Finishing or merging US7 alone does not finish Feature 002. US8 finishes the supervisor story,
-but does not replace Phase 11. Before creating the next active feature specification:
+but does not replace Phase 11. Before recording full completion:
 
 - Reconcile the full Feature 002 ledger, including T159-T166 and earlier acceptance obligations.
   Mark work complete only with attributable evidence; task count alone is insufficient.
@@ -88,7 +103,7 @@ but does not replace Phase 11. Before creating the next active feature specifica
   blocking findings. Record the final commit, relevant PRs, acceptance, and remaining nonblocking
   limitations in the feature evidence.
 
-The next-spec trigger is **recorded closure and acceptance after T158**, not merely running T158.
+The next-spec trigger is **recorded full closure or the accepted preview handoff**, not merely running T158.
 Keep `.specify/feature.json` on Feature 002 until the transition is explicitly undertaken. An earlier
 partial release or a proposed deferral must not be labeled full completion; any different sequencing
 requires an explicit owner decision and a documented dependency impact.
@@ -104,7 +119,8 @@ For the first transition, use this bounded request:
 
 ```text
 $speckit-specify Create Verified Mission Delegation from docs/roadmaps/verified-mission-os.md.
-First verify Feature 002's recorded closure. Extend its US8 mission, delegation, result-return,
+First verify Feature 002's accepted handoff and carry forward its explicit D01-D04 deferrals.
+Extend its US8 mission, delegation, result-return,
 lease, and recovery foundation rather than recreating it. Specify the acceptance-evidence
 matrix, Capability Passports, progress accountability, Mission Receipts, and approved Mission
 Focus experience. Separate local verified completion from future GitHub-confirmed PR readiness.
@@ -254,6 +270,6 @@ Do not publish speculative delivery dates or copy task-level status into this do
 | Stage                       | Tracking artifact                                                                                                                | Handoff state at roadmap creation                                                   |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Feature 002                 | [Tasks](../../specs/002-agent-mailbox-routing/tasks.md), [evidence](../../specs/002-agent-mailbox-routing/execution-evidence.md) | Current feature; closure not established.                                           |
-| Verified Mission Delegation | Create with the next available number after the Feature 002 closure gate.                                                        | Product direction approved; no spec or implementation claim.                        |
+| Verified Mission Delegation | Create with the next available number after the Feature 002 handoff gate.                                                        | Product direction approved; no spec or implementation claim.                        |
 | GitHub Mission Intake       | Create separately after Verified Mission Delegation acceptance.                                                                  | Draft-only/quiet-communication direction approved; connector planning gates remain. |
 | Bounded issue auto-start    | Separate future owner decision and spec.                                                                                         | Deferred.                                                                           |

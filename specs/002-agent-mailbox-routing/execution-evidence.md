@@ -1456,3 +1456,55 @@ three files; formatting, local preview-document links and diff whitespace checks
 task count remains 161 checked / 5 open. This change edits documentation only: no runtime tests,
 CI checks, architecture support or safety assertions were disabled. The full runtime suite was not
 rerun for the documentation change; its last complete hosted result is the `ea4c906` run above.
+
+## 2026-08-31 next-feature handoff repairs
+
+The owner requested the work needed to reach the next feature after approving D01-D04. The
+specification, roadmap and [transition record](transition-to-next-feature.md) now permit a limited
+handoff after retained P01-P05 acceptance, required repository review and main integration. Full
+Feature 002 closure is no longer a prerequisite for that route; deferred tasks remain incomplete
+and must be carried into the next specification as unmet constraints. The selector remains 002.
+
+Independent review of `659e59b..88ffeaa` found a real worker resource-bound escape: final worker
+results could finish the attempt and clear host output limits while the process remained alive.
+New regressions reproduced it. Main now stops and independently inspects the exact worker for
+every final disposition; unverified closure becomes unknown, and a reported unknown remains
+unknown even after verified stop. Result persistence never clears a surviving host's ceiling.
+Duplicate results remain idempotent; changed content is rejected. A notification failure cannot
+skip teardown or the actionable recovery record. Main's persisted result and supervisor inbox are
+authoritative; an in-Job caller may be terminated before receiving its final acknowledgement.
+Reusable workers require a separately verified idle protocol rather than a terminal-result claim.
+
+The independent safety reviewer reported no remaining actionable findings in this bounded repair
+and independently passed 35 supervisor contracts. Review evidence is retained locally in
+`tmp/us8/handoff-review-final.log`; the reviewed production blobs were
+`18c95cc18836db27e64fc12032080badf1da0989` (supervisor) and
+`17085b4e6d8b0456450d711b7b22bf9adca2b8d5` (session failure cleanup). The original session-host exception
+still needs owner reconciliation; independent technical review is not owner or repository approval.
+
+Squirrel's shipped in-place uninstaller has no supported post-exit cleanup switch. The replacement
+changes only Forge's maker stage: pinned electron-builder 26.15.3 creates per-user NSIS installers
+from Forge's prepackaged directory. Native copying, actual private-Marvel audit, ASAR integrity and
+production fuses stay with Forge. The maker verifies unchanged EXE/ASAR bytes and records the exact
+generated helper digest; installed acceptance verifies those identities before executing the fixed
+uninstaller path. Publishing, elevation, post-install app launch and user-data deletion are disabled.
+No Squirrel upgrade/migration or certificate-backed signing is claimed. Optional signing credentials
+are captured only inside the callback, outside builder's serialized configuration.
+
+The local unsigned NSIS prototype built successfully (Setup SHA-256
+`82ee2e335782d5cd560404891ce30b242db3713c49ec4e7636e46d8301b99bec`). This is build evidence, not the
+final accepted candidate or installed acceptance. No installer was run on the owner's account.
+The independent installer reviewer accepted the candidate for hosted testing after fixing the
+temporary-helper observation and wrapper parameter shadowing. The harness preserves normal `/S`
+relocation, bounds TEMP/TMP to the run's directory and includes every process there in cleanup
+observation. Its original exit status is explicitly `uninstallLauncherExitCode`; no child exit
+code or global TEMP cleanup is invented. Any retained installed entry, including `.dead`, fails.
+
+Local validation at this checkpoint: lint and typecheck passed; 637 unit/contract tests passed;
+the real temporary-helper observer test passed. The full Windows run had 95 passed, one existing
+skip and one control-order timeout, followed by a clean 13/13 rerun of that entire affected file.
+Do not label the first full run green. The new helper test ran separately after the full run's
+file discovery. Full E2E and hosted candidate checks remain pending at this checkpoint. Generated
+release output and temporary evidence/dependency backups are excluded from lint, without excluding
+application or test source. The prior dependency installation was preserved while regenerating a
+clean installation after pnpm repeatedly omitted a declared dependency.

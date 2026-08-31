@@ -35,6 +35,12 @@ file. A future signed artifact may report `Valid`, but signing is not required b
 ThreadHelm has no automatic updater. The About area links to the releases page; download a
 newer version deliberately and verify it the same way.
 
+The candidate uses a per-user NSIS installer at `%LOCALAPPDATA%\Programs\ThreadHelm`.
+It does not require elevation or launch the app after setup. Uninstall through Windows Installed
+apps; personal workspace/history data is retained. Migration from earlier development Squirrel
+installations is not verified: do not install over, silently remove, or advertise an upgrade from
+one. Fresh install and normal uninstall must pass before this candidate is distributed.
+
 ## Preview limitations
 
 The owner deferred the 250 MiB idle-memory target for this preview; the latest local packaged
@@ -43,6 +49,11 @@ Other CPU/resource bounds and safety checks remain required. Full US8 autonomous
 readiness is not claimed; unavailable Claude auto permission remains held, with no bypass fallback.
 Private Marvel personas are never bundled. These scope deferrals do not waive installer cleanup,
 Windows 11 x64 installed acceptance, independent review or owner acceptance.
+
+A final mission-worker result ends that worker's bounded process scope. Main persists the result
+and routes it to the supervisor; it cannot guarantee that the terminated worker receives a final
+acknowledgement. Unknown effects remain held for inspection, even after the process stops.
+Reusable worker sessions require a separately verified idle transition and are not assumed here.
 
 ## Prerequisites for launching agents
 

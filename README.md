@@ -100,7 +100,7 @@ Releases are intentionally unsigned and include SHA-256 checksums. See
 [installation guidance](docs/install.md) for publisher-trust limitations and verification.
 
 ```powershell
-pnpm package:win                                      # x64 Squirrel installer + .sha256 files
+pnpm package:win                                      # x64 NSIS installer + .sha256 files
 $env:THREADHELM_ARTIFACT = 'C:\path\to\ThreadHelm.exe'; pnpm test:acceptance:installed
 $env:THREADHELM_PROVIDER_SMOKE = '1'; pnpm test:smoke:providers   # real Codex/Claude, non-recording
 ```

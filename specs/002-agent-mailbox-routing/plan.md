@@ -1,5 +1,14 @@
 # Implementation Plan: Durable Hive Coordination
 
+**Preview repair decision, 2026-08-31:** Replace only the Squirrel installer stage with pinned
+electron-builder NSIS consuming the existing Forge package. Forge retains ASAR/fuse/native/persona
+ownership; no Electron shell migration, updater service, automatic publication, elevation or
+application-data deletion is added. The shipped Squirrel updater's in-place uninstall cannot remove
+its own executable and has no supported post-exit cleanup switch. Actual hosted install/uninstall
+must verify the replacement; a successful make is not acceptance. See
+[installer acceptance](../../tests/acceptance/INSTALLER.md) and the
+[next-feature transition](transition-to-next-feature.md).
+
 **Branch**: `002-agent-mailbox-routing` | **Date**: 2026-08-28 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/002-agent-mailbox-routing/spec.md`

@@ -1,6 +1,7 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { assertInstalledNativeArchitecture } from '../../acceptance/helpers/installed-native-architecture.js';
 
@@ -13,6 +14,35 @@ function pe(machine: number): Buffer {
   return bytes;
 }
 describe('installed maker updater architecture exception', () => {
+  it('requires this build NSIS helper digest and never extends its exception to application files', () => {
+    const temp = mkdtempSync(join(tmpdir(), 'threadhelm-installed-nsis-'));
+    try {
+      const helper = pe(0x14c);
+      const digest = createHash('sha256').update(helper).digest('hex');
+      writeFileSync(join(temp, 'ThreadHelm.exe'), pe(0x8664));
+      writeFileSync(join(temp, 'Uninstall ThreadHelm.exe'), helper);
+      expect(() => assertInstalledNativeArchitecture(temp, 'x64', '')).toThrow(
+        'UNINSTALLER_IDENTITY_MISMATCH',
+      );
+      expect(assertInstalledNativeArchitecture(temp, 'x64', '', digest).uninstallerSha256).toBe(
+        digest,
+      );
+      writeFileSync(
+        join(temp, 'Uninstall ThreadHelm.exe'),
+        Buffer.concat([helper, Buffer.from('changed')]),
+      );
+      expect(() => assertInstalledNativeArchitecture(temp, 'x64', '', digest)).toThrow(
+        'UNINSTALLER_IDENTITY_MISMATCH',
+      );
+      writeFileSync(join(temp, 'Uninstall ThreadHelm.exe'), helper);
+      writeFileSync(join(temp, 'ThreadHelm.exe'), helper);
+      expect(() => assertInstalledNativeArchitecture(temp, 'x64', '', digest)).toThrow(
+        'architecture',
+      );
+    } finally {
+      rmSync(temp, { recursive: true, force: true });
+    }
+  });
   it('accepts only an exact root updater matching this build maker bytes while app payload stays strict', () => {
     const temp = mkdtempSync(join(tmpdir(), 'threadhelm-installed-pe-'));
     try {

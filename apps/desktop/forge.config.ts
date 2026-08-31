@@ -1,14 +1,14 @@
 /**
  * Packaging (T027 fuses, T087 installers).
  *
- * x64 and ARM64 per-user Squirrel installers, ASAR with integrity validation,
+ * x64 and ARM64 per-user NSIS installers, ASAR with integrity validation,
  * production fuses, native addons unpacked, optional Authenticode signing driven by
  * environment (keys never live in the repository), and SHA-256 checksums
  * written next to every artifact.
  */
 
 import type { ForgeConfig, ForgeMakeResult } from '@electron-forge/shared-types';
-import { MakerSquirrel } from '@electron-forge/maker-squirrel';
+import { MakerNsis } from './src/packaging/nsis-maker.js';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
 import { createHash } from 'node:crypto';
@@ -145,22 +145,7 @@ const config: ForgeConfig = {
   makers: [
     // `electron-forge make --arch x64` / `--arch arm64` each produce a
     // per-user installer named for its architecture.
-    new MakerSquirrel(
-      (arch) => ({
-        name: 'ThreadHelm',
-        authors: 'ThreadHelm',
-        description: 'ThreadHelm local agent workspace',
-        setupExe: `ThreadHelm-Setup-${arch}.exe`,
-        noMsi: true,
-        ...(signing
-          ? {
-              certificateFile: signing.certificateFile,
-              certificatePassword: signing.certificatePassword,
-            }
-          : {}),
-      }),
-      ['win32'],
-    ),
+    new MakerNsis(signing ?? {}, ['win32']),
   ],
   plugins: [
     new FusesPlugin({
@@ -185,7 +170,7 @@ const config: ForgeConfig = {
     postMake: async (_config, results: ForgeMakeResult[]) => {
       for (const result of results) {
         for (const artifact of result.artifacts) {
-          if (!/\.(exe|nupkg|msi)$/i.test(artifact)) continue;
+          if (!/\.(exe|nupkg|msi|json)$/i.test(artifact)) continue;
           const digest = createHash('sha256').update(readFileSync(artifact)).digest('hex');
           writeFileSync(`${artifact}.sha256`, `${digest}  ${artifact.split(/[\\/]/).pop()}\n`);
         }

@@ -1000,6 +1000,9 @@ export class SupervisorService implements SupervisorBridgeAuthority {
         return { attempt, duplicate: true };
       throw new ThreadHelmError('WORK_ATTEMPT_UNKNOWN');
     }
+    if (!activeAttempt.has(attempt.state)) throw new ThreadHelmError('WORK_ATTEMPT_UNKNOWN');
+    if (request.disposition === 'completion' && !request.evidenceRefs.length)
+      throw new ThreadHelmError('INVALID_REQUEST', 'Completion requires deliberate evidence.');
     let disposition = request.disposition;
     const boundedStop = [
       'timed_out',
@@ -1009,19 +1012,35 @@ export class SupervisorService implements SupervisorBridgeAuthority {
       'permission_blocked',
       'classifier_failed',
     ].includes(disposition);
-    if (boundedStop) {
+    // Finishing an attempt removes it from the resource governor. A worker's
+    // result, including completion, cannot prove its processes are idle. End the
+    // exact scope before releasing the budget/lease; never leave a reusable but
+    // unbounded process behind. Reuse needs a separately verified idle protocol.
+    {
       const live = this.#ctx.live.get(sessionId);
       if (live) {
         this.#ending.add(sessionId);
         try {
           failSession(this.#ctx, live, `WORKER_${disposition.toUpperCase()}`);
+        } catch {
+          // Teardown still runs when a renderer event sink throws. Preserve an
+          // honest durable outcome after revoking the worker instead of losing
+          // its result while onSessionEnded is suppressed by #ending.
+          disposition = 'unknown';
         } finally {
           this.#ending.delete(sessionId);
         }
       }
       try {
         const scope = this.#ctx.native.inspectSessionScope(sessionId);
-        if (scope.truncated || scope.activeProcessCount || scope.processIds.length)
+        if (
+          scope.truncated ||
+          scope.activeProcessCount ||
+          scope.processIds.length ||
+          this.#ctx.live.has(sessionId) ||
+          this.#ctx.storage!.repositories.sessions.findById(sessionId)?.lifecycleState ===
+            'recovery_required'
+        )
           disposition = 'unknown';
       } catch {
         disposition = 'unknown';
@@ -1119,19 +1138,8 @@ export class SupervisorService implements SupervisorBridgeAuthority {
       }
       return result;
     });
-    if (committed.sessionId) {
-      const live = this.#ctx.live.get(committed.sessionId);
-      try {
-        live?.host.postMessage({
-          type: 'host.clearOutputBudget',
-          sessionId: committed.sessionId,
-          protocolVersion: 1,
-          attemptId: committed.id,
-        });
-      } catch {
-        /* A failed clear keeps the stricter budget in the host. */
-      }
-    }
+    // Final results end the worker. If cleanup is uncertain, any surviving host
+    // must keep its stricter ceiling; result persistence never clears a budget.
     return committed;
   }
   #validateReferences(missionId: string, refs: SupervisorEvidenceRef[]): void {

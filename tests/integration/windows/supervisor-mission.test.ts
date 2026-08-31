@@ -310,7 +310,11 @@ describe('Windows supervisor mission authority and recovery', () => {
       expect((await app.jobSnapshot(attempt.sessionId!))!.activeProcessCount).toBeGreaterThan(0);
       const response = result(attempt, 'completion');
       await app.bridgeRequest(attempt.sessionId!, 'threadhelm_work_result', response);
-      await app.bridgeRequest(attempt.sessionId!, 'threadhelm_work_result', response);
+      // Final results end the bounded worker and revoke its bridge credential.
+      await expect(
+        app.bridgeRequest(attempt.sessionId!, 'threadhelm_work_result', response),
+      ).rejects.toThrow();
+      expect(await app.jobSnapshot(attempt.sessionId!)).toBeNull();
     }
     const finished = await detail(mission.id);
     expect(finished.completedWorkItemCount).toBe(3);

@@ -421,7 +421,7 @@ pnpm test:smoke:providers
 ```
 
 `THREADHELM_ARTIFACT` points to the packaged or installed **ThreadHelm.exe**, not a Setup executable.
-Artifact acceptance starts that app but does not install/uninstall Squirrel. The provider smoke
+Artifact acceptance starts that app but does not install/uninstall NSIS. The provider smoke
 command separately drives the development build with installed CLIs; it proves readiness and process
 lifecycle only. It does not prove a live mission, Claude auto/classifier behavior, actual read/edit/test
 work, or installed mission integration. The expanded `provider-coordination-smoke.test.ts` suite is

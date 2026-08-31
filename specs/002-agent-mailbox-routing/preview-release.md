@@ -7,7 +7,14 @@ distribution and final acceptance are not yet approved.
 This is a limited preview milestone within Feature 002, not completion of all US8 capabilities.
 It supersedes earlier statements that every full-feature gate must pass before this preview.
 The full-feature task ledger stays intact: deferred work is not marked complete, Feature 002
-remains selected, and this decision does not authorize merging, releasing, or starting the next spec.
+remains selected until the recorded handoff below. Scope approval alone does not approve a merge,
+release, or candidate acceptance.
+
+**Sequencing decision, 2026-08-31:** The owner subsequently requested the work needed to reach the
+next feature. After the retained P01-P05 gates, required repository review and integration on main,
+Verified Mission Delegation may begin with D01-D04 carried forward explicitly. Full Feature 002
+closure is no longer a prerequisite for that limited handoff. This does not waive P01-P05 or
+mark deferred tasks complete. See [the transition record](transition-to-next-feature.md).
 
 ## Approved deferrals
 
@@ -32,7 +39,8 @@ application processes. The four-idle-session 700 MiB budget and median idle CPU 
   workflows. Windows Server CI cannot satisfy this client-platform requirement.
 - [ ] **P02 — Installer cleanup:** Fix and verify actual x64 uninstall. No remaining executable
   payload, registration, shortcuts, app/bridge processes or session credentials; the documented
-  `.dead` tombstone is allowed. Do not manually delete residue to manufacture a passing result.
+  NSIS candidate permits no retained installation entries, including a legacy `.dead` tombstone.
+  Do not manually delete residue to manufacture a passing result.
 - [ ] **P03 — Independent safety and scope review:** Review the exact candidate diff, preserved
   permission/unknown-outcome boundaries and test evidence. Explicitly resolve the original
   session-host preserve-only instruction versus the later content-free byte-meter change.
@@ -57,7 +65,7 @@ do not relax them to obtain Windows 11 x64 evidence.
 | T149 aggregate US8 evidence and acceptance | Mixed: full autonomous-provider proof deferred under D03; independent review and human acceptance retained under P03/P05, with D04 simplifying reviewer assignments. |
 | T154 packaging / installed lookup / cleanup | x64 portions retained under P01/P02/P04. ARM64 distribution acceptance deferred under D02; its failures remain recorded. |
 | T157 installed-artifact and provider proofs | Preview x64 artifact/manual-workflow evidence retained; unproved autonomous-provider mission proof deferred under D03. Do not relabel fixtures as live provider proof. |
-| T158 final feature closure | Remains incomplete. A preview acceptance record is separate from full Feature 002 closure and cannot trigger the next feature. |
+| T158 final feature closure | Remains incomplete until full obligations pass. The separately approved preview handoff may trigger the next feature only after P01-P05, required review and integration on main; carry every deferral forward. |
 
 ## Current evidence and remaining work
 

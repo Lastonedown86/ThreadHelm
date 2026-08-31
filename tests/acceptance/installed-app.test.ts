@@ -219,11 +219,18 @@ describeInstalled('installed artifact acceptance', () => {
       'vendor',
       'Squirrel.exe',
     );
-    const updaterIdentity = assertInstalledNativeArchitecture(dirname(exe), process.arch, vendor);
+    const updaterIdentity = assertInstalledNativeArchitecture(
+      dirname(exe),
+      process.arch,
+      vendor,
+      process.env.THREADHELM_UNINSTALLER_SHA256,
+    );
     report.installerUpdaterIdentity = updaterIdentity;
-    scenarios.nativeArchitecture = updaterIdentity.updaterSha256
-      ? `Application native files match ${process.arch}; maker updater separately byte-verified`
-      : `Application native files match ${process.arch}; no maker updater present`;
+    scenarios.nativeArchitecture = updaterIdentity.uninstallerSha256
+      ? `Application native files match ${process.arch}; NSIS uninstaller build digest verified`
+      : updaterIdentity.updaterSha256
+        ? `Application native files match ${process.arch}; legacy maker updater separately byte-verified`
+        : `Application native files match ${process.arch}; no installer helper present`;
   });
 
   // Production fuses disable the inspect port Playwright attaches through, so

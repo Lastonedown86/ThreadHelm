@@ -29,6 +29,8 @@ export default tseslint.config(
       '**/.tsbuild/',
       '**/coverage/',
       '**/target/',
+      '**/release/',
+      'tmp/',
       '**/*.node',
       'native/windows-supervisor/index.js',
       'native/windows-supervisor/index.d.ts',

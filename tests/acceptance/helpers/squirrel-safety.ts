@@ -21,7 +21,14 @@ export function installationPlan(
   env: NodeJS.ProcessEnv,
   platform: string,
   arch: string,
-): { installer: string; installRoot: string; reportRoot: string; workspace: string; arch: string } {
+): {
+  installer: string;
+  installRoot: string;
+  legacyInstallRoot: string;
+  reportRoot: string;
+  workspace: string;
+  arch: string;
+} {
   if (
     env.THREADHELM_INSTALLER_ACCEPTANCE !== '1' ||
     env.GITHUB_ACTIONS !== 'true' ||
@@ -49,7 +56,7 @@ export function installationPlan(
   }
   const workspace = win32.resolve(env.GITHUB_WORKSPACE!);
   const installer = inside(
-    win32.join(workspace, 'apps', 'desktop', 'release', 'make'),
+    win32.join(workspace, 'apps', 'desktop', 'release', 'make', 'nsis', arch),
     env.THREADHELM_INSTALLER!,
   );
   if (win32.basename(installer) !== `ThreadHelm-Setup-${arch}.exe`)
@@ -59,7 +66,8 @@ export function installationPlan(
     workspace,
     installer,
     arch,
-    installRoot: win32.join(local, 'ThreadHelm'),
+    installRoot: win32.join(local, 'Programs', 'ThreadHelm'),
+    legacyInstallRoot: win32.join(local, 'ThreadHelm'),
     reportRoot: win32.join(
       env.RUNNER_TEMP!,
       `threadhelm-install-${env.GITHUB_RUN_ID}-${env.GITHUB_RUN_ATTEMPT}-${arch}`,
@@ -73,9 +81,9 @@ export function assertFreshAccount(state: InstallObservation): void {
 }
 
 export function assertUninstalled(state: InstallObservation): void {
-  // Squirrel intentionally recreates its root with this tombstone after FullUninstall.
+  // NSIS has no Squirrel tombstone exception: any retained entry fails.
   if (
-    state.rootEntries.some((entry) => entry !== '.dead') ||
+    state.rootEntries.length ||
     state.registrations.length ||
     state.shortcuts.length ||
     state.processIds.length ||

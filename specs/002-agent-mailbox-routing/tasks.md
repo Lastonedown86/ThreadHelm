@@ -11,6 +11,8 @@ The full-feature task list below remains intact: deferred work is not complete a
 stays open. T148 is deferred from the preview; T149/T154/T157 mix deferred and retained work;
 T158 still represents full feature closure. Do not use the aggregate 161/166 count as the preview
 release checklist or require deferred ARM64/auto-provider work to accept the limited preview.
+The subsequently approved [next-feature handoff](transition-to-next-feature.md) carries D01-D04
+forward after retained acceptance, required review and main integration; it is separate from T158.
 
 **Input**: Design documents from `specs/002-agent-mailbox-routing/`
 
@@ -594,4 +596,7 @@ existing renderer stream. The scope decision is recorded in `execution-evidence.
 permit general host refactoring or changing `resize.ts`. Existing host edits, ordered controls,
 Job-before-create containment, and bootstrap behavior remain preserved. Native/host source review
 and Windows regressions verify this bounded deviation; it is not an exception to permission or
-process containment requirements.
+process containment requirements. The current independent review requires explicit owner
+reconciliation before P03 passes: the earlier root-agent scope ruling was not owner approval.
+Unrelated keystroke work is preserved separately on the recovery branch recorded in
+[transition-to-next-feature.md](transition-to-next-feature.md), not present in this candidate.

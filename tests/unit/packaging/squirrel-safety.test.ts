@@ -20,7 +20,7 @@ const env = {
   USERPROFILE: 'C:\\Users\\runneradmin',
   LOCALAPPDATA: 'C:\\Users\\runneradmin\\AppData\\Local',
   THREADHELM_INSTALLER:
-    'D:\\a\\ThreadHelm\\ThreadHelm\\apps\\desktop\\release\\make\\squirrel.windows\\x64\\ThreadHelm-Setup-x64.exe',
+    'D:\\a\\ThreadHelm\\ThreadHelm\\apps\\desktop\\release\\make\\nsis\\x64\\ThreadHelm-Setup-x64.exe',
   GITHUB_RUN_ID: '123',
   GITHUB_RUN_ATTEMPT: '1',
 };
@@ -32,7 +32,7 @@ const clean: InstallObservation = {
   credentialFiles: [],
 };
 
-describe('disposable Squirrel acceptance safety boundary', () => {
+describe('disposable NSIS acceptance safety boundary', () => {
   it.skipIf(process.platform !== 'win32')(
     'rejects a junction replacing the expected install root',
     () => {
@@ -82,7 +82,8 @@ describe('disposable Squirrel acceptance safety boundary', () => {
   it('binds install and report paths to the disposable account and exact artifact', () => {
     expect(installationPlan(env, 'win32', 'x64')).toEqual({
       installer: env.THREADHELM_INSTALLER,
-      installRoot: 'C:\\Users\\runneradmin\\AppData\\Local\\ThreadHelm',
+      installRoot: 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\ThreadHelm',
+      legacyInstallRoot: 'C:\\Users\\runneradmin\\AppData\\Local\\ThreadHelm',
       reportRoot: 'D:\\a\\_temp\\threadhelm-install-123-1-x64',
       workspace: env.GITHUB_WORKSPACE,
       arch: 'x64',
@@ -116,8 +117,11 @@ describe('disposable Squirrel acceptance safety boundary', () => {
       expect(() => assertFreshAccount(state)).toThrow('PREEXISTING_THREADHELM_STATE');
     },
   );
-  it('allows only the documented Squirrel .dead tombstone after uninstall', () => {
-    expect(() => assertUninstalled({ ...clean, rootEntries: ['.dead'] })).not.toThrow();
+  it('rejects every retained NSIS root entry, including a legacy Squirrel tombstone', () => {
+    expect(() => assertUninstalled(clean)).not.toThrow();
+    expect(() => assertUninstalled({ ...clean, rootEntries: ['.dead'] })).toThrow(
+      'UNINSTALL_RESIDUE',
+    );
     expect(() => assertUninstalled({ ...clean, rootEntries: ['Update.exe', '.dead'] })).toThrow(
       'UNINSTALL_RESIDUE',
     );

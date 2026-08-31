@@ -37,8 +37,8 @@ still fail closed. No runtime permission, containment, privacy or unknown-outcom
 
 Windows 11 x64 installed acceptance, actual installer cleanup and review of the session-host
 scope discrepancy are retained. The approved scope does not itself approve a candidate, merge
-or distribution. Deferred obligations remain incomplete for full Feature 002 closure; the next
-section governs that separate milestone, not whether the limited preview can be accepted.
+or distribution. Deferred obligations remain incomplete for full Feature 002 closure. The owner
+subsequently authorized preparing the preview handoff below so those deferrals can carry forward.
 
 ## Feature completion and next specification
 
@@ -54,13 +54,15 @@ includes mission envelopes, decomposition, assignment, exact pre-authorized work
 structured result return, dependency tracking, bounds, known-safe retry, and honest recovery.
 Those capabilities MUST be reused rather than recreated by the next feature.
 
-**Trigger for a new `$speckit-specify`:** After US1-US8 and supplemental tasks T159-T166 are
-complete with evidence, T150-T158 release gates have passed, required human acceptance is recorded,
-and the completed feature is integrated on `main` with passing applicable hosted checks and no
-unresolved blocking findings, create a separate **Verified Mission Delegation** specification.
-T158 MUST record final closure and approval, not merely an attempted review or a list of blockers.
-Skipped required provider/installed proofs, unchecked acceptance obligations, partial milestone
-releases, or a PR merge alone MUST NOT be treated as feature completion.
+**Trigger for a new `$speckit-specify`:** Either full Feature 002 closure is accepted, or the
+owner-approved limited preview handoff in [transition-to-next-feature.md](transition-to-next-feature.md)
+passes: P01-P05 retained gates, substantive independent safety review, required repository review,
+exact candidate acceptance and integration on `main` with passing applicable hosted checks and
+no unresolved blocking safety findings. Carry D01-D04 forward as explicit unmet dependencies;
+the next feature cannot advertise or rely on unproved provider capability. This sequencing
+decision does not turn deferred tests into passes or make T148/T149/T154/T157/T158 complete.
+T158 still records full closure only when its full obligations are satisfied. A merge or a
+preview-scope decision alone establishes neither handoff acceptance nor full feature completion.
 
 Keep `.specify/feature.json` pointing to this feature until that explicit transition. Before
 invoking `$speckit-specify`, inspect the current task ledger, execution evidence, checkout, and

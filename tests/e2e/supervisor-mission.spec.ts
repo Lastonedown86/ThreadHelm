@@ -290,10 +290,6 @@ for (const resolution of ['ui', 'refresh'] as const) {
       await detail
         .getByRole('button', { name: 'Confirm mission cancellation', exact: true })
         .click();
-      const stop = await app.call<{ stopToken: string }>('sessions.requestStop', {
-        sessionId: attempt.sessionId,
-      });
-      await app.call('sessions.confirmStop', { stopToken: stop.stopToken });
       await expect
         .poll(async () =>
           (await app.liveSessions()).some((session) => session.id === attempt.sessionId),

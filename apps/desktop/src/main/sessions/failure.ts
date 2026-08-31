@@ -118,16 +118,25 @@ export function failSession(ctx: Context, live: LiveSession, reasonCode: string)
 export function markObservationLost(ctx: Context, live: LiveSession, reasonCode: string): void {
   const lastKnown: LifecycleState = live.state;
   const scope = inspectScope(ctx, live);
-  transition(ctx, live.id, {
-    to: 'recovery_required',
-    actor: 'threadhelm',
-    kind: 'state_changed',
-    reasonCode,
-    summary: `Processes still alive after stop: ${scope.residual}`,
-    patch: { endedAt: now(ctx), exitCode: live.exit?.exitCode ?? null },
-  });
-  createRecoveryRecord(ctx, live.id, lastKnown, 'incomplete_stop', reasonCode);
-  teardown(ctx, live);
+  try {
+    try {
+      transition(ctx, live.id, {
+        to: 'recovery_required',
+        actor: 'threadhelm',
+        kind: 'state_changed',
+        reasonCode,
+        summary: `Processes still alive after stop: ${scope.residual}`,
+        patch: { endedAt: now(ctx), exitCode: live.exit?.exitCode ?? null },
+      });
+    } finally {
+      // A persisted recovery_required state needs its actionable recovery record
+      // even if the subsequent renderer notification failed.
+      createRecoveryRecord(ctx, live.id, lastKnown, 'incomplete_stop', reasonCode);
+    }
+  } finally {
+    // Losing renderer delivery cannot strand native handles or bridge credentials.
+    teardown(ctx, live);
+  }
 }
 
 /** The utility process itself exited. */

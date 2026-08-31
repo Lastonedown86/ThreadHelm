@@ -377,6 +377,132 @@ describe('main mission authority and process effects', () => {
     });
     expect(invalid).toMatchObject({ ok: false, error: { code: 'MEMORY_SCOPE_UNAUTHORIZED' } });
   });
+  it.each([
+    'unknown',
+    'proposal',
+    'authority_required',
+    'completion',
+    'refusal',
+    'failure',
+  ] as const)(
+    'ends the exact worker before releasing its execution bounds after %s',
+    async (disposition) => {
+      fixture = await supervisorWorld();
+      const { world, supervisor, call } = fixture;
+      let mission = await fixture.confirm();
+      const binding = mission.envelope!.bindings.find((b) => b.role === 'worker')!;
+      const item = supervisorFixtureWork(binding.workspaceId);
+      await call(
+        supervisor.id,
+        'threadhelm_work_decompose',
+        decision(mission.id, { items: [item] }),
+      );
+      await call(
+        supervisor.id,
+        'threadhelm_work_assign',
+        decision(mission.id, {
+          workItemId: item.id,
+          bindingId: binding.bindingId,
+        }),
+      );
+      mission = await world.ok('missions.detail', { missionId: mission.id });
+      const attempt = mission.attempts[0]!;
+      const request = {
+        missionId: mission.id,
+        workItemId: item.id,
+        attemptId: attempt.id,
+        idempotencyKey: 'final-result',
+        disposition,
+        explanation: 'A structured result does not establish process quiescence',
+        evidenceRefs: [{ kind: 'artifact' as const, id: 'report.md' }],
+      };
+      await call(attempt.sessionId!, 'threadhelm_work_result', request);
+      expect(world.ctx.live.has(attempt.sessionId!)).toBe(false);
+      expect(world.ctx.live.has(supervisor.id)).toBe(true);
+      const scope = world.native.inspectSessionScope(attempt.sessionId!);
+      expect(scope.activeProcessCount).toBe(0);
+      expect(scope.processIds).toEqual([]);
+      mission = await world.ok('missions.detail', { missionId: mission.id });
+      expect(mission.attempts[0]!.disposition).toBe(disposition);
+      expect(mission.leases[0]!.state).toBe(disposition === 'unknown' ? 'unknown' : 'released');
+      const duplicate = await world.ctx.supervisor!.resultForSession(attempt.sessionId!, request);
+      expect(duplicate.duplicate).toBe(true);
+      expect(duplicate.attempt.resultHandoffId).toBe(mission.attempts[0]!.resultHandoffId);
+      await expect(
+        world.ctx.supervisor!.resultForSession(attempt.sessionId!, {
+          ...request,
+          explanation: 'Changed final result',
+        }),
+      ).rejects.toMatchObject({ code: 'WORK_ATTEMPT_UNKNOWN' });
+      expect(world.hosts).toHaveLength(2);
+    },
+  );
+  it.each(['inspection', 'event delivery', 'stubborn Job and event delivery'])(
+    'keeps completion unknown when worker cleanup fails at %s',
+    async (failure) => {
+      fixture = await supervisorWorld();
+      const { world, supervisor, call } = fixture;
+      let mission = await fixture.confirm();
+      const binding = mission.envelope!.bindings.find((b) => b.role === 'worker')!;
+      const item = supervisorFixtureWork(binding.workspaceId);
+      await call(
+        supervisor.id,
+        'threadhelm_work_decompose',
+        decision(mission.id, { items: [item] }),
+      );
+      await call(
+        supervisor.id,
+        'threadhelm_work_assign',
+        decision(mission.id, {
+          workItemId: item.id,
+          bindingId: binding.bindingId,
+        }),
+      );
+      mission = await world.ok('missions.detail', { missionId: mission.id });
+      const attempt = mission.attempts[0]!;
+      if (failure === 'inspection') {
+        world.native.inspectSessionScope = () => {
+          throw new Error('JOB_INSPECTION_FAILED');
+        };
+      } else {
+        if (failure === 'stubborn Job and event delivery')
+          world.native.stubbornJobs.add(world.ctx.live.get(attempt.sessionId!)!.jobToken);
+        const emit = world.ctx.events.emit;
+        world.ctx.events.emit = (name, payload) => {
+          if (
+            name === 'session.changed' &&
+            'session' in payload &&
+            payload.session.id === attempt.sessionId
+          )
+            throw new Error('Injected worker event failure');
+          emit(name, payload);
+        };
+      }
+      await call(attempt.sessionId!, 'threadhelm_work_result', {
+        missionId: mission.id,
+        workItemId: item.id,
+        attemptId: attempt.id,
+        idempotencyKey: 'unverified-final-result',
+        disposition: 'completion',
+        explanation: 'Worker claims completion',
+        evidenceRefs: [{ kind: 'artifact', id: 'report.md' }],
+      });
+      mission = await world.ok('missions.detail', { missionId: mission.id });
+      expect(mission.state).toBe('paused');
+      expect(mission.attempts[0]!.disposition).toBe('unknown');
+      expect(mission.leases[0]!.state).toBe('unknown');
+      expect(world.ctx.live.has(attempt.sessionId!)).toBe(false);
+      expect(world.ctx.jobs.get(attempt.sessionId!)).toBeUndefined();
+      if (failure === 'stubborn Job and event delivery')
+        expect(
+          world.ctx.storage!.repositories.recovery.findUnresolvedBySession(attempt.sessionId!),
+        ).not.toBeNull();
+      expect(
+        world.hosts[1]!.received.some((message) => message.type === 'host.clearOutputBudget'),
+      ).toBe(false);
+      expect(world.hosts).toHaveLength(2);
+    },
+  );
   it('allows explicit disposal of an unknown lease after cancellation without replay', async () => {
     fixture = await supervisorWorld();
     const { world, supervisor, call } = fixture;
@@ -400,10 +526,7 @@ describe('main mission authority and process effects', () => {
       explanation: 'Cannot establish outcome',
       evidenceRefs: [],
     });
-    const stop = await world.ok<contracts.StopDisclosureView>('sessions.requestStop', {
-      sessionId: attempt.sessionId,
-    });
-    await world.ok('sessions.confirmStop', { stopToken: stop.stopToken });
+    // Main ends the uncertain worker without requiring a second manual stop.
     await world.until(() => !world.ctx.live.has(attempt.sessionId!));
     await world.ok('missions.cancel', { missionId: mission.id });
     const stale = await world.call('missions.resolveEscalation', {

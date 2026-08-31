@@ -1,4 +1,4 @@
-/** Real Squirrel install/remove; refuses local and self-hosted accounts before any effect.
+/** Real NSIS install/remove; refuses local and self-hosted accounts before any effect.
  * Invocation and safety/evidence limits: .github/workflows/installed-acceptance.yml.
  */
 import { execFileSync, spawn } from 'node:child_process';
@@ -21,9 +21,19 @@ const helperRoot = resolve(import.meta.dirname, 'helpers');
 type Observation = InstallObservation & {
   registrationDetails: { key: string; version: string; uninstall: string }[];
   windows: { caption: string; build: string };
+  helperProcesses: {
+    processId: number;
+    parentProcessId: number;
+    createdAt: string;
+    sha256: string | null;
+  }[];
 };
 
-function observe(installRoot: string, includeTree = false): Observation {
+function observe(
+  installRoot: string,
+  includeTree = false,
+  temporaryHelperRoot?: string,
+): Observation {
   return JSON.parse(
     execFileSync(
       'pwsh.exe',
@@ -35,6 +45,7 @@ function observe(installRoot: string, includeTree = false): Observation {
         '-InstallRoot',
         installRoot,
         ...(includeTree ? ['-IncludeTree'] : []),
+        ...(temporaryHelperRoot ? ['-HelperRoot', temporaryHelperRoot] : []),
       ],
       {
         encoding: 'utf8',
@@ -204,165 +215,199 @@ async function installedElectronProof(installed: string, reportRoot: string) {
   }
 }
 
-describe.skipIf(!enabled)(
-  'actual Squirrel installation on a disposable GitHub Windows runner',
-  () => {
-    it('installs the built Setup, exercises installed artifacts, and verifies actual uninstall cleanup', async () => {
-      // This gate is before filesystem writes, process launch, or registry inspection.
-      const plan = installationPlan(process.env, process.platform, process.arch);
-      const report: Record<string, unknown> = {
-        schemaVersion: 1,
-        commit: process.env.GITHUB_SHA,
-        runId: process.env.GITHUB_RUN_ID,
-        runAttempt: process.env.GITHUB_RUN_ATTEMPT,
-        arch: process.arch,
-        startedAt: new Date().toISOString(),
-        installedElectronSessionHost: 'NOT_RUN',
-        distributionPolicy: 'unsigned',
-        trustedPublisherVerified: false,
-        providerMissionGate: 'NOT_RUN',
-      };
-      expect(
-        existsSync(plan.installRoot),
-        'never replace a pre-existing installation, even empty',
-      ).toBe(false);
-      const before = observe(plan.installRoot);
-      assertFreshAccount(before);
-      const installer = realChild(plan.workspace, plan.installer);
-      const checksum = readFileSync(`${installer}.sha256`, 'utf8').trim().split(/\s+/)[0];
-      expect(checksum).toMatch(/^[a-f0-9]{64}$/);
-      const digest = createHash('sha256').update(readFileSync(installer)).digest('hex');
-      expect(digest).toBe(checksum);
-      report.installer = { path: installer, sha256: digest };
-      const literal = `'${installer.replaceAll("'", "''")}'`;
-      report.installerSignature = signatureEvidence(
-        execFileSync(
-          'pwsh.exe',
-          [
-            '-NoProfile',
-            '-NonInteractive',
-            '-Command',
-            `(Get-AuthenticodeSignature -LiteralPath ${literal}).Status.ToString()`,
-          ],
-          { encoding: 'utf8', windowsHide: true, timeout: 30_000 },
-        ).trim(),
+describe.skipIf(!enabled)('actual NSIS installation on a disposable GitHub Windows runner', () => {
+  it('installs the built Setup, exercises installed artifacts, and verifies actual uninstall cleanup', async () => {
+    // This gate is before filesystem writes, process launch, or registry inspection.
+    const plan = installationPlan(process.env, process.platform, process.arch);
+    const report: Record<string, unknown> = {
+      schemaVersion: 1,
+      commit: process.env.GITHUB_SHA,
+      runId: process.env.GITHUB_RUN_ID,
+      runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+      arch: process.arch,
+      startedAt: new Date().toISOString(),
+      installedElectronSessionHost: 'NOT_RUN',
+      distributionPolicy: 'unsigned',
+      trustedPublisherVerified: false,
+      providerMissionGate: 'NOT_RUN',
+    };
+    expect(
+      existsSync(plan.installRoot),
+      'never replace a pre-existing installation, even empty',
+    ).toBe(false);
+    expect(existsSync(plan.legacyInstallRoot), 'no implicit Squirrel migration or cleanup').toBe(
+      false,
+    );
+    const before = observe(plan.installRoot);
+    assertFreshAccount(before);
+    const installer = realChild(plan.workspace, plan.installer);
+    const checksum = readFileSync(`${installer}.sha256`, 'utf8').trim().split(/\s+/)[0];
+    expect(checksum).toMatch(/^[a-f0-9]{64}$/);
+    const digest = createHash('sha256').update(readFileSync(installer)).digest('hex');
+    expect(digest).toBe(checksum);
+    const identityPath = realChild(plan.workspace, `${installer}.identity.json`);
+    const identity = JSON.parse(readFileSync(identityPath, 'utf8'));
+    expect(identity).toMatchObject({ schemaVersion: 1, installer: 'nsis', arch: plan.arch });
+    expect(identity.uninstallerSha256).toMatch(/^[a-f0-9]{64}$/);
+    report.installer = { path: installer, sha256: digest };
+    const literal = `'${installer.replaceAll("'", "''")}'`;
+    report.installerSignature = signatureEvidence(
+      execFileSync(
+        'pwsh.exe',
+        [
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          `(Get-AuthenticodeSignature -LiteralPath ${literal}).Status.ToString()`,
+        ],
+        { encoding: 'utf8', windowsHide: true, timeout: 30_000 },
+      ).trim(),
+    );
+    report.windows = before.windows;
+    mkdirSync(plan.reportRoot, { recursive: true });
+    let startedInstall = false;
+    let failure: unknown;
+    try {
+      startedInstall = true;
+      report.setupExitCode = await run(installer, ['/S'], 120_000);
+      expect(report.setupExitCode).toBe(0);
+      const state = await waitFor(
+        () => observe(plan.installRoot),
+        (state) => state.registrations.length === 1 && state.processIds.length === 0,
       );
-      report.windows = before.windows;
-      mkdirSync(plan.reportRoot, { recursive: true });
-      let startedInstall = false;
-      let failure: unknown;
-      try {
-        startedInstall = true;
-        report.setupExitCode = await run(installer, ['--silent'], 120_000);
-        expect(report.setupExitCode).toBe(0);
-        const state = await waitFor(
-          () => observe(plan.installRoot),
-          (state) => state.registrations.length === 1 && state.processIds.length === 0,
-        );
-        report.installed = state;
-        expect(state.registrations).toHaveLength(1);
-        expect(
-          state.processIds,
-          'silent setup/lifecycle hooks must not leave an app running',
-        ).toEqual([]);
-        expect(
-          state.shortcuts.length,
-          'a real per-user install must create a launch shortcut',
-        ).toBeGreaterThan(0);
-        const versions = state.rootEntries.filter((name) => /^app-\d+\.\d+\.\d+/.test(name));
-        expect(versions).toHaveLength(1);
-        const installed = realChild(
-          plan.installRoot,
-          join(plan.installRoot, versions[0]!, 'ThreadHelm.exe'),
-        );
-        const version = JSON.parse(
-          readFileSync(join(plan.workspace, 'apps', 'desktop', 'package.json'), 'utf8'),
-        ).version;
-        expect(versions[0]).toBe(`app-${version}`);
-        expect(state.registrationDetails[0]!.version).toBe(version);
-        expect(state.registrationDetails[0]!.uninstall.toLowerCase()).toContain(
-          join(plan.installRoot, 'Update.exe').toLowerCase(),
-        );
-        report.installedExe = installed;
-        report.nativeArtifactProof = await nativeArtifactProof(
-          installed,
-          plan.reportRoot,
-          plan.arch,
-        );
-        report.installedElectronSessionHost = 'RUNNING';
-        report.installedElectronSessionHost = await installedElectronProof(
-          installed,
-          plan.reportRoot,
-        );
-        // Existing production-fuse, archive, architecture, startup, native-load and second-instance checks.
-        const artifactReport = join(plan.reportRoot, 'artifact-acceptance.json');
-        report.artifactAcceptanceExitCode = await run(
-          process.execPath,
-          [
-            join(plan.workspace, 'node_modules', 'vitest', 'vitest.mjs'),
-            'run',
-            '--project',
-            'acceptance',
-            'tests/acceptance/installed-app.test.ts',
-          ],
-          240_000,
-          {
-            ...process.env,
-            THREADHELM_ARTIFACT: installed,
-            THREADHELM_ARTIFACT_REPORT: artifactReport,
-          },
-        );
-        if (existsSync(artifactReport)) {
-          const artifact = JSON.parse(readFileSync(artifactReport, 'utf8'));
-          report.installedArtifactSignature = {
-            status: artifact.signatureStatus,
-            trustedPublisherVerified: artifact.trustedPublisherVerified === true,
-          };
-          report.artifactAcceptanceFailures = artifact.failedTests;
-        }
-        expect(report.artifactAcceptanceExitCode).toBe(0);
-      } catch (error) {
-        if (report.installedElectronSessionHost === 'RUNNING')
-          report.installedElectronSessionHost = 'FAILED';
-        failure = error;
-        report.failure = error instanceof Error ? error.message.slice(0, 500) : 'ACCEPTANCE_FAILED';
-      } finally {
-        if (startedInstall) {
-          try {
-            // Execute only this installation's updater; never execute a registry-provided command.
-            const updater = realChild(plan.installRoot, join(plan.installRoot, 'Update.exe'));
-            report.uninstallExitCode = await run(updater, ['--uninstall', '--silent'], 120_000);
-            expect(report.uninstallExitCode).toBe(0);
-            const after = await waitFor(
-              () => observe(plan.installRoot),
-              (state) => {
-                try {
-                  assertUninstalled(state);
-                  return true;
-                } catch {
-                  return false;
-                }
-              },
-              60_000,
-            );
-            report.afterUninstall = observe(plan.installRoot, true);
-            assertUninstalled(after);
-            report.uninstallCleanup = 'PASSED_WITHOUT_MANUAL_DELETION';
-          } catch (error) {
-            report.uninstallCleanup = 'FAILED';
-            report.uninstallFailure =
-              error instanceof Error ? error.message.slice(0, 500) : 'UNINSTALL_FAILED';
-            failure ??= error;
-          }
-        }
-        report.finishedAt = new Date().toISOString();
-        report.passed = !failure;
-        writeFileSync(
-          join(plan.reportRoot, 'installation-report.json'),
-          JSON.stringify(report, null, 2),
-        );
+      report.installed = state;
+      expect(state.registrations).toHaveLength(1);
+      expect(
+        state.processIds,
+        'silent setup/lifecycle hooks must not leave an app running',
+      ).toEqual([]);
+      expect(
+        state.shortcuts.length,
+        'a real per-user install must create a launch shortcut',
+      ).toBeGreaterThan(0);
+      const installed = realChild(plan.installRoot, join(plan.installRoot, 'ThreadHelm.exe'));
+      const version = JSON.parse(
+        readFileSync(join(plan.workspace, 'apps', 'desktop', 'package.json'), 'utf8'),
+      ).version;
+      expect(state.registrationDetails[0]!.version).toBe(version);
+      expect(state.registrationDetails[0]!.uninstall.toLowerCase()).toContain(
+        join(plan.installRoot, 'Uninstall ThreadHelm.exe').toLowerCase(),
+      );
+      expect(createHash('sha256').update(readFileSync(installed)).digest('hex')).toBe(
+        identity.executableSha256,
+      );
+      expect(
+        createHash('sha256')
+          .update(readFileSync(join(plan.installRoot, 'resources', 'app.asar')))
+          .digest('hex'),
+      ).toBe(identity.asarSha256);
+      report.forgeApplicationIdentityPreserved = true;
+      report.installedExe = installed;
+      report.nativeArtifactProof = await nativeArtifactProof(installed, plan.reportRoot, plan.arch);
+      report.installedElectronSessionHost = 'RUNNING';
+      report.installedElectronSessionHost = await installedElectronProof(
+        installed,
+        plan.reportRoot,
+      );
+      // Existing production-fuse, archive, architecture, startup, native-load and second-instance checks.
+      const artifactReport = join(plan.reportRoot, 'artifact-acceptance.json');
+      report.artifactAcceptanceExitCode = await run(
+        process.execPath,
+        [
+          join(plan.workspace, 'node_modules', 'vitest', 'vitest.mjs'),
+          'run',
+          '--project',
+          'acceptance',
+          'tests/acceptance/installed-app.test.ts',
+        ],
+        240_000,
+        {
+          ...process.env,
+          THREADHELM_ARTIFACT: installed,
+          THREADHELM_ARTIFACT_REPORT: artifactReport,
+          THREADHELM_UNINSTALLER_SHA256: identity.uninstallerSha256,
+        },
+      );
+      if (existsSync(artifactReport)) {
+        const artifact = JSON.parse(readFileSync(artifactReport, 'utf8'));
+        report.installedArtifactSignature = {
+          status: artifact.signatureStatus,
+          trustedPublisherVerified: artifact.trustedPublisherVerified === true,
+        };
+        report.artifactAcceptanceFailures = artifact.failedTests;
       }
-      if (failure) throw failure;
-    }, 900_000);
-  },
-);
+      expect(report.artifactAcceptanceExitCode).toBe(0);
+    } catch (error) {
+      if (report.installedElectronSessionHost === 'RUNNING')
+        report.installedElectronSessionHost = 'FAILED';
+      failure = error;
+      report.failure = error instanceof Error ? error.message.slice(0, 500) : 'ACCEPTANCE_FAILED';
+    } finally {
+      if (startedInstall) {
+        try {
+          const quiet = await waitFor(
+            () => observe(plan.installRoot),
+            (state) => state.processIds.length === 0,
+          );
+          report.beforeUninstall = quiet;
+          if (quiet.processIds.length) failure ??= new Error('INSTALLED_APP_DID_NOT_EXIT');
+          // Execute only the byte-verified fixed uninstaller, never a registry-provided command.
+          const updater = realChild(
+            plan.installRoot,
+            join(plan.installRoot, 'Uninstall ThreadHelm.exe'),
+          );
+          expect(createHash('sha256').update(readFileSync(updater)).digest('hex')).toBe(
+            identity.uninstallerSha256,
+          );
+          // NSIS relocates its uninstaller into TEMP. Bound that normal staging
+          // location to this run and observe its processes too; the launcher's
+          // exit code alone does not establish uninstaller completion.
+          const helperRoot = join(plan.reportRoot, 'uninstall-temp');
+          mkdirSync(helperRoot);
+          const verifiedHelperRoot = realChild(plan.reportRoot, helperRoot);
+          report.uninstallLauncherExitCode = await run(updater, ['/S'], 120_000, {
+            ...process.env,
+            TEMP: verifiedHelperRoot,
+            TMP: verifiedHelperRoot,
+          });
+          expect(report.uninstallLauncherExitCode).toBe(0);
+          const seenHelpers = new Map<number, Observation['helperProcesses'][number]>();
+          const after = await waitFor(
+            () => {
+              const state = observe(plan.installRoot, false, verifiedHelperRoot);
+              for (const helper of state.helperProcesses) {
+                if (seenHelpers.size < 16) seenHelpers.set(helper.processId, helper);
+              }
+              return state;
+            },
+            (state) => {
+              try {
+                assertUninstalled(state);
+                return true;
+              } catch {
+                return false;
+              }
+            },
+            60_000,
+          );
+          report.afterUninstall = observe(plan.installRoot, true, verifiedHelperRoot);
+          report.observedTemporaryHelpers = [...seenHelpers.values()];
+          assertUninstalled(after);
+          report.uninstallCleanup = 'PASSED_WITHOUT_MANUAL_DELETION';
+        } catch (error) {
+          report.uninstallCleanup = 'FAILED';
+          report.uninstallFailure =
+            error instanceof Error ? error.message.slice(0, 500) : 'UNINSTALL_FAILED';
+          failure ??= error;
+        }
+      }
+      report.finishedAt = new Date().toISOString();
+      report.passed = !failure;
+      writeFileSync(
+        join(plan.reportRoot, 'installation-report.json'),
+        JSON.stringify(report, null, 2),
+      );
+    }
+    if (failure) throw failure;
+  }, 900_000);
+});

@@ -17,14 +17,60 @@ it.skipIf(process.platform !== 'win32')(
     const executable = join(helperRoot, 'fixture-helper.exe');
     copyFileSync(process.execPath, executable);
     const digest = createHash('sha256').update(readFileSync(executable)).digest('hex');
-    const child = spawn(executable, ['-e', 'setTimeout(() => {}, 30000)'], {
-      windowsHide: true,
-      stdio: 'ignore',
+    const child = spawn(
+      executable,
+      [
+        '-e',
+        `
+      process.stdin.resume();
+      process.stdin.on('end', () => process.exit(0));
+      setTimeout(() => process.exit(2), 45000);
+      process.stdout.write(JSON.stringify({ pid: process.pid, arch: process.arch, node: process.versions.node }) + '\\n');
+    `,
+      ],
+      { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] },
+    );
+    let stderr = '';
+    child.stderr.on('data', (chunk: Buffer) => {
+      stderr = (stderr + chunk.toString()).slice(0, 4096);
     });
-    const closed = new Promise<void>((resolveClose, reject) => {
+    const closed = new Promise<void>((resolveClose) => {
       child.once('close', () => resolveClose());
-      child.once('error', reject);
     });
+    const ready = new Promise<{ pid: number; arch: string; node: string }>(
+      (resolveReady, reject) => {
+        const timer = setTimeout(
+          () => reject(new Error(`HELPER_READY_TIMEOUT: ${stderr}`)),
+          10_000,
+        );
+        let stdout = '';
+        child.once('error', (error) => {
+          clearTimeout(timer);
+          reject(error);
+        });
+        child.once('close', (code, signal) => {
+          clearTimeout(timer);
+          reject(
+            new Error(`HELPER_EXIT_BEFORE_READY: code=${code} signal=${signal} stderr=${stderr}`),
+          );
+        });
+        child.stdout.on('data', (chunk: Buffer) => {
+          stdout += chunk.toString();
+          if (stdout.length > 1024) {
+            clearTimeout(timer);
+            reject(new Error('HELPER_READY_OUTPUT_LIMIT'));
+            child.kill();
+          } else if (stdout.includes('\n')) {
+            clearTimeout(timer);
+            try {
+              resolveReady(JSON.parse(stdout.trim()));
+            } catch {
+              reject(new Error('HELPER_READY_INVALID'));
+            }
+          }
+        });
+      },
+    );
     const observe = () =>
       JSON.parse(
         execFileSync(
@@ -45,14 +91,21 @@ it.skipIf(process.platform !== 'win32')(
         ),
       );
     try {
+      // A created PID does not prove the copied runtime reached JavaScript on this architecture.
+      expect(await ready).toEqual({
+        pid: child.pid,
+        arch: process.arch,
+        node: process.versions.node,
+      });
       const during = observe();
       expect(during.rootEntries).toEqual([]);
       expect(during.processIds).toContain(child.pid);
       expect(during.helperProcesses).toContainEqual(
         expect.objectContaining({ processId: child.pid, sha256: digest }),
       );
-      child.kill();
+      child.stdin.end();
       await closed;
+      expect(child.exitCode, stderr).toBe(0);
       expect(observe().helperProcesses).toEqual([]);
     } finally {
       if (child.exitCode === null && !child.killed) child.kill();

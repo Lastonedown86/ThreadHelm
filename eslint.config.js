@@ -30,6 +30,8 @@ export default tseslint.config(
       '**/coverage/',
       '**/target/',
       '**/release/',
+      'native/shell-host-memory-prototype/ui/assets/',
+      'native/shell-host-memory-prototype/ui/workspace.html',
       'tmp/',
       '**/*.node',
       'native/windows-supervisor/index.js',

@@ -6,12 +6,12 @@ description: "Dependency-ordered implementation tasks for durable hive coordinat
 # Tasks: Durable Hive Coordination
 
 **Current milestone (owner-approved 2026-08-31): unsigned Windows 11 x64 preview.**
-See [approved deferrals D01-D04 and retained preview gates P01-P05](preview-release.md).
+See [approved deferrals D01-D06 and retained preview gates P01-P05](preview-release.md).
 The full-feature task list below remains intact: deferred work is not complete and its checkbox
 stays open. T148 is deferred from the preview; T149/T154/T157 mix deferred and retained work;
 T158 still represents full feature closure. Do not use the aggregate full-feature count as the preview
 release checklist or require deferred ARM64/auto-provider work to accept the limited preview.
-The subsequently approved [next-feature handoff](transition-to-next-feature.md) carries D01-D04
+The subsequently approved [next-feature handoff](transition-to-next-feature.md) carries D01-D06
 forward after retained acceptance, required review and main integration; it is separate from T158.
 
 **Input**: Design documents from `specs/002-agent-mailbox-routing/`
@@ -399,10 +399,18 @@ Windows readiness across the selected milestones.
 - [X] T152 [P] Add full keyboard, visible-focus, accessible-name, text-scaling, WCAG 2.2 AA, bounded-live-region, and no-idle-polling/no-animation coverage in `tests/e2e/accessibility.spec.ts`
 - [X] T153 Audit and harden content-free logging, renderer events, profile/template/draft/export handling, bridge stderr, database metadata, and crash errors in `apps/desktop/src/main/logging.ts`, `apps/desktop/src/main/coordination/service.ts`, `apps/desktop/src/main/coordination/profiles.ts`, `apps/desktop/src/main/coordination/profile-wizard.ts`, `apps/desktop/src/main/coordination/memory.ts`, and `apps/desktop/src/main/coordination/supervisor.ts`
 - [ ] T154 Verify bridge packaging, the owner-approved unsigned distribution policy (reject invalid signatures; optional signing inputs remain supported), x64/ARM64 installed lookup, Job Object containment, and uninstall cleanup in `apps/desktop/forge.config.ts`, `native/windows-supervisor/package.json`, and `tests/acceptance/installed-app.test.ts`
+  Preview checkpoint 2026-08-31: the exact changed unsigned x64 package passed owner-machine
+  installation, identity, installed bridge lookup, native containment and single-instance checks;
+  x64 uninstall cleanup was already green in hosted acceptance. T154 remains open because its full
+  ARM64 obligation is deferred under D02 rather than completed.
 - [X] T155 Update runnable commands, expected evidence, roster import, wizard/template/export, rollback/recovery notes, and separate local/hosted/provider status reporting in `specs/002-agent-mailbox-routing/quickstart.md`
 - [X] T156 Run `pnpm format`, `pnpm lint`, `pnpm rust:fmt`, `pnpm rust:check`, `pnpm rust:test`, `pnpm typecheck`, `pnpm test:unit`, `pnpm test:contract`, `pnpm desktop:build`, `pnpm proof:windows-supervision`, `pnpm test:integration:windows`, and `pnpm test:e2e` sequentially and record every final exit/summary in `specs/002-agent-mailbox-routing/execution-evidence.md`
 - [ ] T157 Run packaged installed-artifact acceptance plus separate exact-version Codex and Claude provider proofs, preserving optional/credentialed status and recording results in `specs/002-agent-mailbox-routing/execution-evidence.md`
-- [ ] T158 Perform final spec/plan/contracts/tasks/constitution drift review, confirm the reviewed Marvel roster, generic/user template boundary, wizard non-authority, all adopted Munder mechanics, and minimal-graphics exclusions, and record approval or blockers in `specs/002-agent-mailbox-routing/execution-evidence.md`
+- [X] T158 Perform final spec/plan/contracts/tasks/constitution drift review, confirm the reviewed Marvel roster, generic/user template boundary, wizard non-authority, all adopted Munder mechanics, and minimal-graphics exclusions, and record approval or blockers in `specs/002-agent-mailbox-routing/execution-evidence.md`
+  Review completed 2026-08-31 with no constitution conflict or uncovered feature requirement.
+  Private persona inputs remain local acceptance/import data and are absent from production artifacts;
+  current bundled starters use `threadhelm/agent-profile@1`. The review records open execution gates
+  rather than approving release or feature completion.
 
 ---
 
@@ -590,7 +598,59 @@ later autonomy, memory, provider, hosted-CI, packaging, or production gate.
   one-time port ownership and genuine failure reporting, and verify the launch/keyboard journeys.
   Installed four-session resource acceptance remains a separate P04 gate.
 
-### Deferred preview target — packaged idle memory (D01)
+- [X] T170 Diagnose the installed idle CPU observation and correct resource measurement.
+  Disconnect the UI inspection client before sampling; preserve accessibility and all process
+  accounting. Add the guarded read-only observer and procedure under `tests/acceptance/helpers/`.
+  Repeat installed no-session and four-session observations, verify normal probe cleanup, and
+  distinguish the passing CPU results from the retained 700 MiB memory failure. This task does
+  not complete P04 or authorize shell/session-host replacement.
+
+- [X] T171 Run the owner-authorized isolated shell/session-host memory prototype.
+  Build a nonshipping Rust/WebView2 shell and four dormant native hosts using a separate copy
+  of the audited containment core. Measure three fresh blank and three combined UI/host launches,
+  count the complete process family and verify normal cleanup. Record the failed blank-shell
+  budget and promising but non-equivalent dormant-host footprint in the architectural assessment.
+  Do not port production authority, start providers, change the installed app or close P04.
+
+- [X] T172 Record the owner-directed preview memory-budget reassessment after T171.
+  Add D05 for the 700 MiB aggregate preview ceiling alongside D01; preserve failed measurements,
+  full optimization targets, CPU/latency, runtime resource bounds and private-persona exclusion.
+  Record extended resource evidence and calibration work without inventing a replacement ceiling,
+  approving production migration or marking P04/P05 complete.
+
+- [X] T173 Complete the retained extended resource evidence on the exact preview candidate.
+  Follow `memory-budget-review.md`: 15-minute idle observation, five four-fixture start/stop cycles,
+  complete process accounting, post-stop settled memory and cleanup. Investigate repeatable
+  accumulating growth or responsiveness failures before P04 acceptance. No live provider or
+  destructive owner-machine install/uninstall is implied by this task.
+  Final 2026-08-31 result: the changed unsigned x64 candidate completed the 15m49s no-session
+  observation and all five four-fixture start/stop cycles. Every one of the 20 fixture sessions
+  stopped cleanly with exit code 0; all 12 session-owned processes disappeared after every cycle,
+  and the series showed no accumulating working-set growth. Active median one-core CPU was
+  0.88%, 1.03%, 0.44%, 1.76% and 1.47%, so three cycles failed the retained 1% limit. Attribution
+  places the steady work in Electron renderer/GPU/utility processes rather than the inert fixture
+  or console processes. T173 is complete evidence with a failed CPU verdict; it does not complete
+  P04. See `t173-candidate-follow-up.md`.
+
+- [ ] T174 Remediate and repeat the retained four-session CPU acceptance on the exact preview
+  candidate. Profile the Electron renderer/GPU/utility wakeups without UI automation attached,
+  preserve terminal responsiveness, security, full-family accounting and the 1% limit, then repeat
+  the complete five-cycle series. Do not weaken the observer, discard windows or treat D01/D05 as
+  CPU deferrals. P04 remains blocked until the exact candidate passes or the owner explicitly
+  changes that separate CPU requirement.
+  Diagnostic checkpoint 2026-08-31: an isolated four-fixture source harness with a 60-second settle
+  reproduced terminal-focus sensitivity (1.09% median focused versus 0.16% with the session list
+  focused). Transparent caret color produced the same 1.09% focused median; disabling native caret
+  animation worsened it to 2.03%. Both speculative CSS candidates were reverted. No production CPU
+  change or weakened acceptance method was retained.
+  Owner decision 2026-08-31: D06 defers the fixed 1% threshold from this preview after the focused
+  diagnosis found no safe improvement. T174 remains an incomplete Feature 002 performance and
+  calibration backlog item. Preserve the five-cycle failures, full-family accounting, terminal
+  focus/accessibility/input/security behavior, responsiveness, cleanup and future representative
+  calibration; do not relabel the original measurements as passes. D06 removes T174 as a P04
+  preview blocker but does not itself pass P04.
+
+### Deferred preview targets — aggregate idle memory (D01/D05)
 
 T151 is complete for measurement coverage, not for release performance acceptance. The fresh
 x64 package measured380.324 MiB peak after deferred renderer loading (399.844 MiB after the preload
@@ -603,6 +663,12 @@ deferral removes only this 250 MiB threshold from the preview gate; it is not a 
 a new memory ceiling, or permission to weaken other resource bounds. Preview acceptance follows
 P01-P05 in [preview-release.md](preview-release.md); the full-feature tasks remain incomplete.
 See the21:13 diagnosis,21:30 checkpoint and21:52 draft-PR follow-up in `execution-evidence.md`.
+
+The later D05 decision also defers the 700 MiB four-session aggregate ceiling for preview. The
+1,427.305 MiB observation remains a failure against that optimization target, not a new ceiling
+or a passing result. T173 and all other retained P01-P05 evidence remain required. Replacement
+ceiling calibration is a Feature 002 performance backlog item described in
+[memory-budget-review.md](memory-budget-review.md); no production enforcement constant changes.
 
 ### Recorded implementation deviation — US8 trusted output bounds
 

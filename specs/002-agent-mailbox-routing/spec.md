@@ -29,9 +29,10 @@ the current upstream source and record any intentional divergence.
 ## Approved preview milestone
 
 On 2026-08-31 the owner approved an **unsigned Windows 11 x64 preview** with the explicit
-[preview scope and retained release checklist](preview-release.md). The 250 MiB idle-memory
-threshold, ARM64 distribution and unproved autonomous-provider capabilities are deferred from
-this preview. Substantive independent safety review and human acceptance remain required;
+[preview scope and retained release checklist](preview-release.md). The 250 MiB no-session memory,
+700 MiB four-session memory and fixed 1% four-session CPU thresholds, ARM64 distribution and
+unproved autonomous-provider capabilities are deferred from this preview. Their measured failures
+remain recorded and calibration work stays open. Substantive independent safety review and human acceptance remain required;
 obtaining every originally named AI-provider review does not. Missing provider authority must
 still fail closed. No runtime permission, containment, privacy or unknown-outcome rule is relaxed.
 

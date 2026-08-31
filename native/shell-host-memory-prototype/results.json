@@ -1,0 +1,324 @@
+{
+  "Date": "2026-08-31",
+  "ProductionAcceptance": false,
+  "Question": "Is this architecture a demonstrated route to the unchanged memory budgets?",
+  "Decision": "Blank shell exceeds 250 MiB; no broad Tauri port. Native dormant hosts merit a separate bounded containment and stream experiment.",
+  "SourceCommit": "3c574fb19db4ea0a1af2fdffc8b8c1ee8ced3e56",
+  "Rust": "1.98.0",
+  "Tauri": "2.11.5",
+  "OS": "Windows 11 Home 26200 x64",
+  "CPU": "Ryzen 7 5700U, 8 cores / 16 threads",
+  "PhysicalRamBytes": 33700167680,
+  "Limits": "No providers, ConPTY, real coordinator, production database, terminal protocol, crash or authority proof. Blank binary did not record visible/minimized fields. UI inspection disconnected for all samples.",
+  "Observations": [
+    {
+      "Mode": "blank",
+      "Run": 1,
+      "ExecutableSha256": "44EFB44386997721FF63E00B214D419A4D755930C00F1B1D34B1EFB49FB62419",
+      "WebViewVersion": "151.0.4129.107",
+      "RawReport": "tmp/shell-host-memory/20260831-122757-blank/run-1-0052980c44664808b8a1e46117975c55/measurement.json",
+      "RawReportSha256": "C95AD38CAF0901954E7A59C38171E40CFBF689B656DE10805CC182E7E4A7E2F4",
+      "DurationSeconds": 63.7604128,
+      "PeakWorkingSetMiB": 375.48046875,
+      "MedianCpuPercentOneCore": 0.29236822059796297,
+      "ProcessCount": 7,
+      "RolesAtPeak": [
+        {
+          "Role": "coordinator",
+          "Count": 1,
+          "WorkingSetMiB": 27.39453125
+        },
+        {
+          "Role": "webview-browser",
+          "Count": 1,
+          "WorkingSetMiB": 131.46875
+        },
+        {
+          "Role": "webview-crashpad-handler",
+          "Count": 1,
+          "WorkingSetMiB": 12.41015625
+        },
+        {
+          "Role": "webview-gpu-process",
+          "Count": 1,
+          "WorkingSetMiB": 88.1796875
+        },
+        {
+          "Role": "webview-renderer",
+          "Count": 1,
+          "WorkingSetMiB": 58.3359375
+        },
+        {
+          "Role": "webview-utility",
+          "Count": 2,
+          "WorkingSetMiB": 57.69140625
+        }
+      ],
+      "CleanExit": true,
+      "RemainingProcesses": 0,
+      "Rendered": true,
+      "Visible": null,
+      "Minimized": null
+    },
+    {
+      "Mode": "blank",
+      "Run": 2,
+      "ExecutableSha256": "44EFB44386997721FF63E00B214D419A4D755930C00F1B1D34B1EFB49FB62419",
+      "WebViewVersion": "151.0.4129.107",
+      "RawReport": "tmp/shell-host-memory/20260831-122757-blank/run-2-627405dafb3a45b093124f9bb7524dff/measurement.json",
+      "RawReportSha256": "8E553B69FD9AF813730F12166468F4AE67208C014330454AE487557385C13784",
+      "DurationSeconds": 64.07574020000001,
+      "PeakWorkingSetMiB": 375.03125,
+      "MedianCpuPercentOneCore": 0.2902596307848747,
+      "ProcessCount": 7,
+      "RolesAtPeak": [
+        {
+          "Role": "coordinator",
+          "Count": 1,
+          "WorkingSetMiB": 27.5
+        },
+        {
+          "Role": "webview-browser",
+          "Count": 1,
+          "WorkingSetMiB": 124.25
+        },
+        {
+          "Role": "webview-crashpad-handler",
+          "Count": 1,
+          "WorkingSetMiB": 18.203125
+        },
+        {
+          "Role": "webview-gpu-process",
+          "Count": 1,
+          "WorkingSetMiB": 88.5390625
+        },
+        {
+          "Role": "webview-renderer",
+          "Count": 1,
+          "WorkingSetMiB": 57.72265625
+        },
+        {
+          "Role": "webview-utility",
+          "Count": 2,
+          "WorkingSetMiB": 58.81640625
+        }
+      ],
+      "CleanExit": true,
+      "RemainingProcesses": 0,
+      "Rendered": true,
+      "Visible": null,
+      "Minimized": null
+    },
+    {
+      "Mode": "blank",
+      "Run": 3,
+      "ExecutableSha256": "44EFB44386997721FF63E00B214D419A4D755930C00F1B1D34B1EFB49FB62419",
+      "WebViewVersion": "151.0.4129.107",
+      "RawReport": "tmp/shell-host-memory/20260831-122757-blank/run-3-6b54a8818b6a46d499faf72b9de925c2/measurement.json",
+      "RawReportSha256": "470974462B820B4452A09C5887BEB9B957748C4CA8FD232EF24D8D2A9E86B9D4",
+      "DurationSeconds": 63.61763749999999,
+      "PeakWorkingSetMiB": 375.4453125,
+      "MedianCpuPercentOneCore": 0.1481179596452927,
+      "ProcessCount": 7,
+      "RolesAtPeak": [
+        {
+          "Role": "coordinator",
+          "Count": 1,
+          "WorkingSetMiB": 27.453125
+        },
+        {
+          "Role": "webview-browser",
+          "Count": 1,
+          "WorkingSetMiB": 125.44921875
+        },
+        {
+          "Role": "webview-crashpad-handler",
+          "Count": 1,
+          "WorkingSetMiB": 18.19921875
+        },
+        {
+          "Role": "webview-gpu-process",
+          "Count": 1,
+          "WorkingSetMiB": 85.00390625
+        },
+        {
+          "Role": "webview-renderer",
+          "Count": 1,
+          "WorkingSetMiB": 61.01171875
+        },
+        {
+          "Role": "webview-utility",
+          "Count": 2,
+          "WorkingSetMiB": 58.328125
+        }
+      ],
+      "CleanExit": true,
+      "RemainingProcesses": 0,
+      "Rendered": true,
+      "Visible": null,
+      "Minimized": null
+    },
+    {
+      "Mode": "hosts",
+      "Run": 1,
+      "ExecutableSha256": "8F657F70BB9DE23BED173BF8DD10E03E26C0448B2978B95643844A15612BF7BC",
+      "WebViewVersion": "151.0.4129.107",
+      "RawReport": "tmp/shell-host-memory/20260831-123948-hosts/run-1-6a37cc34b8eb46f49c19080c19c676f8/measurement.json",
+      "RawReportSha256": "0ED02B0FA36CF3531CA4EB3252FFE30F82991CB64C2F39FACA341D3A71F4F1E5",
+      "DurationSeconds": 64.1201685,
+      "PeakWorkingSetMiB": 431.0625,
+      "MedianCpuPercentOneCore": 0.0,
+      "ProcessCount": 11,
+      "RolesAtPeak": [
+        {
+          "Role": "coordinator",
+          "Count": 1,
+          "WorkingSetMiB": 28.66796875
+        },
+        {
+          "Role": "native-host",
+          "Count": 4,
+          "WorkingSetMiB": 34.83203125
+        },
+        {
+          "Role": "webview-browser",
+          "Count": 1,
+          "WorkingSetMiB": 124.3046875
+        },
+        {
+          "Role": "webview-crashpad-handler",
+          "Count": 1,
+          "WorkingSetMiB": 18.19921875
+        },
+        {
+          "Role": "webview-gpu-process",
+          "Count": 1,
+          "WorkingSetMiB": 98.8828125
+        },
+        {
+          "Role": "webview-renderer",
+          "Count": 1,
+          "WorkingSetMiB": 68.890625
+        },
+        {
+          "Role": "webview-utility",
+          "Count": 2,
+          "WorkingSetMiB": 57.28515625
+        }
+      ],
+      "CleanExit": true,
+      "RemainingProcesses": 0,
+      "Rendered": true,
+      "Visible": true,
+      "Minimized": false
+    },
+    {
+      "Mode": "hosts",
+      "Run": 2,
+      "ExecutableSha256": "8F657F70BB9DE23BED173BF8DD10E03E26C0448B2978B95643844A15612BF7BC",
+      "WebViewVersion": "151.0.4129.107",
+      "RawReport": "tmp/shell-host-memory/20260831-123948-hosts/run-2-451c05a7cef841b7ac64c1d3bbde476e/measurement.json",
+      "RawReportSha256": "5B34BAF5FD5F16C8CE40F5C8D97500A2437F876EF962370CDAE350D677E3126F",
+      "DurationSeconds": 64.0855889,
+      "PeakWorkingSetMiB": 435.8125,
+      "MedianCpuPercentOneCore": 0.29082212462512347,
+      "ProcessCount": 11,
+      "RolesAtPeak": [
+        {
+          "Role": "coordinator",
+          "Count": 1,
+          "WorkingSetMiB": 28.6796875
+        },
+        {
+          "Role": "native-host",
+          "Count": 4,
+          "WorkingSetMiB": 34.84765625
+        },
+        {
+          "Role": "webview-browser",
+          "Count": 1,
+          "WorkingSetMiB": 124.5859375
+        },
+        {
+          "Role": "webview-crashpad-handler",
+          "Count": 1,
+          "WorkingSetMiB": 18.2109375
+        },
+        {
+          "Role": "webview-gpu-process",
+          "Count": 1,
+          "WorkingSetMiB": 104.44921875
+        },
+        {
+          "Role": "webview-renderer",
+          "Count": 1,
+          "WorkingSetMiB": 66.1328125
+        },
+        {
+          "Role": "webview-utility",
+          "Count": 2,
+          "WorkingSetMiB": 58.90625
+        }
+      ],
+      "CleanExit": true,
+      "RemainingProcesses": 0,
+      "Rendered": true,
+      "Visible": true,
+      "Minimized": false
+    },
+    {
+      "Mode": "hosts",
+      "Run": 3,
+      "ExecutableSha256": "8F657F70BB9DE23BED173BF8DD10E03E26C0448B2978B95643844A15612BF7BC",
+      "WebViewVersion": "151.0.4129.107",
+      "RawReport": "tmp/shell-host-memory/20260831-123948-hosts/run-3-aa74d7071f724bea9f7c71cecd2df558/measurement.json",
+      "RawReportSha256": "2C5C05713F43CD250827C560F5402A8EAF36642E607A5564C1D7B80B622699B7",
+      "DurationSeconds": 63.985923899999996,
+      "PeakWorkingSetMiB": 429.63671875,
+      "MedianCpuPercentOneCore": 0.14543460439237263,
+      "ProcessCount": 11,
+      "RolesAtPeak": [
+        {
+          "Role": "coordinator",
+          "Count": 1,
+          "WorkingSetMiB": 28.70703125
+        },
+        {
+          "Role": "native-host",
+          "Count": 4,
+          "WorkingSetMiB": 34.84375
+        },
+        {
+          "Role": "webview-browser",
+          "Count": 1,
+          "WorkingSetMiB": 124.3203125
+        },
+        {
+          "Role": "webview-crashpad-handler",
+          "Count": 1,
+          "WorkingSetMiB": 18.19140625
+        },
+        {
+          "Role": "webview-gpu-process",
+          "Count": 1,
+          "WorkingSetMiB": 98.7109375
+        },
+        {
+          "Role": "webview-renderer",
+          "Count": 1,
+          "WorkingSetMiB": 65.984375
+        },
+        {
+          "Role": "webview-utility",
+          "Count": 2,
+          "WorkingSetMiB": 58.87890625
+        }
+      ],
+      "CleanExit": true,
+      "RemainingProcesses": 0,
+      "Rendered": true,
+      "Visible": true,
+      "Minimized": false
+    }
+  ]
+}

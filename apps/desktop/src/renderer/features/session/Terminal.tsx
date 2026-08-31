@@ -39,7 +39,12 @@ export function TerminalPane({ session, truncationCount, streamFailure, inputNot
       void call(api.sessions.resize({ sessionId, columns: cols, rows })).catch(() => undefined);
     };
     applyFit();
-    entry.term.focus();
+    // A delayed mount or session switch must not take the user's next key
+    // away from the session list, a dialog, or another focused control.
+    const focused = document.activeElement;
+    if (!focused || focused === document.body || container.contains(focused)) {
+      entry.term.focus();
+    }
 
     const observer = new ResizeObserver(() => applyFit());
     observer.observe(container);

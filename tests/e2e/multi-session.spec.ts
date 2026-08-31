@@ -71,6 +71,11 @@ test('two sessions keep input, output, identity, and attention isolated', async 
     await page.keyboard.press('Home');
     await expect(sessionOptions(page).first()).toHaveAttribute('aria-selected', 'true');
     await expect(last).toHaveAttribute('aria-selected', 'false');
+    // Selection mounts a different terminal. It must not steal the next key.
+    await expect(terminalRows(page)).toContainText('ECHO:bravo');
+    await expect(page.getByRole('listbox', { name: 'Sessions' })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(last).toHaveAttribute('aria-selected', 'true');
 
     await stopViaUi(app, a);
     await expect(sessionOption(page, b)).toContainText('Running');

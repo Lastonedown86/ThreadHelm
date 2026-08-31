@@ -48,7 +48,10 @@ Codex/Claude smoke tests
 retained but distribution deferred. Full target: supported Windows 11 x64 and ARM64 installed artifacts.
 
 **Approved preview exception (2026-08-31)**: [preview-release.md](preview-release.md) governs the
-limited unsigned x64 milestone. Defer only the 250 MiB no-session idle-memory threshold, ARM64
+limited unsigned x64 milestone. D01/D05 defer the 250 MiB no-session and 700 MiB four-session
+aggregate memory ceilings; D06 defers the fixed 1% four-session CPU ceiling. Original targets and
+measurements remain recorded as failures and replacement ceilings require calibration. See
+`memory-budget-review.md` for extended idle/session-cycle evidence. Defer ARM64
 distribution and unproved autonomous-provider capabilities/proofs. Retain other performance and
 resource bounds, x64 client installed acceptance, cleanup, independent safety/scope review and
 owner acceptance. The named multi-provider review roster below is no longer a requirement to

@@ -1,0 +1,5 @@
+html, body { height: 100%; margin: 0; background: #fff; color: #1f2328; }
+body { font: 16px/1.4 system-ui, "Segoe UI", sans-serif; }
+main { padding: 32px; }
+h1 { font-size: 20px; }
+/* No animation, timer-driven rendering, or graphics/security switches. */

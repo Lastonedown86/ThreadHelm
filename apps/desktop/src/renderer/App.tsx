@@ -69,7 +69,7 @@ function Shell() {
                   {selected.providerDisplayName}{' '}
                   <span className="mono small-text">{selected.workspaceDisplayPath}</span>
                 </h1>
-                <ControlBar session={selected} />
+                <ControlBar key={selected.id} session={selected} />
               </header>
               <LazyTerminalPane
                 session={selected}

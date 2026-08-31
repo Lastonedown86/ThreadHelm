@@ -1855,3 +1855,372 @@ P02 is updated to the newly tested hosted candidate. P01 broader manual/exact-re
 acceptance, P03 owner host-scope exception, P04 performance and P05 owner acceptance remain open.
 PR17 is still draft and review-required. No new deferral, host-scope exception, merge, distribution
 or feature-selector change is implied by the measurement approval or passing CI.
+
+### 2026-08-31 12:11 EDT — T170: inspection overhead isolated; memory remains open
+
+The owner's "Fix it" request resumed diagnosis of the retained resource failures. The installed
+runtime stayed `0745294c08ed5bb618eb078fbb791dfbe4eac0ad`; no production runtime files, host
+protocols, permission policies, private-persona boundaries or installer bytes were changed.
+Hardware: Windows 11 Home 10.0.26200 x64; Ryzen 7 5700U, 8 cores / 16 logical processors,
+33,700,167,680 bytes installed physical memory. Installed EXE SHA-256:
+`74b8c016b96cbda9be7a3efdde5f527aa06a2545a64dcf5613e8d9c17963d1e1`.
+
+**CPU diagnosis:** One installed idle Codex reproduced about 14.53% main-process CPU. Isolated
+four-session fixture and authorized real-Codex diagnostics did not reproduce that magnitude,
+including selected-terminal, accessibility-enabled and foreground/unthrottled variants. V8
+sampling was predominantly idle; its profiler overhead is excluded from acceptance. A Windows
+CPU trace of installed main PID 39840 showed UIAutomationCore/COM request servicing. After the
+session stopped, the installed main still consumed 39.0625% over five seconds. Resetting the UI
+inspection JavaScript client reduced the same process to 0%, without restarting or changing
+ThreadHelm. Reattachment restored elevated CPU in later windows of the diagnostic
+`installed-main-detached-idle.json`; that mixed-window file is not an acceptance report.
+This confirms inspection overhead as the cause of the prior attribution, not a proven busy
+JavaScript loop or a claim about every assistive-technology client. Accessibility was not disabled.
+
+**Correction:** Added `tests/acceptance/helpers/measure-installed-idle.ps1` and its procedure.
+The observer recursively counts every descendant, checks the installed executable, exact
+provider/host counts, a live renderer, PID start times and unchanged process membership, and
+records twelve approximately five-second windows. It starts/stops no processes and submits no
+input. Inspection clients and profilers must be disconnected for the observation. Wrong-count
+and wrong-root guards and PowerShell syntax validation passed. A changing startup process
+family aborted the first repeat without producing a verdict; the stabilized repeat completed.
+
+| Installed observation | Duration | Processes | Median one-core CPU | Peak working set | Result |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Four authorized startup-idle Codex sessions | 63.83 seconds | 16 | 0.588% | 1,427.305 MiB | CPU passes; retained 700 MiB memory fails |
+| Fresh app launch, no sessions | Twelve five-second windows | 4 | 0% | 403.934 MiB | CPU passes; original 250 MiB memory fails, preview deferral D01 unchanged |
+
+Four-session report: `tmp/us8/detached-four-idle.json`, 12:06:06–12:07:10 EDT. No-session report:
+`tmp/us8/detached-no-session-idle.json`, 12:10:03–12:11:07 EDT. No UI inspection occurred during
+either completed acceptance window. There was no working-set trimming, process exclusion,
+graphics/security change or threshold waiver. The native trace was stopped successfully; WPR
+confirmed it was no longer recording. Diagnostic profiles and the temporary Vitest harness are
+kept only under ignored `tmp/us8`, not shipped or left as a new integration test.
+
+| Folder | Session | Codex / host PID | Cleanup |
+| --- | --- | --- | --- |
+| 4 | e7d66a8d-58b8-445a-be13-8d170d648180 | 34544 / 44672 | stopped, exit 0, 12:08:49 EDT |
+| 3 | 22a5a65a-bf07-4264-864c-b3a96145045f | 25100 / 31968 | stopped, exit 0, 12:08:49 EDT |
+| 2 | 05e7003c-08f0-46d7-b199-0c819bcf1dea | 49584 / 43540 | stopped, exit 0, 12:08:49 EDT |
+| 1 | 04e63134-dc5d-4cf7-9b2e-69e2843687c5 | 33724 / 38924 | stopped, exit 0, 12:08:49 EDT |
+
+All four used the approved manual/default-model/default-effort/eight-process envelope and stayed
+at folder-trust prompts. No prompt, provider trust confirmation or mission was submitted. Stop
+all sessions and exit used the normal app confirmation. Read-only SQLite and OS inspection
+confirmed all four exit-zero records and absence of their twelve processes and old main PID.
+The app was reopened normally with preserved history and no provider started. The earlier single
+installed diagnostic session `31bd1c39-0cff-4a48-9b1f-e46bf2f88c4a` also stopped normally at
+11:52:40 EDT with exit zero. One earlier diagnostic overlapped four isolated probes with that
+installed session; it was not an acceptance sample and exceeded the intended four-at-once test
+scope. The corrected runs did not overlap additional provider probes.
+
+**Remaining remedy:** At the four-session peak, shell processes used 430.730 MiB, Electron hosts
+474.945 MiB, Codex 484.266 MiB and ConPTY helpers 37.363 MiB. Removing only host overhead would
+still leave approximately 952 MiB in this observation. The updated
+`docs/architecture/desktop-shell-reassessment.md` therefore identifies the shell/host comparison
+needed before a replacement decision; it does not assume Tauri/WebView2 will pass or authorize
+production host refactoring. P04's memory gate, P01, P03 owner scope reconciliation and P05 remain
+open. No full unit/E2E rerun, rebuild, reinstall, merge, release or shell migration was performed
+for this observer/documentation-only correction. Earlier hosted results are historical, not
+fresh validation of this worktree.
+
+### 2026-08-31 12:44 EDT — T171: isolated shell/session-host memory prototype
+
+**Authorization and scope:** The owner requested trying the shell/session-host redesign starting
+with an isolated memory prototype. Added `native/shell-host-memory-prototype` as a separate,
+nonshipping Cargo workspace with no package.json or production packaging reference. Production
+coordinator/session-host code, dependency locks, installed app, owner database and provider
+settings were untouched. No provider, trust confirmation, task prompt, credentials or private
+persona was used. This authorizes the experiment, not production migration or P03 reconciliation.
+
+**Implemented:** Tauri 2.11.5 / Rust 1.98.0 release window with private WebView data, local-content
+readiness, real empty-workspace React UI behind a read-only mock bridge, scratch SQLite row and
+four inert native hosts. The copied Job Object core changes only its named-job prefix and retains
+the unnamed non-inheritable outer kill-on-close job. Startup checked name-collision rejection and
+both-job membership for each dormant host; normal shutdown checked exit zero and empty jobs.
+No provider/ConPTY child, terminal stream, production authority or recovery protocol was ported.
+
+**Measurements:** Windows 11 Home 26200 x64, WebView2 151.0.4129.107. Three fresh blank launches
+measured **375.480 / 375.031 / 375.445 MiB** peak, with median one-core CPU **0.292 / 0.290 / 0.148%**.
+Three combined workspace/SQLite/four-host launches measured **431.063 / 435.813 / 429.637 MiB**,
+with median CPU **0 / 0.291 / 0.145%**. Four native hosts accounted for **34.832 / 34.848 / 34.844 MiB**
+at the combined peaks. Every run settled for 15 seconds, then sampled twelve windows over about
+64 seconds with stable process identities; all seven blank or eleven combined processes were
+included. UI inspection was disconnected. Every run exited zero with no residual processes.
+The separate visual smoke confirmed the actual workspace, prototype footer and NONSHIPPING title
+and was excluded from resource results. No working-set trimming or custom graphics/security
+switch was used. Tauri defaults still require independent production security review.
+
+**Evidence:** `native/shell-host-memory-prototype/results.json` preserves six summaries, process
+group costs, binary/report hashes and raw paths under `tmp/shell-host-memory`. Blank binary SHA-256
+`44EFB44386997721FF63E00B214D419A4D755930C00F1B1D34B1EFB49FB62419`; combined binary SHA-256
+`8F657F70BB9DE23BED173BF8DD10E03E26C0448B2978B95643844A15612BF7BC`. See
+`docs/architecture/desktop-shell-reassessment.md` for method and limitations. Release compilation,
+Rust formatting, PowerShell parsing, visual smoke, private-persona asset scan and focused diff
+checks passed. No full production tests, installer build, reinstall, hosted CI, PR/merge or release
+was performed for this prototype.
+
+**Decision:** Blank-shell memory fails 250 MiB consistently; stop before a broad Tauri port.
+The dormant-host footprint supports a separate bounded native-host/ConPTY investigation, not a
+claim of equivalent production savings. The combined total excludes live providers and helpers
+and does not pass four-session acceptance. Crash/descendant containment, retained-handle behavior,
+stream backpressure, durable authority and production compatibility remain unproved. Existing
+P01/P03/P04/P05 gates, D01-D04 deferrals and the feature selector remain unchanged. Keep the
+prototype isolated for review/reproduction, then archive or delete it.
+
+### 2026-08-31 — T172: preview memory-budget reassessment
+
+After the isolated prototype, the owner asked whether the footprint budget was overly restrictive
+and accepted the recommended reassessment. Recorded D05 alongside D01: the 700 MiB four-session
+and 250 MiB no-session aggregate ceilings are deferred for preview, with both retained as
+optimization targets. No numeric replacement ceiling was invented. The original failed
+measurements remain unchanged, including 403.934 MiB installed no-session, 1,427.305 MiB installed
+four startup-idle sessions and the approximately 375 MiB blank Tauri prototype.
+
+Added `memory-budget-review.md` with rationale, retained acceptance and a calibration backlog.
+CPU, latency, scrollback/output/process/mission bounds, containment, private-persona exclusion,
+cleanup, unsigned x64 policy and candidate review remain mandatory. T173 records the unrun
+15-minute idle and five four-fixture start/stop-cycle checks; the earlier one-minute observations
+do not prove long-run stability. Calibration must declare representative hardware/workloads,
+retain aggregate reporting, supplement it with private-memory/system-pressure diagnostics, and
+derive a proposed ceiling from repeated evidence before a fixed-ceiling/full-budget claim.
+
+Updated the preview scope, next-feature carry-forward record, task ledger and architectural
+assessment consistently to D01-D05. The next native-host/ConPTY experiment is paused; neither
+shell replacement nor production host refactoring is required solely to satisfy these deferred
+preview ceilings. The separate P03 host-scope exception is not approved by this decision.
+
+This turn changed documentation only. Focused diff/link/scope checks passed; no tests, new
+resource runs, provider starts, application rebuild/reinstall, repository review, merge or release
+occurred. P01/P03/P04/P05 remain open, the feature selector remains 002, and no original full-feature
+task was marked complete. The revision removes a fixed-threshold preview blocker; it does not
+grant final candidate acceptance or conceal a failed benchmark.
+
+### 2026-08-31 — T173 partial installed-resource checkpoint
+
+Started the next retained resource tasks without changing installed bytes or launching real
+providers. Added a private installed-app fixture launcher, inert Rust terminal, read-only
+lifecycle collector and extended resource observer. Completed 15m57s no-session idle: four
+stable processes, 347.863 MiB peak working set, 0% median CPU, private commit 256.680 to
+256.730 MiB. Completed one four-fixture pilot through normal launch/stop controls: sixteen
+processes, sampled peak 1,079.375 MiB, all four clean exits, and no residual session processes.
+The later 63.984-second settled sample measured 581.766 MiB peak and 0.148% median CPU.
+
+The pilot's final private commit was approximately 10.93 MiB above its warmed baseline;
+one cycle cannot establish accumulating growth or leak freedom. The complete five-cycle
+series remains open. The pilot app closed normally with no remaining owned processes and
+the owner instance still running. Six selected static artifact cases passed; the launch case
+was excluded and the missing adjacent checksum subcheck was skipped, with identity independently
+matched. The latest x64 CI is green but ARM64 has one keyboard-selection E2E failure, not a
+proven flake. The ControlBar's retained pending text is a display follow-up, while actual
+lifecycle and disabled controls are correct. No production source was changed.
+
+See [checkpoint details](t173-resource-checkpoint.md) and
+[structured measurements](t173-resource-checkpoint.json) for hashes, limits and exclusions.
+T173 and P01/P03/P04/P05 remain open. No live-provider start, installation, merge, distribution,
+host-scope approval or transition of the feature selector occurred.
+
+## 2026-08-31 — T173 renderer fixes and changed candidate
+
+The owner approved the recommended order. The stale stop-status regression and terminal
+focus-stealing regression both reproduced locally. The renderer fixes passed 16 affected E2E
+journeys, the full 43-case E2E suite, ten repeated focus journeys, 647 unit/contract cases,
+type checking and focused lint/format/diff checks. The historical ARM64 CI failure remains
+historical: the related shared focus defect is fixed locally, not verified by a new ARM64 run.
+
+Forge/NSIS built a new unsigned x64 worktree candidate based on `3c574fb`. Six selected static
+artifact checks passed; the launch case was excluded and the adjacent EXE checksum subcheck
+was skipped. EXE/ASAR hashes separately matched the completed NSIS identity sidecar, and the
+Setup checksum matched its published local sidecar. Production fuses, native x64 payload and
+private Marvel exclusion remain intact. The owner installation and data were not replaced.
+
+The resource harness now supports an explicitly labelled packaged candidate at one fixed
+repository output path and an identical finite 60-line output burst per fixture launch.
+The Windows Computer Use safety gate rejected the first scratch-folder approval. No workaround
+was used; the dialog was cancelled, no workspace/session was approved/launched, and exact
+fixture-scope approval was requested. The fresh candidate's no-session observation can proceed
+independently. Five-cycle acceptance remains open. See
+[candidate follow-up](t173-candidate-follow-up.md) for current evidence and remaining gates.
+
+The final ControlBar refinement also prevents an earlier interrupt result from reappearing
+after a later stop; its new regression failed before the refinement and passed afterward.
+All 16 affected E2E journeys, type checking and focused lint passed again. Independent
+read-only review of the three renderer files and two regression files found no actionable
+defects. The preceding full 43-case suite, ten focus repetitions and 647 unit/contract runs
+are recorded separately from this final refinement.
+
+Final packaged candidate EXE `5b2acf93baeadae29c3cad4a500f38d2cec9fc885a724cf35d9e45ea820fc358`,
+ASAR `5aae9bd88cefeb3d0054eab7247d36ad16ce209573ac3f2f326196c77c2e26fe`, and Setup
+`56bece9651851b668d9efc2689f2aadda566bbb13ddc7d896c6d825b5d290f97` passed identity/checksum
+verification and the six selected static controls. Its fresh 949.420-second idle observation
+measured 0% median one-core CPU, 381.797 MiB peak working set, and private commit declining
+from 231.059 to 226.371 MiB. All fifteen minute-block CPU medians were below 0.444%; the four
+app process identities were stable and all exited on normal close. Owner installed hashes
+were unchanged. Visibility was checked at start/end, not continuously. The interrupted earlier
+candidate observation is not used as final-candidate evidence.
+
+The fixture-folder scope was later explicitly approved. The completed result follows. Exact
+structured evidence and raw-report hashes are in
+[the final candidate record](t173-candidate-follow-up.json).
+
+### 2026-08-31 — T173 completed five-cycle candidate evidence
+
+The unchanged packaged x64 candidate completed five four-session cycles (20 sessions total) using
+the same finite normal-output fixture. Every session stopped cleanly with exit code 0, and all 12
+session-owned host, fixture and console processes were absent after each cycle. Active peak working
+set was 993.08, 991.09, 935.41, 941.57 and 936.53 MiB; settled post-stop working set was 473.45,
+471.37, 424.15, 426.64 and 429.75 MiB. The series shows no accumulating working-set growth. D05
+continues to record the 700 MiB target as a deferred preview ceiling rather than a passing result.
+
+Active median one-core CPU was 0.876%, 1.029%, 0.440%, 1.756% and 1.471%. Three cycles therefore
+failed the retained 1% CPU limit. Process-delta attribution places sustained CPU mainly in Electron's
+renderer/GPU family, with occasional utility/session-host increments; inert fixture and console
+processes were effectively idle. Excluding each run's first launch-adjacent window leaves aggregate
+means of approximately 0.958%, 0.907%, 0.614%, 1.545% and 1.708%, so the final two failures remain.
+No observer threshold, sample window or process accounting was weakened. T173 is complete evidence;
+T174 carries remediation and the exact-candidate repeat, and P04 remains blocked.
+
+The isolated candidate closed normally with no candidate processes remaining. Owner PID 39356 and
+the owner installation were left unchanged. No live provider, reinstall, merge, distribution or
+feature-selector transition occurred; the distribution remains unsigned x64 and packaged private
+Marvel personas remain excluded.
+
+### 2026-08-31 — exact T173 candidate installed on owner Windows 11 x64
+
+The owner-machine installation authorization was exercised for the changed candidate. ThreadHelm
+closed normally with no live sessions. A fresh backup copied and hash-verified 50 profile files and
+two shortcuts before Setup ran. Unsigned x64 Setup SHA-256
+`56bece9651851b668d9efc2689f2aadda566bbb13ddc7d896c6d825b5d290f97` matched its checksum and
+identity sidecars, returned exit 0, and installed EXE, ASAR and uninstaller bytes matching that
+candidate. The app remains intentionally unsigned; this does not establish publisher trust.
+
+The installed proof resolved the coordination bridge from the unpacked installed application,
+verified dormant scope, session-host/root/descendant Job Object membership, exact three-process
+contained scope, scope-empty after terminate, and kill-on-handle-close for the root, host and bridge
+descendant. Every proof step passed and the temporary proof root was removed. A normal installed
+launch reported x64/Electron 44, and a second launch exited 0 while the original controller stayed
+running. This satisfies P01's installed identity, lookup, containment and single-instance evidence.
+
+The installed owner database exposes six active bundled revision-2 templates. Every current
+manifest uses `threadhelm/agent-profile@1`; the installed UI was left visibly open on the generic
+implementer sample and its inert/non-launching disclosure. Historical revisions remain immutable
+for provenance, but they are not current bundled content. No provider session or mission was
+started or treated as installed acceptance. T154 remains open only for its full ARM64 obligation,
+which D02 defers; T157's unproved provider proofs remain deferred under D03. P04 is still blocked
+by T174 CPU acceptance, and P03/P05 remain open.
+
+### 2026-08-31 — T158 final artifact drift review
+
+Spec Kit prerequisite resolution selected `specs/002-agent-mailbox-routing`; `spec.md`, `plan.md`,
+`tasks.md` and the constitution were read together. The inventory contains 71 functional requirements,
+31 success criteria and 174 implementation/evidence tasks. Every user story and buildable requirement
+has semantic task coverage through its story phase or the cross-cutting release phase. No unresolved
+placeholder, contradictory architecture choice, missing core artifact or constitution MUST conflict
+was found.
+
+Terminology is consistent with the approved boundary. References to the comparison project describe
+adopted mailbox, safe-point, memory and bounded-supervisor mechanics or legacy import compatibility;
+they are not runtime/product dependencies. Legacy manifests remain untrusted user-import data. All
+six current bundled starters use `threadhelm/agent-profile@1`, and the wizard remains inert until the
+separate launch policy resolves provider, model, effort, permission, workspace and resource authority.
+Private character personas are owner-supplied acceptance inputs only and are absent from the packaged
+archive/unpacked production assets. Compact lists, text details and badges preserve the explicit
+no-office-simulation/no-avatar/no-graphics-heavy boundary.
+
+T158 is complete as a review with blockers, not a release approval. Open execution findings are T174's
+failed four-session CPU limit; T154's deferred full ARM64 obligation; T148/T149/T157's deferred exact
+live-provider/full-US8 proof; P03 independent safety/scope review; P04 exact-candidate controls and CPU;
+and P05 owner acceptance. D01-D05 remain explicit scope decisions and do not convert failed or unrun
+evidence into passes. No merge, publication or feature-selector transition is authorized by this review.
+
+### 2026-08-31 — T174 focused-terminal CPU diagnosis
+
+A disposable source harness launched four inert Codex fixtures through the real coordinator,
+session-host, ConPTY and renderer path. Each paired observation waited 60 seconds after the fourth
+launch, then sampled twelve five-second windows with xterm's textarea focused and twelve otherwise
+identical windows with the Sessions list focused. Every probe test passed and stopped/cleaned all
+fixtures. This is diagnostic source-harness evidence, not replacement exact-package acceptance.
+
+The unchanged renderer measured **1.092% median one-core CPU with terminal focus** and **0.156% with
+list focus**. This independently reproduces the direction of T173's attribution: the retained failure
+is associated with the focused Electron/xterm renderer state, while session fixtures remain idle.
+Making Chromium's invisible textarea caret transparent measured **1.091% focused**, showing no
+material improvement. Setting native caret animation to manual measured **2.026% focused**, a
+regression. Both CSS experiments were reverted; `apps/desktop/src/renderer/styles.css` has no retained
+diff. No focus, keyboard, IME, cursor, observer or performance threshold was weakened.
+
+T174 remains open because no safe fix has passed the focused condition and then the exact packaged
+five-cycle acceptance. P04 remains blocked. The owner-installed candidate and its visible generic
+sample were not replaced by these source-only diagnostics.
+
+### 2026-08-31 — P03 exact-candidate safety review
+
+The technical portion of P03 is complete with no open code-safety finding. It does not itself
+approve the original session-host scope exception. The reviewed preview candidate is base
+`3c574fb19db4ea0a1af2fdffc8b8c1ee8ced3e56` plus the recorded T173 renderer changes and unsigned
+x64 Setup SHA-256 `56bece9651851b668d9efc2689f2aadda566bbb13ddc7d896c6d825b5d290f97`.
+The current renderer five-file delta received an independent read-only review with no actionable
+defect. Earlier final independent reviews pass the bounded native/host, domain/storage, UI and
+artifact-drift slices; their initial findings remain in the record and are superseded only within
+their stated final scopes.
+
+The three proposed host-exception files exactly match HEAD and their independently reviewed
+introduction at `da3dc66`: `index.ts` blob
+`83805c915d9c19d271c079434b53356a2f4f5149`, `backpressure.ts` blob
+`dcd80f85bd8b0402329b60aed08dc93f93d4637f`, and `output-meter.ts` blob
+`62a3218c279b0671ae624a8cdcf07e3cf9940461`. `resize.ts` remains unchanged at blob
+`eaafd54cf612696ee8a18a2ac48f064872741a99`. The reviewed change counts bytes inside the trusted
+host, forwards only the allowed raw-output prefix through the existing renderer port, sends only
+content-free counts to main, pauses at exhaustion, prevents an ordinary resume from bypassing the
+bound, and emits a content-free truncation disclosure. It adds no pre-containment process creation.
+
+Fresh current-worktree verification passed:
+
+- eight focused unit/contract files, **173/173** cases;
+- the complete Windows supervisor Rust library and bridge suites, **32/32** cases, including
+  retained named-handle containment and transient registry-watch recovery; and
+- three real Windows permission, coordination-recovery and supervisor-mission integration files,
+  **31/31** cases.
+
+Source inspection and those regressions preserve the exact-preview permission revalidation,
+deny persisted/inherited mission break-glass authority, retain unknown attempts and leases without
+automatic replay, require exact stopped-scope evidence before human unknown acknowledgement, and
+keep main as the sole coordinator/SQLite writer. Production packaging continues to reject the
+private Marvel fixture barrel; all six current bundled starters use `threadhelm/agent-profile@1`.
+Legacy `munder-difflin/hire@1` remains supported only as untrusted import compatibility and is not
+current bundled template content. No provider was started, no credential was used, and this review
+does not pass T174/P04, P05, merge, distribution or the deferred D01-D05 capabilities.
+
+The owner subsequently approved the exact three-file bounded host exception stated in
+`transition-to-next-feature.md` on 2026-08-31. P03 is complete. The approval grants no standing
+permission for later host edits and does not approve provider starts, T174/P04, P05, merge,
+distribution, release or the deferred capabilities.
+
+### 2026-08-31 — D06 CPU preview deferral
+
+The owner approved the recommended D06 scope decision. The fixed 1% four-session median one-core
+CPU threshold is deferred from the unsigned x64 preview after T173 failed three of five cycles and
+T174 reproduced the focused-terminal attribution. The measured cycle medians of 0.876%, 1.029%,
+0.440%, 1.756% and 1.471% remain failures against the original target. Transparent caret styling
+did not improve the focused result, and disabling native caret animation worsened it; both
+experiments were reverted. No production focus, keyboard, IME, cursor, accessibility, security,
+observer or process-accounting behavior was weakened.
+
+D06 retains no-idle-animation and immediate-responsiveness requirements, complete app/host/
+fixture/console process accounting, terminal security and input behavior, containment, bounded
+resources, cleanup, the 15-minute observation, five-cycle evidence and a future calibrated CPU
+target that identifies representative hardware, workload and terminal-focus state. T174 remains
+an incomplete Feature 002 performance/calibration backlog item. D06 removes the fixed threshold as
+a P04 preview blocker; it does not turn the failed measurements into passes or approve P04, P05,
+merge, distribution, release, provider starts or any other deferred capability.
+
+The commit-ready current worktree then passed formatting/diff checks, ESLint, TypeScript build,
+desktop production build, **371/371 unit**, **276/276 contract**, **32/32 Rust supervisor/bridge**,
+the focused **31/31 Windows permission/recovery/supervisor integration** cases and all **43/43 E2E**
+journeys. The isolated nonshipping shell-host prototype also passed locked `cargo check` and
+`cargo fmt --check`. One initial contract run timed out in the five-second bundled-entry case while
+lint, typecheck, unit, contract and a cold prototype compile ran concurrently; the serial full
+contract rerun passed. The prototype's generated minified UI assets remain ignored build output
+and are excluded from repository lint and the staged candidate. A redacted staged Gitleaks scan
+found no leaks. These local checks support committing the candidate; exact-commit hosted checks
+and repository review remain required for P04 and integration.

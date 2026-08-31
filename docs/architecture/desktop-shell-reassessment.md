@@ -1,6 +1,14 @@
 # Desktop shell reassessment
 
-Date: 2026-08-30. Status: reassessment complete; Electron remains the implementation. No replacement shell or migration is approved.
+Date: 2026-08-31. Status: owner authorized an isolated memory prototype; Electron remains the production implementation. No production migration is approved.
+
+**Subsequent preview decision:** The owner accepted the budget reassessment after this experiment.
+The original 250/700 MiB values remain optimization targets; D01/D05 now defer their fixed preview
+ceilings. CPU, latency, runtime resource bounds, cleanup and exact-candidate acceptance remain
+mandatory. The next native-host experiment is paused pending a cost/benefit decision independent
+of those ceilings. See [the current memory-budget review](../../specs/002-agent-mailbox-routing/memory-budget-review.md).
+The measurements and experimental decisions below retain their original context; none is
+retroactively changed to PASS by this scope revision.
 
 [Feature 001 research](../../specs/001-local-agent-workspace/research.md) requires a Tauri/Rust reassessment when packaged Electron still misses the idle budgets after avoidable work is removed. This document records the evidence and proposes the smallest comparison that could inform that decision. The no-session limit remains **250 MiB total working set**, with median idle CPU at or below **1% over 60 seconds**. The four-idle-session limit remains **700 MiB**. Changing the metric or weakening containment is not a remedy.
 
@@ -20,11 +28,54 @@ The fresh deferred-renderer measurement completed at `2026-08-30T22:39:19-04:00`
 
 ## Feasible paths
 
-| Path                                              | Benefit                                                                                              | Cost and unresolved question                                                                                                                                                                                                                                       |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Retain Electron and finish bounded profiling      | Preserves the proven implementation and existing tests.                                              | The latest completed package misses the budget. Further work needs a measured, specific source of avoidable allocation; indefinitely reducing JavaScript bytes is not evidence of success.                                                                         |
-| Tauri 2 with a Rust coordinator and WebView2 UI   | Could retain React, CSS, and deferred xterm while moving desktop coordination to Rust.               | No ThreadHelm memory result exists. TypeScript authority logic, persistence integration, Electron lifecycle, and the session-host launch protocol need deliberate replacement or extraction.                                                                       |
-| Tauri/WebView2 with one headless Node coordinator | Could preserve more TypeScript domain logic, SQLite integration, and N-API code during a transition. | Adds a runtime process and crash coupling. Node must remain the sole SQLite writer and Job Object owner; Rust must not become a second coordinator. Memory benefit is unmeasured, and the current Electron utility host cannot run unchanged as a plain Node host. |
+### 2026-08-31: four real idle sessions and corrected CPU attribution
+
+The unchanged owner-installed x64 runtime `0745294` was measured with four Codex 0.151.0
+processes at their initial folder-trust prompts. No prompt or trust confirmation was submitted.
+The approved manual/default-model/default-effort/eight-process launch envelope was retained.
+After disconnecting the UI inspection client, twelve windows over 63.83 seconds measured
+**1,427.305 MiB peak aggregate working set** and **0.588% median one-core CPU**. All sixteen
+process identities stayed fixed. Report: `tmp/us8/detached-four-idle.json`.
+
+At the peak, the complete process family consisted of:
+
+| Component                                       |       Working set |
+| ----------------------------------------------- | ----------------: |
+| Desktop main, renderer, GPU and network service |       430.730 MiB |
+| Four Electron session hosts                     |       474.945 MiB |
+| Four native Codex processes                     |       484.266 MiB |
+| Four ConPTY helpers                             |        37.363 MiB |
+| **Total**                                       | **1,427.305 MiB** |
+
+The earlier 17.464% CPU measurement was confounded by the inspection client. A native sampled
+trace showed accessibility/COM request servicing. With the same installed process and no live
+sessions, disconnecting that client reduced a five-second main-process observation from
+39.0625% to 0%; reconnecting restored the spike. No application accessibility, graphics,
+permissions, or containment setting was disabled. This diagnoses the measurement overhead;
+it does not establish the performance of every assistive-technology client. The corrected
+[observer and procedure](../../tests/acceptance/helpers/measure-installed-idle.md) require
+inspection/profiler disconnection and retain all process and memory accounting.
+
+CPU no longer explains this memory failure. The observed desktop plus provider/helper cost is
+already approximately 952 MiB even before the 475 MiB session-host group. Consequently,
+removing only host overhead would not meet 700 MiB for this observed configuration. That is a
+calculation from this run, not proof of a universal runtime floor. A credible remedy needs a
+measured reduction across the shell/host architecture; bundle-size edits alone have no
+demonstrated path to the required 727 MiB reduction.
+
+At the time of this diagnosis, the staged comparison below remained the proposed next step. Extend its resource
+report to budget the shell, coordinator, four dormant hosts, providers and helpers separately,
+while enforcing the unchanged aggregate threshold. Retain the same per-session Job Object
+ownership and Job-before-create handshake; do not combine providers into one containment
+scope, make the renderer a writer, or replay uncertain work. The production host preserve-only
+scope and explicit migration review remain in force. No replacement runtime was implemented
+or represented as proven by this diagnostic work.
+
+| Path                                              | Benefit                                                                                                | Cost and unresolved question                                                                                                                                                                                                                                       |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Retain Electron and finish bounded profiling      | Preserves the proven implementation and existing tests.                                                | The latest completed package misses the budget. Further work needs a measured, specific source of avoidable allocation; indefinitely reducing JavaScript bytes is not evidence of success.                                                                         |
+| Tauri 2 with a Rust coordinator and WebView2 UI   | Can render the existing React UI behind a mock bridge; native host footprint is separately measurable. | The isolated blank-shell runs below fail 250 MiB. TypeScript authority logic, persistence integration, Electron lifecycle, and the session-host launch protocol still need deliberate replacement or extraction.                                                   |
+| Tauri/WebView2 with one headless Node coordinator | Could preserve more TypeScript domain logic, SQLite integration, and N-API code during a transition.   | Adds a runtime process and crash coupling. Node must remain the sole SQLite writer and Job Object owner; Rust must not become a second coordinator. Memory benefit is unmeasured, and the current Electron utility host cannot run unchanged as a plain Node host. |
 
 Tauri uses a Rust core and a separate webview; Windows uses WebView2. Its use of a system webview does **not** establish lower resident memory for this application. [Tauri process model](https://v2.tauri.app/concept/process-model/)
 
@@ -50,4 +101,86 @@ Recommend considering a staged, timeboxed spike in an isolated branch or directo
 
 If the blank-shell stage already exceeds 250 MiB, stop before a broad port unless a specific, safe allocation reduction can be demonstrated. If application memory passes but containment or authority fails, the candidate still fails. If both succeed, produce a separately reviewed migration plan covering full persistence compatibility, US8 authority/recovery, Windows x64/ARM64, accessibility, and installed acceptance. **A spike pass neither approves migration nor closes the current Electron release gate.**
 
-The immediate decision is whether to run that bounded comparison now that the fresh Electron measurement still misses the budget. This reassessment supplies the required architectural alternative; it does not select Tauri, assume WebView2 meets the budget, or relax any existing gate.
+The owner subsequently authorized this bounded comparison. The result below informs the next
+decision; it does not select Tauri, approve production migration or relax any existing gate.
+
+## 2026-08-31: isolated memory prototype
+
+The owner requested the shell/session-host redesign experiment starting with an isolated memory
+prototype. The throwaway executable lives in `native/shell-host-memory-prototype`, outside the
+production Cargo/pnpm workspaces and packaging allowlist. It has a distinct application identity,
+fresh WebView data for every run, no installer and no live providers. The installed app and owner
+database were not changed. No production coordinator or session-host code was edited.
+
+The release build uses Rust 1.98.0, Tauri 2.11.5 and WebView2 151.0.4129.107 on Windows 11 Home
+26200 x64, Ryzen 7 5700U (8 cores/16 threads), 33,700,167,680 bytes of physical RAM. The observer
+counts all descendants plus the private WebView process group, requires renderer readiness,
+settles for 15 seconds and samples twelve approximately five-second windows. The process family
+must remain fixed. UI inspection is disconnected throughout every measured run. There is no
+working-set trimming or custom graphics/security switch; framework defaults are not a completed
+production security assessment.
+
+| Blank local window run | Peak total working set | Median one-core CPU | Processes | Normal exit / residual processes |
+| ---------------------- | ---------------------: | ------------------: | --------: | -------------------------------- |
+| 1                      |            375.480 MiB |              0.292% |         7 | Exit 0 / none                    |
+| 2                      |            375.031 MiB |              0.290% |         7 | Exit 0 / none                    |
+| 3                      |            375.445 MiB |              0.148% |         7 | Exit 0 / none                    |
+
+Raw reports: `tmp/shell-host-memory/20260831-122757-blank/run-*/measurement.json`.
+Blank executable SHA-256: `44EFB44386997721FF63E00B214D419A4D755930C00F1B1D34B1EFB49FB62419`.
+Readiness confirms double-animation-frame rendering. This initial binary did not record the
+visible/minimized fields added for the combined prototype; the normal window was also observed
+through OS window metadata. The earlier visual-only probe was not a resource sample, and its
+late screenshot did not establish visual rendering. The seven counted processes comprise the
+Rust coordinator, WebView browser, crashpad, GPU, two utilities and renderer.
+
+**Blank-shell verdict: fails the unchanged 250 MiB gate on all three fresh launches.** The
+approximately 125 MiB overage exists before adding production authority, terminal streams or
+providers. This is a result for this build/runtime/machine, not a universal WebView2 floor. It
+does not justify a broad port. The only further work in this spike is a bounded measurement of
+the existing empty-workspace UI, scratch SQLite connection and four dormant native hosts.
+
+The combined release executable reuses the actual React empty-workspace renderer with a
+read-only mock bridge, opens one scratch SQLite connection containing a prototype-only row,
+and starts four copies of itself in dormant native-host mode. A separate visual smoke confirmed
+the rendered workspace, NONSHIPPING title and PROTOTYPE footer. Its normal shutdown returned
+exit zero. That inspection run is excluded from the following measurements.
+
+| Workspace + scratch SQLite + four dormant native hosts | Peak total working set | Four hosts at peak | Median one-core CPU | Processes |
+| ------------------------------------------------------ | ---------------------: | -----------------: | ------------------: | --------: |
+| Run 1                                                  |            431.063 MiB |         34.832 MiB |                  0% |        11 |
+| Run 2                                                  |            435.813 MiB |         34.848 MiB |              0.291% |        11 |
+| Run 3                                                  |            429.637 MiB |         34.844 MiB |              0.145% |        11 |
+
+Each measured window lasted approximately 64 seconds, retained the same process identities,
+recorded a visible/non-minimized rendered window and ended with exit zero and no residual
+prototype processes. Raw reports: `tmp/shell-host-memory/20260831-123948-hosts/run-*/measurement.json`.
+Combined executable SHA-256: `8F657F70BB9DE23BED173BF8DD10E03E26C0448B2978B95643844A15612BF7BC`.
+The actual prototype WebView executable version was independently checked as 151.0.4129.107.
+[Durable results](../../native/shell-host-memory-prototype/results.json) retain all six summaries,
+per-role working sets at each peak, artifact/report hashes and raw-report locations.
+
+The coordinator owns four independent pairs of unnamed kill-on-close and named tracking jobs.
+Startup rejects name collisions and verifies both-job membership while each host blocks on a
+private input pipe. Shutdown verifies each host exits normally and each job becomes empty.
+The borrowed core was compared against source: only the tracking-name prefix changed, while
+`error.rs` is byte-identical. This is **dormant-host evidence only**: no provider/ConPTY child or
+grandchild was created. Crash cleanup, retained tracking handles, host-crash isolation, output
+backpressure, validated controls, persistence compatibility and restart/unknown-outcome handling
+remain unimplemented and unproved in this replacement.
+
+**Decision:** do not select Tauri or begin a broad authority/UI port. The blank-shell gate failed
+consistently. Four native dormant processes cost approximately 34.8 MiB here, versus 474.9 MiB
+for the earlier installed Electron host group, but those workloads are not equivalent: the
+native prototype has no terminal or production protocol. This is a reason for a separate bounded
+native-host/ConPTY experiment, not a demonstrated 440 MiB production saving. Host replacement
+alone would still not solve the previously observed 700 MiB aggregate failure. Combining these
+prototype numbers with the earlier provider footprint would be an estimate, not acceptance.
+
+The prototype's sub-700 MiB total excludes all live providers and helpers and therefore does not
+close P04. Existing preview deferrals, exact-candidate acceptance, production host restrictions,
+unsigned distribution policy and private-persona exclusion remain unchanged. No production
+source, dependency lockfile, installer or owner data was changed. The isolated release build,
+visual smoke, six resource observations, Rust formatting, PowerShell syntax and focused artifact
+checks were performed; the production unit/E2E/hosted suites were not rerun. Preserve the isolated
+code for review/reproduction, then archive or delete it rather than shipping it.

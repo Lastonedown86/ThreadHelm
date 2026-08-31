@@ -37,7 +37,9 @@ application processes. The four-idle-session 700 MiB budget and median idle CPU 
   disposable supported Windows 11 x64 client. Record artifact identity, launch/native loading,
   installed bridge lookup, containment, single-instance behavior and applicable preview/manual
   workflows. Windows Server CI cannot satisfy this client-platform requirement.
-- [ ] **P02 — Installer cleanup:** Fix and verify actual x64 uninstall. No remaining executable
+- [x] **P02 — Installer cleanup:** Actual x64 uninstall verified for candidate `88d1b41` in
+  [run 33364588605](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33364588605).
+  No remaining executable
   payload, registration, shortcuts, app/bridge processes or session credentials; the documented
   NSIS candidate permits no retained installation entries, including a legacy `.dead` tombstone.
   Do not manually delete residue to manufacture a passing result.
@@ -69,6 +71,18 @@ do not relax them to obtain Windows 11 x64 evidence.
 
 ## Current evidence and remaining work
 
+Candidate `88d1b41` with the NSIS decoder backport passed actual x64 and ARM64 installation,
+installed artifact/containment checks and uninstall without manual deletion in run 33364588605.
+The exact source/merge/Setup identities are in the [transition record](transition-to-next-feature.md).
+The x64 runner was Windows Server 2025, so P01 remains open; ARM64 remains diagnostic under D02.
+P02 is complete for this candidate, not a blanket approval of future installer bytes. The prior
+Squirrel failures below remain historical evidence rather than current NSIS cleanup failures.
+
+Fresh local packaged idle measurement was 382.609 MiB peak and 0% median CPU over twelve windows.
+The four-idle-session 700 MiB requirement still needs supported packaged-client evidence; the
+development/inspector x64 CI observation was 790 MiB and is not a release-budget pass.
+Candidate CI and CodeQL passed on both architectures; the exact run evidence is recorded below.
+
 At runtime/test commit `ea4c90675487903c255193dd22c3d39fb95b2010`, x64/ARM64 Windows CI and CodeQL
 passed; local verification included 360 unit, 264 contract and 42 E2E cases. Actual installed
 artifact and native/Electron containment checks passed on Windows Server x64 and Windows 11 ARM64.
@@ -76,7 +90,7 @@ Uninstall failed on both: x64 retained updater binaries; the latest ARM64 run al
 application files. These failures are not waived. See [PR17](https://github.com/Lastonedown86/ThreadHelm/pull/17)
 and [execution evidence](execution-evidence.md).
 
-The immediate retained work is the x64 installer cleanup repair, real Windows 11 x64 installed
+The immediate retained work is real Windows 11 x64 installed/manual and retained resource
 acceptance, independent review including the session-host scope decision, and owner acceptance.
 The release manifest/download list must contain only accepted x64 artifacts. There is currently no
 automatic publication workflow; building or uploading an ARM64 CI diagnostic is not distribution

@@ -1566,3 +1566,46 @@ four-worker measurement, or a newly approved memory ceiling. Evidence:
 The selector and five full-feature task checkboxes are unchanged. Retained supported-client proof,
 current resource/candidate checks, owner host-scope reconciliation, exact-candidate acceptance and
 required repository review remain prerequisites for the next-feature handoff.
+
+## 2026-08-31 retained installer gate verified
+
+[Installed run 33364588605](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33364588605)
+passed both jobs for source `88d1b41e9d9b9fbbaef5525647d09e8741e875c2`, tested merge checkout
+`3d6fe256ee455dbdf7af1a1568b4df7104fd26ae`.
+
+- x64, Windows Server 2025 build 26100: Setup SHA-256
+  `6452f3a870b45aef46c0822f35a729ade2dd5857843937ec892fa9b44cd71634`.
+- ARM64, Windows 11 Enterprise build 26200, diagnostic only: Setup SHA-256
+  `bd46ca08313fd5d6af46b12d07177e075dc8c99a1abe49cba00e150c5b14cbf4`.
+
+Both actual installs passed native/bridge and Electron/session-host/ConPTY containment, preserved
+Forge EXE/ASAR identity, and passed unsigned policy, fuses, private-persona exclusion and architecture
+checks. Both normal uninstalls left all observed installation entries, registrations, shortcuts,
+app/helper processes and session credential collections empty, without manual deletion. The
+temporary helper was observed with its expected build hash and later absent. Independent review
+verified the reports and live GitHub source/merge/run metadata. Reports are retained in the run's
+artifacts and locally under `tmp/us8/handoff-backport-accepted/`; that local directory name denotes
+automated test success, not owner acceptance.
+
+The nested optional adjacent-checksum scenario was skipped because the installed executable has no
+sidecar. The outer harness separately verified the Setup checksum and installed EXE/ASAR identities;
+do not claim the nested scenario passed. Publisher trust remains unverified under the unsigned
+policy, and `providerMissionGate` is explicitly `NOT_RUN`.
+
+P02 is checked only for this exact candidate. P01 still requires Windows 11 x64 installed/manual
+evidence; P04 still requires the supported packaged-client four-idle-session resource proof. The
+latest development/inspector x64 CI observation was 790 MiB against the retained 700 MiB budget and
+cannot be relabeled a release-budget pass. P03/P05 owner scope reconciliation and candidate acceptance,
+required repository approval and integration remain open. D01-D04 and all five original full-feature
+task checkboxes remain unchanged. Latest CI status is tracked in PR17 rather than inferred from
+installer success.
+
+[CI run 33364588606](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33364588606) and
+[CodeQL run 33364586812](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33364586812) passed
+for the same `88d1b41` source candidate. Each architecture passed 32 Rust tests, 364 unit tests,
+273 contracts, 97 Windows integration tests with one existing skip, and 42 E2E cases. Formatting,
+lint, Rust checks, typecheck and builds also passed. The native short-path observer correction
+passed in the full Windows suite on both architectures. Default CI records rather than enforces
+packaged release resource limits; these green results do not close the retained 700 MiB gate.
+This final evidence-record update changes documentation only, not the tested candidate's code,
+dependencies, packaging configuration, installer bytes or approved scope.

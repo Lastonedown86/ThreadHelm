@@ -28,11 +28,11 @@ Populate these fields from completed evidence, not from intended actions:
 
 | Required record | Current state |
 | --- | --- |
-| Candidate source commit and installer SHA-256 | Pending final reviewed build |
+| Candidate source commit and installer SHA-256 | Source 88d1b41e9d9b9fbbaef5525647d09e8741e875c2; x64 Setup 6452f3a870b45aef46c0822f35a729ade2dd5857843937ec892fa9b44cd71634 |
 | P01: disposable Windows 11 x64 installed/manual acceptance | Pending supported client environment and exact candidate proof |
-| P02: actual uninstall with no executable residue | Source 19752c4 passed actual x64 cleanup on Server in run 33363402143, without manual deletion. The builder compression backport changes installer bytes and awaits fresh artifact proof. |
+| P02: actual uninstall with no executable residue | Passed for candidate 88d1b41 on Server x64 in run 33364588605, without manual deletion. Independent evidence review also passed. |
 | P03: independent safety review and host scope reconciliation | Worker-bound/recovery fixes passed independent review. Owner exception remains pending. |
-| P04: x64 candidate controls and applicable CI | Revalidate after runtime and installer changes |
+| P04: x64 candidate controls and applicable CI | Installed controls, CI run 33364588606 and CodeQL passed for candidate 88d1b41. Retained supported-client resource proof remains pending. |
 | P05: owner acceptance of exact candidate and limitations | Pending P01-P04 |
 | Required repository review and main integration | PR17 draft; no approval or merge recorded |
 
@@ -47,6 +47,12 @@ The corrected identity run passed x64 installed/cleanup checks. ARM64 installed 
 omitted native binaries, matching a vendor extractor bug. Both builder packages are now pinned
 to the maintained v26 backport, 26.15.7; fresh artifact results are tracked in PR17 and the
 [execution record](execution-evidence.md). ARM64 distribution remains deferred.
+
+The maintained-backport run 33364588605 subsequently passed both architectures, including actual
+installed native and Electron/session-host/ConPTY containment and clean uninstall. Tested merge
+checkout: `3d6fe256ee455dbdf7af1a1568b4df7104fd26ae`. The x64 Setup digest is above; diagnostic ARM64
+Setup digest is `bd46ca08313fd5d6af46b12d07177e075dc8c99a1abe49cba00e150c5b14cbf4`.
+Both reports explicitly leave provider mission proof unrun. ARM success does not expand distribution.
 
 Standard hosted x64 installer evidence is from Windows Server and does not satisfy P01's Windows 11
 x64 client requirement. No disposable client environment is confirmed yet. Do not run the destructive

@@ -19,8 +19,10 @@ The existing artifact suite checks actual installed fuses, architecture, private
 startup/native loading, provider availability probes and single-instance behavior. No paid provider
 session or live mission-provider proof is run.
 
-The additional containment test loads the **installed** N-API binary and starts the **installed**
-native bridge beneath a dormant test helper using real Windows Job Objects. It verifies inheritance,
+The additional containment test loads the **installed** N-API binary in a bounded subprocess and starts
+the **installed** native bridge beneath a dormant test helper using real Windows Job Objects. The
+harness waits for that subprocess to close before uninstall: a loaded Windows DLL remains mapped even
+after deleting a JavaScript require-cache entry. It verifies inheritance,
 termination and kill-on-close. This native-artifact result is recorded separately from the next proof:
 the actual installed `ThreadHelm.exe --threadhelm-proof-node <absolute node.exe> <helper arguments>`
 launches a standalone diagnostic helper through the real Electron utility process/session host and
@@ -34,6 +36,11 @@ enable it and no production fuse relaxation. Helper output and captured proof ou
 process timeouts or missing proof markers fail acceptance. The report records a passing installed
 Electron result only after these checks succeed; live provider/mission proof remains `NOT_RUN`.
 
+Squirrel adds its own updater to the versioned app directory. Only that exact root-level
+`squirrel.exe` may differ from the target architecture, and only after its bytes match the current
+maker package's vendor binary. The report records its SHA-256 separately. Application executables,
+native addons, DLLs and all nested payloads retain strict target-architecture checks.
+
 Setup and uninstall are bounded. The uninstaller runs in `finally` even if an earlier acceptance
 assertion fails. It is resolved under the exact newly created install root, never taken from arbitrary
 registry command text. There is no manual recursive deletion of installation files, registry entries,
@@ -42,6 +49,9 @@ payloads, uninstall registration, shortcuts, app/bridge processes or session cre
 Squirrel's documented `.dead` tombstone is allowed. Durable user data outside the installation tree is
 not deleted by the harness or falsely claimed removed. Only curated reports are uploaded; raw app logs
 and disposable bridge credential files are not uploaded. GitHub disposes of the VM after the job.
+Failed nested acceptance cases retain bounded scenario/error codes and native relative paths without
+raw assertion values. Uninstall diagnostics include at most 256 remaining relative paths, entry types
+and file sizes, never file contents; reparse points are listed without following them.
 
 The standard x64 hosted image may be Windows Server rather than Windows 11. Record its actual edition;
 do not claim a supported Windows 11 x64 end-user workflow from that result alone. ARM64 runs on the

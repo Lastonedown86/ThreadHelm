@@ -17,14 +17,16 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { release } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { createRequire } from 'node:module';
 import { FuseV1Options, getCurrentFuseWire } from '@electron/fuses';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
 import { cleanupUserData, makeUserData } from '../e2e/helpers/app.js';
 import {
   assertNoPrivatePersonaFile,
   assertProductionPersonaBoundary,
 } from '../../apps/desktop/src/packaging/release-personas.js';
-import { assertNativeArchitecture } from '../../apps/desktop/src/packaging/native-architecture.js';
+import { assertInstalledNativeArchitecture } from './helpers/installed-native-architecture.js';
+import { acceptanceFailure } from './helpers/acceptance-failure.js';
 import { assertReleaseSignatureStatus } from '../../apps/desktop/src/packaging/signature-policy.js';
 
 const artifact = process.env.THREADHELM_ARTIFACT;
@@ -83,6 +85,14 @@ describeInstalled('installed artifact acceptance', () => {
     scenarios: {} as Record<string, string>,
   };
   const scenarios = report.scenarios as Record<string, string>;
+  const failedTests: ReturnType<typeof acceptanceFailure>[] = [];
+  report.failedTests = failedTests;
+  beforeEach(() => {
+    onTestFailed(({ task }) => {
+      if (failedTests.length < 16)
+        failedTests.push(acceptanceFailure(task.name, task.result?.errors, dirname(exe)));
+    });
+  });
 
   beforeAll(() => {
     expect(existsSync(exe), `artifact not found: ${exe}`).toBe(true);
@@ -199,8 +209,20 @@ describeInstalled('installed artifact acceptance', () => {
   });
 
   it('contains native files matching the tested Windows architecture', () => {
-    assertNativeArchitecture(dirname(exe), process.arch);
-    scenarios.nativeArchitecture = `PE native files match ${process.arch}`;
+    const desktopRequire = createRequire(
+      resolve(import.meta.dirname, '../../apps/desktop/package.json'),
+    );
+    const makerRequire = createRequire(desktopRequire.resolve('@electron-forge/maker-squirrel'));
+    const vendor = join(
+      dirname(makerRequire.resolve('electron-winstaller/package.json')),
+      'vendor',
+      'Squirrel.exe',
+    );
+    const updaterIdentity = assertInstalledNativeArchitecture(dirname(exe), process.arch, vendor);
+    report.installerUpdaterIdentity = updaterIdentity;
+    scenarios.nativeArchitecture = updaterIdentity.updaterSha256
+      ? `Application native files match ${process.arch}; maker updater separately byte-verified`
+      : `Application native files match ${process.arch}; no maker updater present`;
   });
 
   // Production fuses disable the inspect port Playwright attaches through, so

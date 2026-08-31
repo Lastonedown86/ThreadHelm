@@ -17,9 +17,11 @@ import type {
   MemoryDetailView,
   PowerEvent,
   ProviderId,
+  ProviderLifecycleEvidence,
   ProviderMemoryProposeRevisionInput,
 } from '@threadhelm/contracts';
 import type { FakeAgentMode } from '@threadhelm/test-fixtures';
+import type { TestHooks } from '../../../apps/desktop/src/main/test-hooks.js';
 
 export const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 export const desktopDir = resolve(repoRoot, 'apps/desktop');
@@ -64,6 +66,12 @@ export interface LaunchedApp {
     sessionId: string,
     input: ProviderMemoryProposeRevisionInput,
   ): Promise<MemoryDetailView>;
+  replyFromProvider(
+    input: Parameters<TestHooks['replyFromProvider']>[0],
+  ): Promise<ReturnType<TestHooks['replyFromProvider']>>;
+  emitProviderLifecycle(
+    evidence: ProviderLifecycleEvidence,
+  ): ReturnType<TestHooks['emitProviderLifecycle']>;
   /** Authenticated request through the real main-owned named pipe, not direct dispatch. */
   bridgeRequest<T = unknown>(
     sessionId: string,
@@ -165,6 +173,8 @@ export async function launchApp(options: LaunchOptions = {}): Promise<LaunchedAp
       }),
     proposeProviderMemory: (sessionId, input) =>
       hooks('hooks.proposeProviderMemory(arg.sessionId, arg.input)', { sessionId, input }),
+    replyFromProvider: (input) => hooks('hooks.replyFromProvider(arg)', input),
+    emitProviderLifecycle: (evidence) => hooks('hooks.emitProviderLifecycle(arg)', evidence),
     bridgeRequest: (sessionId, method, params) =>
       hooks('hooks.bridgeRequest(arg.sessionId,arg.method,arg.params)', {
         sessionId,

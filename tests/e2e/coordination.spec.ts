@@ -92,33 +92,6 @@ async function createDeliveredConversation(
   return handoff;
 }
 
-async function replyFromProvider(
-  app: LaunchedApp,
-  input: {
-    sessionId: string;
-    inReplyToId: string;
-    kind: 'response' | 'inform' | 'completion' | 'refusal' | 'failure';
-    purpose: string;
-    body: string;
-    authorityRequired: boolean;
-  },
-): Promise<{ id: string; deliveryState: string; holdReasonCode: string | null }> {
-  return app.app.evaluate((_electron, value) => {
-    const hooks = (
-      globalThis as unknown as {
-        __threadhelmTest: {
-          replyFromProvider(input: Record<string, unknown>): {
-            id: string;
-            deliveryState: string;
-            holdReasonCode: string | null;
-          };
-        };
-      }
-    ).__threadhelmTest;
-    return hooks.replyFromProvider(value);
-  }, input);
-}
-
 test('keyboard-only user flow creates and manually presents one exact handoff', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' });
   const { dirs } = await launchThree(app);
@@ -345,48 +318,30 @@ test('safe lifecycle presents once while unproved evidence keeps the visible man
       'Keep this visible when draft safety is unknown.',
     );
 
-    await app.app.evaluate((_electron, sessionId) => {
-      const hooks = (
-        globalThis as unknown as {
-          __threadhelmTest: {
-            emitProviderLifecycle(evidence: Record<string, unknown>): Promise<unknown>;
-          };
-        }
-      ).__threadhelmTest;
-      return hooks.emitProviderLifecycle({
-        sessionId,
-        providerId: 'claude-code',
-        providerVersion: '1.0.0',
-        eventKind: 'safe_point',
-        providerEventId: 'e2e-safe-point-1',
-        turnId: 'e2e-turn-1',
-        occurredAt: new Date().toISOString(),
-        safePoint: true,
-        inputSafety: 'proved_no_pending_draft',
-      });
-    }, sessions[1]!.id);
+    await app.emitProviderLifecycle({
+      sessionId: sessions[1]!.id,
+      providerId: 'claude-code',
+      providerVersion: '1.0.0',
+      eventKind: 'safe_point',
+      providerEventId: 'e2e-safe-point-1',
+      turnId: 'e2e-turn-1',
+      occurredAt: new Date().toISOString(),
+      safePoint: true,
+      inputSafety: 'proved_no_pending_draft',
+    });
     await expect(first).toContainText('Delivered — outcome pending', { timeout: 30_000 });
 
-    const result = await app.app.evaluate((_electron, sessionId) => {
-      const hooks = (
-        globalThis as unknown as {
-          __threadhelmTest: {
-            emitProviderLifecycle(evidence: Record<string, unknown>): Promise<unknown>;
-          };
-        }
-      ).__threadhelmTest;
-      return hooks.emitProviderLifecycle({
-        sessionId,
-        providerId: 'claude-code',
-        providerVersion: '1.0.0',
-        eventKind: 'safe_point',
-        providerEventId: 'e2e-safe-point-2',
-        turnId: 'e2e-turn-2',
-        occurredAt: new Date().toISOString(),
-        safePoint: true,
-        inputSafety: 'unknown',
-      }) as Promise<{ status: string }>;
-    }, sessions[1]!.id);
+    const result = await app.emitProviderLifecycle({
+      sessionId: sessions[1]!.id,
+      providerId: 'claude-code',
+      providerVersion: '1.0.0',
+      eventKind: 'safe_point',
+      providerEventId: 'e2e-safe-point-2',
+      turnId: 'e2e-turn-2',
+      occurredAt: new Date().toISOString(),
+      safePoint: true,
+      inputSafety: 'unknown',
+    });
     expect(result.status).toBe('manual_only');
     await expect(second).toContainText('Manual action required');
     await expect(second.getByRole('button', { name: 'Present…' })).toBeVisible();
@@ -417,7 +372,7 @@ test('bounded coordination requires disclosure before one eligible provider repl
     await expect(disclosure).toBeHidden();
     await expect(detail).toContainText('Automatic continuation enabled');
 
-    const reply = await replyFromProvider(app, {
+    const reply = await app.replyFromProvider({
       sessionId: sessions[1]!.id,
       inReplyToId: root.id,
       kind: 'response',
@@ -427,26 +382,17 @@ test('bounded coordination requires disclosure before one eligible provider repl
     });
     expect(reply.deliveryState).toBe('queued');
 
-    await app.app.evaluate((_electron, sessionId) => {
-      const hooks = (
-        globalThis as unknown as {
-          __threadhelmTest: {
-            emitProviderLifecycle(evidence: Record<string, unknown>): Promise<unknown>;
-          };
-        }
-      ).__threadhelmTest;
-      return hooks.emitProviderLifecycle({
-        sessionId,
-        providerId: 'codex-cli',
-        providerVersion: '1.0.0',
-        eventKind: 'safe_point',
-        providerEventId: 'us4-e2e-safe-point',
-        turnId: 'us4-e2e-turn',
-        occurredAt: new Date().toISOString(),
-        safePoint: true,
-        inputSafety: 'proved_no_pending_draft',
-      });
-    }, sessions[0]!.id);
+    await app.emitProviderLifecycle({
+      sessionId: sessions[0]!.id,
+      providerId: 'codex-cli',
+      providerVersion: '1.0.0',
+      eventKind: 'safe_point',
+      providerEventId: 'us4-e2e-safe-point',
+      turnId: 'us4-e2e-turn',
+      occurredAt: new Date().toISOString(),
+      safePoint: true,
+      inputSafety: 'proved_no_pending_draft',
+    });
 
     await press(conversations.getByRole('button', { name: 'Refresh' }));
     await press(conversations.getByRole('listitem').first());
@@ -472,7 +418,7 @@ test('authority escalation can close a conversation and later provider messages 
       autoContinueConfirmation: true,
     });
 
-    const held = await replyFromProvider(app, {
+    const held = await app.replyFromProvider({
       sessionId: sessions[1]!.id,
       inReplyToId: root.id,
       kind: 'response',
@@ -492,7 +438,7 @@ test('authority escalation can close a conversation and later provider messages 
     await press(escalation.getByRole('button', { name: 'Close conversation' }));
     await expect(detail).toContainText('closed');
 
-    const late = await replyFromProvider(app, {
+    const late = await app.replyFromProvider({
       sessionId: sessions[1]!.id,
       inReplyToId: root.id,
       kind: 'inform',

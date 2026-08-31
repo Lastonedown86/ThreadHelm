@@ -1,4 +1,4 @@
-param([Parameter(Mandatory = $true)][string]$InstallRoot)
+param([Parameter(Mandatory = $true)][string]$InstallRoot, [switch]$IncludeTree)
 $ErrorActionPreference = 'Stop'
 $prefix = [IO.Path]::GetFullPath($InstallRoot).TrimEnd('\') + '\'
 $registrations = @()
@@ -31,11 +31,30 @@ foreach ($name in @('ThreadHelm', '@threadhelm/desktop', 'threadhelm')) {
     }
 }
 $rootEntries = @()
+$remainingEntries = @()
+$remainingEntriesTruncated = $false
 if (Test-Path -LiteralPath $InstallRoot) {
     $rootEntries = @(Get-ChildItem -LiteralPath $InstallRoot -Force | Select-Object -ExpandProperty Name)
+    if ($IncludeTree) {
+        $pending = [Collections.Generic.Queue[string]]::new()
+        $pending.Enqueue([IO.Path]::GetFullPath($InstallRoot))
+        while ($pending.Count -gt 0 -and -not $remainingEntriesTruncated) {
+            $directory = $pending.Dequeue()
+            foreach ($entry in Get-ChildItem -LiteralPath $directory -Force) {
+                if ($remainingEntries.Count -ge 256) { $remainingEntriesTruncated = $true; break }
+                if (-not $entry.FullName.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) { throw 'OBSERVATION_PATH_OUTSIDE_INSTALL' }
+                $reparse = ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0
+                $kind = if ($reparse) { 'reparsePoint' } elseif ($entry.PSIsContainer) { 'directory' } else { 'file' }
+                $remainingEntries += @{ relativePath = $entry.FullName.Substring($prefix.Length); type = $kind; bytes = $(if ($entry.PSIsContainer) { $null } else { $entry.Length }) }
+                if ($entry.PSIsContainer -and -not $reparse) { $pending.Enqueue($entry.FullName) }
+            }
+        }
+    }
 }
 @{
     rootEntries = $rootEntries
+    remainingEntries = $remainingEntries
+    remainingEntriesTruncated = $remainingEntriesTruncated
     registrations = @($registrations | ForEach-Object { $_.key })
     registrationDetails = $registrations
     shortcuts = @($shortcuts | Sort-Object -Unique)

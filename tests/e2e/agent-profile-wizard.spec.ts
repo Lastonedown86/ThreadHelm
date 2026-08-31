@@ -13,23 +13,40 @@ async function press(locator: Locator, key = 'Enter') {
   await locator.page().keyboard.press(key);
 }
 
+type WizardStep =
+  'Start' | 'Identity' | 'Role and goal' | 'Capabilities' | 'Runtime requests' | 'Review';
+
+async function navigate(
+  wizard: Locator,
+  from: WizardStep,
+  to: WizardStep,
+  direction: 'Next' | 'Back' = 'Next',
+) {
+  await expect(wizard.getByRole('heading', { name: from, exact: true })).toBeVisible();
+  await press(wizard.getByRole('button', { name: direction, exact: true }));
+  // The same Next/Back button survives async saves. Wait for the actual step
+  // and its keyboard focus transfer before issuing another navigation action.
+  const heading = wizard.getByRole('heading', { name: to, exact: true });
+  await expect(heading).toBeVisible();
+  await expect(heading).toBeFocused();
+}
+
 async function openQuality(app: LaunchedApp) {
   await press(app.page.getByRole('button', { name: 'Create agent…', exact: true }));
   const wizard = app.page.getByRole('dialog', { name: 'Create agent', exact: true });
   await wizard
     .getByLabel('Start from', { exact: true })
     .selectOption({ label: 'Quality specialist (bundled)' });
-  await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+  await navigate(wizard, 'Start', 'Identity');
   return wizard;
 }
 
 async function review(wizard: Locator, name: string) {
   await wizard.getByLabel('Name', { exact: true }).fill(name);
-  await press(wizard.getByRole('button', { name: 'Next', exact: true }));
-  await expect(wizard.getByRole('heading', { name: 'Role and goal', exact: true })).toBeVisible();
-  await press(wizard.getByRole('button', { name: 'Next', exact: true }));
-  await press(wizard.getByRole('button', { name: 'Next', exact: true }));
-  await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+  await navigate(wizard, 'Identity', 'Role and goal');
+  await navigate(wizard, 'Role and goal', 'Capabilities');
+  await navigate(wizard, 'Capabilities', 'Runtime requests');
+  await navigate(wizard, 'Runtime requests', 'Review');
   await expect(wizard.getByRole('heading', { name: 'Review', exact: true })).toBeVisible();
   await expect(wizard.getByLabel('Exact manifest JSON')).toContainText(name);
 }
@@ -64,8 +81,8 @@ test('invalid fields stay visible and a cancelled draft resumes with Back and De
     await expect(wizard.getByRole('alert')).toContainText('Name');
     await expect(wizard.getByRole('heading', { name: 'Identity', exact: true })).toBeVisible();
     await wizard.getByLabel('Name', { exact: true }).fill('Resumable quality');
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
-    await press(wizard.getByRole('button', { name: 'Back', exact: true }));
+    await navigate(wizard, 'Identity', 'Role and goal');
+    await navigate(wizard, 'Role and goal', 'Identity', 'Back');
     await expect(wizard.getByLabel('Name', { exact: true })).toHaveValue('Resumable quality');
     await press(wizard.getByRole('button', { name: 'Save draft and close', exact: true }));
     await expect(wizard).toBeHidden();
@@ -101,18 +118,17 @@ test('a declared identity variable is reachable before Identity advances', async
     await wizard
       .getByLabel('Start from', { exact: true })
       .selectOption({ label: 'Identity variable starter (local)' });
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+    await navigate(wizard, 'Start', 'Identity');
     await wizard.getByLabel('Name', { exact: true }).fill('{{identity}}');
     await wizard.getByLabel('Variable: identity', { exact: true }).fill('');
     await press(wizard.getByRole('button', { name: 'Next', exact: true }));
     await expect(wizard.getByRole('heading', { name: 'Identity', exact: true })).toBeVisible();
     await expect(wizard.getByRole('alert')).toContainText('Name');
     await wizard.getByLabel('Variable: identity', { exact: true }).fill('Resolved identity');
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
-    await expect(wizard.getByRole('heading', { name: 'Role and goal', exact: true })).toBeVisible();
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+    await navigate(wizard, 'Identity', 'Role and goal');
+    await navigate(wizard, 'Role and goal', 'Capabilities');
+    await navigate(wizard, 'Capabilities', 'Runtime requests');
+    await navigate(wizard, 'Runtime requests', 'Review');
     await expect(wizard.getByLabel('Exact manifest JSON')).toContainText('Resolved identity');
   } finally {
     await teardown(app);
@@ -178,19 +194,21 @@ test('local themed templates come from reviewed profiles and remain separate fro
     await wizard
       .getByLabel('Start from', { exact: true })
       .selectOption({ label: 'Spider-Man (reviewed profile)' });
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+    await navigate(wizard, 'Start', 'Identity');
     await review(wizard, 'Spider-Man local quality');
     await press(wizard.getByRole('checkbox', { name: 'I reviewed this exact manifest' }), 'Space');
     await press(wizard.getByRole('button', { name: 'Save as template…', exact: true }));
     await press(wizard.getByRole('button', { name: 'Confirm save template', exact: true }));
     await expect(wizard.getByRole('status')).toContainText('Local template saved');
-    for (let step = 0; step < 3; step += 1)
-      await press(wizard.getByRole('button', { name: 'Back', exact: true }));
+    await navigate(wizard, 'Review', 'Runtime requests', 'Back');
+    await navigate(wizard, 'Runtime requests', 'Capabilities', 'Back');
+    await navigate(wizard, 'Capabilities', 'Role and goal', 'Back');
     await wizard
       .getByLabel('Goal', { exact: true })
       .fill('Review this bounded local quality change.');
-    for (let step = 0; step < 3; step += 1)
-      await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+    await navigate(wizard, 'Role and goal', 'Capabilities');
+    await navigate(wizard, 'Capabilities', 'Runtime requests');
+    await navigate(wizard, 'Runtime requests', 'Review');
     await press(wizard.getByRole('checkbox', { name: 'I reviewed this exact manifest' }), 'Space');
     await press(wizard.getByRole('button', { name: 'Save as template…', exact: true }));
     await wizard
@@ -248,7 +266,7 @@ test('a saved draft reopens after an actual desktop restart', async () => {
   try {
     const wizard = await openQuality(app);
     await wizard.getByLabel('Name', { exact: true }).fill('Restart survivor');
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+    await navigate(wizard, 'Identity', 'Role and goal');
     await wizard.getByLabel('Goal', { exact: true }).fill('Only inspect the reviewed scope.');
     await press(wizard.getByRole('button', { name: 'Save draft and close', exact: true }));
     await expect(wizard).toBeHidden();
@@ -260,7 +278,7 @@ test('a saved draft reopens after an actual desktop restart', async () => {
     await expect(resumed.getByLabel('Goal', { exact: true })).toHaveValue(
       'Only inspect the reviewed scope.',
     );
-    await press(resumed.getByRole('button', { name: 'Back', exact: true }));
+    await navigate(resumed, 'Role and goal', 'Identity', 'Back');
     await expect(resumed.getByLabel('Name', { exact: true })).toHaveValue('Restart survivor');
   } finally {
     await teardown(app);
@@ -273,23 +291,23 @@ test('blank creation preserves capability typing and a custom model through revi
     await press(app.page.getByRole('button', { name: 'Create agent…', exact: true }));
     const wizard = app.page.getByRole('dialog', { name: 'Create agent', exact: true });
     await wizard.getByLabel('Start from', { exact: true }).selectOption('blank');
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+    await navigate(wizard, 'Start', 'Identity');
     await wizard.getByLabel('Name', { exact: true }).fill('Blank bounded helper');
     await wizard.getByLabel('Description', { exact: true }).fill('A local, bounded helper.');
     await wizard.getByLabel('Author', { exact: true }).fill('Local owner');
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+    await navigate(wizard, 'Identity', 'Role and goal');
     await wizard.getByLabel('Goal', { exact: true }).fill('Review only the approved change.');
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+    await navigate(wizard, 'Role and goal', 'Capabilities');
     await wizard.getByLabel('Capability labels').pressSequentially('quality_review, documentation');
     await expect(wizard.getByLabel('Capability labels')).toHaveValue(
       'quality_review, documentation',
     );
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+    await navigate(wizard, 'Capabilities', 'Runtime requests');
     await wizard.getByLabel('Provider', { exact: true }).selectOption('codex');
     await wizard.getByLabel('Model', { exact: true }).selectOption('__custom__');
     await wizard.getByLabel('Custom model', { exact: true }).fill('gpt-5.6-terra');
     await wizard.getByLabel('Requested token cap').fill('250000');
-    await press(wizard.getByRole('button', { name: 'Next', exact: true }));
+    await navigate(wizard, 'Runtime requests', 'Review');
     await expect(wizard.getByLabel('Exact manifest JSON')).toContainText('munder-difflin/hire@1');
     await expect(wizard.getByLabel('Exact manifest JSON')).toContainText('documentation');
     await press(wizard.getByRole('checkbox', { name: 'I reviewed this exact manifest' }), 'Space');

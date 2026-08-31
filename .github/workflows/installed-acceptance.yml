@@ -9,7 +9,9 @@ on:
       - 'native/windows-supervisor/**'
       - 'packages/**'
       - 'tests/acceptance/**'
+      - 'tests/e2e/helpers/**'
       - 'tests/unit/packaging/**'
+      - 'vitest.config.ts'
       - 'package.json'
       - 'pnpm-lock.yaml'
 
@@ -52,7 +54,7 @@ jobs:
           targets: ${{ matrix.rust_target }}
       - run: pnpm install --frozen-lockfile
       - name: Installer safety boundary tests
-        run: pnpm exec vitest run --project unit tests/unit/packaging/squirrel-safety.test.ts tests/unit/packaging/proof-options.test.ts tests/unit/packaging/proof-descendant.test.ts
+        run: pnpm exec vitest run --project unit tests/unit/packaging/squirrel-safety.test.ts tests/unit/packaging/proof-options.test.ts tests/unit/packaging/proof-descendant.test.ts tests/unit/packaging/isolated-proof.test.ts tests/unit/packaging/installed-native-architecture.test.ts tests/unit/packaging/acceptance-failure.test.ts
       - name: Build native addon and real bridge
         run: pnpm native:build
       - name: Build production desktop

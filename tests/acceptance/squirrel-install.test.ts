@@ -11,9 +11,9 @@ import {
   readdirSync,
   writeFileSync,
 } from 'node:fs';
-import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { isolatedProof } from './helpers/isolated-proof.js';
 import {
   assertFreshAccount,
   assertUninstalled,
@@ -30,7 +30,7 @@ type Observation = InstallObservation & {
   windows: { caption: string; build: string };
 };
 
-function observe(installRoot: string): Observation {
+function observe(installRoot: string, includeTree = false): Observation {
   return JSON.parse(
     execFileSync(
       'pwsh.exe',
@@ -41,6 +41,7 @@ function observe(installRoot: string): Observation {
         join(helperRoot, 'observe-installation.ps1'),
         '-InstallRoot',
         installRoot,
+        ...(includeTree ? ['-IncludeTree'] : []),
       ],
       {
         encoding: 'utf8',
@@ -83,29 +84,7 @@ function run(file: string, args: string[], timeout: number, env = process.env): 
   });
 }
 
-interface NativeScope {
-  createKillOnCloseJob(sessionId: string): number;
-  assignProcess(token: number, pid: number): void;
-  verifyProcessInJob(token: number, pid: number): boolean;
-  inspectJob(token: number): {
-    activeProcessCount: number;
-    processIds: number[];
-    truncated: boolean;
-  };
-  terminateJob(token: number, code: number): { activeProcessCount: number };
-  closeJob(token: number): void;
-}
-
-function alive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** Proves the installed native addon and installed bridge only, not Electron session-host wiring. */
+/** The native addon is loaded only by a subprocess which must close before uninstall. */
 async function nativeArtifactProof(installed: string, reportRoot: string, arch: string) {
   const unpacked = join(dirname(installed), 'resources', 'app.asar.unpacked');
   const nativeDir = join(unpacked, 'node_modules', '@threadhelm', 'windows-supervisor');
@@ -114,88 +93,20 @@ async function nativeArtifactProof(installed: string, reportRoot: string, arch: 
   );
   expect(files).toHaveLength(1);
   const nativeFile = realChild(unpacked, join(nativeDir, files[0]!));
-  const native = createRequire(import.meta.url)(nativeFile) as NativeScope;
   const bridge = realChild(
     unpacked,
     join(unpacked, 'out', 'main', 'threadhelm-coordination-bridge.exe'),
   );
-  const phases: Record<string, boolean> = {};
-  for (const mode of ['terminate', 'close'] as const) {
-    const sessionId = randomUUID();
-    const config = join(reportRoot, `bridge-${mode}.json`);
-    writeFileSync(
-      config,
-      JSON.stringify({
-        version: 1,
-        pipeName: `\\\\.\\pipe\\threadhelm-install-${sessionId}`,
-        sessionId,
-        credential: `disposable-proof-${randomUUID()}-${randomUUID()}`,
-      }),
-    );
-    const token = native.createKillOnCloseJob(sessionId);
-    let tokenClosed = false;
-    const child = spawn(process.execPath, [join(helperRoot, 'installed-bridge-child.mjs')], {
-      stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-      windowsHide: true,
-    });
-    let bridgePid = 0;
-    try {
-      await new Promise<void>((resolveReady, reject) => {
-        const timer = setTimeout(() => reject(new Error('DORMANT_HELPER_TIMEOUT')), 10_000);
-        child.once('message', (message) => {
-          clearTimeout(timer);
-          if (!(message as { ready?: boolean }).ready) reject(new Error('DORMANT_HELPER_INVALID'));
-          else resolveReady();
-        });
-        child.once('error', () => {
-          clearTimeout(timer);
-          reject(new Error('DORMANT_HELPER_FAILED'));
-        });
-      });
-      native.assignProcess(token, child.pid!);
-      expect(native.verifyProcessInJob(token, child.pid!)).toBe(true);
-      expect(native.inspectJob(token).activeProcessCount).toBe(1);
-      bridgePid = await new Promise<number>((resolvePid, reject) => {
-        const timer = setTimeout(() => reject(new Error('INSTALLED_BRIDGE_TIMEOUT')), 10_000);
-        child.once('message', (message) => {
-          clearTimeout(timer);
-          const id = (message as { bridgePid?: number }).bridgePid;
-          if (!Number.isSafeInteger(id) || !id) reject(new Error('INSTALLED_BRIDGE_FAILED'));
-          else resolvePid(id);
-        });
-        child.send({ bridge, config });
-      });
-      expect(native.verifyProcessInJob(token, bridgePid)).toBe(true);
-      const scope = native.inspectJob(token);
-      expect(scope.truncated).toBe(false);
-      expect(scope.processIds).toContain(bridgePid);
-      if (mode === 'terminate') expect(native.terminateJob(token, 1).activeProcessCount).toBe(0);
-      native.closeJob(token);
-      tokenClosed = true;
-      expect(
-        await waitFor(
-          () => !alive(child.pid!) && !alive(bridgePid),
-          (value) => value,
-        ),
-      ).toBe(true);
-      phases[mode] = true;
-    } finally {
-      try {
-        if (!tokenClosed) native.closeJob(token);
-      } finally {
-        child.kill();
-        // No deletion of installation state here. Disposable proof credentials stay only in runner temp.
-        writeFileSync(config, '');
-      }
-    }
-  }
-  return {
+  const proof = await isolatedProof(process.execPath, [
+    join(helperRoot, 'installed-native-proof.mjs'),
     nativeFile,
     bridge,
-    phases,
-    scope: 'installed-native-addon-and-real-bridge',
-    installedElectronSessionHost: 'NOT_PROVED_BY_THIS_TEST',
-  };
+    reportRoot,
+  ]);
+  expect(proof.code).toBe(0);
+  expect(proof.result.passed).toBe(true);
+  expect(proof.result.phases).toEqual({ terminate: true, close: true });
+  return { ...proof.result, proofProcessExited: true };
 }
 
 async function installedElectronProof(installed: string, reportRoot: string) {
@@ -411,6 +322,7 @@ describe.skipIf(!enabled)(
             status: artifact.signatureStatus,
             trustedPublisherVerified: artifact.trustedPublisherVerified === true,
           };
+          report.artifactAcceptanceFailures = artifact.failedTests;
         }
         expect(report.artifactAcceptanceExitCode).toBe(0);
       } catch (error) {
@@ -437,7 +349,7 @@ describe.skipIf(!enabled)(
               },
               60_000,
             );
-            report.afterUninstall = after;
+            report.afterUninstall = observe(plan.installRoot, true);
             assertUninstalled(after);
             report.uninstallCleanup = 'PASSED_WITHOUT_MANUAL_DELETION';
           } catch (error) {

@@ -116,7 +116,16 @@ test('keyboard can leave the terminal to reach Stop and confirm it', async () =>
     await page.keyboard.press('Enter');
     await expect(dialog).toBeHidden({ timeout: 30_000 });
     const [live] = await app.liveSessions();
+    const interrupt = page.locator('.control-bar').getByRole('button', {
+      name: 'Interrupt',
+      exact: true,
+    });
+    await expect(interrupt).toBeEnabled();
+    // Launch completion precedes the lazy terminal's mount and automatic focus.
+    // Exercise F6 from xterm itself; do not send it to a loading/previous control.
+    await expect(page.locator('.terminal-host .xterm-helper-textarea')).toBeFocused();
     await page.keyboard.press('F6');
+    await expect(interrupt).toBeFocused();
     await tabTo(page, /^Stop…$/);
     await page.keyboard.press('Enter');
     const stop = page.getByRole('dialog', { name: 'Stop this session?' });

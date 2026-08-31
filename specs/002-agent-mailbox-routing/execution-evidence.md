@@ -1306,3 +1306,45 @@ loading. No graphics, sandbox, metric, budget, or working-set trimming changed. 
 reassessment is recorded in `docs/architecture/desktop-shell-reassessment.md`; it recommends a bounded
 nonshipping comparison and does not approve a migration or claim an unmeasured alternative passes.
 Task count remains 161/166 pending hosted installed proof, exact provider evidence, and owner closure.
+
+The final full E2E rerun on `13aa68c` exposed one test-harness reentrancy failure (40 passed,
+one failed). A direct Playwright main-process evaluation entered `replyFromProvider` during a
+better-sqlite3 row-factory callback. The shared harness already queues work with `setImmediate`;
+the coordination spec had bypassed it for replies and three lifecycle injections. These callers
+now use typed methods on the existing queued path, with assertions and production code unchanged.
+The original trace/error context were preserved under `tmp/us8/closure4-authority-reentrancy*`.
+All three affected journeys passed three consecutive runs (9/9); a fresh full suite follows.
+That fresh full E2E suite completed at 22:51 EDT with all 41 cases passing.
+
+The first real hosted installer run, `33351451272`, exercised x64 on Windows Server 2025 and
+ARM64 on Windows 11 Enterprise 26200. Both Setup operations, registrations, shortcuts, installed
+native proofs, and installed Electron main/session-host/ConPTY/bridge proofs passed. Both nested
+artifact suites and uninstall-cleanup checks failed, so the workflow is not a pass. Reports are
+preserved under `tmp/us8/closure4-hosted-x64` and `closure4-hosted-arm64`; the actual CI checkout was
+merge commit `786b2e35cf5906f6bde5c12359d61cb4ffb7bbd5`, associated with PR head `13aa68c`.
+
+Investigation found two harness concerns: the parent Vitest process retained a loaded installed
+N-API DLL across uninstall, and Squirrel adds an installer helper (`lib/net45/squirrel.exe`,
+PE machine 014C) that is absent from the pre-installer app directory. Neither failed cleanup nor
+the missing architecture result is waived. Native proof must finish in a subprocess before
+uninstall, and any installer-helper architecture exception must verify exact trusted vendor bytes
+while leaving application/native payload checks strict. Follow-up evidence remains required.
+
+The follow-up now waits for the isolated native-proof subprocess to close before uninstall, so its
+DLL mappings are released. A copied real-addon experiment reproduced deletion denial while its
+loading process remained alive and successful deletion after exit. The only mixed-architecture
+exception is the root maker-injected `squirrel.exe`, verified byte-for-byte against the pinned
+maker dependency's vendor helper; changed bytes, nested helpers, and wrong-architecture application
+payload still fail. Bounded failure metadata records remaining paths/types/sizes without retaining
+file contents, credentials, or raw assertions. No manual installation cleanup was added.
+
+Hosted CI on `13aa68c` also failed one keyboard journey on x64 and one wizard journey on ARM64.
+The tests now wait for the terminal's automatic focus before F6 and for each successful wizard
+transition's destination heading/focus. Assertions remain intact, with retries disabled and no
+arbitrary sleeps. The focused slice passed 11/11; both affected journeys then passed three independent
+runs each (6/6). No hosted trace was available to confirm the exact intermediate focus state.
+
+Local follow-up verification at 22:57 EDT passed 360 unit tests, 264 contracts, typecheck, formatting,
+and lint. The queued coordination fix passed the full 41-case E2E suite before the subsequent
+keyboard/wizard readiness assertions. Hosted installation and CI must be rerun on the new commit;
+the previous failed runs are retained as failed evidence, not retrospectively marked green.

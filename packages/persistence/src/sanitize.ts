@@ -4,7 +4,7 @@
  * `sanitizeSummary` is the gate for summaries built elsewhere.
  */
 
-import { ThreadHelmError } from '@threadhelm/contracts';
+import { isSafeAuthoredText, ThreadHelmError } from '@threadhelm/contracts';
 
 const MAX_SUMMARY = 300;
 const MAX_COORDINATION_PURPOSE_SCALARS = 160;
@@ -96,7 +96,10 @@ function sanitizeCoordinationContent(
     }
     throw error;
   }
-  if (RAW_CONTENT.slice(1).some((rule) => rule.test(normalized))) {
+  if (
+    !isSafeAuthoredText(normalized) ||
+    RAW_CONTENT.slice(1).some((rule) => rule.test(normalized))
+  ) {
     throw invalidCoordination('CREDENTIAL_PATTERN', field);
   }
   const scalarCount = [...normalized].length;

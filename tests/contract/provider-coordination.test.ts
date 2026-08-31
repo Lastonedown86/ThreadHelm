@@ -207,6 +207,50 @@ describe('Provider coordination bridge contract (T033)', () => {
     expect(resultOf(result).senderSessionId).toBe(SESSION_B);
   });
 
+  it('rejects malformed provider text and authority fields without echoing rejected content', async () => {
+    const malformed = [
+      '\ud800',
+      '\udfff',
+      '\u001b]52;c;fixture\u0007',
+      '\u009b31mfixture',
+      'api_key: fixture-secret-value',
+      '-----BEGIN PRIVATE KEY-----',
+      'sk-' + 'x'.repeat(40),
+      '界'.repeat(12_000),
+    ];
+    const fixture = bridgeReplyRequest();
+    const requests = [
+      ...malformed.map((body) => ({ ...fixture, params: { ...fixture.params, body } })),
+      ...['senderSessionId', 'missionId', 'role', 'workspaceId', 'permissionPolicy'].map(
+        (field) => ({
+          ...fixture,
+          params: { ...fixture.params, [field]: 'untrusted-authority-marker' },
+        }),
+      ),
+      { ...fixture, params: [] },
+      { ...fixture, role: 'supervisor' },
+    ];
+    for (const request of requests) {
+      // Independent credentials ensure rate limiting cannot hide a validation bypass.
+      const manager = new BridgeSessionManager();
+      const credential = manager.issueCredential(SESSION_B, 'claude-code', '2.0.0');
+      const error = await manager
+        .dispatch(SESSION_B, credential.token, request as BridgeRequest)
+        .then(
+          () => null,
+          (cause: unknown) => cause,
+        );
+      expect(error, JSON.stringify(request).slice(0, 160)).toBeInstanceOf(Error);
+      const serialized = JSON.stringify(error);
+      for (const value of malformed.filter((text) => text.length > 8)) {
+        expect(serialized).not.toContain(value);
+      }
+      expect(serialized).not.toContain('untrusted-authority-marker');
+      expect(manager.hasValidCredential(SESSION_B)).toBe(true);
+      manager.revoke(SESSION_B);
+    }
+  });
+
   it('dispatches the four mailbox tools: list_pending, acknowledge, reply, report_outcome', async () => {
     const manager = new BridgeSessionManager();
     const cred = manager.issueCredential(SESSION_B, 'claude-code', '2.0.0');

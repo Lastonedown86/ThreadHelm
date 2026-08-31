@@ -74,6 +74,86 @@ fn wait_until(deadline: Duration, mut done: impl FnMut() -> bool) -> bool {
     done()
 }
 
+#[test]
+fn named_session_scope_reports_missing_empty_live_and_closed_without_reattachment() {
+    let id = format!("{:08x}-0000-4000-8000-000000000001", std::process::id());
+    assert!(crate::job::inspect_session_scope(&id).unwrap().is_empty());
+    let token = crate::job::create_named_session_job(&id).unwrap();
+    assert!(crate::job::inspect_session_scope(&id).unwrap().is_empty());
+    let mut child = spawn_sleeper();
+    assign_process(token, child.0.id()).unwrap();
+    assert!(
+        crate::job::inspect_session_scope(&id)
+            .unwrap()
+            .active_process_count
+            >= 1
+    );
+    close_job(token).unwrap();
+    assert!(wait_until(Duration::from_secs(5), || child
+        .0
+        .try_wait()
+        .unwrap()
+        .is_some()));
+    assert!(wait_until(Duration::from_secs(5), || {
+        crate::job::inspect_session_scope(&id).unwrap().is_empty()
+    }));
+}
+
+#[test]
+fn named_session_scope_collision_and_arbitrary_names_fail_closed() {
+    let id = format!("{:08x}-0000-4000-8000-000000000002", std::process::id());
+    let token = crate::job::create_named_session_job(&id).unwrap();
+    assert_eq!(
+        crate::job::create_named_session_job(&id).unwrap_err().code,
+        Code::JobCreateFailed
+    );
+    assert!(inspect_job(token).unwrap().is_empty());
+    close_job(token).unwrap();
+    for invalid in [
+        "",
+        "Global\\arbitrary",
+        "00000000-0000-4000-8000-00000000000z",
+        "0000000000000400080000000000000000001",
+    ] {
+        assert!(crate::job::create_named_session_job(invalid).is_err());
+        assert!(crate::job::inspect_session_scope(invalid).is_err());
+    }
+}
+
+#[test]
+fn retaining_a_named_query_handle_cannot_defeat_containment_cleanup() {
+    use windows_sys::Win32::Foundation::{CloseHandle, FALSE};
+    use windows_sys::Win32::System::JobObjects::OpenJobObjectW;
+    use windows_sys::Win32::System::SystemServices::JOB_OBJECT_QUERY;
+
+    let id = format!("{:08x}-0000-4000-8000-000000000003", std::process::id());
+    let token = crate::job::create_named_session_job(&id).unwrap();
+    let mut child = spawn_sleeper();
+    assign_process(token, child.0.id()).unwrap();
+    assert!(verify_process_in_job(token, child.0.id()).unwrap());
+    let name: Vec<u16> = format!("Local\\ThreadHelm.session.{id}\0")
+        .encode_utf16()
+        .collect();
+    // This is the same access available to a same-user child. Merely opening a
+    // query handle must never keep the actual containment job alive.
+    let held_query = unsafe { OpenJobObjectW(JOB_OBJECT_QUERY, FALSE, name.as_ptr()) };
+    assert!(!held_query.is_null());
+    close_job(token).unwrap();
+    let exited = wait_until(Duration::from_secs(3), || {
+        child.0.try_wait().unwrap().is_some()
+    });
+    let empty = crate::job::inspect_session_scope(&id).unwrap().is_empty();
+    unsafe { CloseHandle(held_query) };
+    assert!(
+        exited,
+        "process survived because a named query handle retained its containment job"
+    );
+    assert!(
+        empty,
+        "the tracking scope must prove empty after containment cleanup"
+    );
+}
+
 // --- identity -----------------------------------------------------------
 
 #[test]

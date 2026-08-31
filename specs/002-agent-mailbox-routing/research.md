@@ -255,7 +255,7 @@ before each story:
 | P4 Bounded coordination | OpenAI `gpt-5.6-sol` at `max` | `gpt-5.6-terra` at `max` | Claude `claude-opus-5` at `xhigh`, human owner required; optional Antigravity `gemini-3.1-pro-high` second review |
 | P5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` at `high` plus deterministic retrieval/privacy evaluation |
 | P6 Reviewed agent roster | Claude `claude-sonnet-5` at `high` | `claude-opus-5` at `high` | OpenAI `gpt-5.6-sol` at `high` plus deterministic schema/digest tests |
-| P7 Agent wizard and templates | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` at `high` plus deterministic schema/export tests |
+| P7 Agent wizard and templates | OpenAI `gpt-5.6-terra` at `high` | `gpt-5.6-sol` at `high` | Deterministic schema/export tests; Claude `claude-sonnet-5` at `high` only after a separately owner-approved external run |
 | P8 Autonomous supervisor | OpenAI `gpt-5.6-sol` at `max` | `gpt-5.6-terra` at `max` | Claude `claude-opus-5` at `xhigh`, human owner required; Antigravity `gemini-3.1-pro-high` adversarial review |
 
 **Rationale**: P1, P3, P4, and P8 contain persistence, crash, authority, or concurrency invariants and

@@ -104,8 +104,19 @@ export class OutputStream {
     }
   }
 
+  /** Disclose bytes withheld by a separately enforced host resource budget. */
+  discard(byteLength: number): void {
+    if (this.#closed || byteLength <= 0) return;
+    this.#truncationCount += Math.ceil(byteLength / this.#marks.frame);
+    // A budget hold can close the host before the coalescing timer fires. Send
+    // the first disclosure now, then coalesce any bytes already in flight.
+    if (this.#truncationAnnounced === 0) this.#announceTruncation();
+    else this.#scheduleTruncationNotice();
+  }
+
   close(): void {
     if (this.#closed) return;
+    this.#announceTruncation();
     this.#closed = true;
     if (this.#truncationTimer) clearTimeout(this.#truncationTimer);
     try {
@@ -144,16 +155,20 @@ export class OutputStream {
     // Coalesce: a 100 MB burst must not become 1,500 notices.
     this.#truncationTimer = setTimeout(() => {
       this.#truncationTimer = undefined;
-      if (this.#truncationCount === this.#truncationAnnounced || this.#closed) return;
-      this.#truncationAnnounced = this.#truncationCount;
-      const notice: OutputTruncated = {
-        kind: 'truncated',
-        sessionId: this.#sessionId,
-        truncationCount: this.#truncationCount,
-      };
-      this.#port.postMessage(notice);
-      this.#hooks.onTruncated(this.#truncationCount);
+      this.#announceTruncation();
     }, 250);
+  }
+
+  #announceTruncation(): void {
+    if (this.#truncationCount === this.#truncationAnnounced || this.#closed) return;
+    this.#truncationAnnounced = this.#truncationCount;
+    const notice: OutputTruncated = {
+      kind: 'truncated',
+      sessionId: this.#sessionId,
+      truncationCount: this.#truncationCount,
+    };
+    this.#port.postMessage(notice);
+    this.#hooks.onTruncated(this.#truncationCount);
   }
 
   #onMessage(data: unknown): void {

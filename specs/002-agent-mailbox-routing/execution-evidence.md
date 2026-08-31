@@ -39,10 +39,15 @@ yet; it is not a failure or permission to substitute another ecosystem.
 | US4 Bounded coordination | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human | VERIFIED 2026-08-29 | PENDING IMPLEMENTATION/REVIEW/HUMAN ACCEPTANCE |
 | US5 Shared hive memory | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` | Claude `claude-opus-5` / `high` | VERIFIED 2026-08-29 | APPROVED FOR US5 |
 | US6 Reviewed agent roster | Claude `claude-sonnet-5` / `high` | `claude-opus-5` / `high` | OpenAI `gpt-5.6-sol` / `high` | VERIFIED 2026-08-29 | IMPLEMENTATION PENDING |
-| US7 Agent wizard/templates | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` | Claude `claude-sonnet-5` / `high` | UNVERIFIED | PENDING |
+| US7 Agent wizard/templates | OpenAI `gpt-5.6-terra` / `high` | `gpt-5.6-sol` / `high` | Deterministic schema/export tests; Claude `claude-sonnet-5` / `high` only after owner approval | OPENAI ASSIGNMENT PENDING CURRENT AVAILABILITY CHECK; CLAUDE/ANTIGRAVITY RUNS NOT AUTHORIZED | PENDING |
 | US8 Autonomous supervisor | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` | Claude `claude-opus-5` / `xhigh` + human + Antigravity `gemini-3.1-pro-high` | UNVERIFIED | PENDING |
 
 ## Command evidence
+
+| 2026-08-30 | US7 execution reassignment | Owner instruction recorded in the active Spec Kit artifacts | N/A | OpenAI `gpt-5.6-terra` / `high` is the US7 primary and `gpt-5.6-sol` / `high` its in-ecosystem fallback. Do not start, probe, or otherwise invoke Claude or Antigravity for US7 without first asking the owner; Claude remains an approval-gated independent verifier and Antigravity is unassigned for this cycle. No external provider run was started by this reassignment. | PENDING — OPENAI AVAILABILITY AND IMPLEMENTATION GATE |
+| 2026-08-30 | T107 US7 local model gate | Current Codex desktop host model inventory | N/A | The current host exposes OpenAI `gpt-5.6-terra` at `high` and fallback `gpt-5.6-sol` at `high`. Terra owns the bounded local wizard/template implementation; deterministic schema/export tests remain the correctness gate. No Claude or Antigravity CLI, model probe, or provider run was invoked. | PASS — IMPLEMENTATION ASSIGNED |
+| 2026-08-30 | T108/T113/T114 US7 domain and fixture foundation | `pnpm exec vitest run --project unit tests/unit/domain/agent-template.test.ts`; `pnpm typecheck` | 0 | The intended missing-domain red phases failed 4/4 and then 1/5, then passed 6/6 after adding copy-on-create provenance, literal declared-variable substitution, unresolved-variable rejection, strict shared-manifest validation/bounds, closed draft lifecycle transitions, and non-authoritative completion policy. Six versioned generic starters (investigator, implementer, reviewer, quality, documentation, release gate) are exported without Marvel or project content. | PASS — FOUNDATION ONLY |
+| 2026-08-30 | T109/T115/T116 persistence foundation | `pnpm exec vitest run --project unit tests/unit/persistence/agent-templates.test.ts`; `pnpm typecheck` | 0 | The intended missing-repository red phase failed 2/2, then passed 2/2 after adding durable template, immutable revision, and draft tables plus a main-owned repository for bundled seeds, draft provenance, completion, and completed-draft edit denial. Remaining quota, revision lifecycle, and full recovery scenarios are still pending. | PASS — FOUNDATION ONLY |
 
 | Timestamp | Scope | Command | Exit | Final summary | Status |
 |---|---|---|---:|---|---|
@@ -344,7 +349,10 @@ gates and independent review rather than routine scaffolding.
   preservation, content-free lineage, FTS deletion, bounded excerpts/results, and the absence of
   terminal, transcript, reasoning, credential, environment, or workspace-file ingestion.
 
-## Story checkpoints
+## Historical story checkpoints (US5 closure)
+
+This table preserves the US5-era snapshot. The later US6, US7, US8 and final verification entries
+below supersede it; pending cells here are not the current feature status.
 
 | Story | Unit/domain | Persistence | Contract | Windows integration | E2E | Provider/installed proof | Independent review | Human gate | Overall |
 |---|---|---|---|---|---|---|---|---|---|
@@ -357,7 +365,7 @@ gates and independent review rather than routine scaffolding.
 | US7 | PENDING | PENDING | PENDING | PENDING | PENDING | N/A | PENDING | CONFIRM SAVE/EXPORT | NOT READY |
 | US8 | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | NOT READY |
 
-## Release gates
+## Historical release gates (US5 closure)
 
 | Gate | Local status | Hosted/external status | Evidence or blocker |
 |---|---|---|---|
@@ -577,6 +585,228 @@ verification. Never record secrets, terminal transcripts, hidden prompts, or raw
   preload, and renderer build 0. Stable profile/revision UUIDs remain independent of mutable names;
   content-free events contain no goal/persona text or source path; import launches and grants nothing.
 
+### US7 persistence completion — T109/T115/T116 (2026-08-30)
+
+- Resumed the existing dirty checkout at `659e59b` after checking the feature selector,
+  requirements checklist (16/16), task ledger, and fetched `origin/main`. Created
+  `codex/us7-template-persistence` without discarding, committing, or staging prior changes.
+  Existing launch-policy, domain/fixture, roadmap, and specification edits were preserved.
+- **T109:** Expanded the two foundation tests into 17 real SQLite cases. Initial new coverage
+  failed 11/11 for missing lifecycle operations and guards; the legacy-v3 case also failed before
+  implementation. Later source/discovery/incomplete-field additions failed 3/16; review regressions
+  failed 2/2 before their fixes. Final focused run passed 17/17. Coverage includes disk close/reopen,
+  copied template and reviewed-profile provenance, stale draft/revision denial, bundled immutability,
+  user revisions and duplication, enable/disable/delete, 100 user templates and 20 open drafts,
+  content scrubbing, immutable completion, strict field ownership, literal variables, bounded
+  content-free discovery, caller-transaction rollback, and legacy migration rollback/retry.
+- **T115:** Added the transactional `agent_template_storage_v1` extension through the existing
+  `CURRENT_SCHEMA_EXTENSIONS` runner; no separate change to `migrate.ts` was needed. The upgrade
+  preserves earlier v3 template/revision/draft IDs, recovers initial fields from pinned source
+  revisions, adds version/step/field/variable/issue/profile-provenance storage, and rebuilds dependent
+  tables without disabling foreign keys. Failed upgrades roll back and may be retried. Migration
+  tests verify repeated application and an empty foreign-key check. The existing complete-table
+  inventory assertion was updated for the four new tables after its expected mismatch.
+- **T116:** Repository operations now enforce exact draft versions and template revisions,
+  active/current seed eligibility, quota checks inside write transactions, read-only bundled
+  revisions, and independent local duplicate identities. Completion remains a repository operation
+  that the later main service must combine transactionally with profile creation or export intent;
+  this slice does not implement confirmation tokens, export effects, IPC, or renderer controls.
+- **Digest decision:** Manifest SHA-256 remains exact content evidence, while revision UUID and
+  `(template_id, revision)` bind identity. The digest index is scoped to a template rather than
+  globally unique: distinct local copies must be allowed to contain identical manifest bytes.
+  This reconciles the required duplicate operation with the earlier data-model global-uniqueness
+  wording. It grants no runtime identity or authority based on content equality.
+- **Independent OpenAI review:** A read-only local subagent reproduced two P2 findings: final-schema
+  trimming rejected/altered intermediate draft text, and aggregate Unicode defaults could exceed
+  autosave bounds. Failing-first regressions now prove exact incomplete text recovery, strict final
+  validation, aggregate UTF-8 declaration bounds, and default-value revalidation. Re-review found no
+  remaining concrete issue within T109/T115/T116 and independently passed 17/17 tests. This is not
+  the separately approval-gated Claude review. No Claude or Antigravity invocation occurred.
+
+| Local command | Final exit | Evidence |
+|---|---:|---|
+| `pnpm exec vitest run --project unit tests/unit/persistence/agent-templates.test.ts` | 0 | 17/17 passed |
+| `pnpm test:unit` | 0 | 24 files, 219/219 passed after updating the schema inventory assertion |
+| `pnpm test:contract` | 0 | 10 files, 198/198 passed; existing contracts only, not the pending US7 IPC suite |
+| `pnpm typecheck` | 0 | Complete TypeScript project build passed |
+| `pnpm lint` | 0 | Complete ESLint pass after correcting the type-only test import |
+| Scoped `pnpm exec prettier --check` | 0 | Repository, schema, template persistence tests, and migration tests passed |
+| `pnpm desktop:build` | 0 | Electron main, preload, and renderer built |
+| `pnpm exec vitest run --project integration tests/integration/windows/agent-profile-import.test.ts` | 0 | Existing Windows import regressions 6/6 passed |
+| `pnpm exec playwright test tests/e2e/agent-roster.spec.ts` | 0 | Existing built-Electron keyboard roster regressions 5/5 passed |
+| `git diff --check` | 0 | No whitespace errors |
+
+**Status at the end of the persistence-only slice:** T110–T112 and T117–T125 were open. The wizard service, exact review/export tokens,
+atomic export, named IPC/preload operations, wizard/template UI, launch-disclosure integration,
+US7-specific Windows/E2E acceptance, and separately authorized verifier gate are not complete.
+No hosted CI, installed-package, live-provider, US8, merge, or release result is claimed.
+
+### US7 wizard, template library, and export — T110–T125 (2026-08-30)
+
+- **Scope and ownership:** Continued the same dirty checkout and branch on the owner's instruction
+  to complete all US7. OpenAI Terra at high implemented the main/IPC/export slice; the controller
+  implemented the renderer and desktop journeys; a separate OpenAI Sol at high reviewed backend
+  safety and specification compliance. No commit, push, merge, provider model run, Claude review,
+  or Antigravity run is included in this evidence.
+- **Main authority:** Named wizard/template operations and generated preload namespaces own bounded
+  drafts, exact manifest reviews, profile-save delegation, native export-target selection, token-bound
+  confirmations, versioned local templates, and content-free change events. List responses omit goals,
+  field values, variables, JSON, and full export paths; these require explicit detail/preview calls.
+  Profile creation and draft completion share a database transaction.
+- **Renderer:** Six keyboard-accessible steps provide blank, generic, local-template, and reviewed-profile
+  starts; owned-field errors; debounced local autosave; Back, resume, cancel and delete; exact JSON and
+  digest review; compatibility warnings; profile save, template save/revision, and explicit export
+  confirmation. The library offers detail/provenance, duplicate, disable/enable, and guarded deletion.
+  Native labels are explicit so option text and textarea contents cannot obscure accessible names.
+  The interface uses text/forms only, without character art, graphics, animation, or idle polling.
+- **Bounds and schema decisions:** The exact existing `HireManifestV1` parser remains authoritative:
+  16 capability labels, not the earlier planning-table value of 64. Drafts preserve bounded incomplete
+  text, but completion never weakens final validation. Templates are limited to 100 active local
+  templates and 32 revisions each, 20 open drafts and one MiB combined draft storage, and 16 declared
+  literal variables of at most 256 Unicode scalars. Existing schema string bounds remain unchanged.
+  Because the portable schema requires provider/model values, the generic seeds retain explicit
+  Codex/Terra requests; their goals and capabilities remain generic and confer no provider authority.
+  Local theme/style uses ordinary name/description text, not a new portable schema field.
+- **T122 launch handoff:** US7 never calls `sessions.previewLaunch` or constructs a launch descriptor.
+  The existing `sessions/preview.ts`, `sessions/launch-policy.ts`, and provider `adapter.ts` continue
+  to resolve model/effort, permission policy, tools, workspace identity, isolation and resource limits.
+  Wizard review states that these are separately resolved at launch. The shared strict schema rejects
+  permission/effort/tools/workspace/mission-role fields. Saving, exporting, copying, or renaming a
+  persona does not grant launch authority; the existing launch dialog retains its separate folder
+  boundary confirmation.
+- **Failing-first and review evidence:** Initial desktop tests failed on the missing creation control,
+  then on ambiguous select/textarea labels. A new blank-start journey failed final review before
+  default schema identity/isolation were fixed. The first broad unit run caught the new export-intent
+  table missing from the migration inventory; the first broad contract run caught degraded-storage
+  service initialization (three existing cases failed). Independent backend review additionally
+  identified an absent-target overwrite race, prepared-intent recovery gap, placeholder loss when
+  saving templates, and incomplete field-error attribution. Fixes and regression evidence are recorded
+  below; earlier green focused runs did not establish those wider guarantees.
+- **T123 local-themed acceptance:** The built-Electron keyboard journey imports the reviewed Spider-Man
+  fixture through the existing import confirmation, starts a draft from that exact reviewed profile,
+  saves `Spider-Man local quality` as a user template, checks reviewed-profile provenance, disables and
+  enables it, duplicates it, and deletes the duplicate. Six bundled starters remain separate, generic,
+  and free of Marvel names or graphics. The controller inspected the resulting desktop screenshot
+  (`test-results/us7-local-template-acceptance.png`). This is agent-driven automated desktop acceptance,
+  not a claim that the owner performed human acceptance. The manual recipe is in quickstart section 12.
+
+**T125 exact bundled inventory:** Version 1; SHA-256 of the exact canonical UTF-8 JSON (two-space
+indentation and trailing LF), recomputed from the shipped fixtures. All six use one narrow routing
+label, a bounded goal, no literal variables, no executable fields, and no project/Marvel content.
+
+| Template key | Version | SHA-256 | UTF-8 bytes |
+|---|---:|---|---:|
+| investigator | 1 | `a793a98b6135999829d00acdd38affac0c8e1e01e1e75fa394bab4f5c246cf35` | 327 |
+| implementer | 1 | `c90598a87ddb95e2946c701800c732f28fd7ed239571d0c64a7f6fb457e81818` | 335 |
+| reviewer | 1 | `cdd1f32162f0c68576645df08ad0df3d82c81811757b5b5e253c9ae2c63d97f8` | 327 |
+| quality | 1 | `f9b40a7698718c434c5bd2bf11441cfa8e857152911c69d71dd8626eeb894436` | 334 |
+| documentation | 1 | `3347975aa9a0fb5ee87fa67ca3add07138a12acd5a4b40b4d796d006627c5d51` | 345 |
+| release-gate | 1 | `0685e4888afe1d0b326c34f7b93253e29509b36a11c6f74c0ae0a3e3882e8c2a` | 339 |
+
+- **Owner production-content correction:** The owner explicitly required Marvel personas to remain
+  private custom content, excluded from production releases. A scan found that the general test-fixture
+  barrel had embedded `MARVEL_ROSTER_FIXTURES` and persona names in `out/main/index.cjs`, despite
+  generic visible starters. The desktop now uses a narrow `@threadhelm/test-fixtures/desktop` entry;
+  deterministic runtime helpers no longer import the private roster barrel. Vite rejects private
+  fixture modules and persona content in generated chunks/assets; Forge scans copied output before
+  packaging, including stale chunks. Two failing-first guard tests now pass. A rebuilt output scan
+  passed with no private persona content. Custom local import behavior remains covered separately.
+  This verifies built output and the packaging guard; no new signed/installed release was produced.
+
+| Final local command / gate | Exit | Result |
+|---|---:|---|
+| `pnpm test:unit` | 0 | 25 files; 227/227 passed, including production-content guard cases |
+| `pnpm test:contract` | 0 | 11 files; 208/208 passed, including ten wizard/template cases |
+| `pnpm typecheck` | 0 | Full TypeScript project build, including build/package guards |
+| `pnpm lint` | 0 | Full ESLint pass |
+| Prettier over changed TypeScript/TSX/CSS/JSON files | 0 | All matched files passed |
+| `pnpm desktop:build` | 0 | Main, preload, renderer; private-fixture graph/content guard passed |
+| `assertProductionPersonaBoundary("apps/desktop/out")` | 0 | Recursive built-output scan passed; no private persona content |
+| Windows wizard/import/permission integration slices | 0 | 15/15 passed; seven wizard/export, six import, two permission-policy |
+| Built-Electron wizard/roster/launch Playwright slices | 0 | 13/13 passed; seven wizard, five roster, one launch journey |
+| `git diff --check` | 0 | No whitespace errors |
+
+Backend review fixes retain edited literal placeholders, identify missing/invalid values by manifest
+field even for long variable names, reject invalid capability labels before Next, recover prepared
+and writing export intents without replay, and classify installed-file cleanup failures as unknown.
+Completed drafts remain readable after their user template is deleted. Missing targets use an atomic
+no-clobber hard-link installation; filesystems without that primitive fail safely. Existing targets
+still require an explicit overwrite review and changed-target checks. Scoped regression evidence is
+included in the final suites above.
+
+**Final independent review: PASS.** A whole-US7 OpenAI Sol review raised two final P2 findings:
+literal expansion needed to gate its owned step with exact field errors, and copied templates needed
+to survive deletion of a historical provenance profile. The consolidated fix validates expansion with
+the shared manifest rules, exposes variable inputs before Identity advances, and distinguishes live
+direct profile copying from historical copied provenance. Post-fix contract/persistence regressions
+and the identity-variable desktop journey passed. The scoped re-review found both findings addressed,
+with no new important regression; specification compliance and code quality/safety both passed.
+
+**US7 complete:** T107–T125 are checked in the task ledger. No hosted CI, signed/installed artifact,
+live-provider run, Claude review, Antigravity run, US8 completion, merge, or release approval is claimed.
+The owner's private-persona release preference was also saved to the permitted memory update folder.
+
+## Feature 002 remainder — US8 execution and cross-cutting work (2026-08-30)
+
+- **T126 implementation assignment:** resumed `codex/us7-template-persistence` at `659e59b`,
+  fetched/pruned origin, retained all pre-existing dirty US7/specification changes, and verified
+  the active feature selector and 16/16 requirements checklist. No extension hooks are configured.
+  Current desktop inventory exposes OpenAI `gpt-5.6-sol`/`max` and `gpt-5.6-terra`/`max`;
+  Sol/max is assigned the authority/concurrency backend. The owner requested the rest of Feature002;
+  final authority acceptance remains a separate T149 gate.
+- **Current independent reviewer availability:** Claude Code `2.1.251` reports authenticated
+  `claude.ai`, `firstParty`, `max`. A tool-free, strict-empty-MCP, hooks-disabled, no-session-persistence
+  `claude-opus-5`/`xhigh` probe returned `US8_REVIEWER_AVAILABLE`, exit0, reported cost USD0.048978.
+  Model usage included canonical `claude-opus-5` and CLI auxiliary Haiku usage; no implementation or
+  adversarial-review verdict is claimed by this marker. Antigravity `1.1.22` current model inventory
+  includes `gemini-3.1-pro-high`. Subsequent tool-free availability and bounded packaging-review
+  inference evidence is recorded below; availability alone is not an adversarial PASS.
+- **Permission gate:** the same-version T166 disposable auto-mode proof remains prerequisite evidence,
+  not a blanket runtime grant. The built-in Claude capability adapter currently declares organization
+  policy unknown and only manual/bounded-allowlist support. Auto must remain held without fresh trusted
+  evidence for the exact runtime; authentication, version, personas, or the historical proof alone
+  cannot populate that authority. Bypass remains excluded from missions.
+- **Cross-cutting privacy RED/GREEN:** profile/draft malformed Unicode and terminal/credential text
+  failed two new tests before shared validation; focused profile/wizard suites passed29/29 afterwards.
+  Logger C1/Unicode/credential and envelope-overwrite tests failed2/2 then passed2/2. Memory preview
+  fuzz failed first on unsafe Unicode, then multibyte byte overflow; focused memory/coordination
+  suites passed26/26 after correction. Escaped duplicate manifest keys failed before decoding keys
+  for comparison, then profile contracts passed19/19. Unsafe template names and citation identifiers
+  failed2/2 then passed2/2 in a focused run. Final aggregate suites remain pending US8 integration.
+- **Scale checks:** disk-backed 10,000-revision memory FTS and 100-profile/100-template/20-draft
+  list/detail measurements both passed their500ms/1000ms p95 thresholds. These are local repository
+  measurements, not installed UI/mission/recovery performance acceptance. T151 remains open.
+- **Private persona boundary:** added installed acceptance that scans the actual uncompressed ASAR
+  archive and unpacked text assets, supplementing the existing Vite/Forge private-persona guards.
+  This cycle has not yet produced or accepted a new installed artifact.
+- **UI RED:** the first keyboard mission-creation Electron test failed for the missing New mission
+  button before the new mission components were implemented. Full mission lifecycle/recovery journeys
+  are written and await the backend/build checkpoint. T131/T144-T146 remain open until verified.
+
+### US8 implementation checkpoint, 2026-08-30 19:18 EDT
+
+- Built desktop checkpoint passes. Real Electron mission creation, pause/resume, cancellation,
+  content deletion and crash recovery pass three scenarios. All four accessibility scenarios pass,
+  including keyboard focus, contrast/reduced motion, idle stability and 200% mission-form reflow.
+  Additional allowlist and concurrent-revision scenarios are being validated; this is not T149 signoff.
+- Five real fixture sessions (one supervisor plus four workers) passed the mission detail p95 <=1s
+  and crash-to-recovered-mission <=5s gates; zero sessions restarted. One test passed, nine skipped
+  in that focused run. Earlier 1,000 duplicate presentation calls all failed with exactly one durable
+  applied delivery. Full final integration remains pending the native supervisor registry extension.
+- Provider-bridge text/authority fuzz exposed missing PEM/colon-secret rules in mailbox content;
+  shared validation closes that gap. Provider plus desktop coordination contracts pass32/32.
+  Independent earlier privacy re-review passes; profile/template/memory contracts pass41/41 and
+  logging2/2 at that checkpoint. No rejected content is echoed in error assertions.
+- The additive migration inventory now covers all nine supervisor tables, with4/4 migration tests.
+- Packaging now rejects native PE architecture mismatch and malformed binaries, including dependent
+  DLLs; node-pty packaging selects only the requested Windows prebuild. Partial signing configuration
+  fails instead of silently falling back to unsigned output. Guard2/2, migration4/4, logging2/2 pass.
+  No new packaged artifact, signature, ARM64 machine run or uninstall acceptance is claimed yet.
+- Independent UI review found omitted effective allowlists, dropped typed separators, stale revision
+  version adoption and missing focus transitions. All four are fixed; the reviewer then identified
+  stale local allowlist text after removing an earlier worker, now synchronized without losing commas.
+  A packaging review identified skipped DLLs, now included. Final focused re-review remains pending.
+
 ## Rollback and recovery notes
 
 - Coordination schema changes are forward migrations; retain a pre-migration database backup for
@@ -585,3 +815,342 @@ verification. Never record secrets, terminal transcripts, hidden prompts, or raw
 - Disable unproved provider automation per provider/version and retain the manual path.
 - A failed story gate stops advancement to dependent phases; completed earlier milestones remain
   independently usable and are not relabeled as passing later gates.
+
+### Review and artifact checkpoint, 2026-08-30 19:53 EDT
+
+- Aggregate checkpoint: 251 unit tests and 226 contract tests passed, exit0, before subsequent
+  native/review fixes. Typecheck passed after exact unknown-attempt/lease acknowledgement inputs.
+- Interim portable x64 package built, then actual-artifact acceptance passed7/7, exit0. Tested
+  Windows11 Home build26200 x64, app0.0.0. ASAR/unpacked private-persona scan, architecture/fuses,
+  native bootstrap, both provider probes and second-instance exclusion passed. The artifact was
+  unsigned; there was no portable-exe checksum. This is not Squirrel installation/uninstall,
+  ARM64, signed production, or live mission-provider proof. Evidence: `tmp/us8/interim-x64-acceptance.json`.
+- Later focused Electron run:10passed/2failed. All four accessibility tests, ordinary launch with
+  explicit process-limit8/default-reset1, and five mission lifecycle/revision/allowlist/focus tests
+  passed. The two new unknown-outcome flows failed at existing-worker assignment with
+  `MISSION_ENVELOPE_STALE`; no successful acknowledgement/no-replay claim is made until corrected.
+- Independent OpenAI UI re-review:PASS for exact captured attempt/lease pairs, stale-inspection
+  clearing, contained-process editing, and deletion disclosure. Backend deletion/enforcement excluded.
+- Claude Opus5/xhigh tool-free domain/storage snapshot review completed exit0, USD1.054574.
+  It raised nine findings, not PASS. Main-caller/schema false-positive disposition and fixes for
+  valid lease/deletion/terminal-state issues are being recorded by the implementer. Snapshot/result:
+  `tmp/us8/domain-review-input.md`, `tmp/us8/claude-domain-review.json`.
+- Antigravity1.1.22 Gemini3.1ProHigh/high packaging snapshot review completed in plan/sandbox mode,
+  exit0, one turn,41208 reported tokens (23904 input,17304 output including16312 thinking).
+  Conversation `2e8e7baa-4cd3-491c-9287-4a3fce19b0e0`; result
+  `tmp/us8/gemini-packaging-review-initial.json`. Five findings, not PASS. Full post-copy asset
+  scanning, explicit unsigned-local override, recursive unpacked-native signature checks and robust
+  startup-log waiting now address them; re-review pending. Five added asset-extension regressions
+  failed first, then all7 persona-guard tests passed. Actual unsigned artifact signature acceptance
+  now fails by default (expected RED); with explicit local override the focused signature test
+  passes1/1 and records production signature gate NOT passed. Final package rebuild remains pending.
+- Independent native/host review found a P1 named-job last-handle retention hole and P2 output
+  truncation/registry-watch recovery gaps. Preserve unnamed outer kill-on-close containment with
+  separately named inspection scope; regression and final native rebuild underway. Earlier native
+  build success is not evidence that these later findings are resolved.
+- No commit, push, merge, deployment, public release, hosted CI or human final acceptance occurred.
+
+Root task accounting: T131 authored failing mission journeys and T144-T146 renderer implementation
+are complete, with scoped independent UI PASS and five core mission flows passing. The two later
+unknown-effect end-to-end variants remain blocked at a backend assignment defect, explicitly retained
+under T149 final integration rather than reported green. T152 accessibility coverage passes4/4 on
+built Electron: keyboard/focus/names, terminal escape/stop, contrast/reduced-motion/idle and 200% form
+reflow. This is local coverage, not an external accessibility certification.
+
+### Packaging re-review, 2026-08-30 19:58 EDT
+
+Gemini3.1ProHigh/high final bounded packaging re-review:PASS, exit0, one turn,51127 reported tokens
+(25126input,26001output including25713thinking),166.52s, conversation
+`729381f8-3ecb-41e6-bf3d-9ff67a474d98`. Snapshot/result: `tmp/us8/gemini-packaging-review-input.md`
+and `tmp/us8/gemini-packaging-review.json`. The second review is retained separately. Its suggestion
+to allow NotTrusted signatures was rejected: missing trust evidence must not certify production.
+Other follow-ups are fixed: chunked UTF8/UTF16 dual-alignment asset scan, literal signature paths,
+unresolved-link rejection, cookie-encryption fuse assertion and parsed startup events. Thirteen
+persona/native-architecture unit regressions pass, including copied dependency assets, chunk
+boundaries and directory junctions. This PASS covers source safeguards only, not final native
+containment, whole-US8 authority, signed binaries, ARM64 or installed/uninstall acceptance.
+
+### Windows and authority checkpoint, 2026-08-30 20:22 EDT
+
+- Rebuilt the native addon/bridge and Electron application at 20:05, exit0. Native review now
+  passes for unnamed outer kill-on-close containment with named query-only tracking scope;
+  retained inspection handles cannot keep the containment job alive. The backend reports
+  20 native library and 12 bridge tests passing, plus rustfmt/clippy; final sequential rerun remains pending.
+- Seven mission Electron E2Es pass, including both previously failing cancelled-unknown flows.
+  Exact structural launch-snapshot comparison and attaching the reserved session before host-budget
+  acknowledgement fixed the assignment failures; unknown inspection still binds the exact attempt/lease.
+- Seventeen distinct real-Windows mission cases passed across focused runs: three workers and result
+  links, offline Codex launch, no-bypass hold, exact worker authority/ancestor rejection, write conflict,
+  loop stop, typed outcome handling, native elapsed/no-progress/output bounds, safe before-effect
+  reassignment, crash/unknown inspection and power invalidation. The new Claude-auto fixture case
+  and folder-drift recovery case await the latest build; they are not yet claimed passing.
+- Four active workers plus supervisor passed detail p95 <=1 second and recovery <=5 seconds,
+  with four unknown attempts/leases after crash and zero automatic restarts. This focused run does
+  not establish strict idle CPU/memory release budgets.
+- Folder drift exposed a cleanup defect: descriptive error text was incorrectly used as a typed
+  reason code. The fix uses the typed code and enters teardown even if lifecycle event emission
+  fails. Independent review then found bridge-revocation event delivery could still interrupt
+  teardown; a final cleanup fix and explicit throwing-event regression are in progress.
+- Claude Opus5/xhigh broader authority snapshot review returned bounded PASS, exit0,
+  USD2.177605, 685.114 seconds; session `8de7bbd7-10cb-43da-83ee-e7066239a106`.
+  Evidence: `tmp/us8/claude-authority-review-input.md`, `tmp/us8/claude-authority-review.json`.
+  Its own-work-state residual is covered by a subsequent activation/launch guard. Its host-output
+  waiter identity residual is being tightened and tested before final verification. No tool access
+  was supplied to this reviewer; this is source review, not live mission proof.
+- The initial Antigravity whole-authority attempt returned an empty response after a headless
+  filesystem-read permission denial. CLI status SUCCESS/exit0 is not a review PASS. Permissions were
+  not changed or bypassed. Two smaller authorized source excerpts are now being reviewed inline
+  with no tools, maintaining the existing plan/sandbox restrictions.
+
+### Final review dispositions, 2026-08-30 20:34 EDT
+
+- Cleanup and host-budget ACK regression tests each failed before the fixes and passed after them.
+  Full supervisor/provider contracts then passed30/30, typecheck/lint passed. Independent cleanup
+  re-review PASS: event callbacks cannot strand later cleanup, and exact session/attempt/mission/
+  binding ownership is validated before an output ACK resolves. Durable unknown leases remain held.
+- Antigravity recovery review found a real Resume race during awaited provider revalidation.
+  Resume now rechecks envelope version, state, current supervisor identity, unknown leases, exact
+  synchronous live binding and bounds inside the write transaction. A delayed-probe regression
+  changed from incorrectly running with an unknown lease to rejection (RED to GREEN).
+- Antigravity authority initial six findings were rejected after tracing strict schemas/main callers
+  and requirements: mission break-glass must stay excluded, main alone chooses plannedSessionId,
+  worker results have worker-specific ownership, nested specification objects are invalid, expiry
+  cannot free uncertain leases, and unknown attempts never auto-retry. Re-review bounded PASS,
+  `gemini-3.1-pro-high`/high,104.124s,35749 reported tokens,
+  conversation `47946f81-6826-478a-81db-0c1fcf2615f3`.
+- Antigravity recovery re-review bounded PASS,54.822s,28480 reported tokens,
+  conversation `c15d1eb7-364b-4e8f-86d8-78ae6ae07e6a`. Only the Resume race required a new fix:
+  completed missions already reject unresolved leases and native missing scope already returns an
+  empty snapshot. The reviewer called those two dispositions fixed, but they were existing caller/
+  native guarantees, not code changes. Both final reviews received inline source only, no tools,
+  under unchanged plan/sandbox restrictions. No permission bypass followed the initial denial.
+  Snapshots/results are `tmp/us8/gemini-authority-final-input.md`, `gemini-authority-final.json`,
+  `gemini-recovery-final-input.md`, and `gemini-recovery-final.json` in the same directory.
+- Rebuilt app then passed18/19 Windows mission cases, including folder drift, explicit resume and
+  reassignment. The Claude-auto fixture correctly held the test's Opus selection for a missing
+  high-cost escalation reason. Changing this inert fixture to the allowed Sonnet5 runtime made the
+  remaining focused case pass1/1. This is deterministic fixture capability evidence, not real Claude
+  organization-policy authorization or installed-provider automatic execution.
+- Independent final spec/plan/contracts/constitution review found no material missing adopted
+  mechanic or new P1/P2 implementation defect; bounded alignment PASS. Final suite/package results
+  and explicit human/platform/provider gates remain required. The historical US5 tables above are
+  now labeled as historical, and tasks.md records the bounded host-meter implementation deviation
+  while preserving its original host-file restriction for traceability.
+
+### Implementation task accounting, 2026-08-30 20:37 EDT
+
+T127-T143 and T147 are now checked for authored regressions and reviewed implementation. T131 and
+T144-T146 were already checked for the mission UI. T150 and T153 are checked for the fuzz/privacy
+hardening and reviewed content boundaries; T155 is checked for the runnable quickstart and recovery/
+release distinctions. The final aggregate is 269 unit tests and 247 contracts passing after the
+20:34 all-source freeze. T148 remains partial: its expanded deterministic acceptance has18passes
+and one optional packaged-lookup skip, but that does not establish installed live mission execution.
+T149 retains owner/live-provider acceptance obligations. T154/T157/T158 retain signed, installed,
+ARM64, uninstall, exact live-provider and final integration/approval obligations.
+
+The first final-sequence format check failed on the SDD progress ledger and two root privacy test
+files. Formatting those three files resolved it; the entire sequential run restarted from format,
+with the failed attempt preserved in `tmp/us8/final-verification-format-failure.json` and
+`tmp/us8/final-format-first-failure.log`. No behavior changed for that remediation.
+
+Gitleaks scanned the tracked working diff plus nonignored untracked file contents with full
+redaction:780972bytes, exit0, no leaks found. Report:`tmp/us8/gitleaks-current-work.json`.
+This is a current-work scan, not a repository-history or external-account secret audit.
+
+### Final sequential local verification, 2026-08-30 20:46 EDT
+
+All commands ran sequentially after the all-source freeze, from20:34:42 through20:45:46 EDT.
+Every final exit was0. Exact timing/log paths: `tmp/us8/final-verification.json`.
+
+| Command | Exit | Final result |
+|---|---|---|
+| `pnpm format` | 0 | PASS after formatting-only remediation |
+| `pnpm lint` | 0 | PASS |
+| `pnpm rust:fmt` | 0 | PASS |
+| `pnpm rust:check` | 0 | PASS, warnings denied |
+| `pnpm rust:test` | 0 | 20 native library +12 bridge tests passed |
+| `pnpm typecheck` | 0 | PASS |
+| `pnpm test:unit` | 0 | 30 files,269 tests passed |
+| `pnpm test:contract` | 0 | 13 files,247 tests passed |
+| `pnpm desktop:build` | 0 | Main,preload,renderer built; persona module guard passed |
+| `pnpm proof:windows-supervision` | 0 | 3 tests passed |
+| `pnpm test:integration:windows` | 0 | 17 files,96 passed,1 intentional skip |
+| `pnpm test:e2e` | 0 | 41 passed |
+
+The single integration skip is the existing locked/read-only database harness case at
+`tests/integration/windows/recovery.test.ts`: the harness cannot retain the necessary file lock
+across Electron startup. It is not a skipped US8 mission case. All19 new mission Windows cases
+and all7 mission E2Es passed in the final complete run. T151 measurement coverage and T156 are
+checked. Default development idle CPU/working-set measurements are observational rather than
+strict installed release gates; latency/recovery/FTS bounds are enforced. Final package and
+credentialed provider results follow separately and do not imply hosted CI or owner acceptance.
+
+
+### Packager crash diagnosis and regression, 2026-08-30 20:54 EDT
+
+The initial final `pnpm package:win` and direct Forge retry both failed during the first persona
+scan with Windows exit3221226356 (`0xC0000374`), after native/app builds succeeded. A tagged stage
+probe localized the failure before runtime dependency copying. A standalone scan narrowed it to
+Node24.18.0 UTF-16 decoding of a Buffer view with an odd byte offset. Minimal reproduction:
+`Buffer.alloc(524026, 0x61).subarray(1).toString('utf16le')`. On this host, the odd-offset view
+crashed; copying it to an aligned Buffer passed. Node22.23.1 also passed the original full scan,
+without changing the configured runtime.
+
+A fresh Node subprocess regression at the real file-scanner seam failed first with3221226356.
+The scanner now copies the odd-alignment view before decoding. Both UTF-16 alignments, UTF-8,
+all asset types and the bounded chunk overlap remain checked; no guard was disabled. All14
+persona/native guard tests pass and the original actual-build scan now passes on Node24.18.0.
+Independent bounded re-review PASS; the additional allocation stays within the existing read
+window. Production config debug markers were removed; throwaway reproduction scripts/logs remain
+clearly named in ignored `tmp/us8` as diagnostic evidence.
+
+After this packaging-only change, `pnpm format`, `pnpm lint`, `pnpm typecheck`, and the full unit
+suite passed again (270tests). Runtime/domain/native/renderer source did not change after the
+completed full Windows/contract/E2E sequence above. Final package/acceptance results follow below.
+Failure evidence is preserved in `final-package-win.log`, `final-package-direct.log`,
+`package-stage-probe.log`, `scan-repro-node24.log`, `scan-repro-node22.log`, and `scan-minimal.log`
+under `tmp/us8`; the normal command retry writes `final-package-win-fixed.log`.
+
+### Final x64 package and acceptance, 2026-08-30 20:57 EDT
+
+`pnpm package:win` succeeded after the aligned-decoder fix (exit0). It rebuilt native/app output,
+created the portable package and Squirrel x64 Setup/nupkg, and wrote SHA-256 sidecars. Both
+sidecars independently match their files (`tmp/us8/final-distributables.json`):
+
+- Setup: `apps/desktop/release/make/squirrel.windows/x64/ThreadHelm-Setup-x64.exe`,156184576bytes,
+  SHA256 `2ea1cb81064633b54db0d685995ccc982e5cb62586d0637ee391a6e90d07651e`.
+- Package: `apps/desktop/release/make/squirrel.windows/x64/ThreadHelm-0.0.0-full.nupkg`,155439756bytes,
+  SHA256 `996b821f67edc7043e230a12955fe3d8065293304b6850be8fc93853a4ffb603`.
+
+Final actual-artifact acceptance passed7/7 with the explicit local unsigned override. Expanded
+coordination acceptance passed19/19, including packaged bridge lookup: combined26passed, exit0.
+Tested Windows11 Home build26200 x64, ThreadHelm0.0.0. Actual ASAR/unpacked content contains no
+private Marvel persona material; target native PE files, required unpacked dependencies, all
+production fuses, native bootstrap, provider probes, and single-instance behavior passed.
+The portable exe has no sibling checksum, so that internal scenario is explicitly unverified;
+the distributable Setup/nupkg checksums above were verified separately.
+
+Strict signature acceptance on the same final artifact failed as expected with `NotSigned`,
+exit1. Local override acceptance records9unsigned app/native files and
+`signatureReleaseReady:false`. Valid Microsoft-signed terminal dependencies are not evidence
+that ThreadHelm is signed. Nothing was installed or uninstalled; no ARM64, live mission, trusted
+release signature, hosted CI, integration-on-main, or owner acceptance is established here.
+Reports/logs: `tmp/us8/final-x64-acceptance.json`, `final-artifact-acceptance.log`,
+`final-artifact-strict-signature.json`, and `final-package-win-fixed.log`.
+
+### Packaged performance gate and runtime diagnosis, 2026-08-30 21:13 EDT
+
+The 20:56 packaged x64 executable was measured with fresh disposable user data, no sessions,
+no inspector, a visible normal-size window, ten seconds of settling and twelve five-second
+process-family samples. Median CPU was 0 percent of one core (PASS against 1 percent); peak
+summed working set was 435.293 MiB, settling near 402.4 MiB (FAIL against 250 MiB).
+The measurement script's exit0 means measurement and cleanup succeeded, not that the budget
+passed. Report: `tmp/us8/final-packaged-idle-performance.json`. This is a real release blocker;
+T151's authored measurements and passing latency tests do not close the memory gate.
+
+Exploratory attribution at fifteen seconds showed four processes: main119.27, GPU126.39,
+utility48.56 and renderer118.63 MiB, total412.85 MiB. The same package with `--disable-gpu`
+used373.16 MiB, still above the unchanged budget. A separate blank Electron44 window with
+sandbox/context isolation and normal dimensions used280.59 MiB with default graphics and
+275.12 MiB with software rendering. Renderer-ready markers and all four process rows verified
+that the final baseline actually loaded. Earlier baseline attempts had malformed PowerShell
+arguments and never loaded a renderer; their approximately57 MiB readings are INVALID and
+must not be used. Valid results: `tmp/us8/packaged-memory-ab.json` and
+`tmp/us8/minimal-electron-memory-ab.json`. These short diagnostic snapshots are not repeated
+release benchmarks or proof that every Electron configuration exceeds the target.
+
+Source inspection identified avoidable eager contract/schema initialization in preload and
+eager terminal/view modules, but no idle terminal-buffer allocation, refresh polling, extra
+window or large configured SQLite cache. These are candidates for a separately measured
+performance iteration, not demonstrated closure of the150-185 MiB overage. No graphics default,
+working-set metric, process isolation, sandbox, security setting or250 MiB requirement was
+changed. No working-set trimming was performed. Details: `tmp/us8/memory-analysis.md`.
+
+### Credentialed development smoke and final fatal-error fix, 2026-08-30 21:13 EDT
+
+The separate live development smoke passed3/3 with Codex0.151.0 and Claude Code2.1.251,
+both authenticated. It exercised real CLI process launch and cleanup through the development
+app, without submitting model work or recording provider messages. It does not establish
+installed mission, real Claude-auto classifier, read/edit/test, billing or owner acceptance.
+Evidence: `tmp/us8/final-live-provider-smoke.log`. Unavailable provider cases now use actual
+test skips rather than silently passing, and output records sanitized version/readiness only.
+
+Final privacy review found that the preexisting uncaught-exception handler printed raw error
+stack/message/string values. A small `main/fatal.ts` handler now ignores the thrown value,
+writes only the fixed `THREADHELM_FATAL UNCAUGHT_EXCEPTION` marker and exits1 even if writing
+fails. Five real Node subprocess regressions reproduced private stack/string leakage before
+the fix and passed afterward; independent bounded source review PASS. This covers the handler,
+not V8's preparation of thrown values or static-import failures before handler registration.
+Runtime source froze at21:08 EDT; the20:56 artifact above predates this final fix and remains a
+historical checkpoint until the fresh build/acceptance below.
+
+The first post-fix verification restart stopped at lint because a temporary CommonJS baseline
+probe used `require`. Its source was archived as non-executable diagnostic text after the valid
+baseline finished, and the entire verification sequence restarted. No production lint rule was
+disabled. Failure record: `tmp/us8/closure-verification-probe-lint-failure.json`.
+
+### Final runtime-source verification, 2026-08-30 21:24 EDT
+
+The complete sequence was rerun after the21:08 fatal-handler source freeze and probe cleanup.
+All twelve commands exited0: format, lint, Rust format/clippy/tests, TypeScript checking, unit,
+contract, desktop build, native supervision proof, full Windows integration and full E2E.
+Exact timestamps and logs are in `tmp/us8/closure-verification.json`; the final E2E ended at
+21:23:57 EDT. Results:275unit across31files,247contracts across13files,20native-library plus
+12bridge Rust tests,3supervision proofs,96Windows integration passes with the same single
+preexisting database-lock harness skip, and41E2E passes. All19mission integration cases and
+all7mission E2Es passed. No runtime source changed after this sequence began.
+
+The five fatal-handler subprocess cases also passed under Node22.23.1, matching CI's Node22
+major, and all11persona scanner cases passed under that runtime. These are compatibility
+checks, not hosted CI. Logs:`tmp/us8/closure-node22-compatibility.log` and
+`tmp/us8/closure-node22-persona-guards.log`. Current-work Gitleaks scanned813740bytes with
+redaction and found no leaks (`tmp/us8/gitleaks-closure-work.json`); this is not a history audit.
+
+### Current final checkpoint — 2026-08-30 21:30 EDT
+
+This table supersedes earlier progress/status tables for current completion claims. Feature002
+remains selected and active.161of166tasks are checked; T148,T149,T154,T157,T158 remain open.
+The packaged memory failure is additionally an explicit release blocker despite T151 measurement
+coverage being complete. No commit, staging, push, merge, install, uninstall or release was performed.
+
+| Evidence category | Current result and limitation |
+|---|---|
+| US8 implementation | Mission authority, bounded DAG/leases/startup, durable recovery, immutable profile/runtime bindings, typed returns, UI and content deletion implemented; bounded independent source reviews passed |
+| Local full verification | All twelve commands exit0;275unit,247contract,32Rust,3nativeproof,96Windows with1preexisting skip,41E2E; full results above |
+| Focused performance |4passes; mission detail p95 23.7ms; recovery2041.4ms;1000duplicate rejection p95 3.2ms;100profiles/100templates/20drafts p95 76.7ms;10,000revision FTS p95 2.5ms. Six unrelated cases were filtered out only for this focused rerun, not omitted from the full suite |
+| Final x64 package | Normal `pnpm package:win` exit0 at21:26:41; portable/Setup/nupkg rebuilt after final runtime fix |
+| Actual private-persona boundary | PASS: final ASAR and unpacked assets contain no private Marvel persona material; generic starters remain bundled and personal local imports remain supported |
+| Local artifact acceptance |26passes under explicit unsigned-local override; x64 PE/native dependencies, fuses, bootstrap/probes and single instance passed; packaged bridge lookup passed |
+| Signing | BLOCKED: strict default gate exits1 with `NotSigned`; local report records9unsigned app/native files and `signatureReleaseReady:false` |
+| Packaged idle CPU | PASS: median0percent of one core over twelve five-second windows, no sessions/no inspector |
+| Packaged idle memory | FAIL: final peak413.367MiB against250MiB; no budget/metric/security relaxation; source optimization/runtime investigation remains necessary |
+| Live providers | Development launch/cleanup smoke3passes with authenticated Codex0.151.0/Claude2.1.251; prior isolated T166 auto proof remains scoped historical evidence; installed US8 mission/auto/classifier/usage proof remains unverified |
+| Model reviews | Bounded OpenAI/Claude/Antigravity source reviews passed after documented fixes/dispositions; not owner acceptance |
+| Other release gates | Signed x64/ARM64 installed execution, actual installer/uninstaller cleanup, exact installed live mission proof, hosted CI/main integration and explicit human acceptance remain open |
+
+Fresh evidence: `tmp/us8/closure-artifact-checks.json`, `closure-x64-acceptance.json`,
+`closure-strict-signature-report.json`, `closure-performance-details.log`,
+`closure-packaged-idle-performance.json`, `closure-distributables.json`, and
+`closure-package-identity.json`. These ignored local reports are supporting artifacts; the
+facts and limitations above are recorded here for durable review. No model message bodies or
+credentials are included in this record.
+
+Final distributable identities, with both SHA-256 sidecars independently matched:
+
+- `ThreadHelm-Setup-x64.exe`:156184576bytes,
+  SHA256 `553220be651924e529f410571961e4ee0b56f6d1594962a0b8a788c46c70e044`.
+- `ThreadHelm-0.0.0-full.nupkg`:155439853bytes,
+  SHA256 `1ae5df1bc00ddf3453d8b391585f81add4f732cc9945b6ef006b7ea38384348c`.
+- Final `resources/app.asar`:
+  SHA256 `6e00541c6de7a3ec3749294574fea8396e4f5135fb8cd9e6f2f85c01352e1e53`.
+
+The portable executable itself has no adjacent checksum; its internal checksum acceptance
+scenario remains explicitly skipped. The verified distributable checksums above do not imply
+code signing. The final measurement used the final package identity and cleaned its disposable
+user data afterward; the measurement command exited0 while its memory-budget boolean was false.
+
+Next required closure work is a measured reduction of packaged idle memory without weakening
+isolation; an approved exact installed-provider mission acceptance run with real auto-policy and
+usage evidence; trusted signing plus x64/ARM64 installer/uninstaller validation; then hosted
+integration and owner acceptance. These are not satisfied by the deterministic fixtures, prior
+isolated provider proof, passing build or current unsigned package.

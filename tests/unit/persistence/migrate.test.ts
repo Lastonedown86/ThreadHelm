@@ -51,10 +51,15 @@ describe('migrate', () => {
     ).map((t) => t.name);
     expect(tables).toEqual([
       'agent_definitions',
+      'agent_profile_drafts',
+      'agent_profile_export_intents',
       'agent_profile_revisions',
+      'agent_profile_template_revisions',
+      'agent_profile_templates',
       'agent_profiles',
       'agent_readiness_snapshots',
       'agent_sessions',
+      'agent_template_storage_v1',
       'approved_workspaces',
       'coordination_conversations',
       'coordination_delivery_attempts',
@@ -75,6 +80,15 @@ describe('migrate', () => {
       'shared_memory_fts_idx',
       'shared_memory_revisions',
       'shared_memory_scope_quotas',
+      'supervisor_decisions',
+      'supervisor_dependencies',
+      'supervisor_envelopes',
+      'supervisor_events',
+      'supervisor_missions',
+      'supervisor_session_roles',
+      'supervisor_work_attempts',
+      'supervisor_work_items',
+      'supervisor_worker_leases',
     ]);
   });
 

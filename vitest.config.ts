@@ -4,6 +4,10 @@ import { defineConfig } from 'vitest/config';
 // Workspace packages resolve to TypeScript source so tests never depend on a
 // prior `tsc --build`. electron.vite.config.ts uses the same aliases.
 export const workspaceAliases = {
+  '@threadhelm/test-fixtures/desktop': resolve(
+    import.meta.dirname,
+    'packages/test-fixtures/src/desktop.ts',
+  ),
   '@threadhelm/contracts': resolve(import.meta.dirname, 'packages/contracts/src/index.ts'),
   '@threadhelm/domain': resolve(import.meta.dirname, 'packages/domain/src/index.ts'),
   '@threadhelm/persistence': resolve(import.meta.dirname, 'packages/persistence/src/index.ts'),

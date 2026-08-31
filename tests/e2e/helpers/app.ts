@@ -43,6 +43,7 @@ export interface LaunchedApp {
   useFixtureAdapters(
     modes: Partial<Record<ProviderId, FakeAgentMode>>,
     lines?: number,
+    permissionCapabilities?: Partial<Record<ProviderId, 'allowed' | 'denied' | 'unknown'>>,
   ): Promise<void>;
   liveSessions(): Promise<{ id: string; state: string; hostPid: number; rootPid: number | null }[]>;
   jobSnapshot(
@@ -63,6 +64,12 @@ export interface LaunchedApp {
     sessionId: string,
     input: ProviderMemoryProposeRevisionInput,
   ): Promise<MemoryDetailView>;
+  /** Authenticated request through the real main-owned named pipe, not direct dispatch. */
+  bridgeRequest<T = unknown>(
+    sessionId: string,
+    method: string,
+    params: Record<string, unknown>,
+  ): Promise<T>;
   /** Hard-kills the coordinator with no cleanup; resolves once the process is gone. */
   crashCoordinator(): Promise<void>;
   close(): Promise<void>;
@@ -137,8 +144,12 @@ export async function launchApp(options: LaunchOptions = {}): Promise<LaunchedAp
       return result.value as never;
     },
     setPickerPath: (path) => hooks('hooks.setPickerPath(arg)', path),
-    useFixtureAdapters: (modes, lines) =>
-      hooks('hooks.useFixtureAdapters(arg.modes, arg.lines)', { modes, lines }),
+    useFixtureAdapters: (modes, lines, permissionCapabilities) =>
+      hooks('hooks.useFixtureAdapters(arg.modes, arg.lines, arg.permissionCapabilities)', {
+        modes,
+        lines,
+        permissionCapabilities,
+      }),
     liveSessions: () => hooks('hooks.liveSessions()'),
     jobSnapshot: (sessionId) => hooks('hooks.jobSnapshot(arg)', sessionId),
     simulatePower: (event) => hooks('hooks.simulatePower(arg)', event),
@@ -154,6 +165,12 @@ export async function launchApp(options: LaunchOptions = {}): Promise<LaunchedAp
       }),
     proposeProviderMemory: (sessionId, input) =>
       hooks('hooks.proposeProviderMemory(arg.sessionId, arg.input)', { sessionId, input }),
+    bridgeRequest: (sessionId, method, params) =>
+      hooks('hooks.bridgeRequest(arg.sessionId,arg.method,arg.params)', {
+        sessionId,
+        method,
+        params,
+      }),
     async crashCoordinator() {
       // app.process() is Playwright's cli wrapper; the coordinator is the browser process.
       const pid = await app.evaluate(() => process.pid);

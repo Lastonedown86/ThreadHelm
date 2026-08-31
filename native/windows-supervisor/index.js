@@ -704,6 +704,7 @@ module.exports.assignProcess = nativeBinding.assignProcess
 module.exports.closeJob = nativeBinding.closeJob
 module.exports.createKillOnCloseJob = nativeBinding.createKillOnCloseJob
 module.exports.inspectJob = nativeBinding.inspectJob
+module.exports.inspectSessionScope = nativeBinding.inspectSessionScope
 module.exports.resolveDirectory = nativeBinding.resolveDirectory
 module.exports.terminateJob = nativeBinding.terminateJob
 module.exports.verifyProcessInJob = nativeBinding.verifyProcessInJob

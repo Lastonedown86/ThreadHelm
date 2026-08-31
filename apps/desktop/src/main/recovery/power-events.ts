@@ -26,6 +26,7 @@ const MAP: Record<'suspend' | 'resume' | 'lock-screen' | 'unlock-screen', PowerE
 };
 
 export function reconcileLiveSessions(ctx: Context, event: PowerEvent): void {
+  ctx.supervisor?.onPowerBoundary();
   let reconciled = 0;
   let recoveryRequired = 0;
   for (const live of [...ctx.live.values()]) {
@@ -39,7 +40,7 @@ export function reconcileLiveSessions(ctx: Context, event: PowerEvent): void {
       if (!ctx.live.has(live.id)) recoveryRequired += 1;
     }
   }
-  ctx.log.info('power.reconciled', { event, reconciled, recoveryRequired });
+  ctx.log.info('power.reconciled', { powerEvent: event, reconciled, recoveryRequired });
   ctx.events.emit('application.powerChanged', { event, reconciled, recoveryRequired });
 }
 

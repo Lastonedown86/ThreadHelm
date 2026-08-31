@@ -23,7 +23,7 @@ export class JobRegistry {
 
   create(sessionId: string): number {
     if (this.#tokens.has(sessionId)) throw new Error('job already exists for session');
-    const token = this.#native.createKillOnCloseJob();
+    const token = this.#native.createKillOnCloseJob(sessionId);
     this.#tokens.set(sessionId, token);
     this.#log.info('job.created', { sessionId, token });
     return token;

@@ -6,9 +6,14 @@
  */
 
 import { rmSync } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
+import Database from 'better-sqlite3';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createRepositories, migrate, openDatabase } from '@threadhelm/persistence';
+import { GENERIC_AGENT_TEMPLATE_FIXTURES } from '@threadhelm/test-fixtures';
+import type { MissionDetailView, OperationResponse } from '@threadhelm/contracts';
+import { prepareFixtureMission } from '../../e2e/helpers/mission.js';
 import {
   cleanupUserData,
   launchApp,
@@ -82,6 +87,219 @@ function budget(label: string, value: number, max: number, unit: string) {
 }
 
 describe('performance budgets', () => {
+  it('keeps a supervisor plus four workers responsive and recovers a mission within five seconds', async () => {
+    app = await launchApp();
+    userData = app.userData;
+    await app.useFixtureAdapters({ 'codex-cli': 'echo' });
+    const envelope = await prepareFixtureMission(
+      app,
+      Array.from({ length: 5 }, (_, i) => ws(`mission-${i}`)),
+    );
+    envelope.bounds.maxTokenBudget = 1_000_000;
+    const preview = await app.call<OperationResponse<'missions.preview'>>('missions.preview', {
+      envelope,
+    });
+    const mission = await app.call<MissionDetailView>('missions.confirm', {
+      previewToken: preview.previewToken,
+      boundaryConfirmation: true,
+    });
+    expect(await app.liveSessions()).toHaveLength(5);
+    const supervisor = envelope.supervisor.sessionId;
+    const bindings = mission.envelope!.bindings.filter((binding) => binding.role === 'worker');
+    const items = bindings.map((binding) => ({
+      id: randomUUID(),
+      parentWorkItemId: null,
+      workspaceId: binding.workspaceId,
+      title: 'Bounded fixture work',
+      specification: 'Inspect a local fixture',
+      acceptanceCriteria: 'Cited observations',
+      dependencies: [],
+      authorityClass: 'routine',
+    }));
+    const decision = {
+      missionId: mission.id,
+      rationale: 'Bounded responsiveness measurement',
+      inputRefs: [],
+      expectedEvidence: 'A fixture report',
+    };
+    await app.bridgeRequest(supervisor, 'threadhelm_work_decompose', {
+      ...decision,
+      idempotencyKey: randomUUID(),
+      items,
+    });
+    for (const [index, binding] of bindings.entries()) {
+      await app.bridgeRequest(supervisor, 'threadhelm_work_assign', {
+        ...decision,
+        idempotencyKey: randomUUID(),
+        workItemId: items[index]!.id,
+        bindingId: binding.bindingId,
+      });
+    }
+    const active = await app.call<MissionDetailView>('missions.detail', { missionId: mission.id });
+    expect(active.activeWorkerCount).toBe(4);
+    expect(active.attempts).toHaveLength(4);
+    const samples: number[] = [];
+    for (let index = 0; index < 100; index++) {
+      const start = performance.now();
+      const detail = await app.call<MissionDetailView>('missions.detail', {
+        missionId: mission.id,
+      });
+      expect(detail.state).toBe('running');
+      expect(detail.envelope!.bounds.maxWorkers).toBe(4);
+      samples.push(performance.now() - start);
+    }
+    samples.sort((a, b) => a - b);
+    expect(samples[94]).toBeLessThanOrEqual(1000);
+    await app.crashCoordinator();
+    app = undefined;
+    const recoveryStarted = performance.now();
+    app = await launchApp({ userData });
+    const recovered = await app.call<MissionDetailView>('missions.detail', {
+      missionId: mission.id,
+    });
+    const recoveryMs = performance.now() - recoveryStarted;
+    expect(recovered.state).toBe('recovery_required');
+    expect(recovered.attempts.every((attempt) => attempt.state === 'unknown')).toBe(true);
+    expect(recovered.leases.every((lease) => lease.state === 'unknown')).toBe(true);
+    expect(await app.liveSessions()).toHaveLength(0);
+    expect(recoveryMs).toBeLessThanOrEqual(5000);
+    console.log(
+      `Mission detail p95 ${samples[94]!.toFixed(1)} ms; recovery ${recoveryMs.toFixed(1)} ms`,
+    );
+  }, 120_000);
+
+  it('rejects 1,000 duplicate presentations with exactly one applied logical delivery', async () => {
+    app = await launchApp();
+    userData = app.userData;
+    await app.useFixtureAdapters({ 'codex-cli': 'echo', 'claude-code': 'echo' });
+    const sender = await launchIn(app, ws('duplicate-sender'), 'codex-cli');
+    const recipient = await launchIn(app, ws('duplicate-recipient'), 'claude-code');
+    const preview = await app.call<{ previewToken: string }>('coordination.previewHandoff', {
+      sourceSessionId: sender.session.id,
+      recipientSessionId: recipient.session.id,
+      kind: 'request',
+      purpose: 'Duplicate boundary measurement',
+      body: 'Review a bounded fixture',
+      responseExpected: true,
+    });
+    const handoff = await app.call<{ id: string }>('coordination.confirmHandoff', {
+      previewToken: preview.previewToken,
+      persistenceConfirmation: true,
+    });
+    await app.call('sessions.select', { sessionId: recipient.session.id });
+    const presentation = await app.call<{ presentationToken: string }>(
+      'coordination.requestPresentation',
+      { handoffId: handoff.id },
+    );
+    await app.call('coordination.confirmPresentation', {
+      presentationToken: presentation.presentationToken,
+      submitConfirmation: true,
+    });
+    const samples: number[] = [];
+    for (let count = 0; count < 1000; count++) {
+      const started = performance.now();
+      const duplicate = await app.dispatch('coordination.confirmPresentation', {
+        presentationToken: presentation.presentationToken,
+        submitConfirmation: true,
+      });
+      samples.push(performance.now() - started);
+      expect(duplicate.ok).toBe(false);
+    }
+    const db = new Database(join(userData, 'threadhelm.sqlite'), {
+      readonly: true,
+      fileMustExist: true,
+    });
+    try {
+      expect(
+        db
+          .prepare(
+            'SELECT count(*) AS count FROM coordination_delivery_attempts WHERE handoff_id = ? AND state = ?',
+          )
+          .get(handoff.id, 'applied'),
+      ).toEqual({ count: 1 });
+      expect(
+        db
+          .prepare(
+            'SELECT count(*) AS count FROM coordination_delivery_attempts WHERE handoff_id = ?',
+          )
+          .get(handoff.id),
+      ).toEqual({ count: 1 });
+    } finally {
+      db.close();
+    }
+    samples.sort((a, b) => a - b);
+    console.log(
+      `duplicate presentation response p95: ${samples[949]!.toFixed(1)} ms (1000 rejected)`,
+    );
+    expect(samples[949]).toBeLessThanOrEqual(1000);
+  }, 120_000);
+
+  it('lists and resumes bounded authoring data at 100 profiles, 100 templates and 20 drafts', () => {
+    const directory = ws('authoring-performance');
+    const db = openDatabase(join(directory, 'authoring.sqlite'));
+    try {
+      migrate(db);
+      const repos = createRepositories(db);
+      const at = '2026-08-30T00:00:00.000Z';
+      const manifest = GENERIC_AGENT_TEMPLATE_FIXTURES[0]!.manifest;
+      for (let index = 0; index < 100; index++) {
+        const name = `Generic specialist ${index}`;
+        const json = JSON.stringify({ ...manifest, name });
+        const digest = createHash('sha256').update(json).digest('hex');
+        repos.agentProfiles.importManifest({
+          manifestKey: `perf-${index}`,
+          digest,
+          displayName: name,
+          description: manifest.description,
+          requestedProvider: manifest.provider,
+          requestedModel: manifest.model,
+          capabilities: manifest.capabilities,
+          isolateRequested: manifest.isolate,
+          tokenCapRequested: manifest.tokenCap,
+          author: manifest.author,
+          goal: manifest.goal,
+          manifestSpec: manifest.spec,
+          compatibility: 'compatible',
+          sourceBasename: `perf-${index}.hire.json`,
+          createdAt: at,
+        });
+        repos.agentTemplates.saveRevision({
+          key: `perf-${index}`,
+          name,
+          manifestJson: json,
+          digest,
+          createdAt: at,
+        });
+      }
+      const drafts = Array.from({ length: 20 }, () =>
+        repos.agentTemplates.createDraft({ createdAt: at }),
+      );
+      const samples: number[] = [];
+      for (const draft of drafts) {
+        const start = performance.now();
+        const profiles = repos.agentProfiles.list({ limit: 50 });
+        const templates = repos.agentTemplates.listTemplates({ limit: 50 });
+        expect(profiles.profiles).toHaveLength(50);
+        expect(
+          repos.agentProfiles.list({ limit: 50, cursor: profiles.nextCursor! }).profiles,
+        ).toHaveLength(50);
+        expect(templates.items).toHaveLength(50);
+        expect(
+          repos.agentTemplates.listTemplates({ limit: 50, cursor: templates.nextCursor! }).items,
+        ).toHaveLength(50);
+        expect(repos.agentTemplates.listDrafts().items).toHaveLength(20);
+        expect(repos.agentTemplates.getDraft(draft.draftId).draftId).toBe(draft.draftId);
+        samples.push(performance.now() - start);
+      }
+      samples.sort((a, b) => a - b);
+      const p95 = samples[Math.ceil(samples.length * 0.95) - 1]!;
+      console.log(`authoring at 100/100/20 p95: ${p95.toFixed(1)} ms`);
+      expect(p95).toBeLessThanOrEqual(1000);
+    } finally {
+      db.close();
+    }
+  });
+
   it('shared-memory FTS stays below 500 ms p95 for a representative local corpus', () => {
     const workspace = ws('memory-performance');
     const database = openDatabase(join(workspace, 'memory-performance.sqlite'));
@@ -108,7 +326,7 @@ describe('performance budgets', () => {
         );
       const memory = createRepositories(database).memory;
       database.transaction(() => {
-        for (let index = 0; index < 2_000; index += 1) {
+        for (let index = 0; index < 10_000; index += 1) {
           memory.publish({
             scope: { workspaceId },
             kind: 'fact',
@@ -129,7 +347,7 @@ describe('performance budgets', () => {
         const started = performance.now();
         const page = memory.search({
           scope: { workspaceId },
-          query: `needle-${1_999 - index}`,
+          query: `needle-${9_999 - index}`,
           limit: 20,
         });
         samples.push(performance.now() - started);
@@ -137,7 +355,7 @@ describe('performance budgets', () => {
       }
       samples.sort((left, right) => left - right);
       const p95 = samples[Math.ceil(samples.length * 0.95) - 1]!;
-      console.log(`shared-memory FTS p95: ${p95.toFixed(1)} ms (2,000 revisions)`);
+      console.log(`shared-memory FTS p95: ${p95.toFixed(1)} ms (10,000 revisions)`);
       expect(p95).toBeLessThanOrEqual(500);
     } finally {
       database.close();

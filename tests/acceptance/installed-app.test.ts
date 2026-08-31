@@ -2,25 +2,47 @@
  * Installed-artifact acceptance (T088).
  *
  * Runs against a PACKAGED ThreadHelm, never the dev tree:
- *   pnpm test:acceptance:installed            (THREADHELM_ARTIFACT=<path to ThreadHelm.exe or Setup exe>)
+ *   pnpm test:acceptance:installed            (THREADHELM_ARTIFACT=<path to packaged ThreadHelm.exe>)
  *
- * Validates: Authenticode signature (when the artifact claims one), published
+ * Validates: Authenticode signatures (required unless explicitly testing unsigned locally), published
  * checksum, production fuses, ASAR integrity, native module loading through a
  * real launch, and the displayed version. Records the Windows release and
  * architecture actually exercised so a report can only claim what it tested.
+ * This launches an unpacked package or installed app; it does not install a Setup executable
+ * or prove Squirrel uninstall behavior.
  */
 
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { release } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { FuseV1Options, getCurrentFuseWire } from '@electron/fuses';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { cleanupUserData, makeUserData } from '../e2e/helpers/app.js';
+import {
+  assertNoPrivatePersonaFile,
+  assertProductionPersonaBoundary,
+} from '../../apps/desktop/src/packaging/release-personas.js';
+import { assertNativeArchitecture } from '../../apps/desktop/src/packaging/native-architecture.js';
 
 const artifact = process.env.THREADHELM_ARTIFACT;
+const allowUnsigned = process.env.THREADHELM_ALLOW_UNSIGNED_ARTIFACTS === '1';
 const describeInstalled = artifact ? describe : describe.skip;
+
+function logEvent(text: string, event: string): Record<string, unknown> | undefined {
+  for (const line of text.split('\n')) {
+    try {
+      const value: unknown = JSON.parse(line);
+      if (value && typeof value === 'object' && 'event' in value && value.event === event) {
+        return value as Record<string, unknown>;
+      }
+    } catch {
+      // A final line may still be flushing; wait for the next bounded observation.
+    }
+  }
+  return undefined;
+}
 
 function powershell(script: string): string {
   // Prefer PowerShell 7; Windows PowerShell 5 sometimes cannot load the
@@ -50,6 +72,7 @@ function powershell(script: string): string {
 
 describeInstalled('installed artifact acceptance', () => {
   const exe = resolve(artifact ?? '');
+  const literalExe = `'${exe.replaceAll("'", "''")}'`;
   const report: Record<string, unknown> = {
     artifact: exe,
     windowsRelease: release(),
@@ -85,16 +108,38 @@ describeInstalled('installed artifact acceptance', () => {
     scenarios.checksum = 'verified';
   });
 
-  it('carries a valid Authenticode signature (or records that it is unsigned)', () => {
-    const status = powershell(`(Get-AuthenticodeSignature -FilePath '${exe}').Status`);
+  it('requires valid artifact and unpacked native signatures unless local unsigned testing is explicit', () => {
+    const status = powershell(`(Get-AuthenticodeSignature -LiteralPath ${literalExe}).Status`);
     report.signatureStatus = status;
-    if (status === 'NotSigned') {
-      scenarios.signature = 'UNSIGNED — public release requires signing';
-      // Unsigned builds are allowed for internal testing but the report says so loudly.
-      return;
+    report.localUnsignedOverride = allowUnsigned;
+    const unsigned: string[] = [];
+    const check = (file: string, signature: string) => {
+      if (signature === 'NotSigned' && allowUnsigned) unsigned.push(file);
+      else expect(signature, `Authenticode signature: ${file}`).toBe('Valid');
+    };
+    check(exe, status);
+    const nativeRoot = join(dirname(exe), 'resources', 'app.asar.unpacked');
+    expect(existsSync(nativeRoot)).toBe(true);
+    const natives = (directory: string): string[] =>
+      readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+        const file = join(directory, entry.name);
+        return entry.isDirectory()
+          ? natives(file)
+          : /\.(?:exe|dll|node)$/i.test(entry.name)
+            ? [file]
+            : [];
+      });
+    const files = natives(nativeRoot);
+    expect(files.length).toBeGreaterThan(0);
+    for (const file of files) {
+      const literal = `'${file.replaceAll("'", "''")}'`;
+      check(file, powershell(`(Get-AuthenticodeSignature -LiteralPath ${literal}).Status`));
     }
-    expect(status).toBe('Valid');
-    scenarios.signature = `valid: ${powershell(`(Get-AuthenticodeSignature -FilePath '${exe}').SignerCertificate.Subject`)}`;
+    report.unsignedNativeOrAppFiles = unsigned;
+    report.signatureReleaseReady = unsigned.length === 0;
+    scenarios.signature = unsigned.length
+      ? `LOCAL ONLY: ${unsigned.length} unsigned files; production signature gate NOT passed`
+      : `valid artifact and ${files.length} unpacked native signatures`;
   });
 
   it('has production fuses set', () => {
@@ -104,6 +149,7 @@ describeInstalled('installed artifact acceptance', () => {
     return getCurrentFuseWire(exe).then((wire) => {
       const config = wire as unknown as Record<number, number>;
       expect(config[FuseV1Options.RunAsNode]).toBe(FuseState.DISABLE);
+      expect(config[FuseV1Options.EnableCookieEncryption]).toBe(FuseState.ENABLE);
       expect(config[FuseV1Options.EnableNodeOptionsEnvironmentVariable]).toBe(FuseState.DISABLE);
       expect(config[FuseV1Options.EnableNodeCliInspectArguments]).toBe(FuseState.DISABLE);
       expect(config[FuseV1Options.EnableEmbeddedAsarIntegrityValidation]).toBe(FuseState.ENABLE);
@@ -120,7 +166,40 @@ describeInstalled('installed artifact acceptance', () => {
     expect(existsSync(join(unpacked, 'out', 'main', 'threadhelm-coordination-bridge.exe'))).toBe(
       true,
     );
+    const terminalNative = join(
+      unpacked,
+      'node_modules',
+      'node-pty',
+      'prebuilds',
+      `win32-${process.arch}`,
+    );
+    for (const name of [
+      'conpty.node',
+      'conpty_console_list.node',
+      'conpty/conpty.dll',
+      'conpty/OpenConsole.exe',
+    ]) {
+      expect(
+        existsSync(join(terminalNative, name)),
+        `missing unpacked terminal dependency ${name}`,
+      ).toBe(true);
+    }
     scenarios.asar = 'present with app.asar.unpacked';
+  });
+
+  it('excludes private persona content from the actual packaged archive and unpacked runtime', () => {
+    const resources = join(dirname(exe), 'resources');
+    const archive = join(resources, 'app.asar');
+    // ASAR stores its header and files without compression; scan the actual archive,
+    // not a source tree whose imports may differ from the bundled module graph.
+    assertNoPrivatePersonaFile(archive);
+    assertProductionPersonaBoundary(join(resources, 'app.asar.unpacked'));
+    scenarios.privatePersonas = 'absent from packaged archive and unpacked text assets';
+  });
+
+  it('contains native files matching the tested Windows architecture', () => {
+    assertNativeArchitecture(dirname(exe), process.arch);
+    scenarios.nativeArchitecture = `PE native files match ${process.arch}`;
   });
 
   // Production fuses disable the inspect port Playwright attaches through, so
@@ -136,11 +215,12 @@ describeInstalled('installed artifact acceptance', () => {
       detached: false,
     });
     try {
-      const log = await waitForLog(logFile, (text) => text.includes('provider.probed'), 60_000);
-      const starting = JSON.parse(log.split('\n').find((l) => l.includes('app.starting'))!) as {
-        version: string;
-        arch: string;
-      };
+      const log = await waitForLog(
+        logFile,
+        (text) => Boolean(logEvent(text, 'provider.probed') && logEvent(text, 'app.starting')),
+        60_000,
+      );
+      const starting = logEvent(log, 'app.starting')!;
       expect(starting.version).toMatch(/^\d+\.\d+\.\d+/);
       expect(starting.arch).toBe(process.arch);
       expect(log).toContain('recovery.reconciled');
@@ -191,5 +271,7 @@ async function waitForLog(
     }
     await new Promise((resolveWait) => setTimeout(resolveWait, 250));
   }
-  throw new Error(`log condition not met within ${timeoutMs}ms; log so far:\n${text.slice(-1500)}`);
+  throw new Error(
+    `Log condition not met within ${timeoutMs}ms (${Buffer.byteLength(text)} bytes recorded; content omitted).`,
+  );
 }

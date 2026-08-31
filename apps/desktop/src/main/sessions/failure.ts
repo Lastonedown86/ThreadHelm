@@ -27,7 +27,23 @@ export interface FinalizeInput {
 }
 
 function teardown(ctx: Context, live: LiveSession): void {
-  ctx.coordinationBridge?.revoke(live.id);
+  const cleanup = (action: () => void) => {
+    try {
+      action();
+    } catch {
+      // A disconnected event sink or another cleanup callback cannot strand
+      // the remaining native handles, local lease, or live-session mirror.
+      try {
+        ctx.log.warn('session.cleanup_failed', {
+          sessionId: live.id,
+          reasonCode: 'SESSION_CLEANUP_FAILED',
+        });
+      } catch {
+        /* Logging is also best effort during teardown. */
+      }
+    }
+  };
+  cleanup(() => ctx.coordinationBridge?.revoke(live.id));
   try {
     live.host.postMessage({ type: 'host.shutdown', sessionId: live.id, protocolVersion: 1 });
   } catch {
@@ -43,27 +59,32 @@ function teardown(ctx: Context, live: LiveSession): void {
   }
   // Ending the session abandons outstanding controls. Only a matching
   // host.controlApplied message may resolve a waiter as applied.
-  for (const resolve of live.pendingControls.values()) resolve(false);
+  for (const resolve of live.pendingControls.values()) cleanup(() => resolve(false));
   live.pendingControls.clear();
-  ctx.jobs.close(live.id);
-  releaseLease(ctx, live.id);
+  cleanup(() => ctx.jobs.close(live.id));
+  cleanup(() => releaseLease(ctx, live.id));
   ctx.live.delete(live.id);
+  cleanup(() => ctx.supervisor?.onSessionEnded(live.id, 'WORKER_SESSION_ENDED'));
   if (ctx.selection.selectedSessionId === live.id) ctx.selection.selectedSessionId = null;
-  maybeQuit(ctx);
+  cleanup(() => maybeQuit(ctx));
 }
 
 /** Terminal state requires an observed-empty scope (invariant 6). */
 export function finalizeSession(ctx: Context, live: LiveSession, input: FinalizeInput): void {
   if (isTerminal(live.state)) return;
-  transition(ctx, live.id, {
-    to: input.to,
-    actor: input.actor,
-    kind: 'state_changed',
-    reasonCode: input.reasonCode,
-    summary: input.summary,
-    patch: { endedAt: now(ctx), exitCode: input.exitCode, stopKind: input.stopKind },
-  });
-  teardown(ctx, live);
+  try {
+    transition(ctx, live.id, {
+      to: input.to,
+      actor: input.actor,
+      kind: 'state_changed',
+      reasonCode: input.reasonCode,
+      summary: input.summary,
+      patch: { endedAt: now(ctx), exitCode: input.exitCode, stopKind: input.stopKind },
+    });
+  } finally {
+    // Native cleanup must not depend on renderer event delivery succeeding.
+    teardown(ctx, live);
+  }
 }
 
 /** Kills the scope and records a failed session; other sessions are untouched. */

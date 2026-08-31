@@ -206,3 +206,38 @@ test('text scaling, contrast, reduced motion, and idle rendering', async () => {
     await teardown(app);
   }
 });
+
+test('mission form has named visible-focus controls, stable idle content and 200 percent reflow', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const page = app.page;
+  try {
+    await page.getByRole('button', { name: 'New mission…', exact: true }).focus();
+    await page.keyboard.press('Enter');
+    const dialog = page.getByRole('dialog', { name: 'Create mission', exact: true });
+    await expect(dialog.getByLabel('Objective', { exact: true })).toBeFocused();
+    // Traverse the real form, checking each enabled focus target rather than
+    // asserting accessibility from the source markup alone.
+    for (let index = 0; index < 18; index++) {
+      const control = await focused(page);
+      expect(control.name, `accessible name for ${control.html}`).not.toBe('');
+      expect(control.outlineStyle !== 'none' && control.outlineWidth !== '0px').toBe(true);
+      await page.keyboard.press('Tab');
+    }
+    await expect(dialog.locator('canvas,svg,img,video')).toHaveCount(0);
+    const before = await dialog.innerHTML();
+    await page.waitForTimeout(2000);
+    expect(await dialog.innerHTML()).toBe(before);
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '200%';
+    });
+    const overflow = await dialog.evaluate(
+      (element) => element.scrollWidth > element.clientWidth + 1,
+    );
+    expect(overflow).toBe(false);
+    await expect(dialog.getByLabel('Objective', { exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+  } finally {
+    await teardown(app);
+  }
+});

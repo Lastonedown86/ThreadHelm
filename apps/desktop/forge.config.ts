@@ -15,12 +15,17 @@ import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, relative, sep } from 'node:path';
+import { assertProductionPersonaBoundary } from './src/packaging/release-personas.js';
+import { assertNativeArchitecture } from './src/packaging/native-architecture.js';
 
 // Signing is opt-in via environment: THREADHELM_SIGN_CERT (path to .pfx) and
-// THREADHELM_SIGN_PASSWORD, or THREADHELM_SIGN_TOOL for an external signer
-// command that receives the file path as its only argument.
+// THREADHELM_SIGN_PASSWORD. Partial configuration must not silently produce an
+// unsigned artifact that the release operator expected to be signed.
 const certificateFile = process.env.THREADHELM_SIGN_CERT;
 const certificatePassword = process.env.THREADHELM_SIGN_PASSWORD;
+if (Boolean(certificateFile) !== Boolean(certificatePassword)) {
+  throw new Error('Signing requires both THREADHELM_SIGN_CERT and THREADHELM_SIGN_PASSWORD.');
+}
 const signing =
   certificateFile && certificatePassword ? { certificateFile, certificatePassword } : undefined;
 
@@ -39,7 +44,10 @@ const RUNTIME_PACKAGES: { name: string; exclude: RegExp[] }[] = [
       /^build\/Release\/(?!.*\.node$)./,
     ],
   },
-  { name: 'node-pty', exclude: [/^(src|scripts|node_modules)(\/|$)/, /\.pdb$/, /\.ts$/] },
+  {
+    name: 'node-pty',
+    exclude: [/^(src|scripts|node_modules|build|third_party)(\/|$)/, /\.pdb$/, /\.ts$/],
+  },
   {
     name: '@threadhelm/windows-supervisor',
     exclude: [/^(src|target|node_modules|\.cargo)(\/|$)/, /^(Cargo\.(toml|lock)|build\.rs)$/],
@@ -57,7 +65,7 @@ function packageRoot(name: string): string {
   return realpathSync(dir);
 }
 
-function copyRuntimePackages(buildPath: string): void {
+function copyRuntimePackages(buildPath: string, arch: string): void {
   for (const pkg of RUNTIME_PACKAGES) {
     const source = packageRoot(pkg.name);
     const target = join(buildPath, 'node_modules', ...pkg.name.split('/'));
@@ -69,6 +77,15 @@ function copyRuntimePackages(buildPath: string): void {
         const rel = relative(source, src);
         if (!rel) return true;
         const normalized = rel.split(sep).join('/');
+        // node-pty resolves prebuilds by process.platform/process.arch. Ship only that
+        // target; its package also contains unrelated macOS and Windows binaries.
+        if (pkg.name === 'node-pty' && normalized.startsWith('prebuilds/')) {
+          const target = `prebuilds/win32-${arch}`;
+          if (normalized !== target && !normalized.startsWith(`${target}/`)) return false;
+        }
+        if (pkg.name === 'better-sqlite3' && normalized.startsWith('prebuilds/')) {
+          if (normalized !== `prebuilds/win32-${arch}.node`) return false;
+        }
         return !pkg.exclude.some((pattern) => pattern.test(normalized));
       },
     });
@@ -89,8 +106,8 @@ const config: ForgeConfig = {
     // Dependencies are copied by the packageAfterCopy hook below.
     prune: false,
     asar: {
-      // Native addons and coordination bridge binary must stay real files on disk.
-      unpack: '{**/*.node,**/threadhelm-coordination-bridge.exe}',
+      // Addons, bridge and dependent terminal binaries must be real disk files.
+      unpack: '{**/*.node,**/*.exe,**/*.dll}',
     },
     name: 'ThreadHelm',
     executableName: 'ThreadHelm',
@@ -157,8 +174,11 @@ const config: ForgeConfig = {
     }),
   ],
   hooks: {
-    packageAfterCopy: async (_config, buildPath) => {
-      copyRuntimePackages(buildPath);
+    packageAfterCopy: async (_config, buildPath, _electronVersion, _platform, arch) => {
+      assertProductionPersonaBoundary(join(buildPath, 'out'));
+      copyRuntimePackages(buildPath, arch);
+      assertProductionPersonaBoundary(buildPath);
+      assertNativeArchitecture(buildPath, arch);
     },
     // Every installer and setup artifact gets a sibling .sha256 file so users
     // can verify integrity; release notes publish the same values.

@@ -71,11 +71,16 @@ Expected assignments:
 | P4 | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` |
 | P5 | Antigravity `gemini-3.1-pro-high` | `gemini-3.7-flash-medium` |
 | P6 | Claude `claude-sonnet-5` / `high` | `claude-opus-5` / `high` |
-| P7 | Antigravity `gemini-3.7-flash-medium` | `gemini-3.6-flash-medium` |
+| P7 | OpenAI `gpt-5.6-terra` / `high` | `gpt-5.6-sol` / `high` |
 | P8 | OpenAI `gpt-5.6-sol` / `max` | `gpt-5.6-terra` / `max` |
 
 If a primary and its approved in-ecosystem fallback are unavailable, leave that story unassigned.
 Do not substitute another provider ecosystem or an unreviewed older model.
+
+For the current US7 cycle, use the OpenAI assignment above. Do not start, probe, or otherwise invoke
+Claude Code or Antigravity for US7 unless the owner first authorizes that specific external run. A
+historical availability record does not supply that authorization; deterministic tests remain runnable
+without an LLM.
 
 ## 3. Install and build foundations
 
@@ -248,6 +253,7 @@ digests, and results in execution evidence. It does not copy those files into th
 
 ```powershell
 pnpm exec vitest run --project unit tests/unit/domain/agent-template.test.ts
+pnpm exec vitest run --project unit tests/unit/persistence/agent-templates.test.ts
 pnpm exec vitest run --project contract tests/contract/agent-templates.test.ts
 pnpm exec vitest run --project integration tests/integration/windows/agent-profile-wizard.test.ts
 pnpm exec playwright test tests/e2e/agent-profile-wizard.spec.ts
@@ -265,6 +271,34 @@ Expected:
 - Restart, cancellation, stale template, unresolved variable, target collision, and write failure
   retain an honest recoverable state and launch no session.
 - Shipped templates are narrow, generic, text-only roles; locally saved Marvel templates remain user data.
+  Production builds and packaging reject private persona fixture modules/content, including stale
+  output chunks. The desktop imports only the narrow generic fixture/runtime entry; the personal
+  roster fixture barrel remains test-only.
+
+Manual desktop acceptance:
+
+1. In **Agent templates**, choose **Create agent…**, select **Quality specialist (bundled)**,
+   and use Next through Identity, Role and goal, Capabilities, Runtime requests, and Review.
+   Change the name and goal, use Back, then **Save draft and close**. Restart ThreadHelm and
+   resume the saved draft; verify the same values and step.
+2. Review the exact JSON and digest. Check **I reviewed this exact manifest**, then **Save
+   profile**. Verify one reviewed profile appears and no session launches.
+3. Create another draft, choose **Export…**, and select an existing `*.hire.json` file. The
+   full selected target must appear. **Confirm export** stays disabled until **Replace this
+   existing file** is checked. Canceling the native picker or export confirmation changes no file.
+4. Import a reviewed local Marvel profile through the existing profile-import dialog. Start a
+   wizard from that reviewed profile, customize its name, review it, then choose **Save as
+   template…** and **Confirm save template**. Close the draft, open template Details, and verify
+   its reviewed-profile provenance. Disable, enable, and duplicate the local template; delete the
+   duplicate. A template used by an open draft cannot be deleted until that draft is removed.
+5. Verify all six bundled starters remain generic and immutable, with no Marvel names, project
+   goals, character art, or launch action. Local theme/style remains ordinary name/description
+   text and never becomes a manifest authority field.
+
+Every action is available with Tab, Shift+Tab, Enter, Space, and the native select keys. An invalid
+field stays visible and blocks Next; draft saving preserves incomplete bounded text. If an export
+does not report success, inspect the target before retrying. Unknown export effects are recorded
+locally and are never replayed on restart. This acceptance recipe does not authorize a provider run.
 
 ## 13. Validate P8 bounded autonomous supervision
 
@@ -297,6 +331,39 @@ Expected:
 - Destructive, privileged, external, spending, credential, permission, workspace-expanding, and
   scope-changing branches require exact user authority.
 - Restart preserves mission/work/memory/decision/lease evidence but launches or resumes nothing.
+
+Manual desktop acceptance (use disposable folders and generic reviewed profiles):
+
+1. Launch an ordinary supervisor and a worker with their intended provider/model/effort and runtime
+   permission selections. In **Missions**, choose **New mission…**. Enter the objective and completion
+   evidence, select the supervisor profile/session, and add the worker profile/session. A profile
+   alone does not create an eligible running session or grant a mission role.
+2. Review every workspace's read/write mode, worker role, and mission ceiling. For an offline worker,
+   opt into automatic startup explicitly and set its exact runtime and execution limits. Choose
+   **Review mission** and inspect the profile revision/digest, native folder identity, permission source,
+   capability evidence, requested/effective isolation, and held reasons before confirming the boundary.
+   No provider substitution or bypass is authorized by this confirmation.
+3. Inspect **Work and dependencies**, **Decision history**, **Attempts, starts and results**, and
+   **Workspace leases** in mission detail. Deliberate objective/evidence text belongs in this detail
+   view; the mission list and live event payloads carry bounded lifecycle metadata only.
+4. Choose **Pause mission**. Resuming requires selecting an eligible supervisor and pressing
+   **Resume mission**. **Revise envelope…** requires a fresh exact review; it does not silently widen
+   the previous authorization. Held-work controls do not approve consequential work.
+5. Close and restart the app with unfinished work. Confirm **recovery required**, no restarted worker,
+   and no replay of an unknown attempt. Inspect prior effects before choosing any explicit recovery
+   action. An unavailable or changed provider leaves the binding held.
+   For an unknown effect, stop the prior worker, choose **Inspect unknown effect…**, and explicitly
+   acknowledge inspection of that exact work. Main independently checks the prior process scope.
+   This releases an eligible unknown hold without retrying, completing, or resuming its work.
+6. Choose **Cancel mission…**, confirm the exact mission cancellation, then **Delete mission
+   content…** and confirm that separate content deletion. The objective, work descriptions and decision
+   content disappear while the lifecycle evidence remains. Deletion does not erase external effects.
+
+The built-in Claude capability evidence currently does not authorize `auto`: organization policy is
+unknown. The previous disposable auto proof is evidence for its exact run, not permission for a new
+runtime. A held binding must remain held until current trusted capability evidence supports the exact
+launch. Authentication alone is insufficient. Deterministic fixture acceptance does not establish a
+live provider result or human acceptance.
 
 ## 14. Validate accessibility, responsiveness, and idle cost
 
@@ -346,6 +413,20 @@ $env:THREADHELM_PROVIDER_SMOKE = '1'
 pnpm test:smoke:providers
 ```
 
+`THREADHELM_ARTIFACT` points to the packaged or installed **ThreadHelm.exe**, not a Setup executable.
+Artifact acceptance starts that app but does not install/uninstall Squirrel. The provider smoke
+command separately drives the development build with installed CLIs; it proves readiness and process
+lifecycle only. It does not prove a live mission, Claude auto/classifier behavior, actual read/edit/test
+work, or installed mission integration. The expanded `provider-coordination-smoke.test.ts` suite is
+deterministic main/SQLite/bridge coverage; `THREADHELM_PACKAGED_APP` adds packaged bridge lookup only.
+Keep those evidence categories separate when recording T148/T149/T157.
+
+Artifact acceptance requires valid Authenticode signatures on the app and every unpacked
+native executable, DLL and addon by default. For an explicitly local, unsigned test build only,
+set `$env:THREADHELM_ALLOW_UNSIGNED_ARTIFACTS = '1'` before acceptance and remove it afterwards.
+The report records each unsigned file and `signatureReleaseReady: false`; that override does
+not satisfy the production signing gate. Invalid signatures fail even with the local override.
+
 For each provider proof, record:
 
 - installed ThreadHelm artifact identity and version;
@@ -365,3 +446,14 @@ For each provider proof, record:
 
 Codex and Claude are separate statuses. If only one provider passes the lifecycle proof, only that
 provider/version may advertise `structured_safe_point`; the other remains `manual_only`.
+
+Release records must also distinguish a locally built x64 artifact from signing verification, an
+ARM64 installed run, uninstall cleanup, hosted CI, named model review, and owner acceptance. Scan the
+actual ASAR and unpacked resources for private persona material; inspecting source imports alone is
+insufficient. User-selected local Marvel profiles remain personal data and must never become bundled
+starters, default seed data, screenshots, or production fixtures.
+
+Rollback/recovery: preserve the user-data directory before changing application versions. Do not
+remove additive tables, reset the SQLite schema version, or use an older binary to resume unfinished
+missions. Recovery is inspection-first: unknown delivery/start/write outcomes are never automatically
+retried. Restoring a database does not undo provider filesystem or external effects.

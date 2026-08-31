@@ -13,6 +13,7 @@ import {
   ProviderMemorySearchInput,
   ReasonCode,
   ThreadHelmError,
+  supervisorToolDefinitions,
   WorkOutcome,
   type EventPayload,
 } from '@threadhelm/contracts';
@@ -25,6 +26,7 @@ import type { ProviderId } from '@threadhelm/contracts';
 import type { ProviderLifecycleEvidence as ProviderLifecycleEvidenceValue } from '@threadhelm/contracts';
 import type { ProviderAdapter, SessionBridgeConfig } from '@threadhelm/providers';
 import type { MemoryBridgeAuthority } from './memory.js';
+import type { SupervisorBridgeAuthority } from './supervisor.js';
 
 export interface BridgeSessionInfo {
   sessionId: string;
@@ -106,6 +108,10 @@ export class BridgeSessionManager {
     | undefined;
   readonly #onHandoffChanged: ((handoffId: string) => void) | undefined;
   #memoryAuthority: MemoryBridgeAuthority | undefined;
+  #supervisorAuthority: SupervisorBridgeAuthority | undefined;
+  readonly #registryWaiters = new Map<string, Set<() => void>>();
+  readonly #registryVersions = new Map<string, number>();
+  readonly #registryFingerprints = new Map<string, string>();
 
   constructor(options: BridgeDispatchContext = {}) {
     this.#repo = options.repo;
@@ -124,6 +130,20 @@ export class BridgeSessionManager {
 
   setMemoryAuthority(authority: MemoryBridgeAuthority): void {
     this.#memoryAuthority = authority;
+  }
+  setSupervisorAuthority(authority: SupervisorBridgeAuthority): void {
+    this.#supervisorAuthority = authority;
+  }
+  notifyMissionRolesChanged(): void {
+    for (const sessionId of this.#sessions.keys()) {
+      const fingerprint = JSON.stringify(
+        this.#supervisorAuthority?.registryForSession(sessionId) ?? [],
+      );
+      if (this.#registryFingerprints.get(sessionId) === fingerprint) continue;
+      this.#registryFingerprints.set(sessionId, fingerprint);
+      this.#registryVersions.set(sessionId, (this.#registryVersions.get(sessionId) ?? 0) + 1);
+      for (const wake of this.#registryWaiters.get(sessionId) ?? []) wake();
+    }
   }
 
   async prepareSession(
@@ -177,6 +197,8 @@ export class BridgeSessionManager {
         sessionId,
         sessionConfigPath,
       };
+      const roleCapability = this.#supervisorAuthority?.roleCapabilityForSession(sessionId);
+      if (roleCapability) result.roleCapability = roleCapability;
 
       if (providerId === 'claude-code') {
         const providerConfigPath = join(directory, 'claude-mcp.json');
@@ -265,6 +287,10 @@ export class BridgeSessionManager {
       this.#inFlightMutations.delete(sessionId);
       this.#seenLifecycleEvents.delete(sessionId);
       this.#lifecycleNotBefore.delete(sessionId);
+      for (const wake of this.#registryWaiters.get(sessionId) ?? []) wake();
+      this.#registryWaiters.delete(sessionId);
+      this.#registryVersions.delete(sessionId);
+      this.#registryFingerprints.delete(sessionId);
       this.#onEvent?.({
         sessionId,
         capability: 'session_scoped_stdio_mcp',
@@ -560,6 +586,7 @@ export class BridgeSessionManager {
     }
     for (const key of dedupeKeys) seen.set(key, occurredAt);
     this.#seenLifecycleEvents.set(sessionId, seen);
+    this.#supervisorAuthority?.onProviderLifecycle(evidence);
 
     if (
       !evidence.safePoint ||
@@ -579,6 +606,7 @@ export class BridgeSessionManager {
     const presentation = this.#onLifecycleEvidence
       ? await this.#onLifecycleEvidence(evidence)
       : { presented: false, reasonCode: 'NO_LIFECYCLE_HANDLER' };
+    this.#supervisorAuthority?.onSafePoint(sessionId);
     return {
       status: 'accepted',
       safePoint: true,
@@ -644,13 +672,16 @@ export class BridgeSessionManager {
     const now = this.#clock().getTime();
     const timestamps = this.#rateLimits.get(sessionId) ?? [];
     const recent = timestamps.filter((t) => now - t < 60_000);
-    if (recent.length >= MAX_MUTATIONS_PER_MINUTE) {
+    const registryRead = ['threadhelm_tool_registry', 'threadhelm_watch_registry'].includes(
+      request.method,
+    );
+    if (!registryRead && recent.length >= MAX_MUTATIONS_PER_MINUTE) {
       throw new ThreadHelmError(
         'COORDINATION_LIMIT_REACHED',
         'Bridge rate limit exceeded (max 20 per minute).',
       );
     }
-    recent.push(now);
+    if (!registryRead) recent.push(now);
     this.#rateLimits.set(sessionId, recent);
 
     const params = request.params ?? {};
@@ -658,6 +689,9 @@ export class BridgeSessionManager {
       'threadhelm_list_pending',
       'threadhelm_memory_search',
       'threadhelm_memory_get',
+      'threadhelm_tool_registry',
+      'threadhelm_watch_registry',
+      'threadhelm_mission_inspect',
     ].includes(request.method);
     if (isMutation && this.#inFlightMutations.has(sessionId)) {
       throw new ThreadHelmError(
@@ -668,7 +702,67 @@ export class BridgeSessionManager {
     if (isMutation) this.#inFlightMutations.add(sessionId);
 
     try {
+      if (
+        request.method.startsWith('threadhelm_work_') ||
+        request.method.startsWith('threadhelm_mission_')
+      ) {
+        if (!this.#supervisorAuthority) throw new ThreadHelmError('SUPERVISOR_NOT_BOUND');
+        return {
+          jsonrpc: '2.0',
+          id: request.id,
+          result: await this.#supervisorAuthority.dispatchForSession(
+            sessionId,
+            request.method,
+            params,
+          ),
+        };
+      }
       switch (request.method) {
+        case 'threadhelm_tool_registry': {
+          requireExactParams(params, []);
+          this.notifyMissionRolesChanged();
+          return {
+            jsonrpc: '2.0',
+            id: request.id,
+            result: {
+              version: 1,
+              revision: this.#registryVersions.get(sessionId) ?? 0,
+              missionId: this.#supervisorAuthority?.missionForSession(sessionId) ?? null,
+              tools: supervisorToolDefinitions(
+                this.#supervisorAuthority?.registryForSession(sessionId) ?? [],
+              ),
+            },
+          };
+        }
+        case 'threadhelm_watch_registry': {
+          requireExactParams(params, ['afterRevision']);
+          if (!Number.isSafeInteger(params.afterRevision) || Number(params.afterRevision) < 0)
+            throw new ThreadHelmError('INVALID_REQUEST');
+          this.notifyMissionRolesChanged();
+          if ((this.#registryVersions.get(sessionId) ?? 0) <= Number(params.afterRevision)) {
+            if ((this.#registryWaiters.get(sessionId)?.size ?? 0) >= 1)
+              throw new ThreadHelmError('COORDINATION_LIMIT_REACHED');
+            await new Promise<void>((resolve) => {
+              const waiters = this.#registryWaiters.get(sessionId) ?? new Set<() => void>();
+              const wake = () => {
+                clearTimeout(timer);
+                waiters.delete(wake);
+                resolve();
+              };
+              const timer = setTimeout(wake, 30_000);
+              timer.unref();
+              waiters.add(wake);
+              this.#registryWaiters.set(sessionId, waiters);
+            });
+          }
+          if (!this.authenticate(sessionId, token))
+            throw new ThreadHelmError('UNAUTHORIZED_SENDER');
+          return {
+            jsonrpc: '2.0',
+            id: request.id,
+            result: { version: 1, revision: this.#registryVersions.get(sessionId) ?? 0 },
+          };
+        }
         case 'threadhelm_list_pending': {
           requireExactParams(params, ['limit']);
           const limit = typeof params.limit === 'number' ? params.limit : 20;

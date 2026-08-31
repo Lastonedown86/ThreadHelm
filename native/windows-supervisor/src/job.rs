@@ -1,23 +1,27 @@
 //! Job Object supervision.
 //!
-//! Every session gets one unnamed Job Object with
-//! `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`. Main holds the token for the session
-//! lifetime, so if the coordinator dies for any reason Windows closes the
-//! handle and tears down the whole supervised tree. That is the containment
-//! guarantee — not a best-effort kill loop.
+//! Every session has an unnamed, non-inheritable kill-on-close containment job.
+//! A second, nested UUID-named job permits query-only recovery inspection. A
+//! same-user child may retain a handle to the named tracking job, but it cannot
+//! thereby retain the unnamed outer containment job. Main assigns a dormant
+//! host to both jobs, outer first, before permitting any provider process.
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Mutex, OnceLock};
 use std::{mem, ptr};
 
-use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, FALSE, HANDLE};
+use windows_sys::Win32::Foundation::{
+    CloseHandle, GetLastError, SetLastError, ERROR_ALREADY_EXISTS, ERROR_FILE_NOT_FOUND, FALSE,
+    HANDLE,
+};
 use windows_sys::Win32::System::JobObjects::{
     AssignProcessToJobObject, CreateJobObjectW, IsProcessInJob, JobObjectBasicProcessIdList,
-    JobObjectExtendedLimitInformation, QueryInformationJobObject, SetInformationJobObject,
-    TerminateJobObject, JOBOBJECT_BASIC_PROCESS_ID_LIST, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
-    JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+    JobObjectExtendedLimitInformation, OpenJobObjectW, QueryInformationJobObject,
+    SetInformationJobObject, TerminateJobObject, JOBOBJECT_BASIC_PROCESS_ID_LIST,
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
 };
+use windows_sys::Win32::System::SystemServices::JOB_OBJECT_QUERY;
 use windows_sys::Win32::System::Threading::{
     OpenProcess, Sleep, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_SET_QUOTA, PROCESS_TERMINATE,
 };
@@ -45,8 +49,7 @@ impl JobSnapshot {
     }
 }
 
-/// Owns a Job Object handle. Dropping it closes the handle, which — because of
-/// KILL_ON_JOB_CLOSE — terminates every process still inside.
+/// Owns a Job Object handle, closed exactly once.
 struct OwnedJob(HANDLE);
 
 // SAFETY: a Job Object HANDLE is a process-wide kernel handle; it is valid from
@@ -62,14 +65,21 @@ impl Drop for OwnedJob {
     }
 }
 
+struct OwnedScope {
+    // Drop containment first. Its only handle is owned here, never named or
+    // inherited. Closing a separately opened tracking handle has no authority.
+    containment: OwnedJob,
+    tracking: Option<OwnedJob>,
+}
+
 // ponytail: a process-global registry keyed by u32 rather than napi External.
 // Tokens are process-local, unforgeable in practice, and explicitly
 // invalidated by close_job — no GC ordering to reason about. If a future
 // multi-coordinator design needs isolated registries, this is the seam.
-static REGISTRY: OnceLock<Mutex<HashMap<u32, OwnedJob>>> = OnceLock::new();
+static REGISTRY: OnceLock<Mutex<HashMap<u32, OwnedScope>>> = OnceLock::new();
 static NEXT_TOKEN: AtomicU32 = AtomicU32::new(1);
 
-fn registry() -> &'static Mutex<HashMap<u32, OwnedJob>> {
+fn registry() -> &'static Mutex<HashMap<u32, OwnedScope>> {
     REGISTRY.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
@@ -80,20 +90,79 @@ fn last_error() -> u32 {
 
 /// Run `f` with the raw handle for `token`, or fail with INVALID_NATIVE_TOKEN.
 fn with_job<T>(token: u32, f: impl FnOnce(HANDLE) -> Result<T>) -> Result<T> {
+    with_scope(token, |containment, _| f(containment))
+}
+
+fn with_scope<T>(token: u32, f: impl FnOnce(HANDLE, Option<HANDLE>) -> Result<T>) -> Result<T> {
     let guard = registry()
         .lock()
         .map_err(|_| SupervisorError::new(Code::InvalidNativeToken))?;
-    let job = guard
+    let scope = guard
         .get(&token)
         .ok_or_else(|| SupervisorError::new(Code::InvalidNativeToken))?;
-    let handle = job.0;
-    drop(guard);
-    f(handle)
+    // Keep the registry lock until the operation completes: close_job on a
+    // different thread must not invalidate either handle while it is in use.
+    f(
+        scope.containment.0,
+        scope.tracking.as_ref().map(|job| job.0),
+    )
 }
 
 pub fn create_kill_on_close_job() -> Result<u32> {
-    // SAFETY: null name and null security attributes create an unnamed job.
-    let handle = unsafe { CreateJobObjectW(ptr::null(), ptr::null()) };
+    create_job(None)
+}
+
+fn session_job_name(session_id: &str) -> Result<Vec<u16>> {
+    let valid = session_id.len() == 36
+        && session_id.bytes().enumerate().all(|(index, byte)| {
+            if [8, 13, 18, 23].contains(&index) {
+                byte == b'-'
+            } else {
+                byte.is_ascii_hexdigit()
+            }
+        });
+    if !valid {
+        return Err(SupervisorError::new(Code::InvalidNativeToken));
+    }
+    Ok(format!(
+        "Local\\ThreadHelm.session.{}\0",
+        session_id.to_ascii_lowercase()
+    )
+    .encode_utf16()
+    .collect())
+}
+
+pub fn create_named_session_job(session_id: &str) -> Result<u32> {
+    create_job(Some(session_job_name(session_id)?))
+}
+
+fn create_job(name: Option<Vec<u16>>) -> Result<u32> {
+    let containment = create_handle(None, true)?;
+    let tracking = name
+        .map(|name| create_handle(Some(&name), false))
+        .transpose()?;
+    let token = NEXT_TOKEN.fetch_add(1, Ordering::Relaxed);
+    registry()
+        .lock()
+        .map_err(|_| SupervisorError::new(Code::JobCreateFailed))?
+        .insert(
+            token,
+            OwnedScope {
+                containment,
+                tracking,
+            },
+        );
+    Ok(token)
+}
+
+fn create_handle(name: Option<&[u16]>, kill_on_close: bool) -> Result<OwnedJob> {
+    // SAFETY: default security attributes make the handle non-inheritable. The
+    // optional name is a bounded UUID-derived name with a terminating NUL.
+    let handle = unsafe {
+        SetLastError(0);
+        CreateJobObjectW(ptr::null(), name.map_or(ptr::null(), |name| name.as_ptr()))
+    };
+    let creation_error = last_error();
     if handle.is_null() {
         return Err(SupervisorError::with_win32(
             Code::JobCreateFailed,
@@ -101,7 +170,17 @@ pub fn create_kill_on_close_job() -> Result<u32> {
         ));
     }
     let job = OwnedJob(handle);
+    // Never join or alter a pre-existing scope, including an attacker-created one.
+    if creation_error == ERROR_ALREADY_EXISTS {
+        return Err(SupervisorError::with_win32(
+            Code::JobCreateFailed,
+            creation_error,
+        ));
+    }
 
+    if !kill_on_close {
+        return Ok(job);
+    }
     let mut limits = unsafe { mem::zeroed::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() };
     limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
     // SAFETY: `limits` is a correctly sized JOBOBJECT_EXTENDED_LIMIT_INFORMATION.
@@ -121,12 +200,33 @@ pub fn create_kill_on_close_job() -> Result<u32> {
         ));
     }
 
-    let token = NEXT_TOKEN.fetch_add(1, Ordering::Relaxed);
-    registry()
-        .lock()
-        .map_err(|_| SupervisorError::new(Code::JobCreateFailed))?
-        .insert(token, job);
-    Ok(token)
+    Ok(job)
+}
+
+/// Query only the exact session's named scope. This returns no control token and
+/// never opens or reattaches a process by a stale PID. Missing is an empty scope;
+/// access denial and all other uncertainty remain errors for main to hold.
+pub fn inspect_session_scope(session_id: &str) -> Result<JobSnapshot> {
+    let name = session_job_name(session_id)?;
+    // SAFETY: bounded terminated name; query-only access; handle is not inherited.
+    let handle = unsafe { OpenJobObjectW(JOB_OBJECT_QUERY, FALSE, name.as_ptr()) };
+    if handle.is_null() {
+        let error = last_error();
+        return if error == ERROR_FILE_NOT_FOUND {
+            Ok(JobSnapshot {
+                active_process_count: 0,
+                process_ids: vec![],
+                truncated: false,
+            })
+        } else {
+            Err(SupervisorError::with_win32(
+                Code::JobInspectionFailed,
+                error,
+            ))
+        };
+    }
+    let query_handle = OwnedJob(handle);
+    inspect_handle(query_handle.0)
 }
 
 /// Open a process handle with exactly the rights the caller needs.
@@ -157,17 +257,22 @@ impl Drop for OwnedProcess {
 }
 
 pub fn assign_process(token: u32, pid: u32) -> Result<()> {
-    with_job(token, |job| {
+    with_scope(token, |containment, tracking| {
         let process = open_process(pid, PROCESS_SET_QUOTA | PROCESS_TERMINATE)?;
-        // SAFETY: both handles are live and owned for the duration of the call.
-        let ok = unsafe { AssignProcessToJobObject(job, process.0) };
-        if ok == 0 {
-            // Nested-job rejection, access denied, and stale pids all land
-            // here. Fail closed: the caller must not launch a provider.
-            return Err(SupervisorError::with_win32(
-                Code::ProcessAssignFailed,
-                last_error(),
-            ));
+        // Windows nested-job assignment must proceed root first. Any failed
+        // inner assignment leaves the dormant host contained by the outer job;
+        // main treats the error as fatal and never sends its launch descriptor.
+        for job in std::iter::once(containment).chain(tracking) {
+            // SAFETY: both handles are live and owned for the duration of the call.
+            let ok = unsafe { AssignProcessToJobObject(job, process.0) };
+            if ok == 0 {
+                // Nested-job rejection, access denied, and stale pids all land
+                // here. Fail closed: the caller must not launch a provider.
+                return Err(SupervisorError::with_win32(
+                    Code::ProcessAssignFailed,
+                    last_error(),
+                ));
+            }
         }
         Ok(())
     })
@@ -175,18 +280,23 @@ pub fn assign_process(token: u32, pid: u32) -> Result<()> {
 
 /// Mandatory before main sends a launch descriptor.
 pub fn verify_process_in_job(token: u32, pid: u32) -> Result<bool> {
-    with_job(token, |job| {
+    with_scope(token, |containment, tracking| {
         let process = open_process(pid, PROCESS_QUERY_LIMITED_INFORMATION)?;
-        let mut in_job = 0i32;
-        // SAFETY: both handles are live; `in_job` is a valid BOOL out-param.
-        let ok = unsafe { IsProcessInJob(process.0, job, &raw mut in_job) };
-        if ok == 0 {
-            return Err(SupervisorError::with_win32(
-                Code::ProcessNotInJob,
-                last_error(),
-            ));
+        for job in std::iter::once(containment).chain(tracking) {
+            let mut in_job = 0i32;
+            // SAFETY: both handles are live; `in_job` is a valid BOOL out-param.
+            let ok = unsafe { IsProcessInJob(process.0, job, &raw mut in_job) };
+            if ok == 0 {
+                return Err(SupervisorError::with_win32(
+                    Code::ProcessNotInJob,
+                    last_error(),
+                ));
+            }
+            if in_job == 0 {
+                return Ok(false);
+            }
         }
-        Ok(in_job != 0)
+        Ok(true)
     })
 }
 

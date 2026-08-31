@@ -49,6 +49,9 @@ export interface State {
   memorySequence: number;
   /** Monotonic content-free signal; components explicitly reload the agent roster. */
   profilesSequence: number;
+  /** Content-free authoring signal; fields are loaded only in explicit detail views. */
+  agentAuthoringSequence: number;
+  missionSequence: number;
   selectedSessionId: string | null;
   unread: Record<string, boolean>;
   truncation: TruncationState;
@@ -74,6 +77,8 @@ const initial: State = {
   coordinationNotice: null,
   memorySequence: 0,
   profilesSequence: 0,
+  agentAuthoringSequence: 0,
+  missionSequence: 0,
   selectedSessionId: null,
   unread: {},
   truncation: {},
@@ -125,7 +130,9 @@ type Action =
   | { type: 'coordinationLoaded'; handoffs: HandoffSummaryView[] }
   | { type: 'coordinationEvent'; event: CoordinationEventEnvelope }
   | { type: 'memoryEvent'; sequence: number }
-  | { type: 'profilesEvent' };
+  | { type: 'profilesEvent' }
+  | { type: 'agentAuthoringEvent' }
+  | { type: 'missionEvent' };
 
 function upsertSession(state: State, session: SessionView): State {
   const known = session.id in state.sessions;
@@ -266,6 +273,10 @@ function reduce(state: State, action: Action): State {
       return { ...state, memorySequence: Math.max(state.memorySequence, action.sequence) };
     case 'profilesEvent':
       return { ...state, profilesSequence: state.profilesSequence + 1 };
+    case 'agentAuthoringEvent':
+      return { ...state, agentAuthoringSequence: state.agentAuthoringSequence + 1 };
+    case 'missionEvent':
+      return { ...state, missionSequence: state.missionSequence + 1 };
   }
 }
 
@@ -411,6 +422,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'memoryEvent', sequence: event.sequence }),
       ),
       api.on('profiles.changed', () => dispatch({ type: 'profilesEvent' })),
+      api.on('agentWizard.changed', () => dispatch({ type: 'agentAuthoringEvent' })),
+      api.on('agentTemplates.changed', () => dispatch({ type: 'agentAuthoringEvent' })),
+      api.on('mission.changed', () => dispatch({ type: 'missionEvent' })),
     ];
     void refresh();
     return () => {

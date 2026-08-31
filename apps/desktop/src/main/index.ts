@@ -9,15 +9,12 @@
 import { app } from 'electron';
 import { join } from 'node:path';
 import { bootstrap } from './bootstrap.js';
+import { installFatalExceptionHandler } from './fatal.js';
 import { runProof } from './proof.js';
 
 // Electron's default handler pops a modal error box, which blocks a headless
 // or CI run forever. Registering a handler replaces that with a printed line.
-process.on('uncaughtException', (error: unknown) => {
-  const detail = error instanceof Error ? (error.stack ?? error.message) : String(error);
-  process.stderr.write(`\nTHREADHELM_FATAL ${detail}\n`);
-  process.exit(1);
-});
+installFatalExceptionHandler();
 
 const PROOF_FLAG = '--threadhelm-proof';
 const paths = {

@@ -7,6 +7,8 @@
  */
 
 import { z } from 'zod';
+import { isSafeAuthoredText } from './content-text.js';
+export { isSafeAuthoredText } from './content-text.js';
 
 // ---------------------------------------------------------------------------
 // Constants (configuration, not user customization — research.md Decision 5)
@@ -307,6 +309,22 @@ export const ErrorCode = z.enum([
   'PROFILE_INCOMPATIBLE',
   'PROFILE_REVISION_STALE',
   'PROFILE_MISSION_PINNED',
+  'MISSION_NOT_FOUND',
+  'MISSION_ENVELOPE_STALE',
+  'MISSION_BOUND_REACHED',
+  'SUPERVISOR_NOT_BOUND',
+  'SUPERVISOR_ROLE_REQUIRED',
+  'WORK_ITEM_NOT_FOUND',
+  'WORK_DAG_INVALID',
+  'WORK_LEASE_CONFLICT',
+  'WORK_ATTEMPT_UNKNOWN',
+  'WORKER_AUTOSTART_NOT_AUTHORIZED',
+  'WORKER_AUTOSTART_PREFLIGHT_FAILED',
+  'SUPERVISOR_DECISION_LOOP',
+  'MISSION_AUTHORITY_REQUIRED',
+  // agent templates and wizard drafts
+  'TEMPLATE_VARIABLE_UNRESOLVED',
+  'TEMPLATE_DRAFT_INCOMPLETE',
   // application and boundary
   'ACTIVE_SESSIONS',
   'INVALID_REQUEST',
@@ -925,7 +943,7 @@ export type MemoryScope = z.infer<typeof MemoryScope>;
 
 export const MemorySourceReference = strictObject({
   kind: z.enum(['handoff', 'work_item', 'memory', 'artifact']),
-  id: z.string().trim().min(1).max(512),
+  id: z.string().trim().min(1).max(512).refine(isSafeAuthoredText, 'unsafe source reference'),
 });
 export type MemorySourceReference = z.infer<typeof MemorySourceReference>;
 
@@ -1353,28 +1371,31 @@ const ProfileCapabilityLabel = z
   .string()
   .min(1)
   .max(64)
-  .regex(/^[a-z][a-z0-9_-]*$/, 'capability labels are inert lowercase routing tags');
+  .regex(/^[a-z][a-z0-9_-]*$/, 'capability labels are inert lowercase routing tags')
+  .refine(isSafeAuthoredText, 'unsafe capability label');
 
 const ProfileModelId = z
   .string()
   .min(1)
   .max(128)
-  .regex(/^[A-Za-z0-9][A-Za-z0-9._:/-]*$/, 'invalid provider model identifier');
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._:/-]*$/, 'invalid provider model identifier')
+  .refine(isSafeAuthoredText, 'unsafe model identifier');
 
 const ProfileDigest = z.string().regex(/^[0-9a-f]{64}$/, 'expected a SHA-256 hex digest');
 const ProfileDigestPrefix = z.string().regex(/^[0-9a-f]{12}$/, 'expected a 12-hex digest prefix');
+const AuthoredText = z.string().refine(isSafeAuthoredText, 'unsafe authored text');
 
 export const HireManifestV1 = strictObject({
   spec: z.literal('munder-difflin/hire@1'),
-  name: z.string().trim().min(1).max(200),
-  description: z.string().trim().min(1).max(MAX_GOAL_LENGTH),
+  name: AuthoredText.trim().min(1).max(200),
+  description: AuthoredText.trim().min(1).max(MAX_GOAL_LENGTH),
   provider: ProfileProviderId,
   model: ProfileModelId,
-  goal: z.string().trim().min(1).max(MAX_GOAL_LENGTH),
+  goal: AuthoredText.trim().min(1).max(MAX_GOAL_LENGTH),
   capabilities: z.array(ProfileCapabilityLabel).max(16),
   isolate: z.boolean(),
   tokenCap: z.number().int().positive().max(MAX_TOKEN_CAP),
-  author: z.string().trim().min(1).max(200),
+  author: AuthoredText.trim().min(1).max(200),
 });
 export type HireManifestV1 = z.infer<typeof HireManifestV1>;
 
@@ -1478,13 +1499,678 @@ export const ProfileEventEnvelope = strictObject({
 export type ProfileEventEnvelope = z.infer<typeof ProfileEventEnvelope>;
 
 // ---------------------------------------------------------------------------
+// Agent creation wizard and local templates. These are bounded local draft
+// data only; none can choose effective tools, permissions, roles, workspaces,
+// or launch an agent.
+// ---------------------------------------------------------------------------
+
+export const AgentWizardStep = z.enum([
+  'start',
+  'identity',
+  'role',
+  'capabilities',
+  'runtime',
+  'review',
+]);
+export type AgentWizardStep = z.infer<typeof AgentWizardStep>;
+
+export const AgentWizardDraftState = z.enum([
+  'editing',
+  'invalid',
+  'ready_for_review',
+  'completed',
+  'deleted',
+]);
+export type AgentWizardDraftState = z.infer<typeof AgentWizardDraftState>;
+
+export const AgentTemplateOrigin = z.enum(['bundled', 'user']);
+export type AgentTemplateOrigin = z.infer<typeof AgentTemplateOrigin>;
+export const AgentTemplateState = z.enum(['active', 'disabled', 'superseded', 'deleted']);
+export type AgentTemplateState = z.infer<typeof AgentTemplateState>;
+
+const BoundedVariableText = AuthoredText.refine(
+  (value) => Array.from(value).length <= 256,
+  'variable value exceeds 256 Unicode scalars',
+);
+
+export const AgentTemplateVariable = strictObject({
+  name: z.string().regex(/^[a-z][a-z0-9_]{0,63}$/),
+  type: z.literal('text'),
+  maxLength: z.number().int().min(1).max(256),
+  defaultValue: BoundedVariableText.optional(),
+});
+export type AgentTemplateVariable = z.infer<typeof AgentTemplateVariable>;
+
+/** Draft storage accepts incomplete and deliberately cleared values; final
+ * completion always re-parses the exact HireManifestV1 schema. */
+const WizardFieldValues = strictObject({
+  spec: z.literal('munder-difflin/hire@1').optional(),
+  name: AuthoredText.max(200).optional(),
+  description: AuthoredText.max(MAX_GOAL_LENGTH).optional(),
+  provider: ProfileProviderId.optional(),
+  model: AuthoredText.max(128).optional(),
+  goal: AuthoredText.max(MAX_GOAL_LENGTH).optional(),
+  capabilities: z.array(AuthoredText.max(64)).max(16).optional(),
+  isolate: z.boolean().optional(),
+  tokenCap: z.number().int().min(0).max(MAX_TOKEN_CAP).optional(),
+  author: AuthoredText.max(200).optional(),
+});
+const WizardVariableValues = z.record(
+  z.string().regex(/^[a-z][a-z0-9_]{0,63}$/),
+  BoundedVariableText,
+);
+const WizardIssueCode = z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/);
+const WizardFieldErrors = z
+  .record(z.string().max(32), WizardIssueCode)
+  .refine((value) => Object.keys(value).length <= 16, 'too many wizard field errors');
+
+export const AgentWizardDraftSummaryView = strictObject({
+  draftId: Uuid,
+  version: z.number().int().positive(),
+  state: AgentWizardDraftState,
+  currentStep: AgentWizardStep,
+  validationIssues: z.array(WizardIssueCode).max(20),
+  updatedAt: Timestamp,
+});
+export type AgentWizardDraftSummaryView = z.infer<typeof AgentWizardDraftSummaryView>;
+
+export const AgentWizardDraftDetailView = strictObject({
+  ...AgentWizardDraftSummaryView.shape,
+  fieldValues: WizardFieldValues,
+  variableValues: WizardVariableValues,
+  sourceTemplateRevisionId: Uuid.nullable(),
+  sourceProfileRevisionId: Uuid.nullable(),
+  provenance: strictObject({
+    templateRevisionId: Uuid.nullable(),
+    profileRevisionId: Uuid.nullable(),
+  }),
+  fieldErrors: WizardFieldErrors,
+  createdAt: Timestamp,
+  completedAt: Timestamp.nullable(),
+});
+export type AgentWizardDraftDetailView = z.infer<typeof AgentWizardDraftDetailView>;
+
+const AgentTemplateSummaryFields = {
+  templateId: Uuid,
+  key: z.string().regex(/^[a-z0-9][a-z0-9-]{0,127}$/),
+  currentRevisionId: Uuid,
+  revision: z.number().int().positive(),
+  name: AuthoredText.trim().min(1).max(200),
+  origin: AgentTemplateOrigin,
+  state: AgentTemplateState,
+  updatedAt: Timestamp,
+};
+export const AgentTemplateSummaryView = strictObject(AgentTemplateSummaryFields);
+export type AgentTemplateSummaryView = z.infer<typeof AgentTemplateSummaryView>;
+
+export const AgentTemplateDetailView = strictObject({
+  ...AgentTemplateSummaryFields,
+  manifest: HireManifestV1,
+  manifestJson: z.string().min(2).max(65_536),
+  digest: ProfileDigest,
+  variables: z.array(AgentTemplateVariable).max(16),
+  provenance: strictObject({ sourceProfileRevisionId: Uuid.nullable() }),
+  createdAt: Timestamp,
+});
+export type AgentTemplateDetailView = z.infer<typeof AgentTemplateDetailView>;
+
+export const CreateAgentWizardDraftRequest = strictObject({
+  source: z.discriminatedUnion('kind', [
+    strictObject({ kind: z.literal('blank') }),
+    strictObject({ kind: z.literal('template'), templateRevisionId: Uuid }),
+    strictObject({ kind: z.literal('profile'), profileRevisionId: Uuid }),
+  ]),
+});
+export type CreateAgentWizardDraftRequest = z.infer<typeof CreateAgentWizardDraftRequest>;
+
+const WizardRequestBase = {
+  draftId: Uuid,
+  version: z.number().int().positive(),
+  nextStep: AgentWizardStep.optional(),
+};
+const WizardStepFields = z.discriminatedUnion('step', [
+  strictObject({
+    ...WizardRequestBase,
+    step: z.literal('identity'),
+    fields: strictObject({
+      name: z.string().max(200).optional(),
+      description: z.string().max(MAX_GOAL_LENGTH).optional(),
+      author: z.string().max(200).optional(),
+    }),
+    variables: WizardVariableValues.optional(),
+  }),
+  strictObject({
+    ...WizardRequestBase,
+    step: z.literal('role'),
+    fields: strictObject({
+      goal: z.string().max(MAX_GOAL_LENGTH).optional(),
+    }),
+    variables: WizardVariableValues.optional(),
+  }),
+  strictObject({
+    ...WizardRequestBase,
+    step: z.literal('capabilities'),
+    fields: strictObject({
+      capabilities: z.array(z.string().max(64)).max(16).optional(),
+    }),
+    variables: WizardVariableValues.optional(),
+  }),
+  strictObject({
+    ...WizardRequestBase,
+    step: z.literal('runtime'),
+    fields: strictObject({
+      provider: ProfileProviderId.optional(),
+      /** Empty is retained while editing; final review applies ProfileModelId. */
+      model: z.string().max(128).optional(),
+      isolate: z.boolean().optional(),
+      tokenCap: z.number().int().min(0).max(MAX_TOKEN_CAP).optional(),
+    }),
+    variables: WizardVariableValues.optional(),
+  }),
+  strictObject({
+    ...WizardRequestBase,
+    step: z.literal('review'),
+    fields: strictObject({}),
+    variables: WizardVariableValues.optional(),
+  }),
+]);
+export const UpdateAgentWizardStepRequest = WizardStepFields;
+export type UpdateAgentWizardStepRequest = z.infer<typeof UpdateAgentWizardStepRequest>;
+
+export const AgentWizardCompletionPreviewView = strictObject({
+  completionToken: OpaqueToken,
+  draftId: Uuid,
+  version: z.number().int().positive(),
+  manifest: HireManifestV1,
+  manifestJson: z.string().min(2).max(65_536),
+  digest: ProfileDigest,
+  compatibility: ProfileCompatibility,
+  compatibilityReasons: z.array(z.string().max(300)).max(20),
+  disclosure: z.string().max(500),
+  expiresAt: Timestamp,
+});
+export type AgentWizardCompletionPreviewView = z.infer<typeof AgentWizardCompletionPreviewView>;
+
+export const AgentWizardExportPreviewView = strictObject({
+  exportToken: OpaqueToken,
+  draftId: Uuid,
+  displayPath: z.string().min(1).max(32_767),
+  basename: z.string().min(1).max(255),
+  collision: z.boolean(),
+  requiresOverwriteConfirmation: z.boolean(),
+  expiresAt: Timestamp,
+});
+export type AgentWizardExportPreviewView = z.infer<typeof AgentWizardExportPreviewView>;
+
+export const AgentTemplateDeletePreviewView = strictObject({
+  deleteToken: OpaqueToken,
+  templateId: Uuid,
+  revisionId: Uuid,
+  name: z.string().min(1).max(200),
+  expiresAt: Timestamp,
+});
+export type AgentTemplateDeletePreviewView = z.infer<typeof AgentTemplateDeletePreviewView>;
+
+export const AgentWizardChangedEvent = strictObject({
+  type: z.literal('agentWizard.changed'),
+  draftId: Uuid,
+  version: z.number().int().positive(),
+  state: AgentWizardDraftState,
+  currentStep: AgentWizardStep,
+  validationIssues: z.array(WizardIssueCode).max(20),
+  occurredAt: Timestamp,
+});
+export type AgentWizardChangedEvent = z.infer<typeof AgentWizardChangedEvent>;
+
+export const AgentTemplatesChangedEvent = strictObject({
+  type: z.literal('agentTemplates.changed'),
+  templateId: Uuid,
+  revisionId: Uuid,
+  state: AgentTemplateState,
+  occurredAt: Timestamp,
+});
+export type AgentTemplatesChangedEvent = z.infer<typeof AgentTemplatesChangedEvent>;
+
+// ---------------------------------------------------------------------------
 // Request/response operations. One entry per preload method; main validates
 // every request against `request` before doing anything else.
 // ---------------------------------------------------------------------------
 
+// Bounded supervisor contracts. Persona fields never appear in role/authority inputs.
+const MissionText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .min(1)
+    .max(max)
+    .refine(isSafeAuthoredText, 'unsafe authored content')
+    .refine((value) => {
+      let bytes = 0;
+      for (const character of value) {
+        const point = character.codePointAt(0)!;
+        bytes += point <= 0x7f ? 1 : point <= 0x7ff ? 2 : point <= 0xffff ? 3 : 4;
+      }
+      return bytes <= max;
+    }, 'mission text exceeds its byte limit');
+export const MissionState = z.enum([
+  'running',
+  'paused',
+  'recovery_required',
+  'completed',
+  'cancelled',
+  'deleted',
+]);
+export type MissionState = z.infer<typeof MissionState>;
+export const SupervisorWorkState = z.enum([
+  'blocked',
+  'ready',
+  'assigned',
+  'running',
+  'waiting',
+  'completed',
+  'failed',
+  'cancelled',
+  'escalated',
+]);
+export type SupervisorWorkState = z.infer<typeof SupervisorWorkState>;
+export const MissionRole = z.enum(['supervisor', 'worker', 'reviewer', 'triage']);
+export type MissionRole = z.infer<typeof MissionRole>;
+export const MissionBounds = ProviderExecutionBounds.extend({
+  maxWorkers: z.number().int().min(1).max(16),
+  maxWorkItems: z.number().int().min(1).max(64),
+  maxDepth: z.number().int().min(1).max(8),
+  maxAttempts: z.number().int().min(1).max(3),
+  maxTokenBudget: z.number().int().min(1).max(MAX_TOKEN_CAP),
+});
+export type MissionBounds = z.infer<typeof MissionBounds>;
+export const MissionRoutineAction = z.enum([
+  'decompose',
+  'assign',
+  'retry',
+  'reassign',
+  'pause',
+  'complete',
+]);
+const MissionWorkspaceInput = strictObject({ workspaceId: Uuid, mode: z.enum(['read', 'write']) });
+const MissionWorkerInput = strictObject({
+  profileId: Uuid,
+  profileRevisionId: Uuid,
+  workspaceId: Uuid,
+  sessionId: Uuid.nullable(),
+  role: z.enum(['worker', 'reviewer', 'triage']).default('worker'),
+  autoStart: z.boolean(),
+  runtimeSelection: LaunchRuntimeSelection,
+  permissionSelection: LaunchPermissionSelection,
+  executionBounds: ProviderExecutionBounds,
+}).refine(
+  (v) => v.permissionSelection.policy !== 'break_glass_bypass',
+  'mission bypass is prohibited',
+);
+export const MissionEnvelopeInput = strictObject({
+  objective: MissionText(4000),
+  completionEvidence: MissionText(2000),
+  workspaces: z.array(MissionWorkspaceInput).min(1).max(16),
+  supervisor: strictObject({ profileId: Uuid, profileRevisionId: Uuid, sessionId: Uuid }),
+  workers: z.array(MissionWorkerInput).min(1).max(16),
+  bounds: MissionBounds,
+  permittedRoutineActions: z.array(MissionRoutineAction).min(1).max(6),
+  knownSafeRetryClasses: z.array(z.literal('failed_before_effect')).max(1),
+  escalationRules: z
+    .array(z.enum(['consequential', 'unknown', 'bounds', 'supervisor_loss']))
+    .min(4)
+    .max(4),
+});
+export type MissionEnvelopeInput = z.infer<typeof MissionEnvelopeInput>;
+export const MissionBindingView = strictObject({
+  bindingId: Uuid,
+  role: MissionRole,
+  profileId: Uuid,
+  profileRevisionId: Uuid,
+  profileDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  workspaceId: Uuid,
+  sessionId: Uuid.nullable(),
+  autoStart: z.boolean(),
+  mode: z.enum(['read', 'write']),
+  providerId: ProviderId,
+  identity: strictObject(WorkspaceIdentity.shape),
+  canonicalPath: z.string().min(1).max(32768),
+  displayPath: z.string().min(1).max(32768),
+  readiness: strictObject(ReadinessView.shape),
+  terminal: strictObject(TerminalSize.shape),
+  runtimeSelection: LaunchRuntimeSelection,
+  runtimeResolution: LaunchRuntimeResolution,
+  permissionSelection: LaunchPermissionSelection,
+  permissionResolution: LaunchPermissionResolution,
+  executionBounds: ProviderExecutionBounds,
+  requestedIsolation: z.boolean(),
+  effectiveIsolation: z.boolean(),
+  effectiveTokenBudget: z.number().int().positive(),
+  launchDisposition: z.enum(['ready', 'held']),
+  reasonCode: ReasonCode.nullable(),
+});
+export type MissionBindingView = z.infer<typeof MissionBindingView>;
+export const MissionEnvelopeView = strictObject({
+  objective: MissionText(4000),
+  completionEvidence: MissionText(2000),
+  workspaces: z.array(MissionWorkspaceInput).min(1).max(16),
+  bindings: z.array(MissionBindingView).min(2).max(17),
+  bounds: MissionBounds,
+  permittedRoutineActions: z.array(MissionRoutineAction).min(1).max(6),
+  knownSafeRetryClasses: z.array(z.literal('failed_before_effect')).max(1),
+  escalationRules: z
+    .array(z.enum(['consequential', 'unknown', 'bounds', 'supervisor_loss']))
+    .min(4)
+    .max(4),
+});
+export type MissionEnvelopeView = z.infer<typeof MissionEnvelopeView>;
+export const MissionPreviewView = strictObject({
+  previewToken: OpaqueToken,
+  missionId: Uuid,
+  version: z.number().int().positive(),
+  envelope: MissionEnvelopeView,
+  boundaryWarning: z.string().min(1).max(2000),
+  expiresAt: Timestamp,
+});
+export type MissionPreviewView = z.infer<typeof MissionPreviewView>;
+export const MissionEligibleSessionView = strictObject({
+  sessionId: Uuid,
+  workspaceId: Uuid,
+  providerId: ProviderId,
+  runtimeSelection: LaunchRuntimeSelection,
+  permissionSelection: LaunchPermissionSelection,
+  permissionResolution: LaunchPermissionResolution,
+  executionBounds: ProviderExecutionBounds,
+});
+export type MissionEligibleSessionView = z.infer<typeof MissionEligibleSessionView>;
+export const MissionSummaryView = strictObject({
+  id: Uuid,
+  version: z.number().int().positive(),
+  state: MissionState,
+  supervisorSessionId: Uuid.nullable(),
+  workItemCount: z.number().int().min(0),
+  completedWorkItemCount: z.number().int().min(0),
+  activeWorkerCount: z.number().int().min(0),
+  sequence: z.number().int().min(0),
+  reasonCode: ReasonCode.nullable(),
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+});
+export type MissionSummaryView = z.infer<typeof MissionSummaryView>;
+export const SupervisorEvidenceRef = strictObject({
+  kind: z.enum(['handoff', 'work_item', 'memory_revision', 'artifact']),
+  id: MissionText(256),
+});
+export type SupervisorEvidenceRef = z.infer<typeof SupervisorEvidenceRef>;
+export const SupervisorWorkInput = strictObject({
+  id: Uuid,
+  parentWorkItemId: Uuid.nullable(),
+  workspaceId: Uuid,
+  title: MissionText(160),
+  specification: MissionText(4000),
+  acceptanceCriteria: MissionText(2000),
+  dependencies: z.array(Uuid).max(64),
+  authorityClass: z.enum([
+    'routine',
+    'destructive',
+    'privileged',
+    'external',
+    'spending',
+    'credential',
+    'workspace_expanding',
+    'permission_changing',
+    'scope_changing',
+  ]),
+});
+export type SupervisorWorkInput = z.infer<typeof SupervisorWorkInput>;
+export const SupervisorWorkView = strictObject({
+  id: Uuid,
+  missionId: Uuid,
+  parentWorkItemId: Uuid.nullable(),
+  workspaceId: Uuid,
+  title: MissionText(160).nullable(),
+  specification: MissionText(4000).nullable(),
+  acceptanceCriteria: MissionText(2000).nullable(),
+  dependencies: z.array(Uuid).max(64),
+  authorityClass: SupervisorWorkInput.shape.authorityClass,
+  state: SupervisorWorkState,
+  assignedSessionId: Uuid.nullable(),
+  attemptCount: z.number().int().min(0).max(3),
+  reasonCode: ReasonCode.nullable(),
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+});
+export type SupervisorWorkView = z.infer<typeof SupervisorWorkView>;
+export const SupervisorDecisionView = strictObject({
+  id: Uuid,
+  missionId: Uuid,
+  workItemId: Uuid.nullable(),
+  supervisorSessionId: Uuid,
+  envelopeVersion: z.number().int().positive().default(1),
+  kind: z.enum(['decompose', 'assign', 'reassign', 'pause', 'complete', 'escalate']),
+  policyResult: z.enum(['accepted', 'held', 'rejected']),
+  reasonCode: ReasonCode.nullable(),
+  rationale: MissionText(2000).nullable(),
+  inputRefs: z.array(SupervisorEvidenceRef).max(16),
+  expectedEvidence: MissionText(2000).nullable(),
+  createdAt: Timestamp,
+});
+export type SupervisorDecisionView = z.infer<typeof SupervisorDecisionView>;
+export const WorkerLeaseView = strictObject({
+  id: Uuid,
+  missionId: Uuid,
+  workItemId: Uuid,
+  workspaceId: Uuid,
+  profileRevisionId: Uuid,
+  sessionId: Uuid.nullable(),
+  mode: z.enum(['read', 'write']),
+  state: z.enum(['reserved', 'active', 'released', 'expired', 'unknown']),
+  acquiredAt: Timestamp,
+  expiresAt: Timestamp,
+  releasedAt: Timestamp.nullable(),
+});
+export type WorkerLeaseView = z.infer<typeof WorkerLeaseView>;
+export const SupervisorResultDisposition = z.enum([
+  'completion',
+  'refusal',
+  'failure',
+  'proposal',
+  'authority_required',
+  'permission_blocked',
+  'classifier_failed',
+  'timed_out',
+  'cancelled',
+  'no_progress',
+  'budget_exhausted',
+  'unknown',
+]);
+export type SupervisorResultDisposition = z.infer<typeof SupervisorResultDisposition>;
+export const SupervisorAttemptView = strictObject({
+  id: Uuid,
+  missionId: Uuid,
+  workItemId: Uuid,
+  decisionId: Uuid,
+  leaseId: Uuid,
+  profileRevisionId: Uuid,
+  sessionId: Uuid.nullable(),
+  envelopeVersion: z.number().int().positive().default(1),
+  reservedTokenBudget: z.number().int().positive().max(MAX_TOKEN_CAP).default(MAX_TOKEN_CAP),
+  attemptNumber: z.number().int().min(1).max(3),
+  state: z.enum(['reserved', 'assigned', 'running', 'completed', 'failed', 'unknown', 'cancelled']),
+  workerStartDisposition: z.enum(['not_needed', 'started', 'held', 'failed']),
+  handoffId: Uuid.nullable(),
+  resultHandoffId: Uuid.nullable(),
+  supervisorSessionId: Uuid,
+  disposition: SupervisorResultDisposition.nullable(),
+  explanation: MissionText(2000).nullable(),
+  evidenceRefs: z.array(SupervisorEvidenceRef).max(16),
+  reasonCode: ReasonCode.nullable(),
+  createdAt: Timestamp,
+  completedAt: Timestamp.nullable(),
+});
+export type SupervisorAttemptView = z.infer<typeof SupervisorAttemptView>;
+export const MissionDetailView = MissionSummaryView.extend({
+  envelope: MissionEnvelopeView.nullable(),
+  input: MissionEnvelopeInput.nullable(),
+  workItems: z.array(SupervisorWorkView).max(64),
+  decisions: z.array(SupervisorDecisionView).max(100),
+  leases: z.array(WorkerLeaseView).max(192),
+  attempts: z.array(SupervisorAttemptView).max(192),
+});
+export type MissionDetailView = z.infer<typeof MissionDetailView>;
+export const SupervisorWorkDetailView = strictObject({
+  workItem: SupervisorWorkView,
+  attempts: z.array(SupervisorAttemptView).max(3),
+  decisions: z.array(SupervisorDecisionView).max(100),
+});
+export type SupervisorWorkDetailView = z.infer<typeof SupervisorWorkDetailView>;
+const supervisorDecisionBase = {
+  missionId: Uuid,
+  idempotencyKey: z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/),
+  rationale: MissionText(2000),
+  inputRefs: z.array(SupervisorEvidenceRef).max(16),
+  expectedEvidence: MissionText(2000),
+};
+export const SupervisorDecomposeInput = strictObject({
+  ...supervisorDecisionBase,
+  items: z.array(SupervisorWorkInput).min(1).max(64),
+});
+export const SupervisorAssignInput = strictObject({
+  ...supervisorDecisionBase,
+  workItemId: Uuid,
+  bindingId: Uuid,
+});
+export const SupervisorPauseInput = strictObject({
+  ...supervisorDecisionBase,
+  workItemId: Uuid.nullable(),
+});
+export const SupervisorCompleteInput = strictObject({
+  ...supervisorDecisionBase,
+  evidenceRefs: z.array(SupervisorEvidenceRef).min(1).max(16),
+});
+export const SupervisorEscalateInput = strictObject({
+  ...supervisorDecisionBase,
+  workItemId: Uuid.nullable(),
+  authorityClass: SupervisorWorkInput.shape.authorityClass,
+});
+export const SupervisorInspectInput = strictObject({
+  missionId: Uuid,
+  view: z.enum(['mission', 'bindings', 'work_items', 'decisions', 'attempts']).default('mission'),
+  cursor: z.number().int().min(0).max(192).default(0),
+  limit: z.number().int().min(1).max(8).default(4),
+  afterSequence: z.number().int().min(0).nullable().default(null),
+  waitMs: z.number().int().min(0).max(15_000).default(0),
+}).refine(
+  (value) => value.waitMs === 0 || (value.view === 'mission' && value.afterSequence !== null),
+  'A bounded wait requires the last observed mission sequence.',
+);
+export const SupervisorResultInput = strictObject({
+  missionId: Uuid,
+  workItemId: Uuid,
+  attemptId: Uuid,
+  idempotencyKey: supervisorDecisionBase.idempotencyKey,
+  disposition: SupervisorResultDisposition,
+  explanation: MissionText(2000),
+  evidenceRefs: z.array(SupervisorEvidenceRef).max(16),
+});
+export type SupervisorResultInput = z.infer<typeof SupervisorResultInput>;
+export const supervisorToolSchemas = {
+  threadhelm_mission_inspect: SupervisorInspectInput,
+  threadhelm_work_decompose: SupervisorDecomposeInput,
+  threadhelm_work_assign: SupervisorAssignInput,
+  threadhelm_work_reassign: SupervisorAssignInput,
+  threadhelm_work_pause: SupervisorPauseInput,
+  threadhelm_mission_complete: SupervisorCompleteInput,
+  threadhelm_mission_escalate: SupervisorEscalateInput,
+  threadhelm_work_result: SupervisorResultInput,
+} as const;
+export function supervisorToolDefinitions(names: readonly string[]) {
+  return names.flatMap((name) => {
+    const schema = supervisorToolSchemas[name as keyof typeof supervisorToolSchemas];
+    return schema
+      ? [
+          {
+            name,
+            description:
+              'Version 1 mission-scoped operation. Main validates the authenticated session and confirmed envelope.',
+            inputSchema: z.toJSONSchema(schema, { io: 'input' }),
+          },
+        ]
+      : [];
+  });
+}
+export const MissionChangedEvent = strictObject({
+  missionId: Uuid,
+  sequence: z.number().int().positive(),
+  state: MissionState,
+  workItemId: Uuid.nullable(),
+  reasonCode: ReasonCode.nullable(),
+});
+const MissionControlInput = strictObject({ missionId: Uuid });
+const MissionConfirmInput = strictObject({
+  previewToken: OpaqueToken,
+  boundaryConfirmation: z.boolean(),
+});
 const none = z.undefined();
 
 export const operations = {
+  'missions.eligibleSessions': {
+    request: none,
+    response: z.array(MissionEligibleSessionView).max(500),
+  },
+  'missions.preview': {
+    request: strictObject({ envelope: MissionEnvelopeInput }),
+    response: MissionPreviewView,
+  },
+  'missions.confirm': { request: MissionConfirmInput, response: MissionDetailView },
+  'missions.list': {
+    request: strictObject({ limit: z.number().int().min(1).max(100).optional() }).optional(),
+    response: z.array(MissionSummaryView),
+  },
+  'missions.detail': { request: MissionControlInput, response: MissionDetailView },
+  'missions.pause': { request: MissionControlInput, response: MissionDetailView },
+  'missions.resume': {
+    request: strictObject({ missionId: Uuid, supervisorSessionId: Uuid }),
+    response: MissionDetailView,
+  },
+  'missions.cancel': { request: MissionControlInput, response: MissionDetailView },
+  'missions.previewRevision': {
+    request: strictObject({
+      missionId: Uuid,
+      expectedVersion: z.number().int().positive(),
+      envelope: MissionEnvelopeInput,
+    }),
+    response: MissionPreviewView,
+  },
+  'missions.confirmRevision': { request: MissionConfirmInput, response: MissionDetailView },
+  'missions.workItem': {
+    request: strictObject({ missionId: Uuid, workItemId: Uuid }),
+    response: SupervisorWorkDetailView,
+  },
+  'missions.resolveEscalation': {
+    request: z.discriminatedUnion('disposition', [
+      strictObject({
+        missionId: Uuid,
+        workItemId: Uuid.nullable(),
+        disposition: z.enum(['keep_paused', 'cancel_work']),
+      }),
+      strictObject({
+        missionId: Uuid,
+        workItemId: Uuid,
+        disposition: z.literal('acknowledge_unknown'),
+        expectedAttemptId: Uuid,
+        expectedLeaseId: Uuid,
+      }),
+    ]),
+    response: MissionDetailView,
+  },
+  'missions.previewDelete': {
+    request: MissionControlInput,
+    response: strictObject({ previewToken: OpaqueToken, missionId: Uuid, expiresAt: Timestamp }),
+  },
+  'missions.confirmDelete': {
+    request: strictObject({ previewToken: OpaqueToken }),
+    response: MissionDetailView,
+  },
   'workspaces.choose': { request: none, response: WorkspaceCandidateView },
   'workspaces.approve': {
     request: z.object({ candidateToken: OpaqueToken }),
@@ -1735,6 +2421,125 @@ export const operations = {
     request: ConfirmDeleteProfileRequest,
     response: AgentProfileSummaryView,
   },
+  'agentWizard.createDraft': {
+    request: CreateAgentWizardDraftRequest,
+    response: AgentWizardDraftDetailView,
+  },
+  'agentWizard.listDrafts': {
+    request: strictObject({
+      cursor: z.string().max(512).optional(),
+      limit: z.number().int().min(1).max(50).optional(),
+    }).optional(),
+    response: strictObject({
+      drafts: z.array(AgentWizardDraftSummaryView).max(50),
+      nextCursor: z.string().max(512).nullable(),
+    }),
+  },
+  'agentWizard.getDraft': {
+    request: strictObject({ draftId: Uuid }),
+    response: AgentWizardDraftDetailView,
+  },
+  'agentWizard.updateStep': {
+    request: UpdateAgentWizardStepRequest,
+    response: AgentWizardDraftDetailView,
+  },
+  'agentWizard.previewCompletion': {
+    request: strictObject({
+      draftId: Uuid,
+      version: z.number().int().positive(),
+      action: z.enum(['profile', 'export']),
+    }),
+    response: AgentWizardCompletionPreviewView,
+  },
+  'agentWizard.confirmProfile': {
+    request: strictObject({ completionToken: OpaqueToken, profileConfirmation: z.literal(true) }),
+    response: AgentProfileSummaryView,
+  },
+  'agentWizard.chooseExportTarget': {
+    request: none,
+    response: strictObject({ targetHandle: z.string().min(16).max(128) }),
+  },
+  'agentWizard.previewExport': {
+    request: strictObject({
+      completionToken: OpaqueToken,
+      targetHandle: z.string().min(16).max(128),
+    }),
+    response: AgentWizardExportPreviewView,
+  },
+  'agentWizard.confirmExport': {
+    request: strictObject({ exportToken: OpaqueToken, overwriteConfirmation: z.boolean() }),
+    response: strictObject({
+      draftId: Uuid,
+      state: z.literal('completed'),
+      digest: ProfileDigest,
+      completedAt: Timestamp,
+    }),
+  },
+  'agentWizard.deleteDraft': {
+    request: strictObject({ draftId: Uuid, version: z.number().int().positive() }),
+    response: strictObject({
+      draftId: Uuid,
+      state: z.literal('deleted'),
+      version: z.number().int().positive(),
+      deletedAt: Timestamp,
+    }),
+  },
+  'agentTemplates.list': {
+    request: strictObject({
+      cursor: z.string().max(512).optional(),
+      limit: z.number().int().min(1).max(50).optional(),
+      state: z.enum(['active', 'disabled']).optional(),
+    }).optional(),
+    response: strictObject({
+      templates: z.array(AgentTemplateSummaryView).max(50),
+      nextCursor: z.string().max(512).nullable(),
+    }),
+  },
+  'agentTemplates.get': {
+    request: strictObject({ templateId: Uuid }),
+    response: AgentTemplateDetailView,
+  },
+  'agentTemplates.saveRevision': {
+    request: strictObject({
+      source: z.discriminatedUnion('kind', [
+        strictObject({
+          kind: z.literal('draft'),
+          draftId: Uuid,
+          version: z.number().int().positive(),
+        }),
+        strictObject({ kind: z.literal('profile'), profileRevisionId: Uuid }),
+      ]),
+      key: z.string().regex(/^[a-z0-9][a-z0-9-]{0,127}$/),
+      name: z.string().trim().min(1).max(200),
+      variables: z.array(AgentTemplateVariable).max(16).optional(),
+      templateId: Uuid.optional(),
+      revisionId: Uuid.optional(),
+    }).superRefine((value, ctx) => {
+      if (Boolean(value.templateId) !== Boolean(value.revisionId))
+        ctx.addIssue({ code: 'custom', message: 'templateId and revisionId must be paired' });
+    }),
+    response: AgentTemplateSummaryView,
+  },
+  'agentTemplates.duplicate': {
+    request: strictObject({
+      templateRevisionId: Uuid,
+      key: z.string().regex(/^[a-z0-9][a-z0-9-]{0,127}$/),
+      name: AuthoredText.trim().min(1).max(200),
+    }),
+    response: AgentTemplateSummaryView,
+  },
+  'agentTemplates.setEnabled': {
+    request: strictObject({ templateId: Uuid, revisionId: Uuid, enabled: z.boolean() }),
+    response: AgentTemplateSummaryView,
+  },
+  'agentTemplates.previewDelete': {
+    request: strictObject({ templateId: Uuid, revisionId: Uuid }),
+    response: AgentTemplateDeletePreviewView,
+  },
+  'agentTemplates.delete': {
+    request: strictObject({ deleteToken: OpaqueToken, deleteConfirmation: z.literal(true) }),
+    response: AgentTemplateSummaryView,
+  },
 } as const;
 
 export type OperationName = keyof typeof operations;
@@ -1749,6 +2554,7 @@ export const operationNames = Object.keys(operations) as OperationName[];
 // ---------------------------------------------------------------------------
 
 export const events = {
+  'mission.changed': MissionChangedEvent,
   'workspace.changed': ApprovedWorkspaceView,
   'provider.readinessChanged': ReadinessView,
   'session.changed': z.object({
@@ -1778,6 +2584,8 @@ export const events = {
   'memory.changed': MemoryChangedEvent,
   'memory.conflictChanged': MemoryConflictChangedEvent,
   'profiles.changed': ProfileEventEnvelope,
+  'agentWizard.changed': AgentWizardChangedEvent,
+  'agentTemplates.changed': AgentTemplatesChangedEvent,
   'coordination.bridgeChanged': strictObject({
     sessionId: Uuid,
     capability: z.string(),
@@ -1870,6 +2678,14 @@ export const MainToHostMessage = z.discriminatedUnion('type', [
     ...hostBase,
     bootstrapSecret: OpaqueToken,
     descriptor: LaunchDescriptor,
+    outputBudget: strictObject({
+      attemptId: Uuid,
+      maxOutputBytes: z
+        .number()
+        .int()
+        .min(1)
+        .max(64 * 1024 * 1024),
+    }).optional(),
   }),
   z.object({
     type: z.literal('host.input'),
@@ -1881,6 +2697,17 @@ export const MainToHostMessage = z.discriminatedUnion('type', [
   z.object({ type: z.literal('host.cleanStop'), ...controlBase, action: CleanStopAction }),
   z.object({ type: z.literal('host.pauseOutput'), ...hostBase }),
   z.object({ type: z.literal('host.resumeOutput'), ...hostBase }),
+  strictObject({
+    type: z.literal('host.setOutputBudget'),
+    ...hostBase,
+    attemptId: Uuid,
+    maxOutputBytes: z
+      .number()
+      .int()
+      .min(1)
+      .max(64 * 1024 * 1024),
+  }),
+  strictObject({ type: z.literal('host.clearOutputBudget'), ...hostBase, attemptId: Uuid }),
   z.object({ type: z.literal('host.shutdown'), ...hostBase }),
 ]);
 export type MainToHostMessage = z.infer<typeof MainToHostMessage>;
@@ -1899,6 +2726,15 @@ export const HostFailureCode = z.enum([
 export type HostFailureCode = z.infer<typeof HostFailureCode>;
 
 export const HostToMainMessage = z.discriminatedUnion('type', [
+  strictObject({
+    type: z.literal('host.outputProgress'),
+    sessionId: Uuid,
+    attemptId: Uuid.nullable(),
+    totalOutputBytes: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+    outputBytes: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+    sequence: z.number().int().positive(),
+    limitReached: z.boolean(),
+  }),
   z.object({
     type: z.literal('host.ready'),
     sessionId: Uuid,

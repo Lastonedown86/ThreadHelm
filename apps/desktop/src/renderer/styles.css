@@ -505,6 +505,37 @@ button:disabled {
   background: rgba(0, 0, 0, 0.45);
 }
 
+.wizard-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.wizard-json {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 18rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+  padding: 0.625rem;
+  font-size: 0.8125rem;
+}
+
+.agent-wizard .actions,
+.agent-template-library .actions {
+  flex-wrap: wrap;
+}
+
+.agent-wizard h3:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.agent-template-library li {
+  overflow-wrap: anywhere;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
@@ -523,4 +554,29 @@ button:disabled {
   border-radius: 0.2rem;
   padding: 0 0.3rem;
   font-family: inherit;
+}
+/* Mission details stay bounded and text based, including at increased text size. */
+.missions .list {
+  overflow-wrap: anywhere;
+}
+.modal pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 22rem;
+  overflow: auto;
+}
+.mission-table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.mission-table table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.mission-table th,
+.mission-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border);
 }

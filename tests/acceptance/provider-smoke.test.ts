@@ -61,14 +61,18 @@ describeSmoke('real provider smoke (non-recording)', () => {
   });
 
   for (const providerId of ['codex-cli', 'claude-code'] as const) {
-    it(`launches, runs, and cleanly stops ${providerId} when available`, async () => {
+    it(`launches, runs, and cleanly stops ${providerId} when available`, async (context) => {
       const view = readiness.find((r) => r.providerId === providerId);
       if (!view || view.availability !== 'available' || view.authentication === 'unauthenticated') {
         console.log(
           `${providerId}: skipped (${view?.availability ?? 'missing'}/${view?.authentication ?? 'unknown'})`,
         );
+        context.skip();
         return;
       }
+      console.log(
+        `${providerId}: version=${view.version?.match(/\b\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?\b/)?.[0] ?? 'unreported'} authentication=${view.authentication}; dev-build lifecycle proof only`,
+      );
       const dir = mkdtempSync(join(tmpdir(), `threadhelm-smoke-${providerId}-`));
       dirs.push(dir);
       const workspace = await approveFolder(app, dir);

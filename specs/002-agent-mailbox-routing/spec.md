@@ -26,6 +26,48 @@ The upstream behavior was reviewed at upstream commit
 Because upstream behavior may change, each planning cycle MUST compare its proposed milestone with
 the current upstream source and record any intentional divergence.
 
+## Feature completion and next specification
+
+The approved cross-feature sequence is maintained in
+[Verified Mission OS: implementation roadmap](../../docs/roadmaps/verified-mission-os.md).
+That document records future product direction; it does not expand this feature's requirements,
+replace its task ledger, grant new runtime/external authority, or declare implementation complete.
+
+Feature 002 remains the active specification through US7 (agent wizard/templates), US8 (bounded
+autonomous supervisor), and Phase 11 (cross-cutting release gates). Finishing US7 does not finish
+the feature, and merging US8 does not replace release validation. The existing US8 scope already
+includes mission envelopes, decomposition, assignment, exact pre-authorized worker starts,
+structured result return, dependency tracking, bounds, known-safe retry, and honest recovery.
+Those capabilities MUST be reused rather than recreated by the next feature.
+
+**Trigger for a new `$speckit-specify`:** After US1-US8 and supplemental tasks T159-T166 are
+complete with evidence, T150-T158 release gates have passed, required human acceptance is recorded,
+and the completed feature is integrated on `main` with passing applicable hosted checks and no
+unresolved blocking findings, create a separate **Verified Mission Delegation** specification.
+T158 MUST record final closure and approval, not merely an attempted review or a list of blockers.
+Skipped required provider/installed proofs, unchecked acceptance obligations, partial milestone
+releases, or a PR merge alone MUST NOT be treated as feature completion.
+
+Keep `.specify/feature.json` pointing to this feature until that explicit transition. Before
+invoking `$speckit-specify`, inspect the current task ledger, execution evidence, checkout, and
+existing feature directories. Allocate the next available feature number at that time and create
+only one feature per invocation; do not pre-create follow-on directories or switch another active
+task's selector as part of documenting the roadmap.
+
+The next specification covers the incremental high-level mission/delegation experience,
+criterion-level verification, Capability Passports, progress accountability, Mission Receipts,
+and the approved Mission Focus interface. It MUST distinguish locally verified completion from
+an externally confirmed verified PR and MUST NOT add GitHub intake or delivery to Feature 002.
+After that feature is accepted and integrated, run a second `$speckit-specify` for **GitHub Mission
+Intake**, covering draft-only issue intake, explicit mission approval, authorized branch/PR
+delivery, individually approved clarification/final issue comments, and quiet communication.
+Automatic issue activation, merge, and deployment are excluded from that first GitHub feature.
+
+The [roadmap](../../docs/roadmaps/verified-mission-os.md#sequence-and-specification-triggers)
+defines the ordered entry/exit gates, future specification requests, and unresolved connector
+planning decisions. Any earlier transition or changed dependency order requires an explicit
+owner decision with recorded impact; documentation approval alone does not waive a release gate.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Send a Directed Agent Handoff (Priority: P1 — MVP)
@@ -467,6 +509,9 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
 - **FR-059**: ThreadHelm MUST provide versioned generic starter templates and local user-saved
   templates. Shipped templates MUST be provider-neutral where possible, use narrow role scaffolds,
   and MUST NOT bundle the user's Marvel names or project-specific goals as product defaults.
+  The owner's Marvel personas are private custom content and MUST NOT enter production bundles or
+  release packages, including indirectly through test-fixture imports. User-selected local imports
+  remain supported; test-only persona fixtures are not product content.
 - **FR-060**: Applying a template MUST create an independent draft with template identity, revision,
   provenance, and compatibility warnings; later template changes MUST NOT silently mutate the draft.
 - **FR-061**: Wizard drafts MUST be local, recoverable after restart, explicitly deletable, bounded,

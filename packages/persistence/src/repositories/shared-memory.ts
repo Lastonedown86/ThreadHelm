@@ -2,6 +2,7 @@
 
 import { createHash, randomUUID } from 'node:crypto';
 import {
+  isSafeAuthoredText,
   ThreadHelmError,
   type MemoryConfidence,
   type MemoryConflictView,
@@ -193,6 +194,8 @@ function normalizePublication(input: PublishMemoryInput) {
   const body = input.body.trim();
   if (
     body.length === 0 ||
+    !isSafeAuthoredText(body) ||
+    !isSafeAuthoredText(title ?? '') ||
     Buffer.byteLength(body, 'utf8') > MAX_MEMORY_BODY_BYTES ||
     (title !== null && [...title].length > 160)
   ) {

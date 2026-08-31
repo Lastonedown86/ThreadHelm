@@ -329,6 +329,12 @@ export class AgentProfileRepository {
     return toDetail(profile, revision, this.#history(profileId));
   }
 
+  getDetailByRevision(revisionId: string): AgentProfileDetailView | undefined {
+    const revision = this.#revision(revisionId);
+    const profile = revision ? this.#profile(revision.profile_id) : null;
+    return revision && profile ? toDetail(profile, revision, this.#history(profile.id)) : undefined;
+  }
+
   list(options: ProfileListOptions = {}): ProfileListPage {
     const limit = Math.max(1, Math.min(options.limit ?? 50, 100));
     const where = ["p.state <> 'deleted'"];

@@ -4,3 +4,5 @@ export * from './controller-lease.js';
 export * from './coordination.js';
 export * from './shared-memory.js';
 export * from './agent-profile.js';
+export * from './agent-template.js';
+export * from './supervisor.js';

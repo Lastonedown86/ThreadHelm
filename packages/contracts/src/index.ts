@@ -7,8 +7,16 @@
  */
 
 import { z } from 'zod';
+import type { EventName, OperationName } from './protocol.js';
 import { isSafeAuthoredText } from './content-text.js';
 export { isSafeAuthoredText } from './content-text.js';
+export {
+  eventNames,
+  operationNames,
+  STREAM_PORT_CHANNEL,
+  type EventName,
+  type OperationName,
+} from './protocol.js';
 
 // ---------------------------------------------------------------------------
 // Constants (configuration, not user customization — research.md Decision 5)
@@ -2540,14 +2548,12 @@ export const operations = {
     request: strictObject({ deleteToken: OpaqueToken, deleteConfirmation: z.literal(true) }),
     response: AgentTemplateSummaryView,
   },
-} as const;
+} as const satisfies Record<OperationName, { request: z.ZodType; response: z.ZodType }>;
 
-export type OperationName = keyof typeof operations;
 export type OperationRequest<N extends OperationName> = z.input<(typeof operations)[N]['request']>;
 export type OperationResponse<N extends OperationName> = z.output<
   (typeof operations)[N]['response']
 >;
-export const operationNames = Object.keys(operations) as OperationName[];
 
 // ---------------------------------------------------------------------------
 // Main → renderer events
@@ -2592,14 +2598,9 @@ export const events = {
     connected: z.boolean(),
     reasonCode: ReasonCode.nullable(),
   }),
-} as const;
+} as const satisfies Record<EventName, z.ZodType>;
 
-export type EventName = keyof typeof events;
 export type EventPayload<N extends EventName> = z.output<(typeof events)[N]>;
-export const eventNames = Object.keys(events) as EventName[];
-
-/** Channel that carries a transferred MessagePort for one session's output. */
-export const STREAM_PORT_CHANNEL = 'session.streamPort';
 
 // ---------------------------------------------------------------------------
 // Terminal stream frames (host ↔ renderer over a session MessagePort)

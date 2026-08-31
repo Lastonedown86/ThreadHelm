@@ -566,12 +566,12 @@ later autonomy, memory, provider, hosted-CI, packaging, or production gate.
 ### Current release blocker — packaged idle memory
 
 T151 is complete for measurement coverage, not for release performance acceptance. The fresh
-x64 package measured413.367 MiB peak with no sessions on the final rebuild (435.293 MiB on the
-earlier checkpoint) against the unchanged250 MiB limit on Windows11 Home26200. Median idle CPU
+x64 package measured399.844 MiB peak after the preload follow-up (413.367 and435.293 MiB on
+earlier checkpoints) against the unchanged250 MiB limit on Windows11 Home26200. Median idle CPU
 passed. Graphics and blank-runtime diagnostic comparisons
 did not meet the memory target; no metric, budget or security boundary was relaxed. Keep this
 blocker open alongside T148/T149/T154/T157/T158 until a fresh packaged measurement passes.
-See the21:13 diagnosis and21:30 current status in `execution-evidence.md` for scope and evidence.
+See the21:13 diagnosis,21:30 checkpoint and21:52 draft-PR follow-up in `execution-evidence.md`.
 
 ### Recorded implementation deviation — US8 trusted output bounds
 

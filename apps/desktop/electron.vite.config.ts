@@ -16,6 +16,7 @@ const root = resolve(__dirname, '../..');
 // vitest.config.ts) so a build never depends on a prior `tsc --build`.
 const workspaceAliases = {
   '@threadhelm/test-fixtures/desktop': resolve(root, 'packages/test-fixtures/src/desktop.ts'),
+  '@threadhelm/contracts/protocol': resolve(root, 'packages/contracts/src/protocol.ts'),
   '@threadhelm/contracts': resolve(root, 'packages/contracts/src/index.ts'),
   '@threadhelm/domain': resolve(root, 'packages/domain/src/index.ts'),
   '@threadhelm/persistence': resolve(root, 'packages/persistence/src/index.ts'),

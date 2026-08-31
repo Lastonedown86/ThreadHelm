@@ -1154,3 +1154,78 @@ isolation; an approved exact installed-provider mission acceptance run with real
 usage evidence; trusted signing plus x64/ARM64 installer/uninstaller validation; then hosted
 integration and owner acceptance. These are not satisfied by the deterministic fixtures, prior
 isolated provider proof, passing build or current unsigned package.
+
+### Draft PR sequence and preload follow-up — 2026-08-30 21:52 EDT
+
+The owner authorized starting the recommended draft-PR/closure sequence. The reviewed combined
+US7/US8 implementation was committed as `da3dc66ab82497b33f72c4c6e0cf442bbf06d375` and pushed to
+`codex/us7-template-persistence`; draft [PR17](https://github.com/Lastonedown86/ThreadHelm/pull/17)
+is open. All pending source/tests/feature documents were in that scope; ignored probes, logs,
+packages and credentials were excluded. Two Markdown hard-break spaces in the previously
+untracked roadmap were replaced with paragraph separation to satisfy staged whitespace checks.
+The exact staged content passed the redacted secret scan. The earlier no-commit statements above
+describe their historical checkpoints, not the current branch state.
+
+Hosted CI passed on `da3dc66`: Windows x64 and Windows ARM64, plus CodeQL Actions,
+JavaScript/TypeScript and Rust analysis. CI run33348003266 and CodeQL run33348001972 are linked
+from PR17. No reviewer approval or merge occurred. This is hosted native/dev-runtime evidence,
+not signed ARM64 packaging, actual installation/uninstallation or a credentialed mission proof.
+
+The next bounded performance change separates IPC names into a dependency-free contracts
+protocol subpath. Preload imports only those values and erases full-contract type imports.
+Frozen operation/event lists define exact schema-table keys through exhaustive TypeScript
+`Record` checks; main retains sender/request/response/event validation. The preload still exposes
+fixed named methods, never a generic invocation channel. No permission, sandbox, isolation,
+graphics, budget or provider configuration changed.
+
+A regression bundled and executed the real preload entry: before the fix it found19 schema/Zod
+modules while its method/event behavior tests passed; after the fix all3cases passed with no
+schema runtime modules. Tests compare all exposed methods and listeners with main's schemas,
+attempt channel substitution, reject unknown event subscriptions, verify unsubscribe, and retain
+stream-port transfer. Independent source review passed. The production preload fell from213.28KB
+to4.79KB (83modules to3); renderer output fell from1,380.01KB to1,370.96KB. These are bundle
+measurements, not resident-memory estimates.
+
+Post-change local checks passed: format, lint, typecheck,275unit tests,250contracts, desktop
+build, all41E2Es, and29focused Windows mission/authoring/recovery cases with the same preexisting
+database-lock harness skip. The other Windows files and Rust source were unchanged; their full
+previous local and hosted results remain separate. Records:`tmp/us8/preload-final-verification.json`,
+`preload-protocol-red.log`, `preload-protocol-green.log`, and `preload-build.log`.
+
+The normal package command passed again; all26artifact/coordination cases passed with the
+explicit unsigned-local override. Actual ASAR/unpacked private Marvel content remains absent.
+Strict default signing still exits1 with `NotSigned`;9unsigned app/native files remain. Both
+distributable checksums match. Final package identities for this follow-up:
+
+- Setup156143616bytes, SHA256
+  `e40fba0c8a43772472b304c097221051afb0e3784e0a8222bd9abab07f295e29`.
+- nupkg155399778bytes, SHA256
+  `c21464f36a7453d111ad3d53382662dd4faac7b78fadbf382aaf45e8fecc2adc`.
+- ASAR SHA256 `3f74ffa6ac8176c4f83a2a68f320da1e05e50c20cf0254f8a1c155a667b031a1`.
+
+The fresh visible packaged app, no sessions/no inspector, measured399.844MiB peak working set
+over twelve five-second windows, with median CPU0percent. CPU passes; memory still FAILS250MiB.
+This is lower than the preceding413.367MiB observation, but the single before/after measurement
+does not establish the entire difference as causal savings from preload. The verified removal
+of schema initialization is retained; the release memory blocker remains open. Reports:
+`tmp/us8/preload-artifact-checks.json`, `preload-x64-acceptance.json`,
+`preload-distributables.json`, and `preload-packaged-idle-performance.json`.
+
+Read-only installed-proof assessment clarified the remaining work:
+
+- The production Claude adapter reports organization policy unknown and manual/bounded-allowlist
+  support. Authentication/version probing supplies no trusted auto-policy verdict. Real auto is
+  held correctly; a trusted production capability-evidence integration is still needed. Historical
+  T166 proof, fixture injection and absence of a known prohibition must not grant current authority.
+- A copied whole x64 package plus fresh user data and disposable workspaces permits isolated
+  packaged acceptance. The report writes beside the exe; do not aim it at an existing installation.
+  Live manual-provider mission acceptance remains separate from deterministic fixture coverage.
+- Fresh user data does not isolate Squirrel's product registration, files or shortcuts. Genuine
+  Setup/uninstall proof requires a disposable Windows account or VM. Provider-owned credential
+  caches are also distinct from ThreadHelm user data; do not copy/read credentials to fake isolation.
+- Signing, signed ARM64 package acceptance, actual installed-provider proof and explicit human
+  acceptance remain unverified. No installer or real mission was run by this follow-up assessment.
+
+Task count remains161/166; T148/T149/T154/T157/T158 and the memory blocker remain open. Keep PR17
+draft and Feature002 active. Verified Mission Delegation has not started. The preload follow-up
+requires its own final-head hosted check result; `da3dc66` CI must not be attributed to a later SHA.

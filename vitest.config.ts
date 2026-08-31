@@ -8,6 +8,10 @@ export const workspaceAliases = {
     import.meta.dirname,
     'packages/test-fixtures/src/desktop.ts',
   ),
+  '@threadhelm/contracts/protocol': resolve(
+    import.meta.dirname,
+    'packages/contracts/src/protocol.ts',
+  ),
   '@threadhelm/contracts': resolve(import.meta.dirname, 'packages/contracts/src/index.ts'),
   '@threadhelm/domain': resolve(import.meta.dirname, 'packages/domain/src/index.ts'),
   '@threadhelm/persistence': resolve(import.meta.dirname, 'packages/persistence/src/index.ts'),

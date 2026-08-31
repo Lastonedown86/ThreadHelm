@@ -8,6 +8,9 @@ target/
 pnpm-lock.yaml
 native/windows-supervisor/index.js
 native/windows-supervisor/index.d.ts
+native/shell-host-memory-prototype/gen/
+native/shell-host-memory-prototype/ui/assets/
+native/shell-host-memory-prototype/ui/workspace.html
 specs/
 .specify/
 .agents/

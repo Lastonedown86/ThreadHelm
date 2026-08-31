@@ -1774,3 +1774,84 @@ The regression failed before the fix and passed afterward. The launch/accessibil
 five E2E cases; terminal controller/stream coverage passed thirteen unit cases; build, typecheck
 and scoped lint passed. Independent static review found no actionable issues. Full E2E, updated
 installer identity and the approved four-session measurement are recorded separately when complete.
+
+### 2026-08-31 — corrected installed candidate and four idle Codex sessions
+
+Runtime/source `0745294c08ed5bb618eb078fbb791dfbe4eac0ad` passed all 42 local E2E cases and
+647 unit/contract cases (58 files), plus typecheck, scoped lint, formatting and build. The T169
+regression was observed failing before the fix; independent static review found no actionable
+issues. This does not close the five remaining full-feature tasks.
+
+The unsigned local x64 Setup SHA-256 is
+`f6583622701ea57ccf5bc030345716a150424fa561feb05e9b062c345d36c00e`. Normal installation returned
+zero after verifying 49 app-data files and two shortcuts in backup
+`%LOCALAPPDATA%/ThreadHelmBackups/before-nsis-20260831-110357`. Installed EXE, ASAR and uninstaller
+hashes matched the build identity. A separate installed native/Electron/session-host/ConPTY/real
+bridge diagnostic passed containment, termination and handle-close checks without opening personal
+data. The old Squirrel installation was retained; no personal-machine uninstall was attempted.
+
+The owner's explicit approval covered four idle Codex sessions, up to eight contained processes per
+session, and the disclosed lack of folder confinement and possible file/network access. Four empty
+folders `C:/Users/Bill/TH-idle-0831/1` through `4` were approved through the installed app. Each normal
+launch reviewed Codex 0.151.0, manual permissions, CLI-default model/effort, 30 minutes, 64 turns,
+five minutes without progress, 8,388,608 output bytes and eight contained processes. One stale
+preview expired without launching; it was canceled and regenerated through the normal controls.
+All four corrected-candidate sessions displayed output without `SUBSCRIPTION_FAILED`.
+
+All sessions remained at Codex's folder-trust prompt. No trust confirmation, task prompt or other
+terminal input was submitted; no Claude or Antigravity session was launched. This observation
+measures startup-idle behavior, not fully initialized provider readiness, autonomous mission proof
+or a permission-mode verification. It cannot satisfy deferred US8 live proof.
+
+The first observation aborted after three completed windows when the process family changed and
+produced no acceptance verdict. A second observation of the same four sessions completed from
+11:25:57 to 11:27:01 EDT, twelve approximately five-second windows totaling 64.13 seconds. All
+sixteen process identities remained unchanged: four app processes, four session hosts, four Codex
+processes and four console helpers. No process was excluded and no working set was trimmed.
+
+| Retained budget | Installed observation | Result |
+| --- | --- | --- |
+| Four idle sessions, at most 700 MiB aggregate working set | 1,461.383 MiB peak | FAIL |
+| Median idle CPU, at most 1% of one core over 60 seconds | 17.464% median | FAIL |
+
+The main process accounted for approximately 17.464% of one core averaged across the entire
+observation; its final working set was 169.395 MiB. This identifies a profiling target, not a proved
+root cause. Each session host used about 116-119 MiB and each Codex process about 115-117 MiB.
+Even excluding providers would not justify a pass, and the acceptance total does not exclude them.
+D01 defers only the no-session 250 MiB threshold; neither measured failure is waived. Performance
+remains a real P04 blocker. Fix/profile the main-process CPU behavior before proposing any new
+deferral; do not weaken containment, introduce replay or trim memory to manufacture passing data.
+
+| Disposable folder | Session ID | Codex / host PIDs | Normal stop result (EDT) |
+| --- | --- | --- | --- |
+| 1 | 836ca599-9f7e-4a43-9326-aeb919979ff5 | 40736 / 9372 | 11:29:56, stopped, exit 0 |
+| 2 | 4aa903ea-e1c1-490a-a8a8-2fd5fd6e30a7 | 45024 / 10920 | 11:29:14, stopped, exit 0 |
+| 3 | 88f5366e-71a4-4717-bf3f-508e4d63776c | 28324 / 48536 | 11:28:19, stopped, exit 0 |
+| 4 | 46367a28-7c99-4957-849a-fa1e7740e636 | 5828 / 38704 | 11:27:35, stopped, exit 0 |
+
+All four sessions were stopped through ThreadHelm's normal Stop confirmation, without force stop.
+Read-only database inspection confirmed stopped/exit-zero records, and OS inspection confirmed
+all twelve test provider/host/console processes had exited. The app remained open, with historical
+sessions and owner data preserved. Empty disposable folders and their approval/history records
+were retained. Local reports are `tmp/us8/stream-ready-install-result.json`,
+`stream-ready-installed-proof.json`, `stream-ready-four-idle.json`, and
+`stream-ready-session-cleanup.json`; the measurement script is `measure-installed-four-idle.ps1`.
+
+[CI run 33406139237](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33406139237) and
+[CodeQL run 33406136909](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33406136909)
+passed for source `0745294`. Both installed acceptance architectures passed in
+[run 33406139286](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33406139286), tested
+merge `5e96e73ca968f5a6651048f95ca1e2239245c23a`. Hosted x64 Setup SHA-256 is
+`47271ee3bc7ba5a16006cd332f924f6c07b4c5477801651a26865e97b4d2fb17`; diagnostic ARM64 Setup is
+`9f8c0917eb457b2ae62acf35d1d4258076777cc6e7163f46752bee0526314a22`. Both reports record actual
+installation, installed containment and `PASSED_WITHOUT_MANUAL_DELETION` cleanup. The x64 report
+confirms unsigned policy, fuses, private-persona exclusion, correct native architecture and
+single-instance behavior. The adjacent installed-EXE checksum scenario was skipped for lack of a
+sidecar; Setup and installed build identities were independently verified. No trusted-publisher
+claim is made. Both provider mission gates remain `NOT_RUN`; x64 hosted evidence is Windows Server,
+and these Setup bytes are distinct from the local Windows 11 installation.
+
+P02 is updated to the newly tested hosted candidate. P01 broader manual/exact-release-artifact
+acceptance, P03 owner host-scope exception, P04 performance and P05 owner acceptance remain open.
+PR17 is still draft and review-required. No new deferral, host-scope exception, merge, distribution
+or feature-selector change is implied by the measurement approval or passing CI.

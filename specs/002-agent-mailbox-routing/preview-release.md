@@ -38,10 +38,10 @@ application processes. The four-idle-session 700 MiB budget and median idle CPU 
   installation on their machine with app-data backup instead of a VM. Record artifact identity, launch/native loading,
   installed bridge lookup, containment, single-instance behavior and applicable preview/manual
   workflows. Windows Server CI cannot satisfy this client-platform requirement.
-- [x] **P02 — Installer cleanup:** Actual x64 uninstall verified for source `4160352`, tested merge
-  `e13e2fe816c11d04cc17714467908c455551c462`, in
-  [run 33402598472](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33402598472).
-  Tested x64 Setup SHA-256 is `78b34f99339e0765ef7846c3027a20fbb10fdb84d29206d4804c48a6cc06aeb0`.
+- [x] **P02 — Installer cleanup:** Actual x64 uninstall verified for source `0745294`, tested merge
+  `5e96e73ca968f5a6651048f95ca1e2239245c23a`, in
+  [run 33406139286](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33406139286).
+  Tested x64 Setup SHA-256 is `47271ee3bc7ba5a16006cd332f924f6c07b4c5477801651a26865e97b4d2fb17`.
   This hosted artifact is distinct from the owner's locally built installer. There was no remaining executable
   payload, registration, shortcuts, app/bridge processes or session credentials; the documented
   NSIS candidate permits no retained installation entries, including a legacy `.dead` tombstone.
@@ -62,7 +62,9 @@ The owner explicitly requested installation on their existing machine on 2026-08
 x64 candidate was installed normally after a verified app-data backup; the older Squirrel
 installation was left intact. This exception does not enable the destructive CI acceptance
 harness on a personal account: its disposable-runner guards remain unchanged. No local uninstall
-or agent/provider session was run. This is not final candidate acceptance or release approval.
+was run. The owner subsequently explicitly approved four idle Codex sessions with eight contained
+processes each and the file/network disclosure; their results are below. This is not final
+candidate acceptance or release approval.
 
 ## Full-feature task mapping
 
@@ -77,7 +79,33 @@ or agent/provider session was run. This is not final candidate acceptance or rel
 
 ## Current evidence and remaining work
 
-**Current local installed candidate:** `f53441ee58b9326cfb5d615d34adeb7da80b0e22`, x64 Setup
+**Current local installed candidate:** `0745294c08ed5bb618eb078fbb791dfbe4eac0ad`, x64 Setup
+`f6583622701ea57ccf5bc030345716a150424fa561feb05e9b062c345d36c00e`. T169 fixes premature renderer
+output subscription during host startup. The unsigned update exited zero after a fresh verified
+49-file app-data backup and two shortcut backups. Installed EXE, ASAR and uninstaller identities
+matched the build; installed native/session-host/ConPTY/bridge containment passed. No local
+uninstall was performed. The prior Squirrel installation and owner data were preserved.
+
+The owner-authorized four-session observation on Windows 11 Home x64 completed twelve windows
+over 64.13 seconds: **1,461.383 MiB peak aggregate working set and 17.464% median one-core CPU**.
+Both retained budgets failed (700 MiB and 1%). All sixteen app/provider/helper processes were
+included with unchanged identities, no trimming or exclusions. The four Codex 0.151.0 sessions
+used manual permissions, CLI-default model/effort and eight contained processes each in separate
+disposable folders. They remained at provider folder-trust prompts: no prompt, trust confirmation,
+mission or work was submitted. This is startup-idle evidence, not provider-ready mission proof.
+The first observation was aborted when the process family changed; it produced no verdict.
+All four sessions subsequently stopped normally with exit zero, and their twelve processes exited.
+P04 therefore remains blocked on performance; D01 does not waive either failed budget.
+
+At source `0745294`, local verification passed 647 unit/contract cases and all 42 E2E cases.
+Independent review of T169 found no actionable issues. Hosted CI `33406139237`, CodeQL
+`33406136909`, and installed acceptance `33406139286` passed, including both architectures.
+Hosted x64 cleanup is recorded in P02; its Setup differs from the locally installed bytes.
+Private-persona exclusion, production fuses and unsigned policy passed in hosted installed checks.
+ARM64 remains diagnostic; both provider mission gates remain `NOT_RUN`. P01 broader manual/exact
+release-artifact acceptance, P03 owner host-scope exception and P05 owner acceptance remain open.
+
+**Historical installed candidate:** `f53441ee58b9326cfb5d615d34adeb7da80b0e22`, x64 Setup
 `06c0284d2fa39aa0bea196c1f7b23c2f911b519c872b541226e5b74971c567ef`. The owner-authorized update
 completed on Windows 11 Home x64 after a fresh verified 49-file backup and two shortcut backups.
 Installed EXE, ASAR and NSIS helper hashes matched the build identity. The actual app displayed

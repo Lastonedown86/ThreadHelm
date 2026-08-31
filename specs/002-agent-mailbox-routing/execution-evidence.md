@@ -2229,3 +2229,34 @@ The application, prototype, test helpers and evidence were committed as `d23d297
 `codex/us7-template-persistence`. This commit contains the exact renderer application source whose
 hashes were packaged and measured in T173. The following identity correction changes only evidence
 metadata. P04 remains pending fresh PR-head hosted checks and required repository review.
+
+### 2026-08-31 — P04 exact-head hosted acceptance
+
+P04 is complete for application candidate `d23d297` and PR head
+`ea3307622e0c01e616e1c9357bf3a6e7ec904ffc`. The initial PR-head x64 CI attempt failed only because
+two newly tracked nonshipping prototype source assets had not been formatted. No product test ran
+or failed in that attempt. The assets were formatted, generated prototype UI/schema output was
+added to the repository formatting ignore boundary, the full local format check passed, and the
+correction was pushed as `ea33076` without changing production application source.
+
+Fresh [CI run 33451269519](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33451269519)
+passed x64 and diagnostic ARM64. Both jobs passed formatting, lint, Rust format/clippy/tests,
+native build, typecheck, 371 unit tests, 276 contract tests, desktop build, real Windows architecture/
+integration proof and all 43 E2E journeys. Fresh
+[CodeQL run 33451267094](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33451267094)
+passed Actions, JavaScript/TypeScript and Rust analysis.
+
+Fresh [installed acceptance run
+33451269522](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33451269522) tested merge
+`f80d60b3ae5c40627d2e20284217c875175e63ef`. Its unsigned x64 Setup SHA-256 is
+`2eef36569824bb35c009e8d58c605c5d64eedb0a899faf13a8dacd394c8369a7`. The Windows Server x64 job
+passed the unsigned policy, production fuses, x64 native architecture, private-persona exclusion,
+bridge lookup, installed Electron/session-host/ConPTY containment, second-instance behavior and
+actual uninstall. After uninstall, payload, registration, shortcuts, app/helper processes and
+session credentials were empty without manual deletion. Provider mission proof remained `NOT_RUN`.
+
+The ARM64 CI and installed-acceptance jobs also passed on Windows 11 ARM64, including cleanup, but
+remain diagnostic under D02 and do not expand preview distribution. P04 uses the required x64 result;
+ARM64 success is recorded without relabeling the support boundary. D01/D05/D06 measurements and
+limitations remain unchanged. P05 owner acceptance, required repository review, main integration
+and any later distribution remain separate.

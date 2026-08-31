@@ -54,7 +54,17 @@
       "nativeArchitecture": "Application native files match x64; no installer helper present"
     },
     "IndependentRendererReview": "no actionable defects; read-only review, no tests run by reviewer",
-    "HostedFinalCandidate": "not run"
+    "HostedFinalCandidate": {
+      "ApplicationCommit": "d23d297",
+      "PrHead": "ea3307622e0c01e616e1c9357bf3a6e7ec904ffc",
+      "TestedMerge": "f80d60b3ae5c40627d2e20284217c875175e63ef",
+      "CiRun": "33451269519",
+      "CodeQlRun": "33451267094",
+      "InstalledAcceptanceRun": "33451269522",
+      "X64SetupSha256": "2EEF36569824BB35C009E8D58C605C5D64EEDB0A899FAF13A8DACD394C8369A7",
+      "X64": "passed",
+      "Arm64Diagnostic": "passed"
+    }
   },
   "Resource": {
     "FinalIdle": {

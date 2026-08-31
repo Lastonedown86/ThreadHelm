@@ -70,13 +70,25 @@ workflows. Windows Server CI cannot satisfy this client-platform requirement.
   automatic provider start. On 2026-08-31 the owner approved the exact bounded exception in the
   transition record. It grants no standing permission for later host edits and does not approve
   provider starts, merge, distribution, P04, P05 or deferred capabilities.
-- [ ] **P04 — Candidate controls and evidence:** Confirm x64-only distribution, unsigned signature
+- [x] **P04 — Candidate controls and evidence:** Confirm x64-only distribution, unsigned signature
   policy (invalid signatures rejected), checksums, production fuses, private Marvel exclusion,
   no unproved automatic starts, retained performance/resource checks and applicable CI on the
   reviewed candidate. Include the long-run/session-cycle evidence and memory disclosure defined
   in the memory-budget review. D01/D05 defer fixed aggregate memory ceilings; D06 defers the fixed
   four-session CPU ceiling while retaining the measured failures and qualitative safety/UX gates.
   Existing passes are evidence, not automatic approval of a later artifact.
+  **Complete for application candidate `d23d297` / PR head `ea33076`:** [CI run
+  33451269519](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33451269519),
+  [CodeQL run
+  33451267094](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33451267094) and
+  [installed acceptance run
+  33451269522](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33451269522) passed. The
+  tested hosted merge was `f80d60b3ae5c40627d2e20284217c875175e63ef`; its unsigned x64 Setup
+  SHA-256 is `2eef36569824bb35c009e8d58c605c5d64eedb0a899faf13a8dacd394c8369a7`.
+  Hosted x64 install, fuses, native architecture, private-persona exclusion, bridge/session-host/
+  ConPTY containment, single-instance behavior and actual uninstall cleanup passed without manual
+  deletion. All CodeQL analyses and both CI architectures passed. ARM64 installed evidence also
+  passed but remains diagnostic under D02 and does not expand distribution.
 - [ ] **P05 — Owner acceptance:** Accept the exact preview candidate and its disclosed limitations
   after P01-P04. Obtain required repository review before merging; distribution remains a separate
   deliberate action.

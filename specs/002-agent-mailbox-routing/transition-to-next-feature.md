@@ -40,8 +40,8 @@ Populate these fields from completed evidence, not from intended actions:
 | P01: Windows 11 x64 installed/manual acceptance | Complete. Exact changed candidate installed after a fresh verified backup; installed identity, bridge lookup, native containment, single-instance behavior and visible current generic template content passed. No provider mission was started or counted as evidence. |
 | P02: actual uninstall with no executable residue | Passed for source 0745294 / tested merge 5e96e73ca968f5a6651048f95ca1e2239245c23a in run 33406139286. Tested hosted x64 Setup 47271ee3bc7ba5a16006cd332f924f6c07b4c5477801651a26865e97b4d2fb17; no manual deletion. This is distinct from the locally installed Setup. |
 | P03: independent safety review and host scope reconciliation | Complete. Technical review passed and the owner approved the exact bounded three-file host exception on 2026-08-31. |
-| P04: x64 candidate controls and applicable CI | Static controls, unsigned policy, x64 payload, private-persona exclusion and extended cleanup evidence pass. D06 preserves the failed CPU measurements while deferring the fixed preview threshold. Exact-candidate repository/CI evidence remains pending. |
-| P05: owner acceptance of exact candidate and limitations | Pending P04 |
+| P04: x64 candidate controls and applicable CI | Complete for application candidate `d23d297` / PR head `ea33076`. CI, CodeQL and installed acceptance passed; hosted tested merge `f80d60b3`, unsigned x64 Setup SHA-256 `2eef36569824bb35c009e8d58c605c5d64eedb0a899faf13a8dacd394c8369a7`. D06 preserves the failed CPU measurements. |
+| P05: owner acceptance of exact candidate and limitations | Pending owner decision |
 | Required repository review and main integration | PR17 draft; no approval or merge recorded |
 
 The initial NSIS Setup exited successfully on x64 and ARM64, but the harness looked for

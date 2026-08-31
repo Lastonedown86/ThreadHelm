@@ -2,6 +2,10 @@
 
 **Decision date:** 2026-08-30
 
+**Preview scope decision, 2026-08-31:** The owner approved a limited unsigned Windows 11 x64
+preview with [explicit deferrals and retained gates](../../specs/002-agent-mailbox-routing/preview-release.md).
+That milestone does not complete Feature 002, enable unproved autonomy, or trigger the next spec.
+
 **Status:** Product direction approved; follow-on features not yet specified or implemented.
 **Audience:** Windows power users and solo developers using local coding agents.
 

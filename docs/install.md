@@ -2,16 +2,20 @@
 
 ## Supported platform
 
-Windows 11 client releases within Microsoft's support lifecycle, x64 and ARM64. Windows 10,
-Windows Server, and 32-bit systems are outside the acceptance matrix. A release may claim only the
-architectures and Windows releases its acceptance run actually exercised (see the acceptance report
-that ships with each release; the MVP run is recorded in
-`specs/001-local-agent-workspace/validation-report.md`).
+The approved preview target is **Windows 11 x64** within Microsoft's support lifecycle. ARM64
+distribution is deferred even though its implementation and CI validation remain. Windows 10,
+Windows Server and 32-bit systems are outside the client acceptance matrix. A preview may claim
+only the Windows releases and workflows its acceptance run actually exercised; Windows Server
+CI does not supply Windows 11 x64 installed acceptance.
+
+The preview installer is not yet approved for distribution. See the
+[approved scope, deferrals and retained checklist](../specs/002-agent-mailbox-routing/preview-release.md).
 
 ## Getting the installer
 
-Releases publish per-user Squirrel installers (`ThreadHelm-Setup-x64.exe`, and `-arm64` when
-ARM64 hardware has been validated) together with a `.sha256` file for each artifact.
+Once the retained acceptance gates pass and the owner approves distribution, the preview may
+publish only `ThreadHelm-Setup-x64.exe` and its `.sha256`. Do not publish ARM64 CI artifacts as
+preview downloads. Restoring ARM64 distribution requires its acceptance and a separate scope decision.
 
 ThreadHelm is distributed **unsigned**. The installer does not establish a trusted publisher, and
 Windows may display an unknown-publisher or reputation warning. Download only from the project's
@@ -30,6 +34,15 @@ file. A future signed artifact may report `Valid`, but signing is not required b
 
 ThreadHelm has no automatic updater. The About area links to the releases page; download a
 newer version deliberately and verify it the same way.
+
+## Preview limitations
+
+The owner deferred the 250 MiB idle-memory target for this preview; the latest local packaged
+x64 observation is 380.324 MiB. This is a disclosed limitation, not a passing performance result.
+Other CPU/resource bounds and safety checks remain required. Full US8 autonomous-provider mission
+readiness is not claimed; unavailable Claude auto permission remains held, with no bypass fallback.
+Private Marvel personas are never bundled. These scope deferrals do not waive installer cleanup,
+Windows 11 x64 installed acceptance, independent review or owner acceptance.
 
 ## Prerequisites for launching agents
 

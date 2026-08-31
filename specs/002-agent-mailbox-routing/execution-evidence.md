@@ -1418,3 +1418,41 @@ the harness defect and its correction; no hosted trace was available to prove th
 offset in the failed ARM64 run.
 The three affected journeys passed three independent runs each (9/9, retries disabled) after the
 focused red/green regression. Typecheck, lint and formatting passed for the final follow-up.
+
+### Owner-approved preview deferrals — 2026-08-31
+
+The owner accepted the recommended unsigned x64 preview package after reviewing which remaining
+items were technical blockers versus deferrable quality/process requirements. The authoritative
+[preview-release.md](preview-release.md) records D01-D04 and retained gates P01-P05. This approval
+changes the preview scope; it is not retroactive test success, full Feature 002 completion, approval
+of the session-host scope change, or permission to merge/distribute a candidate.
+
+Deferred from the preview: the 250 MiB idle-memory threshold (latest observation 380.324 MiB),
+ARM64 distribution, unproved autonomous-provider capabilities and their full live proof, and the
+requirement to obtain every originally named AI review. Substantive independent review and owner
+acceptance remain required. Windows 11 x64 installed acceptance, real x64 uninstall cleanup,
+session-host scope review, unsigned integrity/fuse checks, privacy and runtime authority controls
+remain gates. Existing full-feature checkboxes remain unchanged at 161/166; partial/deferred tasks
+are mapped explicitly rather than marked complete. Feature 002 remains selected.
+
+Verified before the scope edit: runtime/test commit `ea4c90675487903c255193dd22c3d39fb95b2010`
+passed [Windows x64/ARM64 CI](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33353604610)
+and [CodeQL](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33353602108).
+The [installed run](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33353604612) tested
+merge checkout `a30bf3abd67182e3a8121f44ec555f6d65d578aa`: artifact and containment checks passed,
+but cleanup failed on both architectures. x64 retained the updater binaries; ARM64 additionally
+retained ThreadHelm.exe, v8_context_snapshot.bin and vk_swiftshader.dll. No remaining processes or
+session credentials were observed at the final snapshot. Additional ARM64 residue is not
+conclusively attributed to the vendor-only issue. Deferring ARM64 distribution does not erase it.
+
+The current Claude adapter reports only manual/bounded-allowlist policies and unknown organization
+policy for its supported surface. The main permission resolver rejects missing, stale, mismatched
+or unsupported evidence and requires allowed organization policy for auto. This scope edit changes
+no runtime guard, manifest, provider setting, packaging architecture support or CI matrix. There is
+no automatic publication workflow; only accepted x64 candidates may be selected for preview release.
+
+Scope-change validation: 93 existing launch-policy/provider/launch-contract checks passed across
+three files; formatting, local preview-document links and diff whitespace checks passed. The full
+task count remains 161 checked / 5 open. This change edits documentation only: no runtime tests,
+CI checks, architecture support or safety assertions were disabled. The full runtime suite was not
+rerun for the documentation change; its last complete hosted result is the `ea4c906` run above.

@@ -5,6 +5,13 @@ description: "Dependency-ordered implementation tasks for durable hive coordinat
 
 # Tasks: Durable Hive Coordination
 
+**Current milestone (owner-approved 2026-08-31): unsigned Windows 11 x64 preview.**
+See [approved deferrals D01-D04 and retained preview gates P01-P05](preview-release.md).
+The full-feature task list below remains intact: deferred work is not complete and its checkbox
+stays open. T148 is deferred from the preview; T149/T154/T157 mix deferred and retained work;
+T158 still represents full feature closure. Do not use the aggregate 161/166 count as the preview
+release checklist or require deferred ARM64/auto-provider work to accept the limited preview.
+
 **Input**: Design documents from `specs/002-agent-mailbox-routing/`
 
 **Prerequisites**: `plan.md`, `spec.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`
@@ -563,7 +570,7 @@ later autonomy, memory, provider, hosted-CI, packaging, or production gate.
 - [X] T165 Implement main-owned runtime permission resolution and source disclosure, exact provider capability evidence, per-process Claude auto mapping, bounded allowlist/manual fallback action, and isolated one-run break-glass validation requiring fresh process/filesystem containment, disposable-workspace-only writes, no unrelated credential/environment inheritance, bounded network destinations, and verified cleanup; add elapsed/turn/no-progress/resource bounds, structured progress/cancel, and typed provider outcomes without editing provider/profile/template settings in `apps/desktop/src/main/sessions/launch-policy.ts`, `apps/desktop/src/main/sessions/preview.ts`, `apps/desktop/src/main/sessions/launch.ts`, `packages/contracts/src/index.ts`, `packages/providers/src/adapter.ts`, `packages/providers/src/codex.ts`, `packages/providers/src/claude-code.ts`, and `apps/desktop/src/renderer/features/launch/LaunchDialog.tsx`
 - [X] T166 Run one disposable installed Claude auto-mode compatibility proof covering harmless read/edit/test work, classifier denial, unavailable-auto/no-bypass behavior, progress, timeout/cancel/no-progress, usage accounting, fresh process/filesystem containment, disposable-workspace-only writes, bounded credential/environment/network exposure, verified cleanup, and exact CLI/model/provider evidence recorded separately from deterministic tests in `specs/002-agent-mailbox-routing/execution-evidence.md`; MUST complete before T126
 
-### Current release blocker — packaged idle memory
+### Deferred preview target — packaged idle memory (D01)
 
 T151 is complete for measurement coverage, not for release performance acceptance. The fresh
 x64 package measured380.324 MiB peak after deferred renderer loading (399.844 MiB after the preload
@@ -571,7 +578,10 @@ follow-up; 413.367 and435.293 MiB on earlier checkpoints) against the unchanged2
 Windows11 Home26200. Median idle CPU
 passed. Graphics and blank-runtime diagnostic comparisons
 did not meet the memory target; no metric, budget or security boundary was relaxed. Keep this
-blocker open alongside T148/T149/T154/T157/T158 until a fresh packaged measurement passes.
+full-release target open until a fresh packaged measurement passes. The owner-approved D01
+deferral removes only this 250 MiB threshold from the preview gate; it is not a passing result,
+a new memory ceiling, or permission to weaken other resource bounds. Preview acceptance follows
+P01-P05 in [preview-release.md](preview-release.md); the full-feature tasks remain incomplete.
 See the21:13 diagnosis,21:30 checkpoint and21:52 draft-PR follow-up in `execution-evidence.md`.
 
 ### Recorded implementation deviation — US8 trusted output bounds

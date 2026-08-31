@@ -26,6 +26,20 @@ The upstream behavior was reviewed at upstream commit
 Because upstream behavior may change, each planning cycle MUST compare its proposed milestone with
 the current upstream source and record any intentional divergence.
 
+## Approved preview milestone
+
+On 2026-08-31 the owner approved an **unsigned Windows 11 x64 preview** with the explicit
+[preview scope and retained release checklist](preview-release.md). The 250 MiB idle-memory
+threshold, ARM64 distribution and unproved autonomous-provider capabilities are deferred from
+this preview. Substantive independent safety review and human acceptance remain required;
+obtaining every originally named AI-provider review does not. Missing provider authority must
+still fail closed. No runtime permission, containment, privacy or unknown-outcome rule is relaxed.
+
+Windows 11 x64 installed acceptance, actual installer cleanup and review of the session-host
+scope discrepancy are retained. The approved scope does not itself approve a candidate, merge
+or distribution. Deferred obligations remain incomplete for full Feature 002 closure; the next
+section governs that separate milestone, not whether the limited preview can be accepted.
+
 ## Feature completion and next specification
 
 The approved cross-feature sequence is maintained in

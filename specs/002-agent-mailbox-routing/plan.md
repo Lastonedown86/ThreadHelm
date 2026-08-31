@@ -35,7 +35,16 @@ sequential Windows mission/fault integration tests with fixture agents and bridg
 Electron end-to-end tests, Cargo tests for the packaged bridge, and separate credentialed
 Codex/Claude smoke tests
 
-**Target Platform**: Supported Windows 11 client releases, x64 and ARM64 installed artifacts
+**Target Platform**: Windows 11 x64 for the approved preview; ARM64 implementation/validation
+retained but distribution deferred. Full target: supported Windows 11 x64 and ARM64 installed artifacts.
+
+**Approved preview exception (2026-08-31)**: [preview-release.md](preview-release.md) governs the
+limited unsigned x64 milestone. Defer only the 250 MiB no-session idle-memory threshold, ARM64
+distribution and unproved autonomous-provider capabilities/proofs. Retain other performance and
+resource bounds, x64 client installed acceptance, cleanup, independent safety/scope review and
+owner acceptance. The named multi-provider review roster below is no longer a requirement to
+obtain every listed review for this preview; it neither authorizes provider runs nor replaces
+substantive independent review. No production authority check or full-feature completion claim changes.
 
 **Project Type**: Windows desktop application with typed renderer/main IPC, one utility process and
 PTY per agent session, a main-owned local database, and a small session-scoped native stdio bridge

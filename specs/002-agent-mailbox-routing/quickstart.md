@@ -3,6 +3,13 @@
 This guide validates the feature after implementation. It exercises deterministic fixtures first;
 live provider and installed-artifact evidence remain separate gates.
 
+For the owner-approved unsigned x64 preview, use [preview-release.md](preview-release.md) to
+select the required acceptance scope. ARM64 distribution, the 250 MiB idle target and unproved
+autonomous-provider proof are deferred, not passed. Keep all runtime authority checks intact;
+do not run a deferred live-provider mission merely to make the full-feature checklist green.
+Windows 11 x64 installed acceptance, actual cleanup, independent review and owner acceptance
+remain required before distributing the preview installer.
+
 ## Prerequisites
 
 - Supported Windows 11 client release with PowerShell.

@@ -28,11 +28,11 @@ Populate these fields from completed evidence, not from intended actions:
 
 | Required record | Current state |
 | --- | --- |
-| Candidate source commit and installer SHA-256 | Source 88d1b41e9d9b9fbbaef5525647d09e8741e875c2; x64 Setup 6452f3a870b45aef46c0822f35a729ade2dd5857843937ec892fa9b44cd71634 |
-| P01: Windows 11 x64 installed/manual acceptance | Owner authorized their existing machine instead of a VM. Exact candidate installed, launched and passed installed containment/single-instance checks on Windows 11 Home x64; manual workflows remain pending. |
-| P02: actual uninstall with no executable residue | Passed for candidate 88d1b41 on Server x64 in run 33364588605, without manual deletion. Independent evidence review also passed. |
+| Candidate source commit and installer SHA-256 | Local installed runtime f53441ee58b9326cfb5d615d34adeb7da80b0e22; x64 Setup 06c0284d2fa39aa0bea196c1f7b23c2f911b519c872b541226e5b74971c567ef. Later T168 changes tests/documentation only. |
+| P01: Windows 11 x64 installed/manual acceptance | Updated on the owner's machine after a verified backup. Exact installed identity, native-template UI and containment diagnostic passed on Windows 11 Home x64. Earlier single-instance evidence belongs to 88d1b41; broader manual workflow acceptance remains pending. |
+| P02: actual uninstall with no executable residue | Earlier 88d1b41 passed in run 33364588605 without manual deletion. Current artifact does not inherit that result; fresh hosted artifact acceptance pending. |
 | P03: independent safety review and host scope reconciliation | Worker-bound/recovery fixes passed independent review. Owner exception remains pending. |
-| P04: x64 candidate controls and applicable CI | Installed controls, CI run 33364588606 and CodeQL passed for candidate 88d1b41. Retained supported-client resource proof remains pending. |
+| P04: x64 candidate controls and applicable CI | f53441e static installed controls and containment diagnostic passed; Setup/installed identity independently verified. Fresh hosted CI and retained four-session supported-client resource proof remain pending. |
 | P05: owner acceptance of exact candidate and limitations | Pending P01-P04 |
 | Required repository review and main integration | PR17 draft; no approval or merge recorded |
 

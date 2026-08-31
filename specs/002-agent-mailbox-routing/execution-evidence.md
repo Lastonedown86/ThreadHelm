@@ -1657,3 +1657,40 @@ private-roster acceptance test was skipped; no private files or live providers w
 This is a local follow-up candidate. It does not inherit the prior installer's checksum or hosted
 acceptance result, close P01/P04/P05, or authorize a release/merge. The owner installation remains
 unchanged until the running app can be closed and a fresh backup verified before updating it.
+
+### 2026-08-31 — native-template installation and retained acceptance follow-up
+
+The owner explicitly requested reinstalling the changed sample JSON. Candidate `f53441e` Setup
+`06c0284d2fa39aa0bea196c1f7b23c2f911b519c872b541226e5b74971c567ef` was rechecked as unsigned and
+installed normally with exit zero after the app closed and a fresh backup verified all 49 app-data
+files and two shortcuts. Installed EXE/ASAR/uninstaller hashes matched the build identity. The app
+reopened; Windows UI accessibility and screenshot inspection showed the documentation specialist's
+`threadhelm/agent-profile@1` JSON and six bundled revision-2 starters. No data deletion, VM, local
+uninstall, provider session or release/merge was performed.
+
+On resuming implementation, the static installed-artifact slice exited zero: six tests selected,
+one runtime-launch/probe test excluded. The adjacent-EXE checksum scenario reported no sidecar;
+Setup and installed-file identities were separately verified. Signature policy (nine unsigned
+app/native files), fuses, ASAR, private-persona exclusion and native architecture passed. The
+installed Electron/session-host/ConPTY/real-bridge diagnostic separately passed dormant Job scope,
+descendant containment, termination and handle-close cleanup using only a diagnostic fixture.
+It did not open personal storage or invoke a provider. Local reports are
+`tmp/us8/native-template-installer.json`, `native-template-install-result.json`,
+`native-template-artifact-controls.json` and `native-template-installed-proof.json`.
+
+### 2026-08-31 — T168 keyboard acceptance synchronization
+
+Live inspection of PR17 at `0758483` found x64 CI/CodeQL and both installer jobs successful, but
+ARM64 CI run `33365494381` failed the keyboard terminal-escape test before launch: `tabTo` could
+not reach `Launch session`; 41 other E2E tests and all Windows integration tests passed. The
+failure did not reproduce in twelve local x64 repetitions. Inspection showed that the test did
+not await all asynchronous dialog/checkbox/button readiness transitions, while disabled buttons
+are skipped by Tab. T168 adds observable visibility/checked/enabled assertions, with no sleeps,
+extra mouse input, focus injection, tab-limit increase or product change. Keyboard navigation,
+accessible names, visible focus, explicit confirmation, xterm F6 escape and Stop assertions remain.
+
+The complete accessibility file passed three repetitions (12 tests). Independent review found no
+actionable issues and explicitly retained the uncertainty about the original ARM failure. This
+is test synchronization hardening, not a proven production defect fix; fresh hosted ARM64 evidence
+is required. D01-D04 and the five full-feature tasks remain open as previously recorded. No new
+provider run, host-scope exception, final owner acceptance, merge or distribution is authorized.

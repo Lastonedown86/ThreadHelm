@@ -83,6 +83,9 @@ test('keyboard-only journey with visible focus and accessible names', async () =
     await tabTo(page, /cannot confine/);
     await page.keyboard.press('Space');
     await expect(dialog.getByRole('checkbox')).toBeChecked();
+    // Keyboard traversal skips disabled controls. Wait for the async preview
+    // and React confirmation update before trying to reach the launch button.
+    await expect(dialog.getByRole('button', { name: 'Launch session', exact: true })).toBeEnabled();
     await tabTo(page, /^Launch session$/);
     await page.keyboard.press('Enter');
     await expect(dialog).toBeHidden({ timeout: 30_000 });
@@ -105,13 +108,20 @@ test('keyboard can leave the terminal to reach Stop and confirm it', async () =>
     await page.locator('.status-bar').click();
     await tabTo(page, /^Choose folder/);
     await page.keyboard.press('Enter');
+    const approve = page.getByRole('dialog', { name: 'Approve this folder?' });
+    await expect(approve).toBeVisible();
     await tabTo(page, /^Approve folder$/);
     await page.keyboard.press('Enter');
+    await expect(approve).toBeHidden();
     await tabTo(page, /^Launch Codex CLI in /);
     await page.keyboard.press('Enter');
     const dialog = page.getByRole('dialog', { name: 'Review this launch' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('checkbox')).toBeVisible();
     await tabTo(page, /cannot confine/);
     await page.keyboard.press('Space');
+    await expect(dialog.getByRole('checkbox')).toBeChecked();
+    await expect(dialog.getByRole('button', { name: 'Launch session', exact: true })).toBeEnabled();
     await tabTo(page, /^Launch session$/);
     await page.keyboard.press('Enter');
     await expect(dialog).toBeHidden({ timeout: 30_000 });

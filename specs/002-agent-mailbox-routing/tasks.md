@@ -9,7 +9,7 @@ description: "Dependency-ordered implementation tasks for durable hive coordinat
 See [approved deferrals D01-D04 and retained preview gates P01-P05](preview-release.md).
 The full-feature task list below remains intact: deferred work is not complete and its checkbox
 stays open. T148 is deferred from the preview; T149/T154/T157 mix deferred and retained work;
-T158 still represents full feature closure. Do not use the aggregate 161/166 count as the preview
+T158 still represents full feature closure. Do not use the aggregate full-feature count as the preview
 release checklist or require deferred ARM64/auto-provider work to accept the limited preview.
 The subsequently approved [next-feature handoff](transition-to-next-feature.md) carries D01-D04
 forward after retained acceptance, required review and main integration; it is separate from T158.
@@ -578,6 +578,12 @@ later autonomy, memory, provider, hosted-CI, packaging, or production gate.
   `threadhelm/agent-profile@1` for bundled starters, new drafts/copies, and wizard save/export;
   preserve legacy imports and immutable source digests, upgrade existing bundled records safely,
   and verify pre-upgrade draft completion without weakening stale-source or launch boundaries.
+
+- [X] T168 Synchronize keyboard-only acceptance with asynchronous launch-dialog readiness in
+  `tests/e2e/accessibility.spec.ts`; retain keyboard traversal, visible focus, the existing tab bound,
+  explicit boundary confirmation and F6/Stop assertions. Record local repetitions, independent
+  review, the unreproduced historical ARM64 failure and separate hosted confirmation in
+  `specs/002-agent-mailbox-routing/execution-evidence.md`.
 
 ### Deferred preview target — packaged idle memory (D01)
 

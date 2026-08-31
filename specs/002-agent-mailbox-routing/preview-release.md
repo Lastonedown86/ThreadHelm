@@ -38,9 +38,10 @@ application processes. The four-idle-session 700 MiB budget and median idle CPU 
   installation on their machine with app-data backup instead of a VM. Record artifact identity, launch/native loading,
   installed bridge lookup, containment, single-instance behavior and applicable preview/manual
   workflows. Windows Server CI cannot satisfy this client-platform requirement.
-- [x] **P02 — Installer cleanup:** Actual x64 uninstall verified for candidate `88d1b41` in
+- [ ] **P02 — Installer cleanup:** Actual x64 uninstall verified for earlier candidate `88d1b41` in
   [run 33364588605](https://github.com/Lastonedown86/ThreadHelm/actions/runs/33364588605).
-  No remaining executable
+  The installed native-template candidate `f53441e` has different Setup bytes and does not inherit
+  this pass. Fresh hosted acceptance is pending. The earlier run had no remaining executable
   payload, registration, shortcuts, app/bridge processes or session credentials; the documented
   NSIS candidate permits no retained installation entries, including a legacy `.dead` tombstone.
   Do not manually delete residue to manufacture a passing result.
@@ -74,6 +75,21 @@ or agent/provider session was run. This is not final candidate acceptance or rel
 | T158 final feature closure | Remains incomplete until full obligations pass. The separately approved preview handoff may trigger the next feature only after P01-P05, required review and integration on main; carry every deferral forward. |
 
 ## Current evidence and remaining work
+
+**Current local installed candidate:** `f53441ee58b9326cfb5d615d34adeb7da80b0e22`, x64 Setup
+`06c0284d2fa39aa0bea196c1f7b23c2f911b519c872b541226e5b74971c567ef`. The owner-authorized update
+completed on Windows 11 Home x64 after a fresh verified 49-file backup and two shortcut backups.
+Installed EXE, ASAR and NSIS helper hashes matched the build identity. The actual app displayed
+`threadhelm/agent-profile@1` in the documentation starter, with all six bundled starters at revision 2.
+Static installed controls and the separate Electron/session-host/ConPTY/bridge containment diagnostic
+passed. The adjacent installed-EXE checksum scenario was skipped (no sidecar); Setup and installed
+identity hashes were independently verified. No new live provider, uninstall or four-session
+resource acceptance was performed. Historical results below are not evidence for these Setup bytes.
+
+The previous PR head `0758483` passed x64 CI, CodeQL and both installed-acceptance jobs, but ARM64 CI
+failed one keyboard-navigation E2E case (41 passed). T168 adds observable readiness waits; the
+original failure did not reproduce in twelve x64 repetitions. Independent review passed and fresh
+hosted confirmation is pending. This test-only change does not alter the installed application.
 
 Candidate `88d1b41` with the NSIS decoder backport passed actual x64 and ARM64 installation,
 installed artifact/containment checks and uninstall without manual deletion in run 33364588605.

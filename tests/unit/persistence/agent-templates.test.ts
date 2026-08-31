@@ -288,6 +288,9 @@ describe('agent-template persistence', () => {
     });
   });
 
+  // Two real on-disk migrations/reopens can exceed Vitest's default 5s on a
+  // hosted Windows disk. This is a durability/stale-write test, not the separate
+  // UI or runtime recovery performance gate; retain every state assertion.
   it('recovers autosaved fields and step from disk and rejects stale writes', () => {
     const directory = mkdtempSync(join(tmpdir(), 'threadhelm-template-'));
     directories.push(directory);
@@ -319,7 +322,7 @@ describe('agent-template persistence', () => {
       }),
     ).toThrowError(expect.objectContaining({ code: 'PROFILE_REVISION_STALE' }));
     expect(templates.getDraft(draft.draftId).fieldValues.name).toBe('My reviewer');
-  });
+  }, 15_000);
 
   it('requires complete valid fields and an exact version before immutable completion', () => {
     const { templates } = setup();

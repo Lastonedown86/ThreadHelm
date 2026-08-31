@@ -1,4 +1,4 @@
-param([Parameter(Mandatory = $true)][string]$InstallRoot, [switch]$IncludeTree, [string]$HelperRoot)
+param([Parameter(Mandatory = $true)][string]$InstallRoot, [Parameter(Mandatory = $true)][guid]$AppGuid, [switch]$IncludeTree, [string]$HelperRoot)
 $ErrorActionPreference = 'Stop'
 $prefix = [IO.Path]::GetFullPath($InstallRoot).TrimEnd('\') + '\'
 $registrations = @()
@@ -6,7 +6,7 @@ foreach ($registryRoot in @('HKCU:\Software\Microsoft\Windows\CurrentVersion\Uni
     if (Test-Path -LiteralPath $registryRoot) {
         foreach ($key in Get-ChildItem -LiteralPath $registryRoot) {
             $value = Get-ItemProperty -LiteralPath $key.PSPath
-            if ($key.PSChildName -eq 'ThreadHelm' -or $value.DisplayName -eq 'ThreadHelm') {
+            if ($key.PSChildName -eq $AppGuid.ToString() -or $key.PSChildName -eq 'ThreadHelm' -or $value.DisplayName -eq 'ThreadHelm') {
                 $registrations += @{ key = $key.Name; version = $value.DisplayVersion; uninstall = $value.UninstallString }
             }
         }

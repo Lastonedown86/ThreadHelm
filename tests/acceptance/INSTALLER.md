@@ -1,7 +1,7 @@
 # Disposable Windows installation acceptance
 
 `Installed Windows acceptance` builds the actual NSIS Setup separately on GitHub-hosted x64 and
-ARM64 runners, installs into that VM user's `%LOCALAPPDATA%\Programs\ThreadHelm`, exercises the installed files,
+ARM64 runners, installs into that VM user's `%LOCALAPPDATA%\Programs\@threadhelmdesktop`, exercises the installed files,
 and invokes that installation's byte-verified `Uninstall ThreadHelm.exe /S`. It never runs an installer on the
 developer's account. The guard requires the explicit test opt-in, GitHub Actions, a `github-hosted`
 Windows runner, matching architecture, bounded artifact paths, and no pre-existing ThreadHelm state.

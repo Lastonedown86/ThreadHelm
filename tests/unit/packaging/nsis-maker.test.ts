@@ -4,6 +4,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { MakerOptions } from '@electron-forge/maker-base';
+import { AppInfo } from 'app-builder-lib/out/appInfo.js';
+import type { Packager } from 'app-builder-lib/out/packager.js';
+import { getWindowsInstallationDirName } from 'app-builder-lib/out/targets/targetUtil.js';
+import {
+  installerDirectory,
+  installerGuid,
+} from '../../../apps/desktop/src/packaging/installer-identity.js';
 
 const mocks = vi.hoisted(() => ({ build: vi.fn() }));
 vi.mock('electron-builder', () => ({
@@ -38,7 +45,25 @@ describe('NSIS installer preserves the Forge trust boundary', () => {
       expect(request.prepackaged).toBe(options.dir);
       expect(request.publish).toBe('never');
       expect(request.config.publish).toBeNull();
+      // Exercise the pinned builder's real naming rule with the actual package metadata.
+      // ProductName is not the one-click per-user installation directory.
+      const appInfo = new AppInfo(
+        {
+          metadata: JSON.parse(readFileSync('apps/desktop/package.json', 'utf8')),
+          config: request.config,
+        } as Packager,
+        undefined,
+        request.config.win,
+      );
+      expect(
+        getWindowsInstallationDirName(
+          appInfo,
+          !request.config.nsis.oneClick || request.config.nsis.perMachine,
+        ),
+      ).toBe(installerDirectory);
       expect(request.config.nsis).toMatchObject({
+        guid: installerGuid,
+        oneClick: true,
         perMachine: false,
         allowElevation: false,
         packElevateHelper: false,

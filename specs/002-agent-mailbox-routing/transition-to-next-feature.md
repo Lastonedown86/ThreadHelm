@@ -30,11 +30,23 @@ Populate these fields from completed evidence, not from intended actions:
 | --- | --- |
 | Candidate source commit and installer SHA-256 | Pending final reviewed build |
 | P01: disposable Windows 11 x64 installed/manual acceptance | Pending supported client environment and exact candidate proof |
-| P02: actual uninstall with no executable residue | NSIS replacement under implementation; no passing result claimed |
-| P03: independent safety review and host scope reconciliation | Review found a worker-bound escape; correction and rereview in progress. Owner exception remains pending. |
+| P02: actual uninstall with no executable residue | Pending corrected NSIS harness run; initial hosted run 33362482111 missed the package-name directory and GUID registration. No cleanup pass claimed. |
+| P03: independent safety review and host scope reconciliation | Worker-bound/recovery fixes passed independent review. Owner exception remains pending. |
 | P04: x64 candidate controls and applicable CI | Revalidate after runtime and installer changes |
 | P05: owner acceptance of exact candidate and limitations | Pending P01-P04 |
 | Required repository review and main integration | PR17 draft; no approval or merge recorded |
+
+The initial NSIS Setup exited successfully on x64 and ARM64, but the harness looked for
+`Programs/ThreadHelm` instead of `Programs/@threadhelmdesktop`. The corrected harness uses the
+explicit stable installer GUID and the pinned builder's package-name rule. Hosted x64 CI also
+exceeded a five-second disk-reopen test timeout; that persistence test now allows fifteen seconds
+without changing its recovery or stale-write assertions. Fresh hosted results must replace these
+failed runs before acceptance.
+
+Standard hosted x64 installer evidence is from Windows Server and does not satisfy P01's Windows 11
+x64 client requirement. No disposable client environment is confirmed yet. Do not run the destructive
+install/remove harness on the owner's normal account, spoof hosted-runner metadata, or provision a
+paid runner without separate authorization.
 
 The proposed bounded host exception for review is the content-free output meter, its budget
 messages, resume guards and truncation disclosure. It does not authorize other host refactoring,

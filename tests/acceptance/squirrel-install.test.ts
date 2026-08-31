@@ -6,6 +6,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { installerGuid } from '../../apps/desktop/src/packaging/installer-identity.js';
 import { isolatedProof } from './helpers/isolated-proof.js';
 import {
   assertFreshAccount,
@@ -44,6 +45,8 @@ function observe(
         join(helperRoot, 'observe-installation.ps1'),
         '-InstallRoot',
         installRoot,
+        '-AppGuid',
+        installerGuid,
         ...(includeTree ? ['-IncludeTree'] : []),
         ...(temporaryHelperRoot ? ['-HelperRoot', temporaryHelperRoot] : []),
       ],

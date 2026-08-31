@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { expect, it } from 'vitest';
 import { inside } from '../../acceptance/helpers/squirrel-safety.js';
+import { installerGuid } from '../../../apps/desktop/src/packaging/installer-identity.js';
 
 it.skipIf(process.platform !== 'win32')(
   'observes a relocated helper outside the empty installation until it exits',
@@ -35,6 +36,8 @@ it.skipIf(process.platform !== 'win32')(
             resolve('tests/acceptance/helpers/observe-installation.ps1'),
             '-InstallRoot',
             join(root, 'absent-installation'),
+            '-AppGuid',
+            installerGuid,
             '-HelperRoot',
             helperRoot,
           ],

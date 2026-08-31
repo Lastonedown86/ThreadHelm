@@ -82,7 +82,7 @@ describe('disposable NSIS acceptance safety boundary', () => {
   it('binds install and report paths to the disposable account and exact artifact', () => {
     expect(installationPlan(env, 'win32', 'x64')).toEqual({
       installer: env.THREADHELM_INSTALLER,
-      installRoot: 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\ThreadHelm',
+      installRoot: 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\@threadhelmdesktop',
       legacyInstallRoot: 'C:\\Users\\runneradmin\\AppData\\Local\\ThreadHelm',
       reportRoot: 'D:\\a\\_temp\\threadhelm-install-123-1-x64',
       workspace: env.GITHUB_WORKSPACE,

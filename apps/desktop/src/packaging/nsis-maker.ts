@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
+import { installerAppId, installerGuid } from './installer-identity.js';
 
 type Options = { certificateFile?: string; certificatePassword?: string };
 const sha256 = (file: string) => createHash('sha256').update(readFileSync(file)).digest('hex');
@@ -37,7 +38,7 @@ export class MakerNsis extends MakerBase<Options> {
       publish: 'never',
       config: {
         electronVersion: createRequire(import.meta.url)('electron/package.json').version,
-        appId: 'dev.builtbychappy.threadhelm',
+        appId: installerAppId,
         productName: 'ThreadHelm',
         directories: { output },
         publish: null,
@@ -72,6 +73,7 @@ export class MakerNsis extends MakerBase<Options> {
           },
         },
         nsis: {
+          guid: installerGuid,
           artifactName: `ThreadHelm-Setup-${targetArch}.exe`,
           oneClick: true,
           perMachine: false,

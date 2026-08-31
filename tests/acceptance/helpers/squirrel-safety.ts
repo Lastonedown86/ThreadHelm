@@ -1,5 +1,6 @@
 import { realpathSync } from 'node:fs';
 import { win32 } from 'node:path';
+import { installerDirectory } from '../../../apps/desktop/src/packaging/installer-identity.js';
 
 export interface InstallObservation {
   rootEntries: string[];
@@ -66,7 +67,7 @@ export function installationPlan(
     workspace,
     installer,
     arch,
-    installRoot: win32.join(local, 'Programs', 'ThreadHelm'),
+    installRoot: win32.join(local, 'Programs', installerDirectory),
     legacyInstallRoot: win32.join(local, 'ThreadHelm'),
     reportRoot: win32.join(
       env.RUNNER_TEMP!,

@@ -501,8 +501,8 @@ function workerBriefEditor({
   runtime,
   provider,
   workerName,
-  workerGoal,
-  workerAbilities,
+  workerGoal: _workerGoal,
+  workerAbilities: _workerAbilities,
   assignment,
   assignmentEvidence,
 }) {
@@ -971,7 +971,7 @@ function accessCoachPanel() {
   return `<section class="access-coach-review"><div class="access-coach-heading"><div><span class="eyebrow">MISSION COACH · ACCESS</span><h2>I prepared the smallest authority envelope.</h2><p>Every recommendation traces back to an approved assignment. Anything broader remains off.</p></div><span class="access-unsaved">unsaved draft</span></div>
     <div class="access-coach-readiness"><div class="ready"><span>✓</span><div><b>Outcome shaped</b><small>3 proof obligations</small></div></div><div class="ready"><span>✓</span><div><b>Crew covered</b><small>2 proposed workers</small></div></div><div class="current"><span>3</span><div><b>Access prepared</b><small>Needs your review</small></div></div><div><span>4</span><div><b>Launch brief</b><small>Waiting</small></div></div></div>
     <section class="access-recommendation"><div class="access-rec-heading"><div><span class="eyebrow">RECOMMENDED AUTHORITY</span><h3>One folder, read and write, manual permission.</h3></div><span class="minimum-badge">minimum sufficient</span></div>
-      <div class="access-rec-grid"><div><span>Workspace</span><b>ThreadHelm</b><code>C:\Users\Bill\Documents\ThreadHelm</code><small>Exact approved folder only</small></div><div><span>Access</span><b>Read and write</b><small>Required by the implementation assignment</small></div><div><span>Runtime</span><b>Codex CLI · verified</b><small>No provider or model fallback</small></div><div><span>Permission</span><b>Manual</b><small>Automatic startup remains off</small></div></div>
+      <div class="access-rec-grid"><div><span>Workspace</span><b>ThreadHelm</b><code>C:\\Users\\Bill\\Documents\\ThreadHelm</code><small>Exact approved folder only</small></div><div><span>Access</span><b>Read and write</b><small>Required by the implementation assignment</small></div><div><span>Runtime</span><b>Codex CLI · verified</b><small>No provider or model fallback</small></div><div><span>Permission</span><b>Manual</b><small>Automatic startup remains off</small></div></div>
       <div class="access-reasoning"><div><span>WHY WRITE?</span><p>The implementation worker must change approved Mission Composer files. Read only would make the assignment impossible.</p></div><div><span>WHY ONE FOLDER?</span><p>No assignment requires a parent, sibling, home directory, network share, or additional repository.</p></div><div><span>WHY MANUAL?</span><p>The mission has no proved need for unattended consequential actions or automatic worker startup.</p></div></div>
     </section>
     <section class="coach-operating-envelope"><div><span class="eyebrow">RECOMMENDED OPERATING ENVELOPE</span><h3>Bounded for this focused plan.</h3></div><div class="coach-limit-cards"><div><b>30 minutes</b><span>Elapsed</span><small>Hold at limit</small></div><div><b>3 participants</b><span>Coordinator + crew</span><small>No automatic expansion</small></div><div><b>250k tokens</b><span>Combined budget</span><small>No automatic increase</small></div></div></section>

@@ -416,12 +416,44 @@ Stable identity and scope for one evolving unit of shared knowledge.
 | `resolvedByRevisionId` | UUID nullable | Required when resolved; resolution does not erase either claim. |
 | `createdAt`, `resolvedAt` | timestamps | UTC ISO-8601. |
 
+### MissionComposerDraft
+
+| Field | Type | Rules |
+|---|---|---|
+| `id` | UUID | Primary key; local only. |
+| `state` | `editing`, `ready_for_review`, `converted`, or `deleted` | Drafts grant no mission or launch authority. |
+| `currentStage` | `outcome`, `crew`, `access`, or `review` | Resume point from the last acknowledged save. |
+| `outcome`, `proofObligations`, `exclusions` | bounded JSON/text | Applied editable values; authored content is detail-only. |
+| `outcomeProposal`, `crewPlan`, `accessPlan` | bounded JSON nullable | Versioned untrusted coach proposals; application is a separate transition. |
+| `issueCodes`, `receiptMetadata` | bounded JSON | Safe closed codes and content-free provider/generation receipt data. |
+| `version` | positive integer | Incremented on every main-owned save; stale updates fail without merging. |
+| `convertedMissionId` | UUID nullable | Set only by atomic confirmed conversion. |
+| `createdAt`, `updatedAt`, `savedAt` | timestamps | UTC ISO-8601. |
+
+At most 20 open drafts exist. Autosave acknowledgement is required before the composer closes.
+Autosave failure preserves the open renderer state and never retries, closes, or discards silently.
+Converted drafts retain applied values and safe receipts; unapplied alternatives are removed in the
+conversion transaction. Draft events are content-free.
+
+### MissionCoachProposal
+
+| Field | Type | Rules |
+|---|---|---|
+| `id`, `draftId` | UUID | Proposal belongs to one composer draft. |
+| `kind` | `outcome`, `crew`, or `access` | Closed stage kind. |
+| `sourceDraftVersion` | positive integer | Any source-version change makes the proposal stale. |
+| `state` | `proposed`, `applied`, `rejected`, or `superseded` | Proposed output is never mission authority. |
+| `payload` | strict bounded JSON | Shape defined by `contracts/mission-coaching.md`; unknown fields fail. |
+| `issueCodes`, `receiptMetadata` | bounded JSON | Safe validation/readiness codes and content-free generation evidence. |
+| `createdAt`, `appliedAt` | timestamps nullable | UTC ISO-8601. |
+
 ### SupervisorMission
 
 | Field | Type | Rules |
 |---|---|---|
 | `id` | UUID | Primary key. |
 | `objective` | string nullable | Deliberately confirmed, bounded text; deletable after terminal state. |
+| `completionEvidence` | bounded string/JSON | Exact owner-confirmed proof obligations; model confidence is invalid. |
 | `state` | MissionState | Starts draft/awaiting confirmation. |
 | `supervisorSessionId` | UUID nullable | One ordinary eligible session while running. |
 | `approvedWorkspaceIds` | bounded JSON | Exact approved workspace set. |
@@ -432,6 +464,24 @@ Stable identity and scope for one evolving unit of shared knowledge.
 | `permittedRoutineActions` | bounded enum set | Cannot include consequential authority classes. |
 | `version` | integer | Increments only after user-confirmed envelope revision. |
 | `createdAt`, `startedAt`, `pausedAt`, `completedAt` | timestamps nullable | Lifecycle evidence. |
+
+### MissionWorkerBinding
+
+| Field | Type | Rules |
+|---|---|---|
+| `id`, `missionId` | UUID | Exact binding belongs to one mission version. |
+| `profileId`, `profileRevisionId` | UUID | Exact reviewed active profile revision; re-import never mutates the pin. |
+| `workspaceId`, `sessionId` | UUID / UUID nullable | Exact approved workspace and optional active session. |
+| `role` | `worker`, `reviewer`, or `triage` | Separate owner-confirmed role; persona/capability text cannot assign it. |
+| `assignment` | bounded string | One mission-specific contribution; does not mutate the profile goal. |
+| `requiredReturnEvidence` | bounded JSON | One to eight deliberate evidence descriptions required for completion. |
+| `runtimeSelection`, `permissionSelection`, `executionBounds` | bounded JSON | Reviewed requests resolved again immediately before launch. |
+| `autoStart` | boolean | Valid only when the exact binding is confirmed and current. |
+| `createdAt` | timestamp | UTC ISO-8601. |
+
+The supervisor may decompose inside `assignment` but cannot erase its evidence obligations or widen
+the contribution. Changed assignment/evidence requires an envelope revision preview and fresh owner
+confirmation.
 
 ### SupervisorWorkItem
 
@@ -510,6 +560,9 @@ AgentProfileTemplate 1 ── 1..* AgentProfileTemplateRevision
 AgentProfileTemplateRevision 1 ── * AgentProfileDraft (pinned provenance)
 AgentProfileDraft 0..1 ── 1 AgentProfileRevision (confirmed completion)
 
+MissionComposerDraft 1 ── * MissionCoachProposal
+MissionComposerDraft 0..1 ── 1 SupervisorMission (confirmed conversion)
+
 ApprovedWorkspace 1 ── * SharedMemoryEntry
 SupervisorMission 1 ── * SharedMemoryEntry
 SharedMemoryEntry 1 ── * SharedMemoryRevision
@@ -517,6 +570,8 @@ SharedMemoryRevision * ── * MemoryConflict
 
 SupervisorMission 1 ── * SupervisorWorkItem
 SupervisorMission 1 ── * SupervisorDecision
+SupervisorMission 1 ── * MissionWorkerBinding
+AgentProfileRevision 1 ── * MissionWorkerBinding (exact pin)
 SupervisorWorkItem 0..1 ── * SupervisorWorkItem (dependency/decomposition)
 SupervisorWorkItem 1 ── * WorkAttempt
 SupervisorWorkItem 0..1 ── 1 active WorkerLease

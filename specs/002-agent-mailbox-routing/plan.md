@@ -404,6 +404,7 @@ specs/002-agent-mailbox-routing/
 │   ├── provider-coordination.md
 │   ├── agent-profiles.md
 │   ├── agent-templates.md
+│   ├── mission-coaching.md
 │   ├── session-host.md
 │   ├── shared-memory.md
 │   └── supervisor.md

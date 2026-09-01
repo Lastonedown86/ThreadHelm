@@ -28,6 +28,7 @@ import { api, call } from './api.js';
 import { recordTruncation, type TruncationState } from './features/session/buffer.js';
 import { installTerminalHooks, subscribeOutput } from './features/session/terminal-loader.js';
 import { describeError } from './features/launch/LaunchErrors.js';
+import type { WorkspaceDestination } from './features/shell/navigation.js';
 
 export interface LaunchRequest {
   workspaceId: string;
@@ -52,6 +53,8 @@ export interface State {
   /** Content-free authoring signal; fields are loaded only in explicit detail views. */
   agentAuthoringSequence: number;
   missionSequence: number;
+  selectedMissionId: string | null;
+  selectedDestination: WorkspaceDestination;
   selectedSessionId: string | null;
   unread: Record<string, boolean>;
   truncation: TruncationState;
@@ -79,6 +82,8 @@ const initial: State = {
   profilesSequence: 0,
   agentAuthoringSequence: 0,
   missionSequence: 0,
+  selectedMissionId: null,
+  selectedDestination: 'missions',
   selectedSessionId: null,
   unread: {},
   truncation: {},
@@ -121,6 +126,8 @@ type Action =
   | { type: 'storage'; degraded: boolean }
   | { type: 'closeBlocked'; sessions: SessionView[] | null }
   | { type: 'select'; sessionId: string | null }
+  | { type: 'selectMission'; missionId: string }
+  | { type: 'selectDestination'; destination: WorkspaceDestination }
   | { type: 'unread'; sessionId: string }
   | { type: 'streamFailed'; sessionId: string; reason: string }
   | { type: 'inputNotice'; sessionId: string; notice: string | null }
@@ -227,6 +234,14 @@ function reduce(state: State, action: Action): State {
         selectedSessionId: action.sessionId,
         unread: action.sessionId ? { ...state.unread, [action.sessionId]: false } : state.unread,
       };
+    case 'selectMission':
+      return {
+        ...state,
+        selectedMissionId: action.missionId,
+        selectedDestination: 'missions',
+      };
+    case 'selectDestination':
+      return { ...state, selectedDestination: action.destination };
     case 'unread':
       if (action.sessionId === state.selectedSessionId) return state;
       return { ...state, unread: { ...state.unread, [action.sessionId]: true } };
@@ -283,6 +298,8 @@ function reduce(state: State, action: Action): State {
 export interface Actions {
   refresh(): Promise<void>;
   select(sessionId: string | null): void;
+  selectMission(missionId: string): void;
+  selectDestination(destination: WorkspaceDestination): void;
   openLaunch(request: LaunchRequest | null): void;
   setNotice(notice: string | null): void;
   dismissCloseBlocked(): void;
@@ -442,6 +459,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'select', sessionId });
         void call(api.sessions.select({ sessionId })).catch(() => undefined);
       },
+      selectMission: (missionId) => dispatch({ type: 'selectMission', missionId }),
+      selectDestination: (destination) => dispatch({ type: 'selectDestination', destination }),
       openLaunch: (request) => dispatch({ type: 'launchRequest', request }),
       setNotice: (notice) => dispatch({ type: 'notice', notice }),
       dismissCloseBlocked: () => dispatch({ type: 'closeBlocked', sessions: null }),

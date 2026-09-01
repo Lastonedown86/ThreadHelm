@@ -265,7 +265,7 @@ export interface MissionRailProps {
 }
 ```
 
-- [ ] **Step 1: Add selected mission and destination actions to the store**
+- [x] **Step 1: Add selected mission and destination actions to the store**
 
 Extend `State` with:
 
@@ -277,23 +277,23 @@ selectedDestination: WorkspaceDestination;
 Add actions `selectMission(missionId: string)` and `selectDestination(destination:
 WorkspaceDestination)`. Preserve `selectedSessionId`; do not overload it as the mission selection.
 
-- [ ] **Step 2: Add approved visual tokens**
+- [x] **Step 2: Add approved visual tokens**
 
 Define the six approved colors, Windows-local font stacks, focus ring, state shapes, and reduced
 motion behavior in `tokens.css`. Import it before legacy styles.
 
-- [ ] **Step 3: Build the structural shell**
+- [x] **Step 3: Build the structural shell**
 
 Render semantic `nav`, `main`, `aside`, and optional terminal regions. Include skip links for mission
 content and the terminal. At widths below 980px collapse context; below 700px replace the rail with a
 mission picker.
 
-- [ ] **Step 4: Build keyboard mission selection**
+- [x] **Step 4: Build keyboard mission selection**
 
 Use one tab stop for the mission queue. Arrow keys, Home, End, Enter, and Space follow the existing
 `SessionList` pattern. After activation, focus the selected mission heading in the main region.
 
-- [ ] **Step 5: Run typecheck and focused accessibility E2E**
+- [x] **Step 5: Run typecheck and focused accessibility E2E**
 
 ```powershell
 pnpm typecheck
@@ -302,7 +302,7 @@ pnpm playwright test tests/e2e/accessibility.spec.ts
 
 Expected: pass; the old app remains mounted until Task 4 completes the selected mission page.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add apps/desktop/src/renderer/features/shell apps/desktop/src/renderer/features/mission-focus/MissionRail.tsx apps/desktop/src/renderer/styles apps/desktop/src/renderer/styles.css apps/desktop/src/renderer/store.tsx

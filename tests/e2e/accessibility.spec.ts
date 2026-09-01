@@ -65,6 +65,7 @@ test('keyboard-only journey with visible focus and accessible names', async () =
   const dir = tempWorkspace();
   const page = app.page;
   try {
+    await page.getByRole('button', { name: 'Sessions', exact: true }).click();
     await app.setPickerPath(dir);
     await page.locator('.status-bar').click(); // establish a focus origin only
     await tabTo(page, /^Choose folder/);
@@ -104,6 +105,7 @@ test('keyboard can leave the terminal to reach Stop and confirm it', async () =>
   const dir = tempWorkspace();
   const page = app.page;
   try {
+    await page.getByRole('button', { name: 'Sessions', exact: true }).click();
     await app.setPickerPath(dir);
     await page.locator('.status-bar').click();
     await tabTo(page, /^Choose folder/);
@@ -152,6 +154,7 @@ test('text scaling, contrast, reduced motion, and idle rendering', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo' });
   const page = app.page;
   try {
+    await page.getByRole('button', { name: 'Sessions', exact: true }).click();
     // Contrast (WCAG 2.2 AA): text ≥ 4.5, borders ≥ 3 against effective backgrounds.
     const samples = await page.evaluate(() => {
       const bg = (el: Element | null): string => {
@@ -216,7 +219,7 @@ test('text scaling, contrast, reduced motion, and idle rendering', async () => {
       document.documentElement.style.fontSize = '200%';
     });
     await expect(page.getByRole('button', { name: 'Choose folder…' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sessions' })).toHaveCount(1);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
     );

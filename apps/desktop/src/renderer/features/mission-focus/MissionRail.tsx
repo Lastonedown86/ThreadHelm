@@ -62,7 +62,7 @@ export function MissionRail({ missions, selectedMissionId, onSelect, onCreate }:
           <h2 id="mission-rail-heading">ThreadHelm</h2>
         </div>
         <button type="button" className="mission-create-button" onClick={onCreate}>
-          New mission
+          New mission…
         </button>
       </header>
       <label className="mission-picker-label" htmlFor="mission-picker">

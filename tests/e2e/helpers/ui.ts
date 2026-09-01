@@ -35,7 +35,9 @@ export async function launchWithFixtures(
   // Readiness is fetched once at startup; re-probing emits readinessChanged
   // events that the renderer applies, so no reload is needed.
   await app.call('providers.listReadiness');
+  await app.page.getByRole('button', { name: 'Settings', exact: true }).click();
   await expect(app.page.getByText('Available').first()).toBeVisible();
+  await app.page.getByRole('button', { name: 'Missions', exact: true }).click();
   return app;
 }
 

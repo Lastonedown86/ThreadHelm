@@ -120,10 +120,11 @@ test('mission crash recovery restores an honest hold and launches no sessions', 
     await app.crashCoordinator();
     app = await launchWithFixtures({ 'codex-cli': 'echo' }, userData);
     await app.page
-      .getByRole('list', { name: 'Missions', exact: true })
-      .getByRole('button')
+      .getByRole('listbox', { name: 'Missions', exact: true })
+      .getByRole('option')
       .first()
       .click();
+    await app.page.getByRole('button', { name: 'Inspect mission', exact: true }).click();
     const detail = app.page.getByRole('dialog', { name: 'Mission detail' });
     await expect(detail.getByRole('status')).toContainText('recovery required');
     await expect(detail).toContainText('Nothing was restarted or replayed');

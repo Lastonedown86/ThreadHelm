@@ -1,5 +1,6 @@
 @import './styles/tokens.css';
 @import './styles/shell.css';
+@import './styles/mission-focus.css';
 
 /* Restrained, static, high-contrast. No transitions anywhere: nothing moves
    unless the user or an event changes state. */

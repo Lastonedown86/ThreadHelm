@@ -363,31 +363,31 @@ pnpm playwright test tests/e2e/mission-focus-workspace.spec.ts
 
 Expected: fail because the production Mission Focus page is not mounted.
 
-- [ ] **Step 3: Implement event-driven mission loading**
+- [x] **Step 3: Implement event-driven mission loading**
 
 Load summaries on mount and when `missionSequence` changes. Load detail only for the selected mission.
 Use a cancellation flag in both effects. Do not poll and do not store mission content in browser
 storage.
 
-- [ ] **Step 4: Implement Mission Course and result mapping**
+- [x] **Step 4: Implement Mission Course and result mapping**
 
 Render `presentation.course` as an ordered list with text state labels. Expose one primary action from
 `presentation.primaryAction`. Route pause, resume, inspect, and evidence actions through the existing
 validated API and existing detailed controls; do not duplicate mutation logic in presentation
 components.
 
-- [ ] **Step 5: Implement context and session summaries**
+- [x] **Step 5: Implement context and session summaries**
 
 Summarize bound profiles and sessions from the selected detail. Do not show unbound sessions as crew.
 Keep profile display names local and never supply packaged personal persona fixtures.
 
-- [ ] **Step 6: Mount Mission Focus without redesigning other destinations**
+- [x] **Step 6: Mount Mission Focus without redesigning other destinations**
 
 Use Mission Focus as the default destination. Until later page gates pass, selecting Sessions, Agents,
 Templates, Memory, or Settings opens the existing components with their current semantics and copy;
 do not restyle their internal layouts in this task.
 
-- [ ] **Step 7: Run focused and regression verification**
+- [x] **Step 7: Run focused and regression verification**
 
 ```powershell
 pnpm typecheck
@@ -398,7 +398,7 @@ pnpm playwright test tests/e2e/mission-focus-workspace.spec.ts tests/e2e/supervi
 
 Expected: pass.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```powershell
 git add apps/desktop/src/renderer/App.tsx apps/desktop/src/renderer/features/mission-focus apps/desktop/src/renderer/styles/mission-focus.css tests/e2e/mission-focus-workspace.spec.ts

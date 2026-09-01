@@ -1,7 +1,9 @@
 # Mission Focus workspace design
 
-**Status:** Approved interaction direction and mission-creation flow; production implementation in progress  
-**Selected prototype:** D — Mission Course  
+**Status:** Approved interaction direction and mission-creation flow; production implementation in progress
+
+**Selected prototype:** D — Mission Course
+
 **Decision date:** 2026-08-31
 
 ## Purpose

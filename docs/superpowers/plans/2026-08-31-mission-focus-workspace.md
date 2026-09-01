@@ -118,7 +118,7 @@ rg -n "from .*prototypes|import .*prototypes" apps/desktop/src --glob '!renderer
 
 Expected: no matches.
 
-- [ ] **Step 4: Commit the approved design artifact**
+- [x] **Step 4: Commit the approved design artifact**
 
 ```powershell
 git add docs/architecture/mission-focus-workspace-design.md docs/superpowers/plans/2026-08-31-mission-focus-workspace.md apps/desktop/src/renderer/prototypes/mission-focus package.json
@@ -452,7 +452,7 @@ Open the local page on variant A, leave the switcher visible, and explain the hi
 Do not create or modify production Mission Composer components in this task. Record the chosen variant,
 combined elements, and rejected behaviors in `NOTES.md`.
 
-- [ ] **Step 4: Commit only the reviewed prototype decision**
+- [x] **Step 4: Commit only the reviewed prototype decision**
 
 ```powershell
 git add apps/desktop/src/renderer/prototypes/mission-create

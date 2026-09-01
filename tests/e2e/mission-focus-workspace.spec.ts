@@ -1,6 +1,59 @@
 import { expect, test } from '@playwright/test';
-import { launchApp } from './helpers/app.js';
-import { teardown } from './helpers/ui.js';
+import { randomUUID } from 'node:crypto';
+import type {
+  MissionDetailView,
+  MissionEnvelopeInput,
+  MissionPreviewView,
+} from '@threadhelm/contracts';
+import { launchApp, type LaunchedApp } from './helpers/app.js';
+import { prepareFixtureMission } from './helpers/mission.js';
+import { launchWithFixtures, teardown, tempWorkspace } from './helpers/ui.js';
+
+async function confirmMission(app: LaunchedApp, envelope: MissionEnvelopeInput, objective: string) {
+  const preview = await app.call<MissionPreviewView>('missions.preview', {
+    envelope: { ...envelope, objective },
+  });
+  return app.call<MissionDetailView>('missions.confirm', {
+    previewToken: preview.previewToken,
+    boundaryConfirmation: true,
+  });
+}
+
+function workDecision(missionId: string) {
+  return {
+    missionId,
+    rationale: 'Exercise the approved mission presentation',
+    inputRefs: [],
+    expectedEvidence: 'A retained browser fixture report',
+  };
+}
+
+async function addWork(
+  app: LaunchedApp,
+  mission: MissionDetailView,
+  authorityClass: 'routine' | 'consequential' = 'routine',
+) {
+  const supervisorId = mission.supervisorSessionId!;
+  const binding = mission.envelope!.bindings.find((item) => item.role === 'worker')!;
+  const workItemId = randomUUID();
+  await app.bridgeRequest(supervisorId, 'threadhelm_work_decompose', {
+    ...workDecision(mission.id),
+    idempotencyKey: randomUUID(),
+    items: [
+      {
+        id: workItemId,
+        parentWorkItemId: null,
+        workspaceId: binding.workspaceId,
+        title: authorityClass === 'routine' ? 'Verify browser evidence' : 'Await owner decision',
+        specification: 'Produce one bounded result for the mission workspace.',
+        acceptanceCriteria: 'Reference the retained fixture report.',
+        dependencies: [],
+        authorityClass,
+      },
+    ],
+  });
+  return { supervisorId, binding, workItemId };
+}
 
 test('missions are the focused default and legacy destinations remain explicit', async () => {
   const app = await launchApp();
@@ -30,5 +83,161 @@ test('missions are the focused default and legacy destinations remain explicit',
     ).toBe(false);
   } finally {
     await teardown(app);
+  }
+});
+
+test('mission course exposes selected, waiting, uncertain, completed and recovery states honestly', async () => {
+  let app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const directories: string[] = [];
+  const newEnvelope = async (tag: string) => {
+    const pair = [tempWorkspace(`${tag}-leader`), tempWorkspace(`${tag}-worker`)];
+    directories.push(...pair);
+    return prepareFixtureMission(app, pair);
+  };
+  try {
+    let completed = await confirmMission(
+      app,
+      await newEnvelope('completed-focus'),
+      'Completed browser evidence mission',
+    );
+    const completedWork = await addWork(app, completed);
+    await app.bridgeRequest(completedWork.supervisorId, 'threadhelm_work_assign', {
+      ...workDecision(completed.id),
+      idempotencyKey: randomUUID(),
+      workItemId: completedWork.workItemId,
+      bindingId: completedWork.binding.bindingId,
+    });
+    completed = await app.call('missions.detail', { missionId: completed.id });
+    const completedAttempt = completed.attempts[0]!;
+    await app.bridgeRequest(completedAttempt.sessionId!, 'threadhelm_work_result', {
+      missionId: completed.id,
+      workItemId: completedWork.workItemId,
+      attemptId: completedAttempt.id,
+      idempotencyKey: randomUUID(),
+      disposition: 'completion',
+      explanation: 'The browser fixture completed with retained evidence.',
+      evidenceRefs: [{ kind: 'artifact', id: 'browser-report.md' }],
+    });
+    await app.bridgeRequest(completedWork.supervisorId, 'threadhelm_mission_complete', {
+      ...workDecision(completed.id),
+      idempotencyKey: randomUUID(),
+      evidenceRefs: [{ kind: 'work_item', id: completedWork.workItemId }],
+    });
+
+    let uncertain = await confirmMission(
+      app,
+      await newEnvelope('uncertain-focus'),
+      'Uncertain browser evidence mission',
+    );
+    const uncertainWork = await addWork(app, uncertain);
+    await app.bridgeRequest(uncertainWork.supervisorId, 'threadhelm_work_assign', {
+      ...workDecision(uncertain.id),
+      idempotencyKey: randomUUID(),
+      workItemId: uncertainWork.workItemId,
+      bindingId: uncertainWork.binding.bindingId,
+    });
+    uncertain = await app.call('missions.detail', { missionId: uncertain.id });
+    const uncertainAttempt = uncertain.attempts[0]!;
+    await app.bridgeRequest(uncertainAttempt.sessionId!, 'threadhelm_work_result', {
+      missionId: uncertain.id,
+      workItemId: uncertainWork.workItemId,
+      attemptId: uncertainAttempt.id,
+      idempotencyKey: randomUUID(),
+      disposition: 'unknown',
+      explanation: 'The prior effect cannot be classified safely.',
+      evidenceRefs: [],
+    });
+
+    const waiting = await confirmMission(
+      app,
+      await newEnvelope('waiting-focus'),
+      'Waiting browser decision mission',
+    );
+    const waitingWork = await addWork(app, waiting);
+    await app.bridgeRequest(waitingWork.supervisorId, 'threadhelm_work_assign', {
+      ...workDecision(waiting.id),
+      idempotencyKey: randomUUID(),
+      workItemId: waitingWork.workItemId,
+      bindingId: waitingWork.binding.bindingId,
+    });
+    const waitingDetail = await app.call<MissionDetailView>('missions.detail', {
+      missionId: waiting.id,
+    });
+    const waitingAttempt = waitingDetail.attempts[0]!;
+    await app.bridgeRequest(waitingAttempt.sessionId!, 'threadhelm_work_result', {
+      missionId: waiting.id,
+      workItemId: waitingWork.workItemId,
+      attemptId: waitingAttempt.id,
+      idempotencyKey: randomUUID(),
+      disposition: 'authority_required',
+      explanation: 'The worker needs an exact owner decision before continuing.',
+      evidenceRefs: [],
+    });
+    const paused = await confirmMission(
+      app,
+      await newEnvelope('paused-focus'),
+      'Paused browser evidence mission',
+    );
+    await app.call('missions.pause', { missionId: paused.id });
+    const running = await confirmMission(
+      app,
+      await newEnvelope('running-focus'),
+      'Running browser evidence mission',
+    );
+
+    const list = app.page.getByRole('listbox', { name: 'Missions', exact: true });
+    await expect(list.getByRole('option')).toHaveCount(5);
+
+    const select = async (mission: MissionDetailView) => {
+      const option = list.getByRole('option', { name: new RegExp(mission.id.slice(0, 8), 'i') });
+      await option.click();
+      await expect(app.page.locator('#mission-workspace h1')).toBeFocused();
+      await expect(list.getByRole('option', { selected: true })).toHaveCount(1);
+    };
+
+    await select(running);
+    await expect(app.page.getByText('Running', { exact: true })).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'Pause mission', exact: true }),
+    ).toBeVisible();
+
+    await select(paused);
+    await expect(app.page.getByText('Paused', { exact: true })).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'Resume mission', exact: true }),
+    ).toBeVisible();
+
+    await select(waiting);
+    await expect(app.page.getByText('decision', { exact: true })).toBeVisible();
+
+    await select(uncertain);
+    await expect(app.page.getByText('uncertain', { exact: true })).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'Inspect mission', exact: true }),
+    ).toBeVisible();
+    await expect(app.page.getByRole('button', { name: /retry/i })).toHaveCount(0);
+
+    await select(completed);
+    await expect(app.page.getByText('Completed', { exact: true })).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'View evidence', exact: true }),
+    ).toBeVisible();
+    await expect(app.page.getByText(/artifact · browser-report\.md/)).toBeVisible();
+
+    const userData = app.userData;
+    await app.crashCoordinator();
+    app = await launchWithFixtures({ 'codex-cli': 'echo' }, userData);
+    const recovered = app.page
+      .getByRole('listbox', { name: 'Missions', exact: true })
+      .getByRole('option')
+      .filter({ hasText: 'recovery required' })
+      .first();
+    await recovered.click();
+    await expect(app.page.getByText('Recovery required', { exact: true })).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'Inspect mission', exact: true }),
+    ).toBeVisible();
+  } finally {
+    await teardown(app, ...directories);
   }
 });

@@ -343,7 +343,7 @@ export interface MissionWorkspaceState {
 export function useMissionWorkspace(selectedMissionId: string | null): MissionWorkspaceState;
 ```
 
-- [ ] **Step 1: Write the E2E test for the approved page**
+- [x] **Step 1: Write the E2E test for the approved page**
 
 The test must assert:
 
@@ -355,13 +355,18 @@ The test must assert:
 - The context rail states `Local coordinator · sole writer` and `External actions · approval required`.
 - At 200% text scaling, content reflows without horizontal page scrolling.
 
-- [ ] **Step 2: Run the E2E test and observe failure**
+- [x] **Step 2: Run the E2E test and observe failure**
 
 ```powershell
 pnpm playwright test tests/e2e/mission-focus-workspace.spec.ts
 ```
 
 Expected: fail because the production Mission Focus page is not mounted.
+
+Recorded deviation: the complete state-family E2E was added after the first production mount. Its
+initial red runs instead exposed stale reused launch bindings and an invalid consequential-work
+fixture. The corrected test now creates separately reviewed missions and drives every state through
+real coordinator contracts; no database rows or renderer state are injected.
 
 - [x] **Step 3: Implement event-driven mission loading**
 

@@ -168,12 +168,12 @@ export interface MissionPresentation {
 export function presentMission(detail: MissionDetailView): MissionPresentation;
 ```
 
-- [ ] **Step 1: Write navigation reducer tests**
+- [x] **Step 1: Write navigation reducer tests**
 
 Test that selecting a mission sets `destination: 'missions'`, updates `missionId`, and clears a
 session that is not explicitly rebound. Test that selecting a session never changes `missionId`.
 
-- [ ] **Step 2: Run the focused navigation test and observe failure**
+- [x] **Step 2: Run the focused navigation test and observe failure**
 
 ```powershell
 pnpm vitest run --project unit tests/unit/renderer/navigation.test.ts
@@ -181,11 +181,11 @@ pnpm vitest run --project unit tests/unit/renderer/navigation.test.ts
 
 Expected: fail because `navigation.ts` does not exist.
 
-- [ ] **Step 3: Implement the exact `WorkspaceSelection` reducer**
+- [x] **Step 3: Implement the exact `WorkspaceSelection` reducer**
 
 Keep the reducer pure. Do not access `window.threadhelm`, React state, or storage.
 
-- [ ] **Step 4: Write mission-presentation tests**
+- [x] **Step 4: Write mission-presentation tests**
 
 Cover these exact mappings:
 
@@ -198,7 +198,7 @@ expect(presentMission(completed).primaryAction).toBe('view_evidence');
 expect(presentMission(cancelled).primaryAction).toBeNull();
 ```
 
-- [ ] **Step 5: Run the presentation test and observe failure**
+- [x] **Step 5: Run the presentation test and observe failure**
 
 ```powershell
 pnpm vitest run --project unit tests/unit/renderer/mission-presentation.test.ts
@@ -206,13 +206,13 @@ pnpm vitest run --project unit tests/unit/renderer/mission-presentation.test.ts
 
 Expected: fail because `mission-presentation.ts` does not exist.
 
-- [ ] **Step 6: Implement presentation mapping without inventing durable facts**
+- [x] **Step 6: Implement presentation mapping without inventing durable facts**
 
 Derive verified nodes only from completed work and retained evidence. Map unknown attempts to
 `uncertain`; never map them to queued retry work. Use the mission objective when content exists and
 the fixed sentence `Mission content was deleted.` when `detail.envelope` is null.
 
-- [ ] **Step 7: Run both focused unit tests**
+- [x] **Step 7: Run both focused unit tests**
 
 ```powershell
 pnpm vitest run --project unit tests/unit/renderer/navigation.test.ts tests/unit/renderer/mission-presentation.test.ts
@@ -220,7 +220,7 @@ pnpm vitest run --project unit tests/unit/renderer/navigation.test.ts tests/unit
 
 Expected: pass.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```powershell
 git add apps/desktop/src/renderer/features/shell/navigation.ts apps/desktop/src/renderer/features/mission-focus/mission-presentation.ts tests/unit/renderer/navigation.test.ts tests/unit/renderer/mission-presentation.test.ts

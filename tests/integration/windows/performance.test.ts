@@ -480,7 +480,9 @@ describe('performance budgets', () => {
   it(`open shared-memory surface remains idle without polling over ${memoryIdleWindows * 5} s`, async () => {
     app = await launchApp();
     userData = app.userData;
-    await app.page.getByRole('button', { name: 'Shared memory' }).click();
+    await app.page.getByRole('button', { name: 'Memory', exact: true }).click();
+    const memoryToggle = app.page.getByRole('button', { name: 'Shared memory' });
+    if ((await memoryToggle.getAttribute('aria-expanded')) !== 'true') await memoryToggle.click();
     await app.page.getByRole('region', { name: 'Shared memory' }).waitFor();
     await sleep(2_000);
 

@@ -19,11 +19,19 @@ const KIND_LABELS: Record<MemoryKind, string> = {
   lesson: 'Lesson',
 };
 
-export function MemoryList() {
+export function MemoryList({
+  initialQuery = '',
+  expanded = false,
+  onAddToReadingList,
+}: {
+  initialQuery?: string;
+  expanded?: boolean;
+  onAddToReadingList?(detail: MemoryDetailView): void;
+} = {}) {
   const { state } = useStore();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(expanded);
   const [workspaceId, setWorkspaceId] = useState('');
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const [items, setItems] = useState<MemorySearchResultView[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [includeContested, setIncludeContested] = useState(false);
@@ -77,6 +85,11 @@ export function MemoryList() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (expanded && initialQuery.trim() && workspaceId) void runSearch();
+    // The workspace is resolved after the first render; a guided query runs once for that scope.
+  }, [expanded, initialQuery, workspaceId]);
 
   useEffect(() => {
     if (open && query.trim()) void runSearch();
@@ -280,7 +293,20 @@ export function MemoryList() {
               Load more memories
             </button>
           ) : null}
-          {detail ? <MemoryDetail detail={detail} onChanged={setDetail} /> : null}
+          {detail ? (
+            <>
+              <MemoryDetail detail={detail} onChanged={setDetail} />
+              {onAddToReadingList && detail.body !== null ? (
+                <button
+                  type="button"
+                  className="small primary"
+                  onClick={() => onAddToReadingList(detail)}
+                >
+                  Add exact edition to reading list
+                </button>
+              ) : null}
+            </>
+          ) : null}
 
           {publishOpen && !publishDisclosure ? (
             <ModalDialog label="Publish shared memory" onDismiss={() => setPublishOpen(false)}>

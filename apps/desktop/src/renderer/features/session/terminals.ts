@@ -19,6 +19,7 @@ export interface TerminalEntry {
   element: HTMLDivElement;
   opened: boolean;
   stream: StreamClient | null;
+  pendingWrites: Array<{ bytes: Uint8Array; done: () => void }>;
 }
 
 const entries = new Map<string, TerminalEntry>();
@@ -49,7 +50,7 @@ export function ensureTerminal(sessionId: string): TerminalEntry {
   });
   const element = document.createElement('div');
   element.className = 'terminal-surface';
-  entry = { term, fit, element, opened: false, stream: null };
+  entry = { term, fit, element, opened: false, stream: null, pendingWrites: [] };
   entries.set(sessionId, entry);
 
   term.onData((data) => {
@@ -70,13 +71,23 @@ export function attachStream(sessionId: string, port: StreamPort): void {
   entry.stream = new StreamClient(
     sessionId,
     port,
-    { write: (bytes, done) => entry.term.write(bytes, done) },
+    {
+      write: (bytes, done) => {
+        if (entry.opened && entry.element.isConnected) entry.term.write(bytes, done);
+        else entry.pendingWrites.push({ bytes, done });
+      },
+    },
     {
       onOutput: () => hooks?.onOutput(sessionId),
       onTruncated: (count) => hooks?.onTruncated(sessionId, count),
       onFailure: (reason) => hooks?.onStreamFailure(sessionId, reason),
     },
   );
+}
+
+export function flushPendingWrites(entry: TerminalEntry): void {
+  const pending = entry.pendingWrites.splice(0);
+  for (const write of pending) entry.term.write(write.bytes, write.done);
 }
 
 export function terminalSize(sessionId: string): { columns: number; rows: number } | undefined {
@@ -96,6 +107,7 @@ export function disposeTerminal(sessionId: string): void {
   const entry = entries.get(sessionId);
   if (!entry) return;
   entry.stream?.close();
+  for (const write of entry.pendingWrites.splice(0)) write.done();
   entry.term.dispose();
   entry.element.remove();
   entries.delete(sessionId);

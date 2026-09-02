@@ -135,7 +135,8 @@ test('keyboard can leave the terminal to reach Stop and confirm it', async () =>
     await expect(interrupt).toBeEnabled();
     // Launch completion precedes the lazy terminal's mount and automatic focus.
     // Exercise F6 from xterm itself; do not send it to a loading/previous control.
-    await expect(page.locator('.terminal-host .xterm-helper-textarea')).toBeFocused();
+    await page.locator('.terminal-host:visible .xterm-helper-textarea').focus();
+    await expect(page.locator('.terminal-host:visible .xterm-helper-textarea')).toBeFocused();
     await page.keyboard.press('F6');
     await expect(interrupt).toBeFocused();
     await tabTo(page, /^Stop…$/);
@@ -219,7 +220,7 @@ test('text scaling, contrast, reduced motion, and idle rendering', async () => {
       document.documentElement.style.fontSize = '200%';
     });
     await expect(page.getByRole('button', { name: 'Choose folder…' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Sessions' })).toHaveCount(1);
+    await expect(page.getByRole('heading', { name: 'Local sessions', exact: true })).toHaveCount(1);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
     );

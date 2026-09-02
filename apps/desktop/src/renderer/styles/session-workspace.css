@@ -1,0 +1,87 @@
+.session-workspace {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.25rem;
+  min-height: 100%;
+}
+.session-tabs {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+.session-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+.session-tabs button.selected {
+  border-color: var(--mission-steel);
+  background: color-mix(in srgb, var(--mission-steel) 12%, white);
+  font-weight: 700;
+}
+.mission-terminal-dock {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--mission-ink);
+  background: var(--mission-paper);
+}
+.mission-terminal-dock > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+}
+.mission-terminal-dock > header h2 {
+  font-family: var(--mission-font-heading);
+}
+.mission-terminal-dock .terminal-pane {
+  min-height: 18rem;
+}
+.mission-terminal-stack {
+  position: relative;
+}
+.mission-terminal-stack > .inactive-terminal {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.session-lifecycle-inspector {
+  padding: 0.75rem;
+  border: 1px solid var(--mission-copper);
+  background: var(--warning-bg);
+}
+.session-start-controls {
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--mission-ink) 25%, transparent);
+  background: var(--mission-paper);
+}
+.session-start-controls > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.session-start-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+@media (max-width: 760px) {
+  .session-start-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.session-coordination-grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.8fr) minmax(24rem, 1.2fr);
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+@media (max-width: 900px) {
+  .session-coordination-grid {
+    grid-template-columns: 1fr;
+  }
+}

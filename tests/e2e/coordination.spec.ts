@@ -29,6 +29,7 @@ async function launchThree(app: LaunchedApp) {
     await launchFixtureSession(app, workspaces[1]!.id, 'claude-code'),
     await launchFixtureSession(app, workspaces[2]!.id, 'codex-cli'),
   ];
+  await app.page.getByRole('button', { name: 'Sessions', exact: true }).click();
   await expect(sessionOptions(app.page)).toHaveCount(3, { timeout: 30_000 });
   return { dirs, sessions };
 }
@@ -118,6 +119,7 @@ test('keyboard-only user flow creates and manually presents one exact handoff', 
     await press(disclosure.getByRole('button', { name: 'Present once' }));
     await expect(disclosure).toBeHidden({ timeout: 30_000 });
     await expect(item).toContainText('Delivered — outcome pending');
+    await page.locator('.terminal-host:visible').scrollIntoViewIfNeeded();
     await expect(terminalRows(page)).toContainText('[ThreadHelm handoff]', { timeout: 30_000 });
     await expect(terminalRows(page)).toContainText('Reply with the bounded fixture result.');
   } finally {
@@ -215,6 +217,7 @@ test('duplicate confirmation fails closed and ambiguous delivery reappears witho
 
     await app.crashCoordinator();
     app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' }, userData);
+    await app.page.getByRole('button', { name: 'Sessions', exact: true }).click();
     const item = app.page
       .getByRole('list', { name: 'Directed handoffs' })
       .getByRole('listitem')

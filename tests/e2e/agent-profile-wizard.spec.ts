@@ -32,6 +32,7 @@ async function navigate(
 }
 
 async function openQuality(app: LaunchedApp) {
+  await app.page.getByRole('button', { name: 'Agents', exact: true }).click();
   await press(app.page.getByRole('button', { name: 'Create agent…', exact: true }));
   const wizard = app.page.getByRole('dialog', { name: 'Create agent', exact: true });
   await wizard
@@ -39,6 +40,10 @@ async function openQuality(app: LaunchedApp) {
     .selectOption({ label: 'Quality specialist (bundled)' });
   await navigate(wizard, 'Start', 'Identity');
   return wizard;
+}
+
+async function openAgents(app: LaunchedApp) {
+  await app.page.getByRole('button', { name: 'Agents', exact: true }).click();
 }
 
 async function review(wizard: Locator, name: string) {
@@ -100,6 +105,7 @@ test('invalid fields stay visible and a cancelled draft resumes with Back and De
 test('a declared identity variable is reachable before Identity advances', async () => {
   const app = await launchApp();
   try {
+    await openAgents(app);
     const starters = await app.call<{ templates: { currentRevisionId: string }[] }>(
       'agentTemplates.list',
       { state: 'active', limit: 50 },
@@ -175,6 +181,7 @@ test('local themed templates come from reviewed profiles and remain separate fro
   const app = await launchApp();
   const dir = tempWorkspace('wizard-local-template');
   try {
+    await openAgents(app);
     const profile = MARVEL_ROSTER_FIXTURES[7]!;
     const path = writeHireManifestFile(dir, profile.basename, profile.text);
     await app.app.evaluate((_electron, filePath) => {
@@ -273,6 +280,7 @@ test('a saved draft reopens after an actual desktop restart', async () => {
     const userData = app.userData;
     await app.close();
     app = await launchApp({ userData });
+    await openAgents(app);
     await press(app.page.getByRole('button', { name: /^Resume draft/ }).first());
     const resumed = app.page.getByRole('dialog', { name: 'Create agent', exact: true });
     await expect(resumed.getByLabel('Goal', { exact: true })).toHaveValue(
@@ -288,6 +296,7 @@ test('a saved draft reopens after an actual desktop restart', async () => {
 test('blank creation preserves capability typing and a custom model through review', async () => {
   const app = await launchApp();
   try {
+    await openAgents(app);
     await press(app.page.getByRole('button', { name: 'Create agent…', exact: true }));
     const wizard = app.page.getByRole('dialog', { name: 'Create agent', exact: true });
     await wizard.getByLabel('Start from', { exact: true }).selectOption('blank');

@@ -28,9 +28,7 @@
     "dev": "pnpm --filter @threadhelm/desktop dev",
     "proof:windows-supervision": "pnpm desktop:build && vitest run --project integration tests/integration/windows/job-object-proof.test.ts",
     "package:win": "pnpm native:build && pnpm desktop:build && pnpm --filter @threadhelm/desktop make",
-    "native:build:debug": "pnpm --filter @threadhelm/windows-supervisor build:debug",
-    "prototype:mission-ui": "node apps/desktop/src/renderer/prototypes/mission-focus/serve.mjs",
-    "prototype:mission-create": "node apps/desktop/src/renderer/prototypes/mission-create/serve.mjs"
+    "native:build:debug": "pnpm --filter @threadhelm/windows-supervisor build:debug"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

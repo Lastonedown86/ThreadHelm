@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { approveFolder, launchFixtureSession, type LaunchedApp } from './helpers/app.js';
 import { approveViaUi, launchWithFixtures, teardown, tempWorkspace } from './helpers/ui.js';
 
@@ -7,13 +7,19 @@ async function press(locator: Locator, key = 'Enter'): Promise<void> {
   await locator.page().keyboard.press(key);
 }
 
+async function openMemory(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Memory', exact: true }).click();
+  const toggle = page.getByRole('button', { name: 'Shared memory' });
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await press(toggle);
+}
+
 test('keyboard-only shared-memory flow publishes, searches, inspects, retracts, and deletes', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' });
   const workspaceDir = tempWorkspace('memory-e2e');
   const page = app.page;
   try {
     await approveViaUi(app, workspaceDir);
-    await press(page.getByRole('button', { name: 'Shared memory' }));
+    await openMemory(page);
     const region = page.getByRole('region', { name: 'Shared memory' });
     await expect(region).toBeVisible();
 
@@ -98,7 +104,7 @@ test('shared-memory conflict is superseded with both citations and resolved thro
     });
 
     const page = app.page;
-    await page.getByRole('button', { name: 'Shared memory' }).click();
+    await openMemory(page);
     const region = page.getByRole('region', { name: 'Shared memory' });
     await region.getByRole('checkbox', { name: 'Include contested' }).check();
     const search = region.getByRole('searchbox', { name: 'Search shared memory' });
@@ -177,7 +183,7 @@ test('shared-memory UI paginates explicitly and production reads expire due entr
     expect(expiredSearch.items).toEqual([]);
 
     const page = app.page;
-    await page.getByRole('button', { name: 'Shared memory' }).click();
+    await openMemory(page);
     const region = page.getByRole('region', { name: 'Shared memory' });
     await expect(region.getByRole('checkbox', { name: 'Include contested' })).not.toBeChecked();
     const search = region.getByRole('searchbox', { name: 'Search shared memory' });
@@ -203,7 +209,7 @@ test('shared-memory UI paginates explicitly and production reads expire due entr
 test('shared-memory presentation is a calm accessible list/detail surface without graph or animation', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo', 'claude-code': 'echo' });
   try {
-    await press(app.page.getByRole('button', { name: 'Shared memory' }));
+    await openMemory(app.page);
     const region = app.page.getByRole('region', { name: 'Shared memory' });
     await expect(region).toBeVisible();
     await expect(region.locator('svg, canvas, [data-memory-graph]')).toHaveCount(0);

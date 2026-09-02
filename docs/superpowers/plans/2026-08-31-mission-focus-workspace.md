@@ -574,7 +574,7 @@ rejected independently.
 - Consumes: owner-approved page decisions and completed follow-up plans.
 - Produces: one production renderer with no prototype runtime or import path.
 
-- [ ] **Step 1: Confirm every mounted destination has an approval record**
+- [x] **Step 1: Confirm every mounted destination has an approval record**
 
 Run:
 
@@ -584,11 +584,11 @@ rg -n "Selected:|Approved:" apps/desktop/src/renderer/prototypes docs/architectu
 
 Expected: one recorded owner selection for every destination mounted by `App.tsx`.
 
-- [ ] **Step 2: Remove prototype code and command**
+- [x] **Step 2: Remove prototype code and command**
 
 Delete `apps/desktop/src/renderer/prototypes/` and remove `prototype:mission-ui` from `package.json`.
 
-- [ ] **Step 3: Prove production has no prototype or private-persona import**
+- [x] **Step 3: Prove production has no prototype or private-persona import**
 
 ```powershell
 rg -n "prototype|Marvel|munder-difflin/hire@1" apps/desktop/src packages --glob '!**/*.test.*'
@@ -597,7 +597,7 @@ rg -n "prototype|Marvel|munder-difflin/hire@1" apps/desktop/src packages --glob 
 Expected: no production prototype or private-persona import. A legacy manifest identifier may remain
 only in explicit untrusted-import compatibility code and its tests.
 
-- [ ] **Step 4: Run local CI-equivalent verification**
+- [x] **Step 4: Run local CI-equivalent verification**
 
 ```powershell
 pnpm format
@@ -615,7 +615,7 @@ pnpm rust:test
 
 Expected: all pass. Record any diagnostic ARM64 result separately from x64 release evidence.
 
-- [ ] **Step 5: Build and inspect the unsigned x64 installer**
+- [x] **Step 5: Build and inspect the unsigned x64 installer**
 
 ```powershell
 pnpm package:win
@@ -625,7 +625,7 @@ pnpm test:acceptance:installed
 Expected: installer acceptance passes with `NotSigned` recorded as intentional, x64 architecture
 confirmed, private personas absent, and uninstall cleanup complete.
 
-- [ ] **Step 6: Commit the integrated renderer**
+- [x] **Step 6: Commit the integrated renderer**
 
 ```powershell
 git add -A

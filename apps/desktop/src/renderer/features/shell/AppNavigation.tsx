@@ -6,6 +6,7 @@ const destinations: ReadonlyArray<{ id: WorkspaceDestination; label: string }> =
   { id: 'agents', label: 'Agents' },
   { id: 'templates', label: 'Templates' },
   { id: 'memory', label: 'Memory' },
+  { id: 'attention', label: 'Attention' },
   { id: 'settings', label: 'Settings' },
 ];
 

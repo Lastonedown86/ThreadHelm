@@ -1,12 +1,8 @@
 import { useState } from 'react';
 import { api, call } from './api.js';
 import { CloseBlockedDialog } from './features/control/CloseBlockedDialog.js';
-import { ControlBar } from './features/control/ControlBar.js';
-import { AgentProfileList } from './features/coordination/AgentProfileList.js';
-import { AgentTemplateLibrary } from './features/coordination/AgentTemplateLibrary.js';
-import { CoordinationPanel } from './features/coordination/CoordinationPanel.js';
-import { ConversationView } from './features/coordination/ConversationView.js';
-import { MemoryList } from './features/coordination/MemoryList.js';
+import { AgentLibraryWorkspace } from './features/coordination/AgentLibraryWorkspace.js';
+import { MemoryLibraryWorkspace } from './features/coordination/MemoryLibraryWorkspace.js';
 import { MissionComposer } from './features/coordination/MissionComposer.js';
 import { MissionDetail } from './features/coordination/MissionDetail.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
@@ -14,57 +10,38 @@ import { MissionContext } from './features/mission-focus/MissionContext.js';
 import { MissionRail } from './features/mission-focus/MissionRail.js';
 import { MissionWorkspace } from './features/mission-focus/MissionWorkspace.js';
 import { useMissionWorkspace } from './features/mission-focus/useMissionWorkspace.js';
-import { RecoveryPanel } from './features/recovery/RecoveryPanel.js';
-import { LazyTerminalPane } from './features/session/LazyTerminal.js';
 import { terminalSize } from './features/session/terminal-loader.js';
-import { SessionList } from './features/sessions/SessionList.js';
+import { SessionWorkspace } from './features/sessions/SessionWorkspace.js';
 import { AppNavigation } from './features/shell/AppNavigation.js';
 import { AppShell } from './features/shell/AppShell.js';
-import { ProviderReadiness } from './features/workspaces/ProviderReadiness.js';
-import { WorkspacePanel } from './features/workspaces/WorkspacePanel.js';
+import { GuidedSetup } from './features/workspaces/GuidedSetup.js';
+import { SetupAttentionSummary } from './features/workspaces/SetupAttentionSummary.js';
+import { RecoveryAttentionQueue } from './features/recovery/RecoveryAttentionQueue.js';
 import { StoreProvider, useStore } from './store.js';
 
 function currentTerminalSize(sessionId: string | null): { columns: number; rows: number } {
   return (sessionId ? terminalSize(sessionId) : undefined) ?? { columns: 120, rows: 30 };
 }
 
-function LegacyDestination() {
+function LegacyDestination({
+  mission,
+}: {
+  mission: ReturnType<typeof useMissionWorkspace>['detail'];
+}) {
   const { state } = useStore();
-  const selected = state.selectedSessionId ? state.sessions[state.selectedSessionId] : undefined;
   switch (state.selectedDestination) {
     case 'sessions':
-      return (
-        <div className="legacy-destination">
-          <RecoveryPanel />
-          <WorkspacePanel />
-          <ProviderReadiness />
-          <SessionList />
-          <CoordinationPanel />
-          <ConversationView />
-          {selected ? (
-            <header className="session-header">
-              <h1>
-                {selected.providerDisplayName}{' '}
-                <span className="mono small-text">{selected.workspaceDisplayPath}</span>
-              </h1>
-              <ControlBar key={selected.id} session={selected} />
-            </header>
-          ) : null}
-        </div>
-      );
+      return <SessionWorkspace mission={mission} />;
     case 'agents':
-      return <AgentProfileList />;
+      return <AgentLibraryWorkspace />;
     case 'templates':
-      return <AgentTemplateLibrary />;
+      return <AgentLibraryWorkspace />;
     case 'memory':
-      return <MemoryList />;
+      return <MemoryLibraryWorkspace />;
+    case 'attention':
+      return <RecoveryAttentionQueue />;
     case 'settings':
-      return (
-        <div className="legacy-destination">
-          <WorkspacePanel />
-          <ProviderReadiness />
-        </div>
-      );
+      return <GuidedSetup />;
     case 'missions':
       return null;
   }
@@ -75,7 +52,6 @@ function Shell() {
   const workspace = useMissionWorkspace(state.selectedMissionId);
   const [creatingMission, setCreatingMission] = useState(false);
   const [detailMissionId, setDetailMissionId] = useState<string | null>(null);
-  const selected = state.selectedSessionId ? state.sessions[state.selectedSessionId] : undefined;
   const missionSelected = state.selectedDestination === 'missions';
 
   return (
@@ -124,28 +100,19 @@ function Shell() {
               }}
             />
           ) : (
-            <LegacyDestination />
+            <LegacyDestination mission={workspace.detail} />
           )
         }
         context={
           missionSelected ? (
             <MissionContext detail={workspace.detail} presentation={workspace.presentation} />
+          ) : state.selectedDestination === 'settings' ? (
+            <SetupAttentionSummary />
           ) : (
-            <p className="mission-workspace-state">
-              Existing {state.selectedDestination} controls remain unchanged during design review.
-            </p>
+            <p className="mission-workspace-state">{state.selectedDestination} workspace</p>
           )
         }
-        terminal={
-          state.selectedDestination === 'sessions' && selected ? (
-            <LazyTerminalPane
-              session={selected}
-              truncationCount={state.truncation[selected.id] ?? selected.truncationCount}
-              streamFailure={state.streamFailed[selected.id] ?? null}
-              inputNotice={state.inputNotice[selected.id] ?? null}
-            />
-          ) : null
-        }
+        terminal={null}
       />
       <footer className="status-bar">
         {state.appInfo

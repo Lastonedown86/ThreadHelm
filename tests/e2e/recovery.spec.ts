@@ -45,12 +45,15 @@ test('crash → restart shows recovery records with explicit next actions', asyn
 
     second = await launchApp({ userData: first.userData });
     const page = second.page;
+    await page.getByRole('button', { name: 'Attention', exact: true }).click();
     expect(await second.liveSessions()).toHaveLength(0);
     for (const pid of pids) expect(isPidAlive(pid)).toBe(false);
 
     const panel = page.getByRole('region', { name: 'Needs attention' });
     await expect(panel).toBeVisible();
-    await expect(panel.getByText('ThreadHelm ended unexpectedly')).toHaveCount(2);
+    await expect(
+      panel.locator('.recovery-queue strong', { hasText: 'ThreadHelm ended unexpectedly' }),
+    ).toHaveCount(2);
     await expect(panel).toContainText(pathA);
     await expect(panel).toContainText(pathB);
     await expect(sessionOption(page, a)).toContainText('Recovery required');

@@ -25,7 +25,7 @@ export const ACTIVITY_LABEL: Record<ActivityState, string> = {
   awaiting_user: 'Awaiting user',
 };
 
-export function SessionList() {
+export function SessionList({ showHeading = true }: { showHeading?: boolean } = {}) {
   const { state, actions } = useStore();
   const listRef = useRef<HTMLUListElement>(null);
   const ids = state.sessionOrder;
@@ -61,8 +61,11 @@ export function SessionList() {
   };
 
   return (
-    <section className="panel" aria-labelledby="sessions-heading">
-      <h2 id="sessions-heading">Sessions</h2>
+    <section
+      className="panel"
+      {...(showHeading ? { 'aria-labelledby': 'sessions-heading' } : { 'aria-label': 'Sessions' })}
+    >
+      {showHeading ? <h2 id="sessions-heading">Sessions</h2> : null}
       {ids.length === 0 ? <p className="hint">No sessions yet.</p> : null}
       <ul
         ref={listRef}

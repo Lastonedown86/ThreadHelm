@@ -1,0 +1,34 @@
+.agent-library-workspace {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  max-width: 78rem;
+  margin: 0 auto;
+}
+.agent-library-region {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--mission-ink) 24%, transparent);
+  background: var(--mission-paper);
+}
+.agent-library-region > header h2 {
+  margin-bottom: 0.25rem;
+  font-family: var(--mission-font-heading);
+  font-size: 1.25rem;
+}
+.agent-library-region > header p:last-child {
+  margin: 0;
+  max-width: 70ch;
+}
+.agent-library-region > .panel {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.private-profile-region {
+  border-left: 0.35rem solid var(--mission-verdigris);
+}
+.agent-template-library > .hint {
+  max-width: 64ch;
+}

@@ -42,7 +42,7 @@ export async function launchWithFixtures(
 }
 
 export function terminalRows(page: Page): Locator {
-  return page.locator('.terminal-host .xterm-rows');
+  return page.locator('.terminal-host:visible .xterm-rows');
 }
 
 export function sessionOptions(page: Page): Locator {
@@ -51,6 +51,10 @@ export function sessionOptions(page: Page): Locator {
 
 /** Choose folder… → Approve folder, returning the workspace's display path. */
 export async function approveViaUi(app: LaunchedApp, dir: string): Promise<string> {
+  const choose = app.page.getByRole('button', { name: 'Choose folder…' });
+  if (!(await choose.isVisible())) {
+    await app.page.getByRole('button', { name: 'Settings', exact: true }).click();
+  }
   await app.setPickerPath(dir);
   await app.page.getByRole('button', { name: 'Choose folder…' }).click();
   const dialog = app.page.getByRole('dialog', { name: 'Approve this folder?' });
@@ -70,6 +74,10 @@ export async function launchViaUi(
   workspaceDisplayPath: string,
 ): Promise<string> {
   const page = app.page;
+  const launchIn = page.getByLabel('Launch in');
+  if (!(await launchIn.isVisible())) {
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  }
   await page.getByLabel('Launch in').selectOption({ label: workspaceDisplayPath });
   await page
     .getByRole('button', { name: `Launch ${PROVIDER_NAME[providerId]} in ${workspaceDisplayPath}` })

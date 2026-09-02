@@ -551,7 +551,7 @@ Compare dedicated recovery page, mission-context recovery, and attention-queue s
 exact target identity, explicit confirmation, no replay of unknown work, and content-deletion scope.
 Record the selection before planning production files.
 
-- [ ] **Step 5: Write one follow-up plan per approved subsystem**
+- [x] **Step 5: Write one follow-up plan per approved subsystem**
 
 Save each plan under `docs/superpowers/plans/` with exact production files and tests. Do not combine
 Agents, Memory, Settings, and Recovery into one implementation task because each can be accepted or

@@ -113,6 +113,11 @@ function Shell() {
             <AppNavigation
               selected={state.selectedDestination}
               onSelect={actions.selectDestination}
+              counts={{
+                sessions: Object.values(state.unread).filter(Boolean).length,
+                attention: state.recoveryRecords.filter((record) => record.resolvedAt === null)
+                  .length,
+              }}
             />
           </>
         }

@@ -117,6 +117,9 @@ export function MissionRail({
               <span>
                 <strong>{titles[mission.id] ?? missionTitle(null, mission.id)}</strong>
                 <small>
+                  {mission.workItemCount > 0
+                    ? `${mission.completedWorkItemCount}/${mission.workItemCount} · `
+                    : ''}
                   {mission.state.replaceAll('_', ' ')} · {mission.id.slice(0, 8)}
                 </small>
               </span>

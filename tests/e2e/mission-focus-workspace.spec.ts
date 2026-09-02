@@ -293,6 +293,9 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
 
     await select(completed);
     await expect(
+      list.getByRole('option', { name: new RegExp(completed.id.slice(0, 8), 'i') }),
+    ).toContainText('1/1');
+    await expect(
       app.page.locator('.mission-lifecycle').getByText('Completed', { exact: true }),
     ).toBeVisible();
     await expect(
@@ -325,6 +328,9 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
         .getByRole('complementary', { name: 'Mission context' })
         .getByRole('button', { name: 'Open attention queue' }),
     ).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'Attention', exact: true }),
+    ).toHaveAccessibleDescription(/needing attention/);
   } finally {
     await teardown(app, ...directories);
   }

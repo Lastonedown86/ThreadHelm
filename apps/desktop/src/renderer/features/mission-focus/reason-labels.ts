@@ -13,6 +13,8 @@ export const REASON_LABELS: Readonly<Record<string, string>> = {
   PERMISSION_ALLOWLIST_UNAVAILABLE: 'The provider cannot use the requested permission allowlist.',
   PERMISSION_AUTO_UNAVAILABLE: 'Automatic permission mode is not available for this provider.',
   PERMISSION_CAPABILITY_CHANGED: 'Provider permission capabilities changed since review.',
+  PERMISSION_MAPPING_MISMATCH:
+    "The provider's permission mapping did not match the reviewed launch policy.",
   PERMISSION_POLICY_HELD: 'Permission policy held this action for your review.',
   STARTUP_DELIVERY_UNCERTAIN: 'A delivery outcome is uncertain after restart.',
   STARTUP_FAILED: 'ThreadHelm could not finish starting.',

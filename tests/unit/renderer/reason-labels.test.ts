@@ -6,7 +6,12 @@ import {
   reasonLabel,
 } from '../../../apps/desktop/src/renderer/features/mission-focus/reason-labels.js';
 
-const roots = ['apps/desktop/src/main', 'packages/domain/src', 'packages/persistence/src'];
+const roots = [
+  'apps/desktop/src/main',
+  'packages/domain/src',
+  'packages/persistence/src',
+  'packages/providers/src',
+];
 const prefixes = /'((?:WORKER|MISSION|SUPERVISOR|STARTUP|PERMISSION)_[A-Z0-9_]+)'/g;
 
 function walk(dir: string, out: string[] = []): string[] {

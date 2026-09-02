@@ -429,57 +429,26 @@ CREATE TABLE mission_profile_pins (
 CREATE INDEX mission_profile_pins_profile ON mission_profile_pins (profile_id);
 `;
 
-// The present-tense counterpart of V3_AGENT_PROFILES: what agent_profiles and
-// its companions look like today, recon columns included. CURRENT_SCHEMA_EXTENSIONS
-// uses this (not V3_AGENT_PROFILES) to repair a database that is already at
-// SCHEMA_VERSION but is somehow missing the table outright — that repair must
-// produce the current shape, not the v3 shape, or it silently reintroduces the
-// column-drift bug this constant exists to prevent.
-const CURRENT_AGENT_PROFILES = `
-CREATE TABLE agent_profiles (
-  id TEXT PRIMARY KEY,
-  manifest_key TEXT NOT NULL,
-  current_revision_id TEXT,
-  state TEXT NOT NULL CHECK (state ${inList(ProfileState.options)}),
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  recon_run_id TEXT,
-  derived_from_commit TEXT
-);
-CREATE UNIQUE INDEX agent_profiles_manifest_key ON agent_profiles (manifest_key);
-
-CREATE TABLE agent_profile_revisions (
-  id TEXT PRIMARY KEY,
-  profile_id TEXT NOT NULL REFERENCES agent_profiles (id) ON DELETE RESTRICT,
-  digest TEXT NOT NULL CHECK (length(digest) = 64),
-  display_name TEXT NOT NULL,
-  description TEXT NOT NULL,
-  requested_provider TEXT NOT NULL CHECK (requested_provider ${inList(ProfileProviderId.options)}),
-  requested_model TEXT NOT NULL,
-  capabilities TEXT NOT NULL,
-  isolate_requested INTEGER NOT NULL CHECK (isolate_requested IN (0, 1)),
-  token_cap_requested INTEGER NOT NULL CHECK (token_cap_requested > 0),
-  author TEXT NOT NULL,
-  goal TEXT NOT NULL,
-  manifest_spec TEXT NOT NULL,
-  compatibility TEXT NOT NULL CHECK (compatibility ${inList(ProfileCompatibility.options)}),
-  compatibility_reasons TEXT NOT NULL DEFAULT '[]',
-  source_basename TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  UNIQUE (profile_id, digest)
-);
-CREATE INDEX agent_profile_revisions_profile_created
-  ON agent_profile_revisions (profile_id, created_at, id);
-
-CREATE TABLE mission_profile_pins (
-  mission_id TEXT NOT NULL,
-  profile_id TEXT NOT NULL REFERENCES agent_profiles (id) ON DELETE RESTRICT,
-  revision_id TEXT NOT NULL REFERENCES agent_profile_revisions (id) ON DELETE RESTRICT,
-  pinned_at TEXT NOT NULL,
-  PRIMARY KEY (mission_id, profile_id)
-);
-CREATE INDEX mission_profile_pins_profile ON mission_profile_pins (profile_id);
+// Assumes agent_profiles already exists — every real version-3 database has
+// it (it shipped in the same migration, see V3_AGENT_PROFILES above). A v3
+// database that is somehow missing agent_profiles will fail this ALTER with
+// a raw SqliteError, because the migration runner applies pending migrations
+// before it repairs missing CURRENT_SCHEMA_EXTENSIONS tables (see migrate.ts).
+// Known limitation, not fixed here: see tests/unit/persistence/workspace-recon.test.ts
+// "fails to migrate a v3 database that is missing agent_profiles (known limitation)".
+const V4_RECON_PROVENANCE = `
+ALTER TABLE agent_profiles ADD COLUMN recon_run_id TEXT;
+ALTER TABLE agent_profiles ADD COLUMN derived_from_commit TEXT;
 `;
+
+// The present-tense counterpart of V3_AGENT_PROFILES: what agent_profiles and
+// its companions look like today. Composed as history-plus-deltas — the v3
+// text followed by every migration applied since — rather than duplicated,
+// so this can never drift from what a fully-migrated database actually looks
+// like; CURRENT_SCHEMA_EXTENSIONS uses this (not V3_AGENT_PROFILES) to repair
+// a database that is already at SCHEMA_VERSION but is somehow missing the
+// table outright.
+const CURRENT_AGENT_PROFILES = `${V3_AGENT_PROFILES}${V4_RECON_PROVENANCE}`;
 
 const V3_AGENT_TEMPLATES = `
 CREATE TABLE agent_profile_templates (
@@ -590,11 +559,6 @@ CREATE TABLE agent_profile_export_intents (
 );
 CREATE INDEX agent_profile_export_intents_draft_created
   ON agent_profile_export_intents (draft_id, created_at DESC);
-`;
-
-const V4_RECON_PROVENANCE = `
-ALTER TABLE agent_profiles ADD COLUMN recon_run_id TEXT;
-ALTER TABLE agent_profiles ADD COLUMN derived_from_commit TEXT;
 `;
 
 export const MIGRATIONS: readonly { version: number; sql: string }[] = [

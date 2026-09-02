@@ -13,23 +13,25 @@
  * `mission_profile_pins`). Queries below use `WHERE id = ?` to match the
  * real schema.
  */
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   createRepositories,
   migrate,
+  MIGRATIONS,
   openDatabase,
   readSchemaVersion,
+  SCHEMA_VERSION,
   type Db,
   type ImportProfileManifestInput,
 } from '@threadhelm/persistence';
 
 const AT = '2026-01-01T00:00:00.000Z';
 
-let db: Db;
-afterEach(() => db?.close());
-
-function openTestStorage() {
-  db = openDatabase(':memory:');
+// Every test opens and closes its own `db` locally — no shared module-level
+// handle, no afterEach — since openTestStorage() already hands the db back
+// for the caller to close.
+function openTestStorage(): { db: Db; repositories: ReturnType<typeof createRepositories> } {
+  const db = openDatabase(':memory:');
   migrate(db);
   return { db, repositories: createRepositories(db) };
 }
@@ -55,8 +57,14 @@ function importInput(overrides: Partial<ImportProfileManifestInput> = {}): Impor
   };
 }
 
+/** Replays only the migrations a real version-3 database would already have applied. */
+function replayThroughV3(db: Db): void {
+  for (const migration of MIGRATIONS) if (migration.version <= 3) db.exec(migration.sql);
+  db.prepare('INSERT INTO schema_meta (version) VALUES (3)').run();
+}
+
 describe('recon provenance columns', () => {
-  it('migrates a version 3 database forward without loss', () => {
+  it('migrates a fresh database (version 0) to the current version with both recon columns present', () => {
     const db = openDatabase(':memory:');
     migrate(db);
     expect(readSchemaVersion(db)).toBeGreaterThanOrEqual(4);
@@ -66,6 +74,32 @@ describe('recon provenance columns', () => {
       .map((row) => (row as { name: string }).name);
     expect(columns).toContain('recon_run_id');
     expect(columns).toContain('derived_from_commit');
+    db.close();
+  });
+
+  it('migrates an existing v3 database forward without losing an existing profile row', () => {
+    const db = openDatabase(':memory:');
+    replayThroughV3(db);
+    const PRE_AT = '2025-06-01T00:00:00.000Z';
+    db.prepare(
+      `INSERT INTO agent_profiles (id, manifest_key, current_revision_id, state, created_at, updated_at)
+       VALUES (?, ?, NULL, ?, ?, ?)`,
+    ).run('profile-pre-v4', 'existing::manifest', 'active', PRE_AT, PRE_AT);
+
+    migrate(db);
+
+    expect(readSchemaVersion(db)).toBe(SCHEMA_VERSION);
+    const row = db.prepare('SELECT * FROM agent_profiles WHERE id = ?').get('profile-pre-v4');
+    expect(row).toMatchObject({
+      id: 'profile-pre-v4',
+      manifest_key: 'existing::manifest',
+      current_revision_id: null,
+      state: 'active',
+      created_at: PRE_AT,
+      updated_at: PRE_AT,
+      recon_run_id: null,
+      derived_from_commit: null,
+    });
     db.close();
   });
 
@@ -122,6 +156,27 @@ describe('recon provenance columns', () => {
       .map((row) => (row as { name: string }).name);
     expect(columns).toContain('recon_run_id');
     expect(columns).toContain('derived_from_commit');
+    db.close();
+  });
+
+  it('fails to migrate a v3 database that is missing agent_profiles (known limitation)', () => {
+    // Pins a real limitation rather than hiding it: migrate() applies pending
+    // migrations before it repairs missing CURRENT_SCHEMA_EXTENSIONS tables,
+    // so a v3 database missing agent_profiles hits v4's ALTER TABLE against a
+    // table that doesn't exist and throws, instead of self-healing the way
+    // the "repair a current-version database" case above does. See the
+    // comment on V4_RECON_PROVENANCE in schema.ts. Not fixed here: reordering
+    // the migration runner is a change to a mechanism every future migration
+    // depends on, and is out of scope for this task.
+    const db = openDatabase(':memory:');
+    replayThroughV3(db);
+    db.exec(`
+      DROP TABLE mission_profile_pins;
+      DROP TABLE agent_profile_revisions;
+      DROP TABLE agent_profiles;
+    `);
+
+    expect(() => migrate(db)).toThrow();
     db.close();
   });
 });

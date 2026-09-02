@@ -12,12 +12,33 @@ const AT = '2026-08-30T16:00:00.000Z';
 const MANIFEST = GENERIC_AGENT_TEMPLATE_FIXTURES[3]!.manifest;
 const connections: Database.Database[] = [];
 const directories: string[] = [];
+const FIXTURE_SCHEMA_VERSION = 3;
 
 afterEach(() => {
   for (const db of connections.splice(0)) if (db.open) db.close();
   for (const directory of directories.splice(0))
     rmSync(directory, { recursive: true, force: true });
 });
+
+/**
+ * Builds exactly a v3 database with the agent_profile_templates extension
+ * applied: replay migrations through FIXTURE_SCHEMA_VERSION only, then stamp
+ * schema_meta by hand, so a later migrate(db) call exercises the v3->current
+ * delta from a known starting point instead of double-applying any migration
+ * this loop already ran.
+ */
+function seedV3Database(): Database.Database {
+  const db = openDatabase(':memory:');
+  connections.push(db);
+  for (const migration of MIGRATIONS)
+    if (migration.version <= FIXTURE_SCHEMA_VERSION) db.exec(migration.sql);
+  db.prepare('INSERT INTO schema_meta (version) VALUES (?)').run(FIXTURE_SCHEMA_VERSION);
+  db.exec(
+    CURRENT_SCHEMA_EXTENSIONS.find((extension) => extension.table === 'agent_profile_templates')!
+      .sql,
+  );
+  return db;
+}
 
 function setup(path = ':memory:') {
   const db = openDatabase(path);
@@ -256,18 +277,7 @@ describe('agent-template persistence', () => {
   });
 
   it('rolls back a failed v3 upgrade and keeps the earlier rows available', () => {
-    const db = openDatabase(':memory:');
-    connections.push(db);
-    // Build exactly a v3 database: replay migrations through v3 only, then stamp
-    // schema_meta at 3 by hand, so the later migrate(db) call exercises the
-    // v3->current delta from a known starting point instead of double-applying
-    // any migration already run by this loop.
-    for (const migration of MIGRATIONS) if (migration.version <= 3) db.exec(migration.sql);
-    db.prepare('INSERT INTO schema_meta (version) VALUES (3)').run();
-    db.exec(
-      CURRENT_SCHEMA_EXTENSIONS.find((extension) => extension.table === 'agent_profile_templates')!
-        .sql,
-    );
+    const db = seedV3Database();
     db.prepare(
       "INSERT INTO agent_profile_templates VALUES ('t', 'quality', 'bundled', 'active', 'r', ?, ?)",
     ).run(AT, AT);
@@ -289,18 +299,7 @@ describe('agent-template persistence', () => {
     expect(() => migrate(db)).not.toThrow();
   });
   it('upgrades existing v3 foundation rows without losing identities or provenance', () => {
-    const db = openDatabase(':memory:');
-    connections.push(db);
-    // Build exactly a v3 database: replay migrations through v3 only, then stamp
-    // schema_meta at 3 by hand, so the later migrate(db) call exercises the
-    // v3->current delta from a known starting point instead of double-applying
-    // any migration already run by this loop.
-    for (const migration of MIGRATIONS) if (migration.version <= 3) db.exec(migration.sql);
-    db.prepare('INSERT INTO schema_meta (version) VALUES (3)').run();
-    db.exec(
-      CURRENT_SCHEMA_EXTENSIONS.find((extension) => extension.table === 'agent_profile_templates')!
-        .sql,
-    );
+    const db = seedV3Database();
     db.prepare(
       "INSERT INTO agent_profile_templates VALUES ('t', 'quality', 'bundled', 'active', 'r', ?, ?)",
     ).run(AT, AT);

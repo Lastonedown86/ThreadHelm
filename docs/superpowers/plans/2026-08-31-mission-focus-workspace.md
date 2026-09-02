@@ -533,7 +533,7 @@ Compare roster-first, profile-detail-first, and library-first structures. Preser
 starters, exact imported provenance, and private local-profile separation. Record the selection before
 planning production files.
 
-- [ ] **Step 2: Present Memory variants**
+- [x] **Step 2: Present Memory variants**
 
 Compare list/detail, search-led, and mission-context structures. Preserve citation, contested,
 retracted, deleted, expired, superseded, and explicit pagination states. Record the selection before

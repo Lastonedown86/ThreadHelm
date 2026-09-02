@@ -15,3 +15,12 @@ variant is reserved for failed and recovery-required detail views.
 starters, saved drafts, and exact JSON import. Keep private local profiles separate from bundled
 starters. Opening a local profile uses the profile-studio treatment for its goal, abilities, runtime
 request, provenance, compatibility, and revisions.
+
+## Memory
+
+**Selected: B — Search-led Reading Desk with the Librarian, plus C for mission context packs.** The
+primary Memory destination searches exact local evidence, opens one cited volume, explains why it
+matched, and keeps lifecycle state visible. The continuous Memory Coach acts as a Librarian that may
+search, explain, propose, and organize. It cannot silently publish, resolve conflicts, delete
+content, or grant authority. Mission launches use a bounded reading-room packet with explicit
+revision citations, inclusion controls, and a context budget.

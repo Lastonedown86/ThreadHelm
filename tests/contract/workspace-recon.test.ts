@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import {
   operations,
   RECON_NO_AUTO_HIRE_STATEMENT,
+  ReconLaunchPreviewView,
   ReconOutcome,
   ReconRejectionView,
   ReconRunView,
@@ -90,6 +91,30 @@ describe('workspaceRecon operations', () => {
   it('states that nothing is hired automatically and never claims read-only', () => {
     expect(RECON_NO_AUTO_HIRE_STATEMENT).toContain('No agent is hired');
     expect(RECON_NO_AUTO_HIRE_STATEMENT.toLowerCase()).not.toContain('read-only');
+  });
+
+  it('names the token cap a request, because ThreadHelm cannot enforce one', () => {
+    const shape = ReconLaunchPreviewView.shape;
+    expect(Object.keys(shape)).toContain('tokenCapRequested');
+    expect(Object.keys(shape)).not.toContain('tokenCap');
+  });
+});
+
+describe('ConfirmImportProfileRequest', () => {
+  it('accepts an owner-typed display name and works without one', () => {
+    const request = operations['profiles.confirmImport'].request;
+    const previewToken = 'a'.repeat(32);
+    expect(request.safeParse({ previewToken, importConfirmation: true }).success).toBe(true);
+    expect(
+      request.safeParse({
+        previewToken,
+        importConfirmation: true,
+        displayName: 'Roster lead',
+      }).success,
+    ).toBe(true);
+    expect(
+      request.safeParse({ previewToken, importConfirmation: true, displayName: '' }).success,
+    ).toBe(false);
   });
 });
 

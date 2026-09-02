@@ -55,11 +55,11 @@ import { findWorkspace } from '../workspaces/service.js';
 const execFileAsync = promisify(execFile);
 
 /**
- * Disclosed to the owner and asked of the agent. ThreadHelm has no token
- * accounting, so this is a request in the prompt, never an enforced bound —
- * see `tokenCapReached` below.
+ * A request carried to the agent in the prompt, disclosed to the owner as
+ * `tokenCapRequested`. ThreadHelm has no token accounting and does not enforce
+ * it — see `tokenCapReached` below for the same limit on the outcome side.
  */
-const RECON_TOKEN_CAP = 200_000;
+const RECON_TOKEN_CAP_REQUESTED = 200_000;
 
 /** `git rev-parse HEAD` is provenance, not a dependency; it fails fast or not at all. */
 const GIT_TIMEOUT_MS = 2_000;
@@ -80,7 +80,7 @@ const RECON_PERMISSION_SELECTION: LaunchPermissionSelection = {
  * launch. It asks for restraint in concrete terms — "write nothing inside the
  * workspace" — rather than claiming a guarantee the product cannot make.
  */
-function buildReconPrompt(outputDirectory: string, tokenCap: number): string {
+function buildReconPrompt(outputDirectory: string, tokenCapRequested: number): string {
   return [
     'Assess this repository so ThreadHelm can propose a roster of agent roles for it.',
     '',
@@ -102,7 +102,7 @@ function buildReconPrompt(outputDirectory: string, tokenCap: number): string {
     '  types the real name when accepting the role.',
     '- Write nothing inside the workspace. Create, change and delete no file there.',
     '  Every file you write goes in the directory above.',
-    `- Stay within about ${tokenCap} tokens for this assessment.`,
+    `- Stay within about ${tokenCapRequested} tokens for this assessment.`,
     '- Write the files, then stop. Do not run builds, tests, installs or migrations.',
   ].join('\n');
 }
@@ -295,9 +295,10 @@ export function createReconService(ctx: Context): ReconService {
       run.outcome = classifyReconOutcome({
         providerUnauthenticated: false,
         ownerStopped: ownerStopped(run.sessionId),
-        // ThreadHelm has no token accounting: the cap is disclosed and asked of
-        // the agent, never measured. This fact stays false until a provider
-        // reports usage main can observe.
+        // Always false today: ThreadHelm has no token accounting, so the cap
+        // is asked of the agent and never measured. Upgrade path — when a
+        // provider reports usage labelled provider-reported or CLI-derived,
+        // read it here. An estimate must never be reported as a reached cap.
         tokenCapReached: false,
         filesWritten: candidates.length,
         parsedCount: run.proposals.length,
@@ -337,7 +338,7 @@ export function createReconService(ctx: Context): ReconService {
       const workspace = findWorkspace(ctx, request.workspaceId);
       const runId = randomUUID();
       const outputDirectory = join(ctx.reconRoot(), request.workspaceId, runId);
-      const reconPrompt = buildReconPrompt(outputDirectory, RECON_TOKEN_CAP);
+      const reconPrompt = buildReconPrompt(outputDirectory, RECON_TOKEN_CAP_REQUESTED);
       pending.set(launch.previewToken, {
         runId,
         workspaceId: request.workspaceId,
@@ -351,7 +352,7 @@ export function createReconService(ctx: Context): ReconService {
       return ReconLaunchPreviewView.parse({
         launch,
         outputDirectory,
-        tokenCap: RECON_TOKEN_CAP,
+        tokenCapRequested: RECON_TOKEN_CAP_REQUESTED,
         reconPrompt,
         autoHireStatement: RECON_NO_AUTO_HIRE_STATEMENT,
       });

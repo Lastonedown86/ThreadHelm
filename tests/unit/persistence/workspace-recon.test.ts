@@ -36,7 +36,9 @@ function openTestStorage(): { db: Db; repositories: ReturnType<typeof createRepo
   return { db, repositories: createRepositories(db) };
 }
 
-function importInput(overrides: Partial<ImportProfileManifestInput> = {}): ImportProfileManifestInput {
+function importInput(
+  overrides: Partial<ImportProfileManifestInput> = {},
+): ImportProfileManifestInput {
   return {
     manifestKey: 'roster-curator::tony-stark',
     digest: 'a'.repeat(64),

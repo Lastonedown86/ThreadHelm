@@ -161,7 +161,10 @@ describe('previewLaunch', () => {
     expect(preview.outputDirectory.toLowerCase()).not.toContain(
       harness.workspacePath.toLowerCase(),
     );
-    expect(preview.tokenCap).toBeGreaterThan(0);
+    // Disclosed as a request, not a bound: ThreadHelm cannot enforce a token
+    // cap, so the prompt asks for it and the field is named for the ask.
+    expect(preview.tokenCapRequested).toBeGreaterThan(0);
+    expect(preview.reconPrompt).toContain(String(preview.tokenCapRequested));
   });
 
   it('sends the disclosed prompt as the session first input', async () => {
@@ -407,16 +410,40 @@ describe('acceptance through the existing profile gate', () => {
       (await harness.world.ok<{ profiles: unknown[] }>('profiles.list', {})).profiles,
     ).toHaveLength(0);
 
-    const summary = await harness.world.ok<{ profileId: string }>('profiles.confirmImport', {
-      previewToken: preview.previewToken,
-      importConfirmation: true,
-    });
+    const summary = await harness.world.ok<{ profileId: string; displayName: string }>(
+      'profiles.confirmImport',
+      {
+        previewToken: preview.previewToken,
+        importConfirmation: true,
+        displayName: 'Roster lead',
+      },
+    );
     const row = harness.world.ctx
       .storage!.db.prepare('SELECT recon_run_id, derived_from_commit FROM agent_profiles')
       .get() as { recon_run_id: string; derived_from_commit: string };
     expect(summary.profileId.length).toBeGreaterThan(0);
     expect(row.recon_run_id).toBe(run.runId);
     expect(row.derived_from_commit).toBe(harness.headCommit);
+    // The owner's name, never the placeholder the proposal carried.
+    expect(summary.displayName).toBe('Roster lead');
+    expect(proposal.manifest.name).toBe('Unnamed supervisor');
+  });
+
+  it('keeps the manifest name when the owner supplies none', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), ['supervisor.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+    const proposal = harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals[0]!;
+
+    const preview = await harness.world.ok<{ previewToken: string }>('profiles.previewImport', {
+      proposalId: proposal.proposalId,
+    });
+    const summary = await harness.world.ok<{ displayName: string }>('profiles.confirmImport', {
+      previewToken: preview.previewToken,
+      importConfirmation: true,
+    });
+    expect(summary.displayName).toBe('Unnamed supervisor');
   });
 
   it('reports a proposal that was already taken as unavailable', async () => {
@@ -434,7 +461,7 @@ describe('acceptance through the existing profile gate', () => {
     expect(second.ok ? 'OK' : second.error.code).toBe('PROFILE_UNREADABLE');
   });
 
-  it('leaves the file-picker import path unstamped', async () => {
+  it('leaves the file-picker import path unstamped and honours a typed name there too', async () => {
     const harness = await buildReconHarness();
     const manifestPath = join(harness.workspacePath, 'picked.agent.json');
     writeFileSync(manifestPath, RECON_PROPOSAL_FIXTURES[0]!.text, 'utf8');
@@ -444,9 +471,10 @@ describe('acceptance through the existing profile gate', () => {
     const preview = await harness.world.ok<{ previewToken: string }>('profiles.previewImport', {
       fileHandle: chosen.fileHandle,
     });
-    await harness.world.ok('profiles.confirmImport', {
+    const summary = await harness.world.ok<{ displayName: string }>('profiles.confirmImport', {
       previewToken: preview.previewToken,
       importConfirmation: true,
+      displayName: 'Picked by hand',
     });
 
     const row = harness.world.ctx
@@ -454,6 +482,8 @@ describe('acceptance through the existing profile gate', () => {
       .get() as { recon_run_id: string | null; derived_from_commit: string | null };
     expect(row.recon_run_id).toBeNull();
     expect(row.derived_from_commit).toBeNull();
+    // The name is owner-supplied on every path, not a recon special case.
+    expect(summary.displayName).toBe('Picked by hand');
   });
 });
 

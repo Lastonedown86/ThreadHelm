@@ -55,6 +55,16 @@ export interface ReconProvenance {
   readonly derivedFromCommit: string | null;
 }
 
+/** What acceptance adds to a reviewed manifest. Both are absent for the wizard. */
+export interface ReviewedManifestOptions {
+  readonly provenance?: ReconProvenance;
+  /**
+   * The name the owner typed at acceptance. Absent keeps the manifest's own
+   * name, which is what every path that authored the name itself relies on.
+   */
+  readonly displayName?: string;
+}
+
 interface PreviewSnapshot {
   /** The file the manifest was read from; null for a proposal held in memory. */
   path: string | null;
@@ -87,7 +97,7 @@ export interface ProfileService {
     manifest: AgentManifestV1,
     digest: string,
     sourceBasename: string,
-    provenance?: ReconProvenance,
+    options?: ReviewedManifestOptions,
   ): AgentProfileSummaryView;
 }
 
@@ -154,13 +164,15 @@ export function createProfileService(ctx: Context): ProfileService {
     manifest: AgentManifestV1,
     digest: string,
     sourceBasename: string,
-    provenance?: ReconProvenance,
+    options?: ReviewedManifestOptions,
   ): AgentProfileSummaryView => {
     const compatibilityResult = evaluateManifestCompatibility(ctx, manifest);
     const input: ImportProfileManifestInput = {
       manifestKey: sourceBasename.toLocaleLowerCase('en-US'),
       digest,
-      displayName: manifest.name,
+      // The owner's name wins over the manifest's. A recon proposal always
+      // carries a placeholder, so the roster shows what the owner typed.
+      displayName: options?.displayName ?? manifest.name,
       description: manifest.description,
       requestedProvider: manifest.provider,
       requestedModel: manifest.model,
@@ -174,8 +186,8 @@ export function createProfileService(ctx: Context): ProfileService {
       compatibilityReasons: compatibilityResult.reasons,
       sourceBasename,
       createdAt: ctx.clock().toISOString(),
-      reconRunId: provenance?.reconRunId ?? null,
-      derivedFromCommit: provenance?.derivedFromCommit ?? null,
+      reconRunId: options?.provenance?.reconRunId ?? null,
+      derivedFromCommit: options?.provenance?.derivedFromCommit ?? null,
     };
     const imported = repository().importManifest(input);
     const summary = AgentProfileSummaryView.parse(repository().getSummary(imported.profileId)!);
@@ -260,15 +272,16 @@ export function createProfileService(ctx: Context): ProfileService {
           'The profile preview expired or was used.',
         );
       }
+      // Applied to both sources alike: acceptance is where the owner names the
+      // role, whether the manifest came from a file or from a proposal.
+      const options: ReviewedManifestOptions = {
+        ...(snapshot.provenance ? { provenance: snapshot.provenance } : {}),
+        ...(request.displayName !== undefined ? { displayName: request.displayName } : {}),
+      };
       if (snapshot.path === null) {
         // A proposal's bytes left the run when it was taken and its directory
         // is gone; the reviewed manifest is the only copy and cannot drift.
-        return saveReviewedManifest(
-          snapshot.manifest,
-          snapshot.digest,
-          snapshot.basename,
-          snapshot.provenance ?? undefined,
-        );
+        return saveReviewedManifest(snapshot.manifest, snapshot.digest, snapshot.basename, options);
       }
       const current = await readBounded(snapshot.path);
       let parsed: AgentManifestV1;
@@ -289,7 +302,7 @@ export function createProfileService(ctx: Context): ProfileService {
           'The profile file changed after review.',
         );
       }
-      return saveReviewedManifest(snapshot.manifest, snapshot.digest, snapshot.basename);
+      return saveReviewedManifest(snapshot.manifest, snapshot.digest, snapshot.basename, options);
     },
 
     list(request) {

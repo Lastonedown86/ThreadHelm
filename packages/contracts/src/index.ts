@@ -295,8 +295,6 @@ export const ErrorCode = z.enum([
   'COORDINATION_BRIDGE_UNAVAILABLE',
   'COORDINATION_AUTHORITY_REQUIRED',
   'COORDINATION_CLOSED',
-  // workspace recon
-  'RECON_UNAVAILABLE',
   // shared memory
   'MEMORY_NOT_FOUND',
   'MEMORY_SCOPE_UNAUTHORIZED',
@@ -1514,7 +1512,12 @@ export const ReconLaunchPreviewView = strictObject({
   /** The unmodified session disclosure, boundary warning included. */
   launch: LaunchPreviewView,
   outputDirectory: z.string().min(1),
-  tokenCap: z.number().int().positive().max(MAX_TOKEN_CAP),
+  /**
+   * Asked of the agent in the prompt below, never enforced: ThreadHelm has no
+   * token accounting. Named like AgentProfileSummaryView.tokenCapRequested
+   * because it is a request carried to the agent, not a ceiling we hold.
+   */
+  tokenCapRequested: z.number().int().positive().max(MAX_TOKEN_CAP),
   /** The exact text sent as this session's first input. */
   reconPrompt: z.string().min(1).max(8000),
   autoHireStatement: z.literal(RECON_NO_AUTO_HIRE_STATEMENT),
@@ -1546,6 +1549,11 @@ export type ProfilePreviewView = z.infer<typeof ProfilePreviewView>;
 export const ConfirmImportProfileRequest = strictObject({
   previewToken: OpaqueToken,
   importConfirmation: z.literal(true),
+  /**
+   * The name the owner typed at acceptance. Absent leaves the reviewed
+   * manifest's own name in place, so the file-picker path is unchanged.
+   */
+  displayName: AgentManifestV1.shape.name.optional(),
 });
 export type ConfirmImportProfileRequest = z.infer<typeof ConfirmImportProfileRequest>;
 

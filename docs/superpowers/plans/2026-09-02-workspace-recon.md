@@ -928,9 +928,7 @@ The largest task. It stays one task because its three parts (preview, launch, co
     confirmLaunch(request: OperationRequest<'workspaceRecon.confirmLaunch'>): Promise<ReconRunView>;
     getRun(request: OperationRequest<'workspaceRecon.getRun'>): ReconRunView | null;
     /** Consumed by profiles.previewImport when the source is a proposal. */
-    takeProposal(
-      proposalId: string,
-    ): {
+    takeProposal(proposalId: string): {
       manifest: AgentManifestV1;
       digest: string;
       sourceBasename: string;

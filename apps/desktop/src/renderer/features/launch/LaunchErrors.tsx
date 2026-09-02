@@ -67,8 +67,6 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   COORDINATION_AUTHORITY_REQUIRED:
     'This action requires explicit user authority before coordination can continue.',
   COORDINATION_CLOSED: 'That coordination conversation is closed.',
-  RECON_UNAVAILABLE:
-    'Workspace recon is not available right now, so nothing was started. Restart ThreadHelm and try again.',
   MEMORY_NOT_FOUND: 'That shared-memory entry or revision no longer exists.',
   MEMORY_SCOPE_UNAUTHORIZED:
     'That shared memory is outside the approved workspace or mission scope.',

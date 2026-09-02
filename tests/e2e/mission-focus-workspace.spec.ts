@@ -306,3 +306,46 @@ test('narrow windows keep the mission heading in the first screen', async () => 
     await teardown(app, ...directories);
   }
 });
+
+test.fixme('medium windows keep an attention control when a decision waits', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const directories = [tempWorkspace('medium-leader'), tempWorkspace('medium-worker')];
+  try {
+    let mission = await confirmMission(
+      app,
+      await prepareFixtureMission(app, directories),
+      'Medium window mission',
+    );
+    const work = await addWork(app, mission);
+    await app.bridgeRequest(work.supervisorId, 'threadhelm_work_assign', {
+      ...workDecision(mission.id),
+      idempotencyKey: randomUUID(),
+      workItemId: work.workItemId,
+      bindingId: work.binding.bindingId,
+    });
+    mission = await app.call('missions.detail', { missionId: mission.id });
+    await app.bridgeRequest(mission.attempts[0]!.sessionId!, 'threadhelm_work_result', {
+      missionId: mission.id,
+      workItemId: work.workItemId,
+      attemptId: mission.attempts[0]!.id,
+      idempotencyKey: randomUUID(),
+      disposition: 'authority_required',
+      explanation: 'An owner decision is needed.',
+      evidenceRefs: [],
+    });
+    await app.page.setViewportSize({ width: 960, height: 800 });
+    const list = app.page.getByRole('listbox', { name: 'Missions', exact: true });
+    await list.getByRole('option', { name: new RegExp(mission.id.slice(0, 8), 'i') }).click();
+    const toggle = app.page.getByRole('button', { name: /needs your decision/i });
+    await expect(toggle).toBeVisible();
+    await toggle.click();
+    const panel = app.page.getByRole('dialog', { name: 'Mission context' });
+    await expect(panel).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Review choices…' })).toBeVisible();
+    await app.page.keyboard.press('Escape');
+    await expect(panel).toBeHidden();
+    await expect(toggle).toBeFocused();
+  } finally {
+    await teardown(app, ...directories);
+  }
+});

@@ -273,6 +273,12 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
         name: 'Review choices…',
       }),
     ).toBeVisible();
+    const rail = app.page.getByRole('complementary', { name: 'Mission context' });
+    await expect(rail.locator('section').first()).toContainText('Needs your decision');
+    await expect(rail.getByRole('button', { name: 'Review choices…' })).toBeVisible();
+    await expect(rail.getByRole('list', { name: 'Crew' }).getByRole('listitem')).toHaveCount(2);
+    await expect(rail.getByRole('list', { name: 'Crew' })).toContainText('Supervisor');
+    await expect(rail.getByRole('list', { name: 'Crew' })).toContainText('failed');
 
     await select(uncertain);
     await expect(
@@ -313,6 +319,11 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
       app.page
         .locator('.mission-action-row')
         .getByRole('button', { name: 'Inspect evidence…', exact: true }),
+    ).toBeVisible();
+    await expect(
+      app.page
+        .getByRole('complementary', { name: 'Mission context' })
+        .getByRole('button', { name: 'Open attention queue' }),
     ).toBeVisible();
   } finally {
     await teardown(app, ...directories);

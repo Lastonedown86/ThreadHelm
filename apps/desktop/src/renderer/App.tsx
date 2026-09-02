@@ -10,6 +10,7 @@ import { MissionContext } from './features/mission-focus/MissionContext.js';
 import { MissionContextFrame } from './features/mission-focus/MissionContextFrame.js';
 import { MissionRail } from './features/mission-focus/MissionRail.js';
 import { MissionWorkspace } from './features/mission-focus/MissionWorkspace.js';
+import type { ActionKind } from './features/mission-focus/mission-presentation.js';
 import { useMissionWorkspace } from './features/mission-focus/useMissionWorkspace.js';
 import { terminalSize } from './features/session/terminal-loader.js';
 import { SessionWorkspace } from './features/sessions/SessionWorkspace.js';
@@ -66,6 +67,18 @@ function Shell() {
   const [detailMissionId, setDetailMissionId] = useState<string | null>(null);
   const missionSelected = state.selectedDestination === 'missions';
 
+  const runMissionAction = (kind: ActionKind) => {
+    const missionId = state.selectedMissionId;
+    if (!missionId) return;
+    if (kind === 'pause') {
+      void call(api.missions.pause({ missionId })).catch((cause) =>
+        actions.setNotice(`Pausing the mission failed (${errorCode(cause)}).`),
+      );
+      return;
+    }
+    setDetailMissionId(missionId);
+  };
+
   return (
     <div className="app">
       {state.storageDegraded ? (
@@ -111,17 +124,7 @@ function Shell() {
               onOpenDetail={() => {
                 if (state.selectedMissionId) setDetailMissionId(state.selectedMissionId);
               }}
-              onAction={(kind) => {
-                const missionId = state.selectedMissionId;
-                if (!missionId) return;
-                if (kind === 'pause') {
-                  void call(api.missions.pause({ missionId })).catch((cause) =>
-                    actions.setNotice(`Pausing the mission failed (${errorCode(cause)}).`),
-                  );
-                  return;
-                }
-                setDetailMissionId(missionId);
-              }}
+              onAction={runMissionAction}
               onOpenTerminal={(sessionId) => {
                 actions.select(sessionId);
                 actions.selectDestination('sessions');
@@ -133,7 +136,12 @@ function Shell() {
         }
         context={
           missionSelected ? (
-            <MissionContext detail={workspace.detail} presentation={workspace.presentation} />
+            <MissionContext
+              detail={workspace.detail}
+              presentation={workspace.presentation}
+              onAction={runMissionAction}
+              onOpenAttention={() => actions.selectDestination('attention')}
+            />
           ) : (
             <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
               <SetupAttentionSummary />

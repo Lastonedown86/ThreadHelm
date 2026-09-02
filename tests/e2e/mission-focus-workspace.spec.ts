@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import type {
   MissionDetailView,
@@ -8,6 +8,49 @@ import type {
 import { launchApp, type LaunchedApp } from './helpers/app.js';
 import { prepareFixtureMission } from './helpers/mission.js';
 import { launchWithFixtures, teardown, tempWorkspace } from './helpers/ui.js';
+
+// Reason codes match /^[A-Z][A-Z0-9_]{2,63}$/ (packages/contracts/src/index.ts) — no
+// underscore required, e.g. the real 'BACKPRESSURE' shipped by
+// apps/desktop/src/main/coordination/delivery.ts. Static UI copy also renders
+// all-caps via CSS text-transform: uppercase on .mission-lifecycle, .course-state,
+// .context-label and .mission-evidence (apps/desktop/src/renderer/styles/mission-focus.css),
+// so allowlist those known labels rather than narrowing the pattern back down.
+const UPPERCASE_UI_COPY = new Set([
+  'LOCAL', // "· local" suffix on the lifecycle line
+  'CREW',
+  'AUTHORITY', // context rail section headers, always rendered
+  'RUNNING',
+  'PAUSED',
+  'COMPLETED', // lifecycleLabels
+  'WAITING',
+  'FOR',
+  'YOU', // "Waiting for you" (lifecycle override + course-state label)
+  'OUTCOME',
+  'UNCERTAIN', // "Outcome uncertain" (lifecycle override + course-state label)
+  'VERIFIED',
+  'FOCUS', // course-state labels "Verified" / "In focus"
+  'RECOVERY',
+  'REQUIRED', // "Recovery required" (lifecycle label + attention label)
+  'NEEDS',
+  'YOUR',
+  'DECISION', // "Needs your decision" attention label
+  'EVIDENCE',
+  'ARTIFACT', // "Evidence: artifact · <file>" verified-result line
+  'BROWSER',
+  'REPORT', // fixture evidence filename "browser-report.md"
+  'CLI', // "Codex CLI" provider display name in the attached-sessions list
+]);
+
+/** Fails if any on-screen token has the reason-code shape and isn't known-safe UI copy. */
+async function assertNoRawReasonCode(page: Page): Promise<void> {
+  const text = (
+    await page.locator('#mission-workspace, .mission-shell-context').allInnerTexts()
+  ).join('\n');
+  const found = [...text.matchAll(/\b[A-Z][A-Z0-9_]{2,63}\b/g)]
+    .map((match) => match[0])
+    .filter((token) => !UPPERCASE_UI_COPY.has(token));
+  expect(found, 'no raw reason code on screen').toEqual([]);
+}
 
 async function confirmMission(app: LaunchedApp, envelope: MissionEnvelopeInput, objective: string) {
   const preview = await app.call<MissionPreviewView>('missions.preview', {
@@ -235,12 +278,7 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
       await option.click();
       await expect(app.page.locator('#mission-workspace h1')).toBeFocused();
       await expect(list.getByRole('option', { selected: true })).toHaveCount(1);
-      const text = await app.page
-        .locator('#mission-workspace, .mission-shell-context')
-        .allInnerTexts();
-      expect(text.join('\n'), 'no raw reason code on screen').not.toMatch(
-        /\b[A-Z]{3,}_[A-Z0-9_]+\b/,
-      );
+      await assertNoRawReasonCode(app.page);
     };
 
     await select(running);
@@ -333,6 +371,7 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await expect(
       app.page.locator('.mission-lifecycle').getByText('Recovery required', { exact: true }),
     ).toBeVisible();
+    await assertNoRawReasonCode(app.page);
     await expect(
       app.page
         .locator('.mission-action-row')

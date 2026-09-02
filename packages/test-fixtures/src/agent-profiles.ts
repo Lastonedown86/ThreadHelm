@@ -14,10 +14,10 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const HIRE_MANIFEST_SPEC = 'munder-difflin/hire@1';
-export const MAX_HIRE_MANIFEST_TOKEN_CAP = 2_000_000;
+export const LEGACY_MANIFEST_SPEC = 'munder-difflin/hire@1';
+export const MAX_AGENT_MANIFEST_TOKEN_CAP = 2_000_000;
 
-export interface HireManifestFixtureFields {
+export interface AgentManifestFixtureFields {
   readonly spec: string;
   readonly name: string;
   readonly description: string;
@@ -30,28 +30,28 @@ export interface HireManifestFixtureFields {
   readonly author: string;
 }
 
-export interface HireManifestFixture {
+export interface AgentManifestFixture {
   readonly basename: string;
-  readonly fields: HireManifestFixtureFields;
+  readonly fields: AgentManifestFixtureFields;
   readonly text: string;
   readonly digest: string;
 }
 
-function manifestText(fields: HireManifestFixtureFields): string {
+function manifestText(fields: AgentManifestFixtureFields): string {
   return JSON.stringify(fields);
 }
 
-export function hireManifestDigest(text: string): string {
+export function agentManifestDigest(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('hex');
 }
 
-function fixture(basename: string, fields: HireManifestFixtureFields): HireManifestFixture {
+function fixture(basename: string, fields: AgentManifestFixtureFields): AgentManifestFixture {
   const text = manifestText(fields);
-  return { basename, fields, text, digest: hireManifestDigest(text) };
+  return { basename, fields, text, digest: agentManifestDigest(text) };
 }
 
 /** Writes a fixture's exact text to disk and returns the file's full path. */
-export function writeHireManifestFile(dir: string, basename: string, text: string): string {
+export function writeAgentManifestFile(dir: string, basename: string, text: string): string {
   mkdirSync(dir, { recursive: true });
   const path = join(dir, basename);
   writeFileSync(path, text, 'utf8');
@@ -61,9 +61,9 @@ export function writeHireManifestFile(dir: string, basename: string, text: strin
 const CURATOR = 'Roster Curator';
 
 /** Ten sanitized roster manifests: four Opus, six Sonnet; eight isolated, two not. */
-export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
-  fixture('black-panther.hire.json', {
-    spec: HIRE_MANIFEST_SPEC,
+export const MARVEL_ROSTER_FIXTURES: readonly AgentManifestFixture[] = [
+  fixture('black-panther.agent.json', {
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Black Panther',
     description: 'Reviews security-sensitive changes before they reach a session.',
     provider: 'claude-code',
@@ -74,8 +74,8 @@ export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
     tokenCap: 1_000_000,
     author: CURATOR,
   }),
-  fixture('captain-america.hire.json', {
-    spec: HIRE_MANIFEST_SPEC,
+  fixture('captain-america.agent.json', {
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Captain America',
     description: 'Reviews whether a proposed change follows team conventions.',
     provider: 'claude-code',
@@ -86,8 +86,8 @@ export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
     tokenCap: 500_000,
     author: CURATOR,
   }),
-  fixture('doctor-strange.hire.json', {
-    spec: HIRE_MANIFEST_SPEC,
+  fixture('doctor-strange.agent.json', {
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Doctor Strange',
     description: 'Reviews edge cases and time-based logic before they reach a session.',
     provider: 'codex-cli',
@@ -98,8 +98,8 @@ export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
     tokenCap: 2_000_000,
     author: CURATOR,
   }),
-  fixture('maria-hill.hire.json', {
-    spec: HIRE_MANIFEST_SPEC,
+  fixture('maria-hill.agent.json', {
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Maria Hill',
     description: 'Reviews operational readiness before a change is presented.',
     provider: 'claude-code',
@@ -110,8 +110,8 @@ export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
     tokenCap: 250_000,
     author: CURATOR,
   }),
-  fixture('nick-fury.hire.json', {
-    spec: HIRE_MANIFEST_SPEC,
+  fixture('nick-fury.agent.json', {
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Nick Fury',
     description: 'Coordinates review priority across the roster.',
     provider: 'claude-code',
@@ -122,8 +122,8 @@ export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
     tokenCap: 750_000,
     author: CURATOR,
   }),
-  fixture('she-hulk.hire.json', {
-    spec: HIRE_MANIFEST_SPEC,
+  fixture('she-hulk.agent.json', {
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'She-Hulk',
     description: 'Reviews contract and API surface changes.',
     provider: 'claude-code',
@@ -134,8 +134,8 @@ export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
     tokenCap: 500_000,
     author: CURATOR,
   }),
-  fixture('shuri.hire.json', {
-    spec: HIRE_MANIFEST_SPEC,
+  fixture('shuri.agent.json', {
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Shuri',
     description: 'Reviews build and tooling changes.',
     provider: 'codex-cli',
@@ -146,8 +146,8 @@ export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
     tokenCap: 1_000_000,
     author: CURATOR,
   }),
-  fixture('spider-man.hire.json', {
-    spec: HIRE_MANIFEST_SPEC,
+  fixture('spider-man.agent.json', {
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Spider-Man',
     description: 'Reviews small, fast-turnaround changes.',
     provider: 'claude-code',
@@ -158,8 +158,8 @@ export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
     tokenCap: 100_000,
     author: CURATOR,
   }),
-  fixture('vision.hire.json', {
-    spec: HIRE_MANIFEST_SPEC,
+  fixture('vision.agent.json', {
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Vision',
     description: 'Reviews data consistency and invariants.',
     provider: 'claude-code',
@@ -170,8 +170,8 @@ export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
     tokenCap: 500_000,
     author: CURATOR,
   }),
-  fixture('war-machine.hire.json', {
-    spec: HIRE_MANIFEST_SPEC,
+  fixture('war-machine.agent.json', {
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'War Machine',
     description: 'Reviews infrastructure and deployment changes.',
     provider: 'claude-code',
@@ -185,14 +185,14 @@ export const MARVEL_ROSTER_FIXTURES: readonly HireManifestFixture[] = [
 ];
 
 /** Same content, a different basename: import must dedupe by digest, not filename. */
-export const DUPLICATE_HIRE_MANIFEST_FIXTURE: HireManifestFixture = fixture(
-  'black-panther-copy.hire.json',
+export const DUPLICATE_AGENT_MANIFEST_FIXTURE: AgentManifestFixture = fixture(
+  'black-panther-copy.agent.json',
   MARVEL_ROSTER_FIXTURES[0]!.fields,
 );
 
 /** Same identity (name + author) as the first roster entry, different content/digest. */
-export const REVISED_HIRE_MANIFEST_FIXTURE: HireManifestFixture = fixture(
-  'black-panther.hire.json',
+export const REVISED_AGENT_MANIFEST_FIXTURE: AgentManifestFixture = fixture(
+  'black-panther.agent.json',
   {
     ...MARVEL_ROSTER_FIXTURES[0]!.fields,
     description: 'Revised: also reviews dependency updates for supply-chain risk.',
@@ -201,10 +201,10 @@ export const REVISED_HIRE_MANIFEST_FIXTURE: HireManifestFixture = fixture(
 );
 
 /** Schema-valid but hostile-looking text; must be stored inertly, never executed. */
-export const HOSTILE_TEXT_HIRE_MANIFEST_FIXTURE: HireManifestFixture = fixture(
-  'hostile-text.hire.json',
+export const HOSTILE_TEXT_AGENT_MANIFEST_FIXTURE: AgentManifestFixture = fixture(
+  'hostile-text.agent.json',
   {
-    spec: HIRE_MANIFEST_SPEC,
+    spec: LEGACY_MANIFEST_SPEC,
     name: '<img src=x onerror=alert(1)>',
     description: "'; DROP TABLE agent_profiles;--",
     provider: 'claude-code',
@@ -218,10 +218,10 @@ export const HOSTILE_TEXT_HIRE_MANIFEST_FIXTURE: HireManifestFixture = fixture(
 );
 
 /** Schema-valid, but the requested model is not in any fixture availability map. */
-export const UNAVAILABLE_MODEL_HIRE_MANIFEST_FIXTURE: HireManifestFixture = fixture(
-  'unavailable-model.hire.json',
+export const UNAVAILABLE_MODEL_AGENT_MANIFEST_FIXTURE: AgentManifestFixture = fixture(
+  'unavailable-model.agent.json',
   {
-    spec: HIRE_MANIFEST_SPEC,
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Ultron',
     description: 'Requests a model ThreadHelm does not currently make available.',
     provider: 'claude-code',
@@ -235,10 +235,10 @@ export const UNAVAILABLE_MODEL_HIRE_MANIFEST_FIXTURE: HireManifestFixture = fixt
 );
 
 /** tokenCap exceeds the product ceiling; must fail preview as an unsafe numeric value. */
-export const EXCESSIVE_BOUND_HIRE_MANIFEST_FIXTURE: HireManifestFixture = fixture(
-  'excessive-bound.hire.json',
+export const EXCESSIVE_BOUND_AGENT_MANIFEST_FIXTURE: AgentManifestFixture = fixture(
+  'excessive-bound.agent.json',
   {
-    spec: HIRE_MANIFEST_SPEC,
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Thanos',
     description: 'Requests a token cap above the two-million ceiling.',
     provider: 'claude-code',
@@ -246,16 +246,16 @@ export const EXCESSIVE_BOUND_HIRE_MANIFEST_FIXTURE: HireManifestFixture = fixtur
     goal: 'Exercise the excessive-bound rejection path.',
     capabilities: ['code_review'],
     isolate: true,
-    tokenCap: MAX_HIRE_MANIFEST_TOKEN_CAP + 1,
+    tokenCap: MAX_AGENT_MANIFEST_TOKEN_CAP + 1,
     author: CURATOR,
   },
 );
 
 /** The "before" half of a changed-after-preview scenario; pair with the field below. */
-export const CHANGED_AFTER_PREVIEW_ORIGINAL_FIXTURE: HireManifestFixture = fixture(
-  'changed-after-preview.hire.json',
+export const CHANGED_AFTER_PREVIEW_ORIGINAL_FIXTURE: AgentManifestFixture = fixture(
+  'changed-after-preview.agent.json',
   {
-    spec: HIRE_MANIFEST_SPEC,
+    spec: LEGACY_MANIFEST_SPEC,
     name: 'Ant-Man',
     description: 'Original content reviewed at preview time.',
     provider: 'claude-code',
@@ -269,8 +269,8 @@ export const CHANGED_AFTER_PREVIEW_ORIGINAL_FIXTURE: HireManifestFixture = fixtu
 );
 
 /** The "after" half: same basename, edited on disk after preview but before confirm. */
-export const CHANGED_AFTER_PREVIEW_EDITED_FIXTURE: HireManifestFixture = fixture(
-  'changed-after-preview.hire.json',
+export const CHANGED_AFTER_PREVIEW_EDITED_FIXTURE: AgentManifestFixture = fixture(
+  'changed-after-preview.agent.json',
   {
     ...CHANGED_AFTER_PREVIEW_ORIGINAL_FIXTURE.fields,
     goal: 'This text was edited after preview, so confirmImport must fail closed.',
@@ -278,7 +278,7 @@ export const CHANGED_AFTER_PREVIEW_EDITED_FIXTURE: HireManifestFixture = fixture
 );
 
 /** Raw text that must fail strict schema validation for a distinct reason each. */
-export const MALFORMED_HIRE_MANIFEST_TEXT_FIXTURES: readonly { reason: string; text: string }[] = [
+export const MALFORMED_AGENT_MANIFEST_TEXT_FIXTURES: readonly { reason: string; text: string }[] = [
   {
     reason: 'unknown field (role)',
     text: JSON.stringify({ ...MARVEL_ROSTER_FIXTURES[0]!.fields, role: 'supervisor' }),
@@ -286,8 +286,8 @@ export const MALFORMED_HIRE_MANIFEST_TEXT_FIXTURES: readonly { reason: string; t
   {
     reason: 'duplicate top-level key',
     text: manifestText(MARVEL_ROSTER_FIXTURES[0]!.fields).replace(
-      `"spec":"${HIRE_MANIFEST_SPEC}"`,
-      `"spec":"${HIRE_MANIFEST_SPEC}","spec":"${HIRE_MANIFEST_SPEC}"`,
+      `"spec":"${LEGACY_MANIFEST_SPEC}"`,
+      `"spec":"${LEGACY_MANIFEST_SPEC}","spec":"${LEGACY_MANIFEST_SPEC}"`,
     ),
   },
   {

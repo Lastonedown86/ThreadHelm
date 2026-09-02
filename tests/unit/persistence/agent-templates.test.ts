@@ -177,7 +177,7 @@ describe('agent-template persistence', () => {
       goal: 'Untrusted persona goal',
       manifestSpec: 'munder-difflin/hire@1',
       compatibility: 'compatible',
-      sourceBasename: 'quality.hire.json',
+      sourceBasename: 'quality.agent.json',
       createdAt: AT,
     });
     const draft = templates.createDraft({ profileRevisionId: profile.revisionId, createdAt: AT });
@@ -219,7 +219,7 @@ describe('agent-template persistence', () => {
       goal: 'Copy this reviewed scaffold',
       manifestSpec: 'munder-difflin/hire@1',
       compatibility: 'compatible',
-      sourceBasename: 'historical-source.hire.json',
+      sourceBasename: 'historical-source.agent.json',
       createdAt: AT,
     });
     const copied = templates.saveRevision({
@@ -531,7 +531,7 @@ describe('agent-template persistence', () => {
       draftId: draft.draftId,
       draftVersion: 1,
       digest: 'a'.repeat(64),
-      targetBasename: 'draft.hire.json',
+      targetBasename: 'draft.agent.json',
       targetIdentity: 'b'.repeat(64),
       createdAt: AT,
     });

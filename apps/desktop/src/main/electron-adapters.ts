@@ -77,7 +77,7 @@ export function electronProfileFilePicker(
       const options = {
         title: 'Choose an agent profile manifest',
         properties: ['openFile', 'dontAddToRecent'] as ('openFile' | 'dontAddToRecent')[],
-        filters: [{ name: 'ThreadHelm hire manifests', extensions: ['json'] }],
+        filters: [{ name: 'ThreadHelm agent manifests', extensions: ['json'] }],
       };
       const result = window
         ? await dialog.showOpenDialog(window, options)
@@ -96,8 +96,8 @@ export function electronAgentExportTargetPicker(
       const window = getWindow();
       const options = {
         title: 'Export agent profile',
-        defaultPath: 'agent.hire.json',
-        filters: [{ name: 'ThreadHelm hire manifests', extensions: ['hire.json'] }],
+        defaultPath: 'agent-manifest.json',
+        filters: [{ name: 'ThreadHelm agent manifests', extensions: ['agent.json'] }],
       };
       const result = window
         ? await dialog.showSaveDialog(window, options)

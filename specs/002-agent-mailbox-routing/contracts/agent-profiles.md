@@ -73,7 +73,7 @@ bound preview without another settings-review action; the only checkbox confirms
 Model/effort priority is one-run override > exact profile revision request > task-type/project policy >
 CLI default. Permission priority is one-run selection > task/project policy > provider default,
 excluding profile/persona/template/mission sources and persisted bypass. Readiness probing and app load
-never prompt. Effort and permission policy are launch state and absent from the hire manifest.
+never prompt. Effort and permission policy are launch state and absent from the agent manifest.
 
 ## Acceptance roster
 

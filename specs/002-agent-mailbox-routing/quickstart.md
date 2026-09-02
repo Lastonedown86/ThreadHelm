@@ -67,7 +67,7 @@ persisted bypass. Readiness probes and app load do not prompt. Automated tests r
 Routine test authoring/failure analysis recommends the lowest-cost capable approved model at
 low/medium effort; explicitly select or record escalation for high-cost/high-effort. Planning may use
 only ChatGPT/OpenAI, Claude, or Google Antigravity; runtime remains Codex CLI and Claude Code. Effort
-and permission policy are not hire-manifest fields.
+and permission policy are not agent-manifest fields.
 
 Expected assignments:
 
@@ -275,7 +275,7 @@ Expected:
 - Final review shows exact JSON, compatibility, template provenance, literal substitutions, and the
   exact save-as-profile or export effect before confirmation.
 - Save-as-profile passes the same strict/digest profile path; export rechecks the selected
-  `*.hire.json` target and never overwrites without a separate confirmation.
+  `*.agent.json` target and never overwrites without a separate confirmation.
 - Restart, cancellation, stale template, unresolved variable, target collision, and write failure
   retain an honest recoverable state and launch no session.
 - Shipped templates are narrow, generic, text-only roles; locally saved Marvel templates remain user data.
@@ -291,7 +291,7 @@ Manual desktop acceptance:
    resume the saved draft; verify the same values and step.
 2. Review the exact JSON and digest. Check **I reviewed this exact manifest**, then **Save
    profile**. Verify one reviewed profile appears and no session launches.
-3. Create another draft, choose **Export…**, and select an existing `*.hire.json` file. The
+3. Create another draft, choose **Export…**, and select an existing `*.agent.json` file. The
    full selected target must appear. **Confirm export** stays disabled until **Replace this
    existing file** is checked. Canceling the native picker or export confirmation changes no file.
 4. Import a reviewed local Marvel profile through the existing profile-import dialog. Start a

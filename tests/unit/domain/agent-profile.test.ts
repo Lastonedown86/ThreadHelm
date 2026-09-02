@@ -1,5 +1,5 @@
 /**
- * T090 (Feature 002, US6) — failing-first domain tests for reviewed hire
+ * T090 (Feature 002, US6) — failing-first domain tests for reviewed agent
  * manifests. `packages/domain/src/agent-profile.ts` does not exist yet; every
  * import below is expected to fail until T096 implements it.
  *
@@ -7,7 +7,7 @@
  */
 
 import {
-  HireManifestV1,
+  AgentManifestV1,
   ThreadHelmError,
   type ProfileCompatibility,
   type ProfileState,
@@ -20,7 +20,7 @@ import {
   MAX_GOAL_LENGTH,
   MAX_MANIFEST_BYTES,
   MAX_TOKEN_CAP,
-  parseHireManifest,
+  parseAgentManifest,
   PROFILE_STATE_TRANSITIONS,
   resolveProfileRuntimeProvider,
 } from '@threadhelm/domain';
@@ -42,18 +42,18 @@ function manifestText(overrides: Record<string, unknown> = {}): string {
   });
 }
 
-describe('hire manifest strict schema and normalization', () => {
+describe('agent manifest strict schema and normalization', () => {
   it.each(['threadhelm/agent-profile@1', 'munder-difflin/hire@1'])(
     'accepts %s without changing the imported schema identifier',
     (spec) => {
-      expect(parseHireManifest(manifestText({ spec })).spec).toBe(spec);
+      expect(parseAgentManifest(manifestText({ spec })).spec).toBe(spec);
     },
   );
 
   it.each(['threadhelm/agent-profile@2', 'munder-difflin/hire@2', 'other/profile@1'])(
     'rejects unsupported format %s',
     (spec) => {
-      expect(() => parseHireManifest(manifestText({ spec }))).toThrowError(
+      expect(() => parseAgentManifest(manifestText({ spec }))).toThrowError(
         expect.objectContaining({ code: 'PROFILE_SCHEMA_INVALID' }),
       );
     },
@@ -73,7 +73,7 @@ describe('hire manifest strict schema and normalization', () => {
       author: '  Roster Curator  ',
     });
 
-    const parsed = parseHireManifest(raw);
+    const parsed = parseAgentManifest(raw);
 
     expect(parsed).toEqual({
       spec: 'munder-difflin/hire@1',
@@ -87,11 +87,11 @@ describe('hire manifest strict schema and normalization', () => {
       tokenCap: 500_000,
       author: 'Roster Curator',
     });
-    expect(HireManifestV1.parse(parsed)).toEqual(parsed);
+    expect(AgentManifestV1.parse(parsed)).toEqual(parsed);
   });
 
   it('rejects an unknown top-level field', () => {
-    expect(() => parseHireManifest(manifestText({ role: 'supervisor' }))).toThrowError(
+    expect(() => parseAgentManifest(manifestText({ role: 'supervisor' }))).toThrowError(
       expect.objectContaining({ code: 'PROFILE_SCHEMA_INVALID' }),
     );
   });
@@ -101,7 +101,7 @@ describe('hire manifest strict schema and normalization', () => {
       '"spec":"munder-difflin/hire@1"',
       '"spec":"munder-difflin/hire@1","spec":"munder-difflin/hire@1"',
     );
-    expect(() => parseHireManifest(withDuplicate)).toThrowError(
+    expect(() => parseAgentManifest(withDuplicate)).toThrowError(
       expect.objectContaining({ code: 'PROFILE_SCHEMA_INVALID' }),
     );
   });
@@ -109,27 +109,27 @@ describe('hire manifest strict schema and normalization', () => {
   it('rejects a file larger than the 64 KiB read bound', () => {
     const oversizedGoal = 'a'.repeat(MAX_MANIFEST_BYTES);
     expect(() =>
-      parseHireManifest(manifestText({ goal: oversizedGoal, description: oversizedGoal })),
+      parseAgentManifest(manifestText({ goal: oversizedGoal, description: oversizedGoal })),
     ).toThrowError(expect.objectContaining({ code: 'PROFILE_OVERSIZED' }));
   });
 
   it('rejects a goal that exceeds the bounded goal length even in a small file', () => {
     const tooLong = 'a'.repeat(MAX_GOAL_LENGTH + 1);
-    expect(() => parseHireManifest(manifestText({ goal: tooLong }))).toThrowError(
+    expect(() => parseAgentManifest(manifestText({ goal: tooLong }))).toThrowError(
       expect.objectContaining({ code: 'PROFILE_OVERSIZED' }),
     );
   });
 
   it('rejects an invalid capability label', () => {
     expect(() =>
-      parseHireManifest(manifestText({ capabilities: ['NOT-a-valid-label!'] })),
+      parseAgentManifest(manifestText({ capabilities: ['NOT-a-valid-label!'] })),
     ).toThrowError(expect.objectContaining({ code: 'PROFILE_SCHEMA_INVALID' }));
   });
 
   it.each([-1, 0, 1.5, MAX_TOKEN_CAP + 1, Number.NaN])(
     'rejects an unsafe tokenCap value: %s',
     (tokenCap) => {
-      expect(() => parseHireManifest(manifestText({ tokenCap }))).toThrowError(
+      expect(() => parseAgentManifest(manifestText({ tokenCap }))).toThrowError(
         expect.objectContaining({ code: 'PROFILE_SCHEMA_INVALID' }),
       );
     },
@@ -137,12 +137,12 @@ describe('hire manifest strict schema and normalization', () => {
 
   it('rejects a provider outside the supported set', () => {
     expect(() =>
-      parseHireManifest(manifestText({ provider: 'unsupported-provider' })),
+      parseAgentManifest(manifestText({ provider: 'unsupported-provider' })),
     ).toThrowError(expect.objectContaining({ code: 'PROFILE_SCHEMA_INVALID' }));
   });
 
   it('rejects an "effort" field: effort is launch policy, never part of the manifest', () => {
-    expect(() => parseHireManifest(manifestText({ effort: 'high' }))).toThrowError(
+    expect(() => parseAgentManifest(manifestText({ effort: 'high' }))).toThrowError(
       expect.objectContaining({ code: 'PROFILE_SCHEMA_INVALID' }),
     );
   });
@@ -150,7 +150,7 @@ describe('hire manifest strict schema and normalization', () => {
 
 describe('persona and capability data never imply authority', () => {
   it('accepts role-shaped capability words as inert routing labels only', () => {
-    const parsed = parseHireManifest(
+    const parsed = parseAgentManifest(
       manifestText({ capabilities: ['supervisor', 'reviewer', 'triage'] }),
     );
     expect(parsed.capabilities).toEqual(['supervisor', 'reviewer', 'triage']);
@@ -159,8 +159,8 @@ describe('persona and capability data never imply authority', () => {
   });
 
   it('never assigns stable identity from the mutable display name', () => {
-    const starkParsed = parseHireManifest(manifestText({ name: 'Tony Stark' }));
-    const ironManParsed = parseHireManifest(manifestText({ name: 'Iron Man' }));
+    const starkParsed = parseAgentManifest(manifestText({ name: 'Tony Stark' }));
+    const ironManParsed = parseAgentManifest(manifestText({ name: 'Iron Man' }));
     expect(starkParsed).not.toHaveProperty('id');
     expect(starkParsed).not.toHaveProperty('profileId');
     expect(ironManParsed).not.toHaveProperty('id');
@@ -170,7 +170,7 @@ describe('persona and capability data never imply authority', () => {
 
 describe('compatibility evaluation is rechecked, never substituted', () => {
   it('keeps the portable provider value while resolving its runtime adapter explicitly', () => {
-    const parsed = parseHireManifest(manifestText({ provider: 'claude' }));
+    const parsed = parseAgentManifest(manifestText({ provider: 'claude' }));
     expect(parsed.provider).toBe('claude');
     expect(resolveProfileRuntimeProvider(parsed.provider)).toBe('claude-code');
     expect(

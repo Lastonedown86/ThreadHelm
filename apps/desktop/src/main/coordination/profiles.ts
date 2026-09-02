@@ -11,7 +11,7 @@ import {
   ProfilePreviewView,
   ThreadHelmError,
   TOKEN_TTL_MS,
-  type HireManifestV1,
+  type AgentManifestV1,
   type OperationRequest,
   type OperationResponse,
   type ProfileCompatibility,
@@ -21,7 +21,7 @@ import {
 import {
   evaluateProfileCompatibility,
   MAX_MANIFEST_BYTES,
-  parseHireManifest,
+  parseAgentManifest,
 } from '@threadhelm/domain';
 import type { ImportProfileManifestInput } from '@threadhelm/persistence';
 import type { Context } from '../context.js';
@@ -36,7 +36,7 @@ interface PreviewSnapshot {
   path: string;
   basename: string;
   digest: string;
-  manifest: HireManifestV1;
+  manifest: AgentManifestV1;
   compatibility: ProfileCompatibility;
   compatibilityReasons: readonly string[];
 }
@@ -59,7 +59,7 @@ export interface ProfileService {
   confirmDelete(request: OperationRequest<'profiles.confirmDelete'>): AgentProfileSummaryView;
   /** Reuses the exact digest-bound import path for wizard completion. */
   saveReviewedManifest(
-    manifest: HireManifestV1,
+    manifest: AgentManifestV1,
     digest: string,
     sourceBasename: string,
   ): AgentProfileSummaryView;
@@ -73,14 +73,14 @@ async function readBounded(path: string): Promise<{ raw: string; digest: string 
     if (!stats.isFile() || stats.size > MAX_MANIFEST_BYTES) {
       throw new ThreadHelmError(
         'PROFILE_OVERSIZED',
-        'Hire manifest exceeds the maximum read size.',
+        'Agent manifest exceeds the maximum read size.',
       );
     }
     const bytes = await handle.readFile();
     if (bytes.byteLength > MAX_MANIFEST_BYTES) {
       throw new ThreadHelmError(
         'PROFILE_OVERSIZED',
-        'Hire manifest exceeds the maximum read size.',
+        'Agent manifest exceeds the maximum read size.',
       );
     }
     return {
@@ -125,7 +125,7 @@ export function createProfileService(ctx: Context): ProfileService {
   };
 
   const saveReviewedManifest = (
-    manifest: HireManifestV1,
+    manifest: AgentManifestV1,
     digest: string,
     sourceBasename: string,
   ): AgentProfileSummaryView => {
@@ -182,7 +182,7 @@ export function createProfileService(ctx: Context): ProfileService {
         );
       }
       const { raw, digest } = await readBounded(path);
-      const manifest = parseHireManifest(raw);
+      const manifest = parseAgentManifest(raw);
       const available = Object.fromEntries(
         ctx.adapters.map((adapter) => [adapter.id, TESTED_MODELS[adapter.id]]),
       );
@@ -221,9 +221,9 @@ export function createProfileService(ctx: Context): ProfileService {
         );
       }
       const current = await readBounded(snapshot.path);
-      let parsed: HireManifestV1;
+      let parsed: AgentManifestV1;
       try {
-        parsed = parseHireManifest(current.raw);
+        parsed = parseAgentManifest(current.raw);
       } catch {
         throw new ThreadHelmError(
           'PROFILE_DIGEST_CHANGED',

@@ -14,7 +14,7 @@ the extensive graphics."
 
 This roadmap selects Munder Difflin's mailbox/actor routing, shared blackboard/memory, and autonomous
 supervisor behaviors as the mechanical alignment target. The upstream model gives each agent an
-addressed inbox, persistent memory, a shared task/plan surface, portable reviewed hire profiles with
+addressed inbox, persistent memory, a shared task/plan surface, portable reviewed agent profiles with
 local creation templates, and a supervisor that routes and adjudicates work. ThreadHelm will pursue those coordination outcomes without adopting Munder
 Difflin's office simulation, avatars, graphics-heavy memory graph, Git/file storage layout, blanket
 "god mode," remote control, or provider-specific authority shortcuts.
@@ -274,7 +274,7 @@ A user creates an agent through a compact step-by-step wizard, starts from a saf
 user-saved template, customizes the agent's identity and role, reviews the exact resulting
 `threadhelm/agent-profile@1` manifest, and then saves, exports, or imports it without launching anything.
 
-**Why this priority**: Importing existing hires preserves the user's roster; a guided creator makes
+**Why this priority**: Importing existing agents preserves the user's roster; a guided creator makes
 that roster maintainable without requiring hand-edited JSON or turning persona design into authority.
 
 **Independent Test**: Create a new themed agent from a generic quality template, resume a saved
@@ -362,8 +362,8 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
 - Mission budget, concurrency, elapsed-time, task-count, or retry bounds are reached mid-run.
 - The supervisor proposes launching a provider/profile or entering a workspace outside the approved
   mission envelope.
-- A hire manifest is duplicated by filename, name, or digest, or is changed after its preview.
-- A hire manifest requests an unavailable model, an excessive token cap, unknown capabilities, or
+- A agent manifest is duplicated by filename, name, or digest, or is changed after its preview.
+- A agent manifest requests an unavailable model, an excessive token cap, unknown capabilities, or
   isolation behavior ThreadHelm cannot guarantee.
 - Persona or goal text attempts to grant itself supervisor status, tools, workspace access, external
   authority, or permission to bypass review.
@@ -537,7 +537,7 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
   valid input, and the final review MUST validate the complete strict manifest and show exact JSON.
 - **FR-063**: Saving a wizard result as a profile MUST use the same revision, digest, compatibility,
   confirmation, and non-authority contract as imported profiles and MUST launch no session.
-- **FR-064**: Export MUST write only a user-confirmed `*.hire.json` target, MUST detect existing or
+- **FR-064**: Export MUST write only a user-confirmed `*.agent.json` target, MUST detect existing or
   changed targets, MUST require explicit overwrite confirmation, and MUST leave a safely reportable
   result after write failure.
 - **FR-065**: Saving, editing, duplicating, disabling, or deleting a user template MUST be
@@ -668,7 +668,7 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
   conflict, failure, authority requirement, or ambiguous target prevents safe continuation.
 - **Shared Memory Entry**: A scoped, revisioned fact, decision, constraint, artifact reference, or
   lesson with deliberate content, provenance, citations, confidence metadata, and lifecycle status.
-- **Agent Profile**: A local, user-reviewed representation of one portable hire manifest, including
+- **Agent Profile**: A local, user-reviewed representation of one portable agent manifest, including
   its display metadata, untrusted goal, requested provider/model/capabilities/isolation/token cap,
   compatibility, enabled state, stable identity, and current revision.
 - **Agent Profile Revision**: An immutable digest-bound import or edit record with its source,
@@ -798,7 +798,7 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
   ChatGPT/OpenAI, Anthropic Claude, and Google Antigravity before assigning stories.
 - Representative fixture agents must be able to simulate recipient readiness, duplicate delivery,
   reply chains, refusal, failure, recovery, and ambiguous provider evidence without real credentials.
-- Sanitized hire fixtures must cover valid, duplicate, revised, malformed, hostile-text, unavailable-
+- Sanitized agent manifest fixtures must cover valid, duplicate, revised, malformed, hostile-text, unavailable-
   model, excessive-bound, and changed-after-preview cases without committing the user's Downloads files.
 - Wizard/template fixtures must cover draft recovery, stale template revisions, literal variable
   substitution, exact JSON preview, save-as-profile, safe export, overwrite review, and cancellation.
@@ -807,4 +807,4 @@ automatic reassignment inside the mission envelope plus a fail-closed human esca
 
 ## Provider launch confirmation policy
 
-Before starting any provider CLI session, ThreadHelm shows resolved provider/model/effort and the separately resolved runtime permission policy and source. Model, effort, and permission controls are direct choices that automatically refresh the bound launch preview; they do not require a second settings-review action. One checkbox confirms only the folder-access boundary and remains independent of those choices. Permission policy is never persona or hire-schema data. For an autonomous mission, the mission-envelope confirmation may serve as pre-authorization for later worker starts only when it shows and binds the exact profile revision, provider/model/effort, effective permission policy/provider mapping, isolation/resource/elapsed/turn/no-progress limits, workspace/folder boundary, and automatic-start permission. A Claude automatic worker start uses real `auto` only after capability proof; unavailable `auto` holds for Manual or bounded allowlist handling and never falls through to `bypassPermissions`. Bypass is an explicit isolated one-run break-glass override and cannot be mission-pre-authorized, persisted, inherited, or restored. Electron main revalidates the complete tuple immediately before launch; drift, unavailability, or substitution holds the assignment for an exact user action instead of prompting or launching silently. Recovery never consumes launch permission until the user explicitly resumes the mission and re-establishes a valid supervisor. Readiness probing and app load never prompt. Model/effort priority is one-run override > exact agent/profile revision request > task-type/project policy > CLI default. Permission priority is one-run selection > task/project policy > provider default; profiles, personas, templates, and missions are not permission-policy sources, and no persisted source may select bypass. CLI default remains an explicit model/effort option. Automated tests use no LLM; routine test authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort, while high-cost/high-effort requires explicit selection or recorded escalation. Planning providers are ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers remain Codex CLI and Claude Code. Effort and permission policy are launch state, not hire-schema data.
+Before starting any provider CLI session, ThreadHelm shows resolved provider/model/effort and the separately resolved runtime permission policy and source. Model, effort, and permission controls are direct choices that automatically refresh the bound launch preview; they do not require a second settings-review action. One checkbox confirms only the folder-access boundary and remains independent of those choices. Permission policy is never persona or agent-manifest data. For an autonomous mission, the mission-envelope confirmation may serve as pre-authorization for later worker starts only when it shows and binds the exact profile revision, provider/model/effort, effective permission policy/provider mapping, isolation/resource/elapsed/turn/no-progress limits, workspace/folder boundary, and automatic-start permission. A Claude automatic worker start uses real `auto` only after capability proof; unavailable `auto` holds for Manual or bounded allowlist handling and never falls through to `bypassPermissions`. Bypass is an explicit isolated one-run break-glass override and cannot be mission-pre-authorized, persisted, inherited, or restored. Electron main revalidates the complete tuple immediately before launch; drift, unavailability, or substitution holds the assignment for an exact user action instead of prompting or launching silently. Recovery never consumes launch permission until the user explicitly resumes the mission and re-establishes a valid supervisor. Readiness probing and app load never prompt. Model/effort priority is one-run override > exact agent/profile revision request > task-type/project policy > CLI default. Permission priority is one-run selection > task/project policy > provider default; profiles, personas, templates, and missions are not permission-policy sources, and no persisted source may select bypass. CLI default remains an explicit model/effort option. Automated tests use no LLM; routine test authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort, while high-cost/high-effort requires explicit selection or recorded escalation. Planning providers are ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers remain Codex CLI and Claude Code. Effort and permission policy are launch state, not agent-manifest data.

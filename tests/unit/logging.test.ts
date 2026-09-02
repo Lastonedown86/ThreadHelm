@@ -22,7 +22,7 @@ describe('content-free logging boundary', () => {
       { goal: 'private goal' },
       () => new Date('2026-08-30T00:00:00Z'),
     );
-    logger.child({ exportPath: 'C:\\private\\target.hire.json' }).info('mission.changed', {
+    logger.child({ exportPath: 'C:\\private\\target.agent.json' }).info('mission.changed', {
       event: 'forged',
       level: 'forged',
       ts: 'forged',

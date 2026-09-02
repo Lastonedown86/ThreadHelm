@@ -331,8 +331,8 @@ describe('agent wizard contracts', () => {
       AgentWizardExportPreviewView.parse({
         exportToken: 'x'.repeat(24),
         draftId: draft.draftId,
-        displayPath: 'C:\\x.hire.json',
-        basename: 'x.hire.json',
+        displayPath: 'C:\\x.agent.json',
+        basename: 'x.agent.json',
         collision: false,
         requiresOverwriteConfirmation: false,
         expiresAt: '2026-08-30T12:00:00.000Z',

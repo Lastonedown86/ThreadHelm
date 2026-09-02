@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  HireManifestV1,
+  AgentManifestV1,
   MAX_TOKEN_CAP,
   UpdateAgentWizardStepRequest,
   type OperationResponse,
@@ -27,7 +27,7 @@ const TITLES: Record<Step, string> = {
   runtime: 'Runtime requests',
   review: 'Review',
 };
-const OWNED: Record<Step, readonly (keyof HireManifestV1)[]> = {
+const OWNED: Record<Step, readonly (keyof AgentManifestV1)[]> = {
   start: [],
   identity: ['name', 'description', 'author'],
   role: ['goal'],
@@ -256,11 +256,11 @@ export function AgentProfileWizard({
   }
 
   function validate(currentStep: Step): boolean {
-    const parsed = HireManifestV1.safeParse(fieldsRef.current);
+    const parsed = AgentManifestV1.safeParse(fieldsRef.current);
     const issues = parsed.success
       ? []
       : parsed.error.issues.filter((issue) =>
-          OWNED[currentStep].includes(String(issue.path[0]) as keyof HireManifestV1),
+          OWNED[currentStep].includes(String(issue.path[0]) as keyof AgentManifestV1),
         );
     const messages = [
       ...new Set(
@@ -372,7 +372,7 @@ export function AgentProfileWizard({
         setConfirmed(false);
         throw cause;
       }
-      onCompleted('Exported the reviewed hire manifest. No agent was launched.');
+      onCompleted('Exported the reviewed agent manifest. No agent was launched.');
     });
 
   const renderText = (key: 'name' | 'description' | 'author' | 'goal', multiline = false) => (
@@ -405,7 +405,7 @@ export function AgentProfileWizard({
     ...new Set([
       ...fieldErrors,
       ...Object.keys(draft?.fieldErrors ?? {})
-        .filter((key) => OWNED[step].includes(key as keyof HireManifestV1) || step === 'review')
+        .filter((key) => OWNED[step].includes(key as keyof AgentManifestV1) || step === 'review')
         .map((key) => `${FIELD_NAMES[key] ?? key}: enter a valid, bounded value.`),
     ]),
   ];
@@ -544,7 +544,10 @@ export function AgentProfileWizard({
                   value={fields.provider ?? ''}
                   onChange={(event) => {
                     setCustomModelMode(false);
-                    edit({ provider: event.target.value as HireManifestV1['provider'], model: '' });
+                    edit({
+                      provider: event.target.value as AgentManifestV1['provider'],
+                      model: '',
+                    });
                   }}
                 >
                   <option value="" disabled>
@@ -592,8 +595,8 @@ export function AgentProfileWizard({
                 </label>
               ) : null}
               <p className="hint">
-                The portable hire schema requires a model. CLI default remains available in the
-                separate launch dialog.
+                The portable agent manifest schema requires a model. CLI default remains available
+                in the separate launch dialog.
               </p>
               <label className="confirmation">
                 <input
@@ -757,7 +760,7 @@ export function AgentProfileWizard({
                   <p>
                     {exportReview.collision
                       ? 'An existing file will be replaced only with your explicit confirmation.'
-                      : 'A new hire manifest will be created here.'}
+                      : 'A new agent manifest will be created here.'}
                   </p>
                   {exportReview.collision ? (
                     <label className="confirmation">

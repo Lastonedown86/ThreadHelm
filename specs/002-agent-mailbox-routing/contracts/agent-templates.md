@@ -48,7 +48,7 @@ scripts, environment variables, file reads, includes, or tool calls.
 | `agentWizard.updateStep` | draft ID/version, step, supported fields | updated draft | stale version, invalid/unknown field, bound exceeded |
 | `agentWizard.previewCompletion` | draft ID/version, action | exact JSON/compatibility + token | incomplete, unresolved variables, stale template |
 | `agentWizard.confirmProfile` | token + explicit confirmation | profile/revision summary | expired/replayed/changed draft |
-| `agentWizard.previewExport` | token + selected `*.hire.json` target | path/collision disclosure + export token | invalid target, changed draft |
+| `agentWizard.previewExport` | token + selected `*.agent.json` target | path/collision disclosure + export token | invalid target, changed draft |
 | `agentWizard.confirmExport` | export token + explicit overwrite choice | export result | target changed, collision unapproved, atomic write failed |
 | `agentWizard.deleteDraft` | draft ID/version | content-free result | stale version/completed |
 | `agentTemplates.list/get` | filters/cursor or template ID | summaries/detail | invalid cursor/not found |
@@ -65,7 +65,7 @@ explicit detail/preview request and never enter broad logs.
 
 - Final JSON must pass the exact profile parser; the wizard does not maintain a looser second schema.
 - Save-as-profile calls the same digest-bound revision service used by import and launches nothing.
-- Export is restricted to a user-selected `.hire.json` file, writes UTF-8 JSON atomically, rechecks
+- Export is restricted to a user-selected `.agent.json` file, writes UTF-8 JSON atomically, rechecks
   the target before replacement, and never overwrites without a distinct confirmation.
 - A completed/failed export records safe evidence but does not retain the full target path in broad events.
 - Template or wizard presentation uses steps, forms, text, tables, and status messages—no avatar,

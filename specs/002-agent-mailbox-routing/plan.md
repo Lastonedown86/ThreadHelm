@@ -140,7 +140,7 @@ bounded JSON-RPC/MCP over provider stdio and a session-scoped Windows named pipe
 has no direct SQLite, filesystem, shell, terminal, credential, or cross-session access. Main derives
 sender identity from the authenticated session; the agent cannot assert another sender.
 
-P5 extends the same bridge with scoped memory query/publish operations. P6 adds reviewed local hire
+P5 extends the same bridge with scoped memory query/publish operations. P6 adds reviewed local agent
 profiles without adding provider tools. P7 adds local templates and a creation wizard, also without
 provider tools. P8 adds supervisor-only typed
 mission operations. Main authenticates the session role and validates each operation against the
@@ -193,7 +193,7 @@ authority source.
 
 ### Reviewed agent-profile import protocol
 
-1. The user selects one or more `.hire.json` files. Main reads a bounded file, parses strict
+1. The user selects one or more `.agent.json` files. Main reads a bounded file, parses strict
    `munder-difflin/hire@1` data, normalizes only documented fields, computes SHA-256, and returns a
    preview containing exact values, validation errors, compatibility reasons, and a two-minute token.
 2. `confirmAgentProfileImport` re-reads the file, re-computes its digest, rejects changed-after-preview
@@ -289,7 +289,7 @@ authority source.
   change provider permissions, or execute a consequential operation. P8 alone may ask main to start
   an exact worker binding already confirmed in the mission envelope; no message or persona text grants
   that permission.
-- A hire manifest is also context, not authority. Its name, goal, capabilities, provider/model,
+- A agent manifest is also context, not authority. Its name, goal, capabilities, provider/model,
   isolation request, and token cap cannot grant tools, expand workspace/mission scope, select a role,
   select permission mode, or raise a product budget. Source paths and goal text never enter broad logs
   or renderer events. Persona rename, template copy, and profile revision do not inherit or mutate
@@ -345,9 +345,9 @@ authority source.
 | User templates | 100 active templates and 32 revisions each | Further save is blocked until a template is disabled/deleted |
 | Wizard drafts | 20 active drafts, one MiB total | New draft blocked until another is completed/deleted |
 | Template variables | 16 declared text variables, 256 Unicode scalars each | Invalid/unknown variable or unresolved value blocks final review |
-| Hire manifest/goal | 64 KiB file; 4,000 Unicode scalar values in `goal` | Preview rejects oversized input before persistence |
-| Hire capabilities | 64 distinct normalized labels | Preview rejects excess or invalid labels |
-| Hire token cap | Positive integer at or below schema maximum `1e10`, further reduced by product/mission policy | Import rejects invalid values; launch never raises its effective budget |
+| Agent manifest/goal | 64 KiB file; 4,000 Unicode scalar values in `goal` | Preview rejects oversized input before persistence |
+| Agent manifest capabilities | 64 distinct normalized labels | Preview rejects excess or invalid labels |
+| Agent manifest token cap | Positive integer at or below schema maximum `1e10`, further reduced by product/mission policy | Import rejects invalid values; launch never raises its effective budget |
 | Active missions | 4 | New mission blocked until another is completed, cancelled, or archived |
 | Work items per mission | 64 | Further decomposition pauses and escalates |
 | Decomposition depth | 8 | Deeper work is held for user review |
@@ -420,7 +420,7 @@ packages/contracts/src/index.ts
 packages/domain/src/
 ├── coordination.ts             # conversation, delivery, outcome, loop state machines
 ├── shared-memory.ts            # revision, conflict, scope, retention policy
-├── agent-profile.ts            # portable hire validation, revision and compatibility policy
+├── agent-profile.ts            # portable agent manifest validation, revision and compatibility policy
 ├── agent-template.ts           # template/draft/variable lifecycle and generation policy
 ├── supervisor.ts               # mission, work DAG, lease, decision and bound policy
 └── index.ts
@@ -568,7 +568,7 @@ persona, template, or mission source and no persisted bypass. Automated tests us
 authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort.
 High-cost/high-effort requires explicit selection or recorded escalation. Planning providers are
 ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers are Codex CLI and Claude Code. Effort
-and permission policy stay outside the Munder hire schema.
+and permission policy stay outside the `munder-difflin/hire@1` schema.
 
 ## Distribution decision — 2026-08-30
 

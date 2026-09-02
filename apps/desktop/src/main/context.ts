@@ -93,7 +93,7 @@ export interface ProfileFilePicker {
   pickFile(): Promise<string | null>;
 }
 
-/** Main-owned Save dialog for a portable hire manifest export. */
+/** Main-owned Save dialog for a portable agent manifest export. */
 export interface AgentExportTargetPicker {
   pickTarget(): Promise<string | null>;
 }

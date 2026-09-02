@@ -2,12 +2,12 @@ import { createHash, randomUUID } from 'node:crypto';
 import {
   AGENT_PROFILE_MANIFEST_SPEC,
   AgentProfileManifestSpec,
-  HireManifestV1,
+  AgentManifestV1,
   isSafeAuthoredText,
   MAX_GOAL_LENGTH,
   ThreadHelmError,
 } from '@threadhelm/contracts';
-import { completeTemplateDraft, createTemplateDraft, parseHireManifest } from '@threadhelm/domain';
+import { completeTemplateDraft, createTemplateDraft, parseAgentManifest } from '@threadhelm/domain';
 import type { Db } from '../migrate.js';
 import { AgentProfileRepository } from './agent-profiles.js';
 
@@ -55,7 +55,7 @@ export interface TemplateDraftDetail {
   state: 'editing' | 'invalid' | 'ready_for_review' | 'completed' | 'deleted';
   version: number;
   currentStep: WizardStep;
-  fieldValues: Partial<HireManifestV1>;
+  fieldValues: Partial<AgentManifestV1>;
   variableValues: Record<string, string>;
   validationIssues: string[];
   createdAt: string;
@@ -103,8 +103,8 @@ function isNativeFormatUpgrade(
     sourceProfileRevisionId?: string | null;
   },
 ): boolean {
-  const before = JSON.parse(source.manifestJson) as HireManifestV1;
-  const after = JSON.parse(next.manifestJson) as HireManifestV1;
+  const before = JSON.parse(source.manifestJson) as AgentManifestV1;
+  const after = JSON.parse(next.manifestJson) as AgentManifestV1;
   return (
     before.spec === 'munder-difflin/hire@1' &&
     after.spec === AGENT_PROFILE_MANIFEST_SPEC &&
@@ -115,12 +115,12 @@ function isNativeFormatUpgrade(
     Object.keys(before).every(
       (key) =>
         key === 'spec' ||
-        JSON.stringify(before[key as keyof HireManifestV1]) ===
-          JSON.stringify(after[key as keyof HireManifestV1]),
+        JSON.stringify(before[key as keyof AgentManifestV1]) ===
+          JSON.stringify(after[key as keyof AgentManifestV1]),
     )
   );
 }
-function fields(value: unknown): Partial<HireManifestV1> {
+function fields(value: unknown): Partial<AgentManifestV1> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) invalid();
   boundedJson(value);
   const text: Record<string, string> = {};
@@ -187,7 +187,7 @@ function fields(value: unknown): Partial<HireManifestV1> {
   return {
     ...result,
     ...text,
-  } as Partial<HireManifestV1>;
+  } as Partial<AgentManifestV1>;
 }
 
 type PageOptions = { limit?: number; cursor?: string };
@@ -338,7 +338,7 @@ export class AgentTemplateRepository {
     };
   }
 
-  private profileSource(revisionId: string): HireManifestV1 {
+  private profileSource(revisionId: string): AgentManifestV1 {
     const row = this.db
       .prepare('SELECT profile_id FROM agent_profile_revisions WHERE id = ?')
       .get(revisionId) as { profile_id: string } | undefined;
@@ -439,7 +439,7 @@ export class AgentTemplateRepository {
       !isSafeAuthoredText(input.name)
     )
       invalid();
-    parseHireManifest(input.manifestJson);
+    parseAgentManifest(input.manifestJson);
     const digest = createHash('sha256').update(input.manifestJson).digest('hex');
     if (input.digest !== digest)
       throw new ThreadHelmError(
@@ -448,7 +448,7 @@ export class AgentTemplateRepository {
       );
     const declared = declarations(input.variables ?? []);
     // Placeholders must be declared; only supported manifest string fields are substituted.
-    const manifest = parseHireManifest(input.manifestJson);
+    const manifest = parseAgentManifest(input.manifestJson);
     for (const text of [
       manifest.name,
       manifest.description,
@@ -575,7 +575,7 @@ export class AgentTemplateRepository {
     return this.db.transaction(() => {
       const source = this.current(input.templateRevisionId);
       // A duplicate is a new scaffold. Preserve the immutable source revision.
-      const manifest = parseHireManifest(source.manifestJson);
+      const manifest = parseAgentManifest(source.manifestJson);
       const manifestJson =
         manifest.spec === AGENT_PROFILE_MANIFEST_SPEC
           ? source.manifestJson
@@ -730,7 +730,7 @@ export class AgentTemplateRepository {
       state: row.state,
       version: row.version,
       currentStep: row.current_step,
-      fieldValues: JSON.parse(row.field_values) as Partial<HireManifestV1>,
+      fieldValues: JSON.parse(row.field_values) as Partial<AgentManifestV1>,
       variableValues: JSON.parse(row.variable_values) as Record<string, string>,
       validationIssues: JSON.parse(row.validation_issues) as string[],
       createdAt: row.created_at,
@@ -748,8 +748,8 @@ export class AgentTemplateRepository {
     return draft;
   }
 
-  private finalManifest(draft: TemplateDraftDetail): HireManifestV1 {
-    const parsed = HireManifestV1.safeParse(draft.fieldValues);
+  private finalManifest(draft: TemplateDraftDetail): AgentManifestV1 {
+    const parsed = AgentManifestV1.safeParse(draft.fieldValues);
     if (!parsed.success)
       throw new ThreadHelmError(
         'TEMPLATE_DRAFT_INCOMPLETE',

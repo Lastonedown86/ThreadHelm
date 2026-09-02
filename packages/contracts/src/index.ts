@@ -37,7 +37,7 @@ export const STOP_GRACE_MS = 15_000;
 export const INTERRUPT_OBSERVE_MS = 5_000;
 /** Bounded provider probe budget. */
 export const PROBE_TIMEOUT_MS = 10_000;
-/** Ceiling on a hire manifest's requested token budget (agent-profiles.md). */
+/** Ceiling on a agent manifest's requested token budget (agent-profiles.md). */
 export const MAX_TOKEN_CAP = 2_000_000;
 /** Bounded length for reviewed free-text manifest fields (goal, description). */
 export const MAX_GOAL_LENGTH = 4_000;
@@ -49,7 +49,7 @@ export const MAX_GOAL_LENGTH = 4_000;
 export const ProviderId = z.enum(['codex-cli', 'claude-code']);
 export type ProviderId = z.infer<typeof ProviderId>;
 
-/** Portable hire-provider labels are data, not runtime adapter identifiers. */
+/** Portable agent-provider labels are data, not runtime adapter identifiers. */
 export const ProfileProviderId = z.enum(['claude', 'codex', 'claude-code', 'codex-cli']);
 export type ProfileProviderId = z.infer<typeof ProfileProviderId>;
 
@@ -1364,7 +1364,7 @@ export const SelectionView = z.object({ selectedSessionId: Uuid.nullable() });
 export type SelectionView = z.infer<typeof SelectionView>;
 
 // ---------------------------------------------------------------------------
-// Agent profiles (contracts/agent-profiles.md). A hire manifest is untrusted
+// Agent profiles (contracts/agent-profiles.md). A agent manifest is untrusted
 // portable data, never an instruction. `effort` is launch policy and is
 // deliberately absent; capability labels and the display name never grant
 // tools, roles, or budget expansion.
@@ -1396,7 +1396,7 @@ export const AgentProfileManifestSpec = z.enum([
 ]);
 export type AgentProfileManifestSpec = z.infer<typeof AgentProfileManifestSpec>;
 
-export const HireManifestV1 = strictObject({
+export const AgentManifestV1 = strictObject({
   spec: AgentProfileManifestSpec,
   name: AuthoredText.trim().min(1).max(200),
   description: AuthoredText.trim().min(1).max(MAX_GOAL_LENGTH),
@@ -1408,7 +1408,7 @@ export const HireManifestV1 = strictObject({
   tokenCap: z.number().int().positive().max(MAX_TOKEN_CAP),
   author: AuthoredText.trim().min(1).max(200),
 });
-export type HireManifestV1 = z.infer<typeof HireManifestV1>;
+export type AgentManifestV1 = z.infer<typeof AgentManifestV1>;
 
 const AgentProfileSummaryFields = {
   profileId: ProfileId,
@@ -1459,7 +1459,7 @@ export const ProfilePreviewView = strictObject({
   previewToken: OpaqueToken,
   digest: ProfileDigest,
   basename: z.string().min(1).max(255),
-  normalized: HireManifestV1,
+  normalized: AgentManifestV1,
   warnings: z.array(z.string().max(300)).max(20),
   compatibility: ProfileCompatibility,
   compatibilityReasons: z.array(z.string().max(300)).max(20),
@@ -1553,7 +1553,7 @@ export const AgentTemplateVariable = strictObject({
 export type AgentTemplateVariable = z.infer<typeof AgentTemplateVariable>;
 
 /** Draft storage accepts incomplete and deliberately cleared values; final
- * completion always re-parses the exact HireManifestV1 schema. */
+ * completion always re-parses the exact AgentManifestV1 schema. */
 const WizardFieldValues = strictObject({
   spec: AgentProfileManifestSpec.optional(),
   name: AuthoredText.max(200).optional(),
@@ -1616,7 +1616,7 @@ export type AgentTemplateSummaryView = z.infer<typeof AgentTemplateSummaryView>;
 
 export const AgentTemplateDetailView = strictObject({
   ...AgentTemplateSummaryFields,
-  manifest: HireManifestV1,
+  manifest: AgentManifestV1,
   manifestJson: z.string().min(2).max(65_536),
   digest: ProfileDigest,
   variables: z.array(AgentTemplateVariable).max(16),
@@ -1692,7 +1692,7 @@ export const AgentWizardCompletionPreviewView = strictObject({
   completionToken: OpaqueToken,
   draftId: Uuid,
   version: z.number().int().positive(),
-  manifest: HireManifestV1,
+  manifest: AgentManifestV1,
   manifestJson: z.string().min(2).max(65_536),
   digest: ProfileDigest,
   compatibility: ProfileCompatibility,

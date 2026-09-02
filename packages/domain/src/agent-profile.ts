@@ -1,5 +1,5 @@
 /**
- * Reviewed hire manifest parsing and profile lifecycle policy. A manifest is
+ * Reviewed agent manifest parsing and profile lifecycle policy. A manifest is
  * untrusted portable data, never an instruction; display name and capability
  * labels are inert presentation data, never identity or authority.
  *
@@ -7,7 +7,7 @@
  */
 
 import {
-  HireManifestV1,
+  AgentManifestV1,
   MAX_GOAL_LENGTH,
   MAX_TOKEN_CAP,
   ProfileProviderId,
@@ -20,7 +20,7 @@ import {
 
 export { MAX_GOAL_LENGTH, MAX_TOKEN_CAP };
 
-/** Bounded read size for a hire manifest file, independent of any single field. */
+/** Bounded read size for a agent manifest file, independent of any single field. */
 export const MAX_MANIFEST_BYTES = 64 * 1024;
 
 // ponytail: minimal top-level-only duplicate-key scanner; the manifest schema
@@ -72,18 +72,18 @@ function hasDuplicateTopLevelKey(text: string): boolean {
 }
 
 /**
- * Strictly parses, size-bounds, and normalizes a hire manifest read from
+ * Strictly parses, size-bounds, and normalizes a agent manifest read from
  * disk. Throws a stable `ThreadHelmError` for every failure mode; raw parse
  * errors never cross this boundary.
  */
-export function parseHireManifest(raw: string): HireManifestV1 {
+export function parseAgentManifest(raw: string): AgentManifestV1 {
   if (new TextEncoder().encode(raw).length > MAX_MANIFEST_BYTES) {
-    throw new ThreadHelmError('PROFILE_OVERSIZED', 'Hire manifest exceeds the maximum read size.');
+    throw new ThreadHelmError('PROFILE_OVERSIZED', 'Agent manifest exceeds the maximum read size.');
   }
   if (hasDuplicateTopLevelKey(raw)) {
     throw new ThreadHelmError(
       'PROFILE_SCHEMA_INVALID',
-      'Hire manifest contains a duplicate top-level field.',
+      'Agent manifest contains a duplicate top-level field.',
     );
   }
 
@@ -91,7 +91,7 @@ export function parseHireManifest(raw: string): HireManifestV1 {
   try {
     candidate = JSON.parse(raw);
   } catch {
-    throw new ThreadHelmError('PROFILE_SCHEMA_INVALID', 'Hire manifest is not valid JSON.');
+    throw new ThreadHelmError('PROFILE_SCHEMA_INVALID', 'Agent manifest is not valid JSON.');
   }
 
   if (candidate !== null && typeof candidate === 'object' && !Array.isArray(candidate)) {
@@ -100,15 +100,15 @@ export function parseHireManifest(raw: string): HireManifestV1 {
       if (typeof value === 'string' && value.length > MAX_GOAL_LENGTH) {
         throw new ThreadHelmError(
           'PROFILE_OVERSIZED',
-          `Hire manifest ${field} exceeds the maximum length.`,
+          `Agent manifest ${field} exceeds the maximum length.`,
         );
       }
     }
   }
 
-  const result = HireManifestV1.safeParse(candidate);
+  const result = AgentManifestV1.safeParse(candidate);
   if (!result.success) {
-    throw new ThreadHelmError('PROFILE_SCHEMA_INVALID', 'Hire manifest failed schema validation.');
+    throw new ThreadHelmError('PROFILE_SCHEMA_INVALID', 'Agent manifest failed schema validation.');
   }
   return result.data;
 }

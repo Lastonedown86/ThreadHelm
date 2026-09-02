@@ -5,15 +5,16 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export type FakeAgentMode =
-  'echo' | 'burst' | 'control' | 'ignore-interrupt' | 'spawn-children' | 'spawn-bridge';
+  'echo' | 'burst' | 'control' | 'ignore-interrupt' | 'spawn-children' | 'spawn-bridge' | 'recon';
 export const FAKE_AGENT_PATH = join(dirname(fileURLToPath(import.meta.url)), 'fake-agent.cjs');
 
 export function fakeAgentLaunch(
   mode: FakeAgentMode,
-  opts: { lines?: number } = {},
+  opts: { lines?: number; outDir?: string } = {},
 ): { executable: string; args: string[] } {
   const args = [FAKE_AGENT_PATH, '--mode', mode];
   if (opts.lines !== undefined) args.push('--lines', String(opts.lines));
+  if (opts.outDir !== undefined) args.push('--out-dir', opts.outDir);
   return { executable: process.execPath, args };
 }
 

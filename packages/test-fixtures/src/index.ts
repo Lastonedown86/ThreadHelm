@@ -60,3 +60,4 @@ export {
   type ProviderLifecycleFixture,
 } from './coordination-bridge.js';
 export * from './supervisor.js';
+export { RECON_PROPOSAL_FIXTURES } from './recon.js';

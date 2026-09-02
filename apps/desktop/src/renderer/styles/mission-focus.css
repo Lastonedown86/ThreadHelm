@@ -4,10 +4,60 @@
   padding: clamp(1rem, 3vw, 2.25rem);
 }
 
-.mission-workspace-content > header {
+.mission-header {
   display: grid;
-  justify-items: start;
-  max-width: 58rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+  max-width: none;
+}
+.mission-action-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.mission-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 1.25rem 0 0;
+  padding: 0.5rem 0;
+  list-style: none;
+  border-top: 1px solid color-mix(in srgb, var(--mission-ink) 20%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--mission-ink) 20%, transparent);
+  font-family: var(--mission-font-code);
+  font-size: 0.8rem;
+}
+.mission-strip li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mission-strip li + li {
+  margin-left: auto;
+}
+.mission-strip li + li + li {
+  margin-left: 0;
+}
+.mission-strip .mission-state-shape {
+  margin-top: 0;
+}
+.mission-result-note {
+  margin: 0.75rem 0 0;
+  color: color-mix(in srgb, var(--mission-ink) 65%, white);
+  font-size: 0.9rem;
+}
+.mission-result {
+  border-left: 0.3rem solid var(--mission-steel);
+}
+@container workspace (max-width: 44rem) {
+  .mission-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mission-action-row {
+    justify-content: flex-start;
+  }
 }
 
 .mission-workspace-content h1 {

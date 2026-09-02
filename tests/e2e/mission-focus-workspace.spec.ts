@@ -242,6 +242,13 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await expect(
       app.page.getByRole('button', { name: 'Pause mission', exact: true }),
     ).toBeVisible();
+    const strip = app.page.getByRole('list', { name: 'Mission status' });
+    await expect(strip).toContainText('Work continues locally');
+    await expect(strip).toContainText('0 decisions pending');
+    await expect(strip).toContainText('2 sessions attached');
+    await expect(app.page.getByRole('button', { name: 'View full history…' })).toBeVisible();
+    await expect(app.page.getByText('No verified result yet.')).toBeVisible();
+    await expect(app.page.getByRole('heading', { name: 'Latest verified result' })).toHaveCount(0);
 
     await select(paused);
     await expect(app.page.getByText('Paused', { exact: true })).toBeVisible();
@@ -279,7 +286,9 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await expect(app.page.getByRole('button', { name: /retry/i })).toHaveCount(0);
 
     await select(completed);
-    await expect(app.page.getByText('Completed', { exact: true })).toBeVisible();
+    await expect(
+      app.page.locator('.mission-lifecycle').getByText('Completed', { exact: true }),
+    ).toBeVisible();
     await expect(
       app.page.getByRole('button', { name: 'View evidence…', exact: true }),
     ).toBeVisible();
@@ -287,6 +296,8 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await expect(
       app.page.getByRole('list', { name: 'Mission course' }).getByText('Verified', { exact: true }),
     ).toBeVisible();
+    await expect(app.page.getByRole('heading', { name: 'Latest verified result' })).toBeVisible();
+    await expect(app.page.getByRole('button', { name: 'Open evidence…' })).toBeVisible();
 
     const userData = app.userData;
     await app.crashCoordinator();
@@ -296,7 +307,7 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
       .getByRole('option', { name: new RegExp(running.id.slice(0, 8), 'i') });
     await recovered.click();
     await expect(
-      app.page.locator('#mission-workspace').getByText('Recovery required', { exact: true }),
+      app.page.locator('.mission-lifecycle').getByText('Recovery required', { exact: true }),
     ).toBeVisible();
     await expect(
       app.page

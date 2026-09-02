@@ -3,6 +3,7 @@ import { MissionCourse } from './MissionCourse.js';
 import type { ActionKind } from './mission-presentation.js';
 import { MissionResult } from './MissionResult.js';
 import { MissionSessionSummary } from './MissionSessionSummary.js';
+import { MissionStrip } from './MissionStrip.js';
 import type { MissionWorkspaceState } from './useMissionWorkspace.js';
 
 export function MissionWorkspace({
@@ -47,12 +48,16 @@ export function MissionWorkspace({
   const { detail, presentation } = workspace;
   return (
     <article className="mission-workspace-content">
-      <header>
-        <span className="mission-lifecycle">{presentation.lifecycleLabel}</span>
-        <h1 tabIndex={-1}>{presentation.title}</h1>
-        {presentation.objective && presentation.objective !== presentation.title ? (
-          <p>{presentation.objective}</p>
-        ) : null}
+      <header className="mission-header">
+        <div>
+          <span className="mission-lifecycle">
+            <span>{presentation.lifecycleLabel}</span> · local
+          </span>
+          <h1 tabIndex={-1}>{presentation.title}</h1>
+          {presentation.objective && presentation.objective !== presentation.title ? (
+            <p>{presentation.objective}</p>
+          ) : null}
+        </div>
         <div className="mission-action-row">
           {presentation.secondaryAction ? (
             <button type="button" onClick={() => onAction(presentation.secondaryAction!.kind)}>
@@ -70,13 +75,19 @@ export function MissionWorkspace({
           ) : null}
         </div>
       </header>
+      <MissionStrip strip={presentation.strip} state={detail.state} />
       <MissionCourse
         course={presentation.course}
         onOpenDetail={onOpenDetail}
         onOpenTerminal={onOpenTerminal}
       />
+      {presentation.verifiedResult ? null : (
+        <p className="mission-result-note">No verified result yet.</p>
+      )}
       <div className="mission-summary-grid">
-        <MissionResult result={presentation.verifiedResult} />
+        {presentation.verifiedResult ? (
+          <MissionResult result={presentation.verifiedResult} onOpenDetail={onOpenDetail} />
+        ) : null}
         <MissionSessionSummary detail={detail} />
       </div>
     </article>

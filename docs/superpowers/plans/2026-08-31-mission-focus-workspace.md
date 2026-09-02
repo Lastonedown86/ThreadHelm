@@ -484,7 +484,7 @@ it does not approve session-page density, terminal tabs, or control placement.
   force-stop states.
 - Produces: one owner-approved session page and terminal-dock decision; no production imports.
 
-- [ ] **Step 1: Build three structural variants**
+- [x] **Step 1: Build three structural variants**
 
 - A: session list in the left rail with one full-height terminal.
 - B: mission-scoped lower dock with session tabs and controls in the dock header.
@@ -493,17 +493,17 @@ it does not approve session-page density, terminal tabs, or control placement.
 Every variant must show stopped, failed, recovery-required, new-output, truncation, backpressure, and
 wrong-selection input states.
 
-- [ ] **Step 2: Present variants and terminal interactions in the browser**
+- [x] **Step 2: Present variants and terminal interactions in the browser**
 
 Demonstrate session switching, dock collapse, keyboard escape from terminal to controls, and visible
 mission/session identity.
 
-- [ ] **Step 3: Stop for owner selection**
+- [x] **Step 3: Stop for owner selection**
 
 Record the chosen structure and terminal-switch behavior. Do not change `LazyTerminal`, terminal
 controller ownership, or production controls in this task.
 
-- [ ] **Step 4: Commit only the reviewed prototype decision**
+- [x] **Step 4: Commit only the reviewed prototype decision**
 
 ```powershell
 git add apps/desktop/src/renderer/prototypes/session-workspace

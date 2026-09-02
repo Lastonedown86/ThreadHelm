@@ -28,6 +28,8 @@
 
 .mission-shell-workspace {
   background: var(--mission-paper);
+  container-type: inline-size;
+  container-name: workspace;
 }
 
 .mission-shell-context {

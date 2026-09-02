@@ -83,6 +83,27 @@ test('missions are the focused default and approved destinations remain explicit
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
       ),
     ).toBe(false);
+
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '';
+    });
+    for (const width of [1400, 1100]) {
+      await page.setViewportSize({ width, height: 860 });
+      await page.getByRole('button', { name: 'Memory', exact: true }).click();
+      await expect(page.getByRole('heading', { name: /reading list/i })).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        ),
+        `no horizontal overflow at ${width}px`,
+      ).toBe(false);
+      const clipped = await page.evaluate(() => {
+        const main = document.querySelector('.mission-shell-workspace')!;
+        return main.scrollWidth > main.clientWidth;
+      });
+      expect(clipped, `workspace column does not scroll sideways at ${width}px`).toBe(false);
+      await page.getByRole('button', { name: 'Missions', exact: true }).click();
+    }
   } finally {
     await teardown(app);
   }

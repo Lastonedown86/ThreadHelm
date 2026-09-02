@@ -24,3 +24,11 @@ matched, and keeps lifecycle state visible. The continuous Memory Coach acts as 
 search, explain, propose, and organize. It cannot silently publish, resolve conflicts, delete
 content, or grant authority. Mission launches use a bounded reading-room packet with explicit
 revision citations, inclusion controls, and a context budget.
+
+## Settings, Workspaces, and Providers
+
+**Selected: C — Task-oriented guided setup with B's compact attention summary.** The destination
+walks through native folder approval, provider-specific readiness, and local application health in
+three explained checks. Folder revocation, effective native identity, provider authentication,
+storage degradation, Windows x64, unsigned release status, and sole-writer evidence remain visible.
+Mission context may show a read-only attention summary but does not host setup mutations.

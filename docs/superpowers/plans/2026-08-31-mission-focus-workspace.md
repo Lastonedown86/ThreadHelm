@@ -539,7 +539,7 @@ Compare list/detail, search-led, and mission-context structures. Preserve citati
 retracted, deleted, expired, superseded, and explicit pagination states. Record the selection before
 planning production files.
 
-- [ ] **Step 3: Present Settings, Workspace, and Provider variants**
+- [x] **Step 3: Present Settings, Workspace, and Provider variants**
 
 Compare destination page, compact inspector, and task-oriented setup structures. Preserve native
 folder selection, revocation, provider readiness, storage degradation, and app-information evidence.

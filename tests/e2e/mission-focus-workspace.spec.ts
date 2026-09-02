@@ -75,6 +75,18 @@ test('missions are the focused default and approved destinations remain explicit
       page.getByText('Select a mission to narrow the dock to its exact workers.'),
     ).toBeVisible();
 
+    await expect(page.getByText(/^sessions workspace$/)).toHaveCount(0);
+    await expect(
+      page.getByRole('complementary', { name: 'Mission context' }).getByRole('heading', {
+        name: 'Sessions',
+      }),
+    ).toBeVisible();
+    await expect(page.getByText(/need attention|Ready for reviewed work/)).toBeVisible();
+    const padding = await page
+      .locator('.mission-shell-context .mission-context-content')
+      .evaluate((el) => parseFloat(getComputedStyle(el).paddingTop));
+    expect(padding).toBeGreaterThan(8);
+
     await page.evaluate(() => {
       document.documentElement.style.fontSize = '200%';
     });

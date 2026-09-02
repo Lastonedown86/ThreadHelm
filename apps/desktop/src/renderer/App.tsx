@@ -7,6 +7,7 @@ import { MissionComposer } from './features/coordination/MissionComposer.js';
 import { MissionDetail } from './features/coordination/MissionDetail.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
 import { MissionContext } from './features/mission-focus/MissionContext.js';
+import { MissionContextFrame } from './features/mission-focus/MissionContextFrame.js';
 import { MissionRail } from './features/mission-focus/MissionRail.js';
 import { MissionWorkspace } from './features/mission-focus/MissionWorkspace.js';
 import { useMissionWorkspace } from './features/mission-focus/useMissionWorkspace.js';
@@ -14,6 +15,7 @@ import { terminalSize } from './features/session/terminal-loader.js';
 import { SessionWorkspace } from './features/sessions/SessionWorkspace.js';
 import { AppNavigation } from './features/shell/AppNavigation.js';
 import { AppShell } from './features/shell/AppShell.js';
+import type { WorkspaceDestination } from './features/shell/navigation.js';
 import { GuidedSetup } from './features/workspaces/GuidedSetup.js';
 import { SetupAttentionSummary } from './features/workspaces/SetupAttentionSummary.js';
 import { RecoveryAttentionQueue } from './features/recovery/RecoveryAttentionQueue.js';
@@ -46,6 +48,16 @@ function LegacyDestination({
       return null;
   }
 }
+
+const destinationHeading: Record<WorkspaceDestination, string> = {
+  missions: 'Mission context',
+  sessions: 'Sessions',
+  agents: 'Agents',
+  templates: 'Templates',
+  memory: 'Memory',
+  attention: 'Attention',
+  settings: 'Settings',
+};
 
 function Shell() {
   const { state, actions } = useStore();
@@ -114,10 +126,10 @@ function Shell() {
         context={
           missionSelected ? (
             <MissionContext detail={workspace.detail} presentation={workspace.presentation} />
-          ) : state.selectedDestination === 'settings' ? (
-            <SetupAttentionSummary />
           ) : (
-            <p className="mission-workspace-state">{state.selectedDestination} workspace</p>
+            <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
+              <SetupAttentionSummary />
+            </MissionContextFrame>
           )
         }
         terminal={null}

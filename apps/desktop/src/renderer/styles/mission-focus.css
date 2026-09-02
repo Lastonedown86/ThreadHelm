@@ -41,7 +41,8 @@
 .mission-course li,
 .mission-result,
 .mission-session-summary,
-.mission-context-content section {
+.mission-context-content section,
+.mission-context-section {
   padding: 1rem;
   border: 1px solid color-mix(in srgb, var(--mission-ink) 22%, transparent);
   border-radius: 0.45rem;

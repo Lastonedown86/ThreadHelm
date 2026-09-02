@@ -52,8 +52,13 @@ export function terminalRows(page: Page): Locator {
  * and pauses painting while it does not intersect the viewport: writes still
  * reach the buffer, but the DOM rows keep their last painted content until the
  * terminal comes back into view. The mission workspace scrolls, so a terminal
- * docked below the fold never repaints. Any assertion about output *appearing*
- * must scroll it in first, exactly as a user watching the terminal would.
+ * docked below the fold never repaints.
+ *
+ * Selecting a session now brings its terminal into view (TerminalPane), so a
+ * spec that only selects needs nothing. This is for the specs that then scroll
+ * somewhere else — clicking a session-list option, say, which Playwright scrolls
+ * into view and which pushes the dock back below the fold — and still measure
+ * output *appearing*. It restores what a user watching the terminal would see.
  */
 export async function showTerminal(page: Page): Promise<Locator> {
   const rows = terminalRows(page);

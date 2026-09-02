@@ -41,6 +41,22 @@ export interface PresentationContext {
   liveSessionIds: ReadonlySet<string>;
 }
 
+/** Shape of the renderer store's session bookkeeping — kept structural (not imported from
+ * `store.tsx`) so this stays a pure module the unit tests can import without a DOM. */
+export interface SessionLifecycleSource {
+  sessionOrder: readonly string[];
+  sessions: Readonly<Record<string, { lifecycleState: string } | undefined>>;
+}
+
+/** A session only counts as live when a terminal is actually attached to it. The store
+ * never removes a stopped/failed session from `sessionOrder` — only `sessions[id]` moves
+ * on — so callers must filter by lifecycle, not just membership in `sessionOrder`. */
+export function liveSessionIds(source: SessionLifecycleSource): Set<string> {
+  return new Set(
+    source.sessionOrder.filter((id) => source.sessions[id]?.lifecycleState === 'running'),
+  );
+}
+
 /** Pause acts directly; the others open the detail dialog, so they end with an ellipsis. */
 export const ACTION_LABELS: Record<ActionKind, string> = {
   pause: 'Pause mission',
@@ -191,7 +207,12 @@ export function presentMission(
   const course = presentCourse(detail, context);
   const uncertain = course.some((node) => node.state === 'uncertain');
   const waitingNodes = course.filter((node) => node.state === 'waiting');
-  const heldDecisions = detail.decisions.filter((decision) => decision.policyResult === 'held');
+  const waitingWorkItemIds = new Set(waitingNodes.map((node) => node.id));
+  const heldDecisions = detail.decisions.filter(
+    (decision) =>
+      decision.policyResult === 'held' &&
+      (!decision.workItemId || !waitingWorkItemIds.has(decision.workItemId)),
+  );
   const decisionsPending = waitingNodes.length + heldDecisions.length;
 
   const attention: MissionAttention = uncertain

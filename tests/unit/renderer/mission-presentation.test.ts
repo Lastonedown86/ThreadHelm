@@ -1,10 +1,12 @@
 import type {
   MissionDetailView,
   SupervisorAttemptView,
+  SupervisorDecisionView,
   SupervisorWorkView,
 } from '@threadhelm/contracts';
 import { describe, expect, it } from 'vitest';
 import {
+  liveSessionIds,
   missionTitle,
   presentMission,
   type CourseNodeState,
@@ -94,6 +96,24 @@ const evidenced = (): SupervisorAttemptView => ({
   evidenceRefs: [{ kind: 'artifact', id: 'report.md' }],
   completedAt: '2026-09-01T12:01:00.000Z',
 });
+
+function decision(overrides: Partial<SupervisorDecisionView> = {}): SupervisorDecisionView {
+  return {
+    id: '00000000-0000-4000-8000-00000000000a',
+    missionId,
+    workItemId: null,
+    supervisorSessionId: '00000000-0000-4000-8000-000000000007',
+    envelopeVersion: 1,
+    kind: 'assign',
+    policyResult: 'held',
+    reasonCode: null,
+    rationale: null,
+    inputRefs: [],
+    expectedEvidence: null,
+    createdAt: '2026-09-01T12:00:00.000Z',
+    ...overrides,
+  };
+}
 
 describe('mission presentation', () => {
   it('titles a mission by its objective and falls back to the id only without content', () => {
@@ -237,5 +257,54 @@ describe('mission presentation', () => {
       ],
     } as unknown as MissionDetailView['envelope'];
     expect(presentMission(mission({ envelope })).strip.sessionsAttached).toBe(1);
+  });
+
+  it('does not double-count a decision that is also a waiting node', () => {
+    const withOverlap = presentMission(
+      mission({
+        state: 'paused',
+        workItems: [workItem({ state: 'waiting' })],
+        decisions: [decision({ workItemId })],
+      }),
+    );
+    expect(withOverlap.strip.decisionsPending).toBe(1);
+
+    const withDistinctDecision = presentMission(
+      mission({
+        state: 'paused',
+        workItems: [workItem({ state: 'waiting' })],
+        decisions: [decision({ workItemId: null })],
+      }),
+    );
+    expect(withDistinctDecision.strip.decisionsPending).toBe(2);
+  });
+
+  it('liveSessionIds only counts sessions the store still runs', () => {
+    const source = {
+      sessionOrder: [sessionId, 'stopped-session', 'failed-session'],
+      sessions: {
+        [sessionId]: { lifecycleState: 'running' },
+        'stopped-session': { lifecycleState: 'stopped' },
+        'failed-session': { lifecycleState: 'failed' },
+      },
+    };
+    expect(liveSessionIds(source)).toEqual(new Set([sessionId]));
+  });
+
+  it('offers no terminal when the assigned session has stopped or failed (the wiring, not just the pure function)', () => {
+    // Regression for the real caller: the store keeps every session id ever seen in
+    // `sessionOrder` (upsertSession only adds), so building liveSessionIds from
+    // sessionOrder alone — without filtering by lifecycleState — offered "Open terminal"
+    // on dead sessions. liveSessionIds() is what useMissionWorkspace.ts now calls.
+    for (const lifecycleState of ['stopped', 'failed', 'recovery_required']) {
+      const source = {
+        sessionOrder: [sessionId],
+        sessions: { [sessionId]: { lifecycleState } },
+      };
+      const result = presentMission(mission({ workItems: [workItem()] }), {
+        liveSessionIds: liveSessionIds(source),
+      });
+      expect(result.course[0]!.action, `lifecycleState ${lifecycleState}`).toBeNull();
+    }
   });
 });

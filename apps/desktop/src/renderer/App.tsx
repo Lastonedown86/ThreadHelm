@@ -155,8 +155,8 @@ function Shell() {
         }
         contextToggle={
           <ContextToggle
-            label={workspace.presentation?.attentionLabel ?? 'Context'}
-            attention={workspace.presentation?.attention ?? 'none'}
+            label={(missionSelected ? workspace.presentation?.attentionLabel : null) ?? 'Context'}
+            attention={(missionSelected ? workspace.presentation?.attention : null) ?? 'none'}
           >
             {contextContent}
           </ContextToggle>

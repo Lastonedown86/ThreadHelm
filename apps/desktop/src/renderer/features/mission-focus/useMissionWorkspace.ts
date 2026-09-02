@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { MissionDetailView, MissionSummaryView } from '@threadhelm/contracts';
 import { api, call } from '../../api.js';
 import { useStore } from '../../store.js';
-import { missionTitle, presentMission, type MissionPresentation } from './mission-presentation.js';
+import {
+  liveSessionIds,
+  missionTitle,
+  presentMission,
+  type MissionPresentation,
+} from './mission-presentation.js';
 
 export interface MissionWorkspaceState {
   missions: MissionSummaryView[];
@@ -101,13 +106,18 @@ export function useMissionWorkspace(selectedMissionId: string | null): MissionWo
     if (cached) titles[mission.id] = cached;
   }
 
+  // Shell re-renders on every terminal-output chunk; presentMission is O(workItems x
+  // attempts), so only recompute it when the inputs it actually reads have changed.
+  const presentation = useMemo(
+    () => (detail ? presentMission(detail, { liveSessionIds: liveSessionIds(state) }) : null),
+    [detail, state.sessionOrder, state.sessions],
+  );
+
   return {
     missions,
     titles,
     detail,
-    presentation: detail
-      ? presentMission(detail, { liveSessionIds: new Set(state.sessionOrder) })
-      : null,
+    presentation,
     loading,
     error,
   };

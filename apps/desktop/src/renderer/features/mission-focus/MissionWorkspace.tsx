@@ -33,9 +33,9 @@ export function MissionWorkspace({
       lastId.current = detailId;
       lastAttention.current = attentionLabel;
       setAnnouncement(`Mission changed: ${title}, ${lifecycle}`);
-    } else if (attentionLabel && attentionLabel !== lastAttention.current) {
+    } else if (attentionLabel !== lastAttention.current) {
       lastAttention.current = attentionLabel;
-      setAnnouncement(attentionLabel);
+      if (attentionLabel) setAnnouncement(attentionLabel);
     }
   }, [detailId, title, lifecycle, attentionLabel]);
 

@@ -300,7 +300,9 @@ test('keyboard order reaches mission rail and workspace controls once a mission 
     await page.locator('.status-bar').click(); // establish a focus origin only
     await tabTo(page, /^New mission…$/);
     await tabTo(page, /^Missions$/);
-    await tabTo(page, /mission|Pause|Review|Inspect|View evidence/);
+    // A freshly-confirmed mission has no work items and no attention, so the next
+    // focusable control after the nav is the running mission's sole action.
+    await tabTo(page, /^Pause mission$/);
     await tabTo(page, /View full history…/);
   } finally {
     await teardown(app, ...directories);

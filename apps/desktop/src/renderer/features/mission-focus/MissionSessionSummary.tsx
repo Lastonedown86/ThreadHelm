@@ -38,7 +38,7 @@ export function MissionSessionSummary({ detail }: { detail: MissionDetailView })
                 <button
                   type="button"
                   className="small"
-                  disabled={!session}
+                  disabled={session?.lifecycleState !== 'running'}
                   onClick={() => {
                     actions.select(sessionId);
                     actions.selectDestination('sessions');

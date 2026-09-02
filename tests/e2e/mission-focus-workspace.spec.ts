@@ -463,3 +463,44 @@ test('medium windows keep an attention control when a decision waits', async () 
     await teardown(app, ...directories);
   }
 });
+
+test('medium windows do not claim a mission decision on a non-mission destination', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const directories = [tempWorkspace('medium-other-leader'), tempWorkspace('medium-other-worker')];
+  try {
+    let mission = await confirmMission(
+      app,
+      await prepareFixtureMission(app, directories),
+      'Medium window other-destination mission',
+    );
+    const work = await addWork(app, mission);
+    await app.bridgeRequest(work.supervisorId, 'threadhelm_work_assign', {
+      ...workDecision(mission.id),
+      idempotencyKey: randomUUID(),
+      workItemId: work.workItemId,
+      bindingId: work.binding.bindingId,
+    });
+    mission = await app.call('missions.detail', { missionId: mission.id });
+    await app.bridgeRequest(mission.attempts[0]!.sessionId!, 'threadhelm_work_result', {
+      missionId: mission.id,
+      workItemId: work.workItemId,
+      attemptId: mission.attempts[0]!.id,
+      idempotencyKey: randomUUID(),
+      disposition: 'authority_required',
+      explanation: 'An owner decision is needed.',
+      evidenceRefs: [],
+    });
+    await app.page.setViewportSize({ width: 960, height: 800 });
+    const list = app.page.getByRole('listbox', { name: 'Missions', exact: true });
+    await list.getByRole('option', { name: new RegExp(mission.id.slice(0, 8), 'i') }).click();
+    // Confirm the decision is really pending before checking it does not leak elsewhere.
+    await expect(app.page.getByRole('button', { name: /needs your decision/i })).toBeVisible();
+    await app.page.getByRole('button', { name: 'Sessions', exact: true }).click();
+    const toggle = app.page.getByRole('button', { name: 'Context', exact: true });
+    await expect(toggle).toBeVisible();
+    await expect(app.page.getByRole('button', { name: /needs your decision/i })).toHaveCount(0);
+    await expect(toggle.locator('.attention-dot')).toHaveCount(0);
+  } finally {
+    await teardown(app, ...directories);
+  }
+});

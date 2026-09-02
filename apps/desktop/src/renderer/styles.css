@@ -1,6 +1,7 @@
 @import './styles/tokens.css';
 @import './styles/shell.css';
 @import './styles/mission-focus.css';
+@import './styles/mission-composer.css';
 @import './styles/guided-setup.css';
 @import './styles/agent-library.css';
 @import './styles/memory-library.css';
@@ -579,28 +580,6 @@ button:disabled {
 .mission-table {
   max-width: 100%;
   overflow-x: auto;
-}
-.mission-limits-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 0.75rem;
-}
-.mission-session-rows {
-  display: grid;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.mission-session-rows > li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  overflow-wrap: anywhere;
-}
-.mission-session-rows button {
-  margin-left: auto;
 }
 .mission-table table {
   border-collapse: collapse;

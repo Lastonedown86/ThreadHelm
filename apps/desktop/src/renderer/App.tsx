@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api, call } from './api.js';
+import { api, call, errorCode } from './api.js';
 import { CloseBlockedDialog } from './features/control/CloseBlockedDialog.js';
 import { AgentLibraryWorkspace } from './features/coordination/AgentLibraryWorkspace.js';
 import { MemoryLibraryWorkspace } from './features/coordination/MemoryLibraryWorkspace.js';
@@ -80,6 +80,7 @@ function Shell() {
           <>
             <MissionRail
               missions={workspace.missions}
+              titles={workspace.titles}
               selectedMissionId={state.selectedMissionId}
               onSelect={actions.selectMission}
               onCreate={() => setCreatingMission(true)}
@@ -97,6 +98,13 @@ function Shell() {
               onCreate={() => setCreatingMission(true)}
               onOpenDetail={() => {
                 if (state.selectedMissionId) setDetailMissionId(state.selectedMissionId);
+              }}
+              onPause={() => {
+                const missionId = state.selectedMissionId;
+                if (!missionId) return;
+                void call(api.missions.pause({ missionId })).catch((cause) =>
+                  actions.setNotice(`Pausing the mission failed (${errorCode(cause)}).`),
+                );
               }}
             />
           ) : (

@@ -21,6 +21,13 @@ export interface MissionPresentation {
   }>;
 }
 
+/** First line of the objective, clipped for headings; the id only when content is gone. */
+export function missionTitle(objective: string | null | undefined, id: string): string {
+  const first = objective?.split('\n')[0]?.trim();
+  if (!first) return `Mission ${id.slice(0, 8)}`;
+  return first.length > 80 ? `${first.slice(0, 79).trimEnd()}…` : first;
+}
+
 const lifecycleLabels: Record<MissionDetailView['state'], string> = {
   running: 'Running',
   paused: 'Paused',
@@ -96,7 +103,7 @@ export function presentMission(detail: MissionDetailView): MissionPresentation {
   const objective = detail.envelope?.objective ?? 'Mission content was deleted.';
 
   return {
-    title: `Mission ${detail.id.slice(0, 8)}`,
+    title: missionTitle(detail.envelope?.objective, detail.id),
     objective,
     lifecycleLabel: lifecycleLabels[detail.state],
     attention: missionAttention(detail, hasUnknownAttempt),

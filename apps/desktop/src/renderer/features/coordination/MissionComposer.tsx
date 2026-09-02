@@ -60,7 +60,7 @@ function AllowedToolsInput({
     if (JSON.stringify(parsed) !== JSON.stringify(value)) setText(value.join(', '));
   }, [value, text]);
   return (
-    <label>
+    <label className="field">
       {label}
       <input
         value={text}
@@ -328,7 +328,7 @@ export function MissionComposer({
           <div ref={reviewRef}>
             <MissionEnvelopeDisclosure preview={preview} />
           </div>
-          <label>
+          <label className="check">
             <input
               type="checkbox"
               checked={confirmed}
@@ -354,7 +354,7 @@ export function MissionComposer({
         </>
       ) : (
         <>
-          <label>
+          <label className="field">
             Objective
             <textarea
               ref={objectiveRef}
@@ -364,7 +364,7 @@ export function MissionComposer({
               disabled={busy}
             />
           </label>
-          <label>
+          <label className="field">
             Completion evidence
             <textarea
               maxLength={2000}
@@ -377,7 +377,7 @@ export function MissionComposer({
             Choose a reviewed profile and an eligible live session for the supervisor. A profile
             grants no mission authority until this exact envelope is confirmed.
           </p>
-          <label>
+          <label className="field">
             Supervisor profile
             <select
               value={supervisorProfile}
@@ -392,7 +392,7 @@ export function MissionComposer({
               ))}
             </select>
           </label>
-          <label>
+          <label className="field">
             Supervisor session
             <select
               value={supervisorSession}
@@ -414,9 +414,9 @@ export function MissionComposer({
             </p>
           ) : null}
           {workers.map((worker, index) => (
-            <fieldset key={index} disabled={busy}>
+            <fieldset key={index} className="launch-settings" disabled={busy}>
               <legend>Worker {index + 1}</legend>
-              <label>
+              <label className="field">
                 Worker {index + 1} profile
                 <select
                   value={worker.profileId}
@@ -436,7 +436,7 @@ export function MissionComposer({
                   ))}
                 </select>
               </label>
-              <label>
+              <label className="field">
                 Worker {index + 1} role
                 <select
                   value={worker.role}
@@ -447,7 +447,7 @@ export function MissionComposer({
                   ))}
                 </select>
               </label>
-              <label>
+              <label className="field">
                 Worker {index + 1} session
                 <select
                   value={worker.sessionId ?? ''}
@@ -478,7 +478,7 @@ export function MissionComposer({
                     ))}
                 </select>
               </label>
-              <label>
+              <label className="field">
                 Worker {index + 1} workspace
                 <select
                   value={worker.workspaceId}
@@ -496,7 +496,7 @@ export function MissionComposer({
               </label>
               {!worker.sessionId ? (
                 <>
-                  <label>
+                  <label className="check">
                     <input
                       type="checkbox"
                       checked={worker.autoStart}
@@ -504,7 +504,7 @@ export function MissionComposer({
                     />
                     Authorize automatic startup of worker {index + 1} within this mission
                   </label>
-                  <label>
+                  <label className="field">
                     Worker {index + 1} model
                     <select
                       value={
@@ -542,7 +542,7 @@ export function MissionComposer({
                   {worker.runtimeSelection.model &&
                   worker.runtimeSelection.model !==
                     profiles.find((p) => p.profileId === worker.profileId)?.requestedModel ? (
-                    <label>
+                    <label className="field">
                       Worker {index + 1} custom model
                       <input
                         maxLength={128}
@@ -555,7 +555,7 @@ export function MissionComposer({
                       />
                     </label>
                   ) : null}
-                  <label>
+                  <label className="field">
                     Worker {index + 1} effort
                     <select
                       value={worker.runtimeSelection.effort ?? ''}
@@ -575,7 +575,7 @@ export function MissionComposer({
                       ))}
                     </select>
                   </label>
-                  <label>
+                  <label className="field">
                     Worker {index + 1} permission
                     <select
                       value={worker.permissionSelection.policy ?? 'manual'}
@@ -608,7 +608,7 @@ export function MissionComposer({
                     />
                   ) : null}
                   {Object.entries(worker.executionBounds).map(([key, value]) => (
-                    <label key={key}>
+                    <label key={key} className="field">
                       Worker {index + 1} {boundLabels[key as keyof typeof defaultBounds]}
                       <input
                         type="number"
@@ -663,7 +663,7 @@ export function MissionComposer({
             Add worker
           </button>
           {workspaceIds.map((id) => (
-            <label key={id}>
+            <label key={id} className="field">
               Access to {workspaceName(id)}
               <select
                 value={modes[id] ?? 'write'}
@@ -676,19 +676,23 @@ export function MissionComposer({
               </select>
             </label>
           ))}
-          <fieldset disabled={busy}>
+          <fieldset className="launch-settings" disabled={busy}>
             <legend>Mission limits</legend>
-            {Object.entries(bounds).map(([key, value]) => (
-              <label key={key}>
-                {boundLabels[key as keyof typeof defaultBounds]}
-                <input
-                  type="number"
-                  min={1}
-                  value={value}
-                  onChange={(e) => setBounds((old) => ({ ...old, [key]: Number(e.target.value) }))}
-                />
-              </label>
-            ))}
+            <div className="mission-limits-grid">
+              {Object.entries(bounds).map(([key, value]) => (
+                <label key={key} className="field">
+                  {boundLabels[key as keyof typeof defaultBounds]}
+                  <input
+                    type="number"
+                    min={1}
+                    value={value}
+                    onChange={(e) =>
+                      setBounds((old) => ({ ...old, [key]: Number(e.target.value) }))
+                    }
+                  />
+                </label>
+              ))}
+            </div>
           </fieldset>
           <button disabled={!valid || busy} onClick={() => void review()}>
             Review mission

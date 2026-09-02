@@ -1,8 +1,10 @@
 import { useRef, type KeyboardEvent } from 'react';
 import type { MissionSummaryView } from '@threadhelm/contracts';
+import { missionTitle } from './mission-presentation.js';
 
 export interface MissionRailProps {
   missions: MissionSummaryView[];
+  titles: Record<string, string>;
   selectedMissionId: string | null;
   onSelect(missionId: string): void;
   onCreate(): void;
@@ -14,7 +16,13 @@ function focusMissionHeading() {
   });
 }
 
-export function MissionRail({ missions, selectedMissionId, onSelect, onCreate }: MissionRailProps) {
+export function MissionRail({
+  missions,
+  titles,
+  selectedMissionId,
+  onSelect,
+  onCreate,
+}: MissionRailProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const ids = missions.map((mission) => mission.id);
 
@@ -79,7 +87,8 @@ export function MissionRail({ missions, selectedMissionId, onSelect, onCreate }:
         </option>
         {missions.map((mission) => (
           <option key={mission.id} value={mission.id}>
-            Mission {mission.id.slice(0, 8)} · {mission.state.replaceAll('_', ' ')}
+            {titles[mission.id] ?? missionTitle(null, mission.id)} ·{' '}
+            {mission.state.replaceAll('_', ' ')}
           </option>
         ))}
       </select>
@@ -106,8 +115,10 @@ export function MissionRail({ missions, selectedMissionId, onSelect, onCreate }:
             >
               <span className="mission-state-shape" data-state={mission.state} aria-hidden="true" />
               <span>
-                <strong>Mission {mission.id.slice(0, 8)}</strong>
-                <small>{mission.state.replaceAll('_', ' ')}</small>
+                <strong>{titles[mission.id] ?? missionTitle(null, mission.id)}</strong>
+                <small>
+                  {mission.state.replaceAll('_', ' ')} · {mission.id.slice(0, 8)}
+                </small>
               </span>
             </li>
           );

@@ -206,7 +206,7 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await select(paused);
     await expect(app.page.getByText('Paused', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Resume mission', exact: true }),
+      app.page.getByRole('button', { name: 'Resume mission…', exact: true }),
     ).toBeVisible();
 
     await select(waiting);
@@ -215,14 +215,14 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await select(uncertain);
     await expect(app.page.getByText('uncertain', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Inspect mission', exact: true }),
+      app.page.getByRole('button', { name: 'Inspect mission…', exact: true }),
     ).toBeVisible();
     await expect(app.page.getByRole('button', { name: /retry/i })).toHaveCount(0);
 
     await select(completed);
     await expect(app.page.getByText('Completed', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'View evidence', exact: true }),
+      app.page.getByRole('button', { name: 'View evidence…', exact: true }),
     ).toBeVisible();
     await expect(app.page.getByText(/artifact · browser-report\.md/)).toBeVisible();
 
@@ -237,7 +237,7 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await recovered.click();
     await expect(app.page.getByText('Recovery required', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Inspect mission', exact: true }),
+      app.page.getByRole('button', { name: 'Inspect mission…', exact: true }),
     ).toBeVisible();
   } finally {
     await teardown(app, ...directories);

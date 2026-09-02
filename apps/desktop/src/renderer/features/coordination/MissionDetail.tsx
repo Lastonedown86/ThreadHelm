@@ -5,6 +5,7 @@ import { useStore } from '../../store.js';
 import { LaunchError } from '../launch/LaunchErrors.js';
 import { ModalDialog } from './ModalDialog.js';
 import { MissionComposer } from './MissionComposer.js';
+import { missionTitle } from '../mission-focus/mission-presentation.js';
 
 export function MissionDetail({ missionId, onClose }: { missionId: string; onClose(): void }) {
   const { state } = useStore();
@@ -110,7 +111,7 @@ export function MissionDetail({ missionId, onClose }: { missionId: string; onClo
         if (!busy) onClose();
       }}
     >
-      <h2>Mission {missionId.slice(0, 8)}</h2>
+      <h2>{missionTitle(detail?.envelope?.objective, missionId)}</h2>
       <LaunchError error={error} />
       {detail ? (
         <>

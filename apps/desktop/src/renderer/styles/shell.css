@@ -1,9 +1,9 @@
 .mission-app-shell {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  flex: 1 1 0;
   min-width: 0;
   min-height: 0;
-  height: 100%;
   color: var(--mission-ink);
   background: var(--mission-fog);
   font-family: var(--mission-font-body);

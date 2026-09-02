@@ -1,6 +1,9 @@
 import type { MissionDetailView, SupervisorAttemptView } from '@threadhelm/contracts';
 import { describe, expect, it } from 'vitest';
-import { presentMission } from '../../../apps/desktop/src/renderer/features/mission-focus/mission-presentation.js';
+import {
+  missionTitle,
+  presentMission,
+} from '../../../apps/desktop/src/renderer/features/mission-focus/mission-presentation.js';
 
 const missionId = '00000000-0000-4000-8000-000000000001';
 
@@ -54,6 +57,14 @@ function unknownAttempt(): SupervisorAttemptView {
 }
 
 describe('mission presentation', () => {
+  it('titles a mission by its objective and falls back to the id only without content', () => {
+    expect(presentMission(mission()).title).toBe('Ship a bounded mission workspace.');
+    expect(missionTitle('First line\nSecond line', missionId)).toBe('First line');
+    expect(missionTitle('x'.repeat(100), missionId)).toBe(`${'x'.repeat(79)}…`);
+    expect(missionTitle(null, missionId)).toBe('Mission 00000000');
+    expect(presentMission(mission({ envelope: null })).title).toBe('Mission 00000000');
+  });
+
   it('maps lifecycle state to one bounded primary action', () => {
     expect(presentMission(mission()).primaryAction).toBe('pause');
     expect(presentMission(mission({ state: 'paused' })).primaryAction).toBe('resume');

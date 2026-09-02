@@ -4,24 +4,31 @@ import { MissionResult } from './MissionResult.js';
 import { MissionSessionSummary } from './MissionSessionSummary.js';
 import type { MissionWorkspaceState } from './useMissionWorkspace.js';
 
+/** Pause acts directly; the others open the detail dialog, so they end with an ellipsis. */
 const actionLabels = {
   pause: 'Pause mission',
-  resume: 'Resume mission',
-  inspect: 'Inspect mission',
-  view_evidence: 'View evidence',
+  resume: 'Resume mission…',
+  inspect: 'Inspect mission…',
+  view_evidence: 'View evidence…',
 } as const;
 
 export function MissionWorkspace({
   workspace,
   onCreate,
   onOpenDetail,
+  onPause,
 }: {
   workspace: MissionWorkspaceState;
   onCreate(): void;
   onOpenDetail(): void;
+  onPause(): void;
 }) {
   if (workspace.loading && !workspace.detail)
-    return <p className="mission-workspace-state">Loading missions…</p>;
+    return (
+      <p className="mission-workspace-state" role="status">
+        Loading missions…
+      </p>
+    );
   if (workspace.error)
     return (
       <div className="mission-workspace-state">
@@ -43,15 +50,22 @@ export function MissionWorkspace({
     );
 
   const { detail, presentation } = workspace;
+  const action = presentation.primaryAction;
   return (
     <article className="mission-workspace-content">
       <header>
         <span className="mission-lifecycle">{presentation.lifecycleLabel}</span>
         <h1 tabIndex={-1}>{presentation.title}</h1>
-        <p>{presentation.objective}</p>
-        {presentation.primaryAction ? (
-          <button type="button" className="primary" onClick={onOpenDetail}>
-            {actionLabels[presentation.primaryAction]}
+        {presentation.objective && presentation.objective !== presentation.title ? (
+          <p>{presentation.objective}</p>
+        ) : null}
+        {action ? (
+          <button
+            type="button"
+            className="primary"
+            onClick={action === 'pause' ? onPause : onOpenDetail}
+          >
+            {actionLabels[action]}
           </button>
         ) : null}
       </header>

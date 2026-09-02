@@ -243,12 +243,17 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     ).toBeVisible();
 
     await select(waiting);
-    await expect(app.page.getByText('decision', { exact: true })).toBeVisible();
+    await expect(app.page.getByText('Needs your decision', { exact: true })).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'Review choices…', exact: true }),
+    ).toBeVisible();
 
     await select(uncertain);
-    await expect(app.page.getByText('uncertain', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Inspect mission…', exact: true }),
+      app.page.locator('#mission-workspace').getByText('Outcome uncertain', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'Inspect evidence…', exact: true }),
     ).toBeVisible();
     await expect(app.page.getByRole('button', { name: /retry/i })).toHaveCount(0);
 
@@ -264,13 +269,13 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     app = await launchWithFixtures({ 'codex-cli': 'echo' }, userData);
     const recovered = app.page
       .getByRole('listbox', { name: 'Missions', exact: true })
-      .getByRole('option')
-      .filter({ hasText: 'recovery required' })
-      .first();
+      .getByRole('option', { name: new RegExp(running.id.slice(0, 8), 'i') });
     await recovered.click();
-    await expect(app.page.getByText('Recovery required', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Inspect mission…', exact: true }),
+      app.page.locator('#mission-workspace').getByText('Recovery required', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'Inspect evidence…', exact: true }),
     ).toBeVisible();
   } finally {
     await teardown(app, ...directories);

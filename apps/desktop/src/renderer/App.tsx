@@ -108,15 +108,16 @@ function Shell() {
             <MissionWorkspace
               workspace={workspace}
               onCreate={() => setCreatingMission(true)}
-              onOpenDetail={() => {
-                if (state.selectedMissionId) setDetailMissionId(state.selectedMissionId);
-              }}
-              onPause={() => {
+              onAction={(kind) => {
                 const missionId = state.selectedMissionId;
                 if (!missionId) return;
-                void call(api.missions.pause({ missionId })).catch((cause) =>
-                  actions.setNotice(`Pausing the mission failed (${errorCode(cause)}).`),
-                );
+                if (kind === 'pause') {
+                  void call(api.missions.pause({ missionId })).catch((cause) =>
+                    actions.setNotice(`Pausing the mission failed (${errorCode(cause)}).`),
+                  );
+                  return;
+                }
+                setDetailMissionId(missionId);
               }}
             />
           ) : (

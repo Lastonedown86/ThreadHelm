@@ -105,7 +105,9 @@ export function useMissionWorkspace(selectedMissionId: string | null): MissionWo
     missions,
     titles,
     detail,
-    presentation: detail ? presentMission(detail) : null,
+    presentation: detail
+      ? presentMission(detail, { liveSessionIds: new Set(state.sessionOrder) })
+      : null,
     loading,
     error,
   };

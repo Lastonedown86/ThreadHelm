@@ -13,7 +13,7 @@ export function MissionContext({
       <h2>Mission context</h2>
       <section>
         <span className="context-label">Attention</span>
-        <strong>{presentation?.attention ?? 'none'}</strong>
+        <strong>{presentation?.attentionLabel ?? 'None'}</strong>
       </section>
       <section>
         <span className="context-label">Crew</span>

@@ -124,7 +124,7 @@ test('mission crash recovery restores an honest hold and launches no sessions', 
       .getByRole('option')
       .first()
       .click();
-    await app.page.getByRole('button', { name: 'Inspect mission…', exact: true }).click();
+    await app.page.getByRole('button', { name: 'Inspect evidence…', exact: true }).click();
     const detail = app.page.getByRole('dialog', { name: 'Mission detail' });
     await expect(detail.getByRole('status')).toContainText('recovery required');
     await expect(detail).toContainText('Nothing was restarted or replayed');

@@ -1,27 +1,18 @@
 import { LaunchError } from '../launch/LaunchErrors.js';
 import { MissionCourse } from './MissionCourse.js';
+import type { ActionKind } from './mission-presentation.js';
 import { MissionResult } from './MissionResult.js';
 import { MissionSessionSummary } from './MissionSessionSummary.js';
 import type { MissionWorkspaceState } from './useMissionWorkspace.js';
 
-/** Pause acts directly; the others open the detail dialog, so they end with an ellipsis. */
-const actionLabels = {
-  pause: 'Pause mission',
-  resume: 'Resume mission…',
-  inspect: 'Inspect mission…',
-  view_evidence: 'View evidence…',
-} as const;
-
 export function MissionWorkspace({
   workspace,
   onCreate,
-  onOpenDetail,
-  onPause,
+  onAction,
 }: {
   workspace: MissionWorkspaceState;
   onCreate(): void;
-  onOpenDetail(): void;
-  onPause(): void;
+  onAction(kind: ActionKind): void;
 }) {
   if (workspace.loading && !workspace.detail)
     return (
@@ -50,7 +41,6 @@ export function MissionWorkspace({
     );
 
   const { detail, presentation } = workspace;
-  const action = presentation.primaryAction;
   return (
     <article className="mission-workspace-content">
       <header>
@@ -59,19 +49,26 @@ export function MissionWorkspace({
         {presentation.objective && presentation.objective !== presentation.title ? (
           <p>{presentation.objective}</p>
         ) : null}
-        {action ? (
-          <button
-            type="button"
-            className="primary"
-            onClick={action === 'pause' ? onPause : onOpenDetail}
-          >
-            {actionLabels[action]}
-          </button>
-        ) : null}
+        <div className="mission-action-row">
+          {presentation.secondaryAction ? (
+            <button type="button" onClick={() => onAction(presentation.secondaryAction!.kind)}>
+              {presentation.secondaryAction.label}
+            </button>
+          ) : null}
+          {presentation.primaryAction ? (
+            <button
+              type="button"
+              className="primary"
+              onClick={() => onAction(presentation.primaryAction!.kind)}
+            >
+              {presentation.primaryAction.label}
+            </button>
+          ) : null}
+        </div>
       </header>
       <MissionCourse course={presentation.course} />
       <div className="mission-summary-grid">
-        <MissionResult detail={detail} />
+        <MissionResult result={presentation.verifiedResult} />
         <MissionSessionSummary detail={detail} />
       </div>
     </article>

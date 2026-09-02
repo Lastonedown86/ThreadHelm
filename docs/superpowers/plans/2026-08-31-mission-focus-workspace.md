@@ -527,7 +527,7 @@ the next.
 - Consumes: existing production component behavior and representative local sample data.
 - Produces: an owner-selected design and a scoped follow-up implementation plan for each page.
 
-- [ ] **Step 1: Present Agents and Templates variants**
+- [x] **Step 1: Present Agents and Templates variants**
 
 Compare roster-first, profile-detail-first, and library-first structures. Preserve generic bundled
 starters, exact imported provenance, and private local-profile separation. Record the selection before

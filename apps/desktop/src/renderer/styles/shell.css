@@ -175,9 +175,11 @@
 @media (max-width: 700px) {
   .mission-shell-regions {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .mission-shell-rail {
+    overflow: visible;
     border-right: 0;
     border-bottom: 1px solid color-mix(in srgb, var(--mission-ink) 20%, transparent);
   }
@@ -193,5 +195,12 @@
 
   .mission-picker {
     width: 100%;
+  }
+
+  .app-navigation {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+    padding: 0.5rem 0.75rem;
   }
 }

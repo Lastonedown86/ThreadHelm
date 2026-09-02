@@ -276,3 +276,33 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await teardown(app, ...directories);
   }
 });
+
+test('narrow windows keep the mission heading in the first screen', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const directories = [tempWorkspace('narrow-leader'), tempWorkspace('narrow-worker')];
+  try {
+    const mission = await confirmMission(
+      app,
+      await prepareFixtureMission(app, directories),
+      'Narrow window mission',
+    );
+    await app.page.setViewportSize({ width: 680, height: 800 });
+    await app.page.getByLabel('Selected mission').selectOption(mission.id);
+    const heading = app.page.locator('#mission-workspace h1');
+    await expect(heading).toHaveText('Narrow window mission');
+    const top = await heading.evaluate((el) => el.getBoundingClientRect().top);
+    expect(top, 'mission heading inside the first viewport').toBeLessThan(400);
+    const scrollers = await app.page.evaluate(() =>
+      [...document.querySelectorAll('*')].filter((el) => {
+        const s = getComputedStyle(el);
+        return (
+          (s.overflowY === 'auto' || s.overflowY === 'scroll') &&
+          el.scrollHeight > el.clientHeight
+        );
+      }).length,
+    );
+    expect(scrollers, 'one vertical scroller').toBeLessThanOrEqual(1);
+  } finally {
+    await teardown(app, ...directories);
+  }
+});

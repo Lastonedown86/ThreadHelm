@@ -32,13 +32,38 @@ const TESTED_MODELS: Readonly<Record<ProviderId, readonly string[]>> = {
   'codex-cli': ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
 };
 
+/**
+ * One compatibility evaluation for every reviewed manifest, whichever path it
+ * arrived on: file picker, wizard completion, or a recon proposal.
+ */
+export function evaluateManifestCompatibility(
+  ctx: Context,
+  manifest: AgentManifestV1,
+): ReturnType<typeof evaluateProfileCompatibility> {
+  return evaluateProfileCompatibility({
+    requestedProvider: manifest.provider,
+    requestedModel: manifest.model,
+    availableProviderModels: Object.fromEntries(
+      ctx.adapters.map((adapter) => [adapter.id, TESTED_MODELS[adapter.id]]),
+    ),
+  });
+}
+
+/** Where an accepted profile came from, when it came from a recon run. */
+export interface ReconProvenance {
+  readonly reconRunId: string;
+  readonly derivedFromCommit: string | null;
+}
+
 interface PreviewSnapshot {
-  path: string;
+  /** The file the manifest was read from; null for a proposal held in memory. */
+  path: string | null;
   basename: string;
   digest: string;
   manifest: AgentManifestV1;
   compatibility: ProfileCompatibility;
   compatibilityReasons: readonly string[];
+  provenance: ReconProvenance | null;
 }
 
 interface DeleteSnapshot {
@@ -62,6 +87,7 @@ export interface ProfileService {
     manifest: AgentManifestV1,
     digest: string,
     sourceBasename: string,
+    provenance?: ReconProvenance,
   ): AgentProfileSummaryView;
 }
 
@@ -128,15 +154,9 @@ export function createProfileService(ctx: Context): ProfileService {
     manifest: AgentManifestV1,
     digest: string,
     sourceBasename: string,
+    provenance?: ReconProvenance,
   ): AgentProfileSummaryView => {
-    const available = Object.fromEntries(
-      ctx.adapters.map((adapter) => [adapter.id, TESTED_MODELS[adapter.id]]),
-    );
-    const compatibilityResult = evaluateProfileCompatibility({
-      requestedProvider: manifest.provider,
-      requestedModel: manifest.model,
-      availableProviderModels: available,
-    });
+    const compatibilityResult = evaluateManifestCompatibility(ctx, manifest);
     const input: ImportProfileManifestInput = {
       manifestKey: sourceBasename.toLocaleLowerCase('en-US'),
       digest,
@@ -154,11 +174,43 @@ export function createProfileService(ctx: Context): ProfileService {
       compatibilityReasons: compatibilityResult.reasons,
       sourceBasename,
       createdAt: ctx.clock().toISOString(),
+      reconRunId: provenance?.reconRunId ?? null,
+      derivedFromCommit: provenance?.derivedFromCommit ?? null,
     };
     const imported = repository().importManifest(input);
     const summary = AgentProfileSummaryView.parse(repository().getSummary(imported.profileId)!);
     emit(summary, 'imported');
     return summary;
+  };
+
+  /** One preview path for both sources: file picker and recon proposal. */
+  const snapshotPreview = (
+    manifest: AgentManifestV1,
+    digest: string,
+    sourceBasename: string,
+    path: string | null,
+    provenance: ReconProvenance | null,
+  ): ProfilePreviewView => {
+    const compatibilityResult = evaluateManifestCompatibility(ctx, manifest);
+    const issued = previews.issue({
+      path,
+      basename: sourceBasename,
+      digest,
+      manifest,
+      compatibility: compatibilityResult.compatibility,
+      compatibilityReasons: compatibilityResult.reasons,
+      provenance,
+    });
+    return ProfilePreviewView.parse({
+      previewToken: issued.token,
+      digest,
+      basename: sourceBasename,
+      normalized: manifest,
+      warnings: compatibilityResult.reasons,
+      compatibility: compatibilityResult.compatibility,
+      compatibilityReasons: compatibilityResult.reasons,
+      expiresAt: issued.expiresAt,
+    });
   };
 
   return {
@@ -173,15 +225,23 @@ export function createProfileService(ctx: Context): ProfileService {
     },
 
     async previewImport(request) {
-      if (request.fileHandle === undefined) {
-        // Proposal-sourced imports arrive in Task 5.
-        throw new ThreadHelmError(
-          'PROFILE_UNREADABLE',
-          'The selected profile file is unavailable.',
-        );
+      if (request.proposalId !== undefined) {
+        // A proposal is single-use. An absent recon service and an already
+        // reviewed proposal are the same fact to the owner: it is not there.
+        const proposal = ctx.recon?.takeProposal(request.proposalId) ?? null;
+        if (!proposal) {
+          throw new ThreadHelmError(
+            'PROFILE_UNREADABLE',
+            'That proposed role is no longer available.',
+          );
+        }
+        return snapshotPreview(proposal.manifest, proposal.digest, proposal.sourceBasename, null, {
+          reconRunId: proposal.runId,
+          derivedFromCommit: proposal.derivedFromCommit,
+        });
       }
-      const path = handles.get(request.fileHandle);
-      handles.delete(request.fileHandle);
+      const path = request.fileHandle !== undefined ? handles.get(request.fileHandle) : undefined;
+      if (request.fileHandle !== undefined) handles.delete(request.fileHandle);
       if (!path) {
         throw new ThreadHelmError(
           'PROFILE_UNREADABLE',
@@ -189,34 +249,7 @@ export function createProfileService(ctx: Context): ProfileService {
         );
       }
       const { raw, digest } = await readBounded(path);
-      const manifest = parseAgentManifest(raw);
-      const available = Object.fromEntries(
-        ctx.adapters.map((adapter) => [adapter.id, TESTED_MODELS[adapter.id]]),
-      );
-      const compatibilityResult = evaluateProfileCompatibility({
-        requestedProvider: manifest.provider,
-        requestedModel: manifest.model,
-        availableProviderModels: available,
-      });
-      const snapshot: PreviewSnapshot = {
-        path,
-        basename: basename(path),
-        digest,
-        manifest,
-        compatibility: compatibilityResult.compatibility,
-        compatibilityReasons: compatibilityResult.reasons,
-      };
-      const issued = previews.issue(snapshot);
-      return ProfilePreviewView.parse({
-        previewToken: issued.token,
-        digest,
-        basename: snapshot.basename,
-        normalized: manifest,
-        warnings: compatibilityResult.reasons,
-        compatibility: compatibilityResult.compatibility,
-        compatibilityReasons: compatibilityResult.reasons,
-        expiresAt: issued.expiresAt,
-      });
+      return snapshotPreview(parseAgentManifest(raw), digest, basename(path), path, null);
     },
 
     async confirmImport(request) {
@@ -225,6 +258,16 @@ export function createProfileService(ctx: Context): ProfileService {
         throw new ThreadHelmError(
           'CONFIRMATION_EXPIRED',
           'The profile preview expired or was used.',
+        );
+      }
+      if (snapshot.path === null) {
+        // A proposal's bytes left the run when it was taken and its directory
+        // is gone; the reviewed manifest is the only copy and cannot drift.
+        return saveReviewedManifest(
+          snapshot.manifest,
+          snapshot.digest,
+          snapshot.basename,
+          snapshot.provenance ?? undefined,
         );
       }
       const current = await readBounded(snapshot.path);

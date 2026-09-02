@@ -23,6 +23,7 @@ import {
   createAgentWizardService,
   type AgentWizardService,
 } from './coordination/profile-wizard.js';
+import { createReconService, type ReconService } from './coordination/recon.js';
 import { deliverHandoff } from './coordination/delivery.js';
 import { createSupervisorService } from './coordination/supervisor.js';
 import { requestClose, stopAllAndClose } from './lifecycle/close.js';
@@ -54,11 +55,7 @@ export function createHandlers(ctx: Context): Handlers {
     }
     return agentWizard;
   };
-  const requireRecon = (): never => {
-    // Task 5 composes the recon service onto ctx; until then the operations
-    // exist on the wire and report honestly that the service is absent.
-    throw new ThreadHelmError('RECON_UNAVAILABLE', 'Workspace recon is unavailable.');
-  };
+  const recon = startRecon(ctx);
   return {
     'missions.eligibleSessions': () => supervisor.eligibleSessions(),
     'missions.preview': (request) => supervisor.preview(request),
@@ -181,9 +178,9 @@ export function createHandlers(ctx: Context): Handlers {
     'profiles.setEnabled': (request) => profiles.setEnabled(request),
     'profiles.previewDelete': (request) => profiles.previewDelete(request),
     'profiles.confirmDelete': (request) => profiles.confirmDelete(request),
-    'workspaceRecon.previewLaunch': () => requireRecon(),
-    'workspaceRecon.confirmLaunch': () => requireRecon(),
-    'workspaceRecon.getRun': () => requireRecon(),
+    'workspaceRecon.previewLaunch': (request) => recon.previewLaunch(request),
+    'workspaceRecon.confirmLaunch': (request) => recon.confirmLaunch(request),
+    'workspaceRecon.getRun': (request) => recon.getRun(request),
     'agentWizard.createDraft': (request) => requireAgentWizard().createDraft(request),
     'agentWizard.listDrafts': (request) => requireAgentWizard().listDrafts(request),
     'agentWizard.getDraft': (request) => requireAgentWizard().getDraft(request),
@@ -212,6 +209,13 @@ export function createHandlers(ctx: Context): Handlers {
 export function startProfiles(ctx: Context): ProfileService {
   const service = ctx.profiles ?? createProfileService(ctx);
   ctx.profiles = service;
+  return service;
+}
+
+/** Compose the one main-owned recon authority for this application run. */
+export function startRecon(ctx: Context): ReconService {
+  const service = ctx.recon ?? createReconService(ctx);
+  ctx.recon = service;
   return service;
 }
 

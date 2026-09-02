@@ -31,6 +31,7 @@ import type { BridgeSessionManager } from './coordination/bridge.js';
 import type { MemoryService } from './coordination/memory.js';
 import type { ProfileService } from './coordination/profiles.js';
 import type { AgentWizardService } from './coordination/profile-wizard.js';
+import type { ReconService } from './coordination/recon.js';
 import type { SupervisorService } from './coordination/supervisor.js';
 
 // --- native boundary (contracts/windows-supervisor.md) ----------------------
@@ -217,6 +218,10 @@ export interface Context {
   profiles?: ProfileService;
   /** Main-owned wizard/template authority; drafts remain non-executable. */
   agentWizard?: AgentWizardService;
+  /** Root of the ThreadHelm-owned recon output tree. Never inside a workspace. */
+  reconRoot: () => string;
+  /** Main-owned recon authority; absent until handler composition. */
+  recon?: ReconService;
   /** Main-owned mission authority. No renderer/provider receives this object. */
   supervisor?: SupervisorService;
   /** Session-scoped provider bridge authority; absent in degraded/test compositions. */

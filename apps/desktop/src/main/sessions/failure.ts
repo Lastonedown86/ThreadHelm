@@ -65,6 +65,9 @@ function teardown(ctx: Context, live: LiveSession): void {
   cleanup(() => releaseLease(ctx, live.id));
   ctx.live.delete(live.id);
   cleanup(() => ctx.supervisor?.onSessionEnded(live.id, 'WORKER_SESSION_ENDED'));
+  // The terminal-lifecycle signal a recon run collects on. Its durable state
+  // and events are already written; nothing here reads session output.
+  cleanup(() => ctx.recon?.onSessionEnded(live.id));
   if (ctx.selection.selectedSessionId === live.id) ctx.selection.selectedSessionId = null;
   cleanup(() => maybeQuit(ctx));
 }

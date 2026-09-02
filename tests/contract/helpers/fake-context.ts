@@ -5,6 +5,8 @@
  * coordinator touches, nothing real spawned.
  */
 
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { MessageChannel } from 'node:worker_threads';
 // eslint-disable-next-line no-restricted-imports -- type-only; the fake stands in for Electron ports
 import type { MessagePortMain } from 'electron';
@@ -406,7 +408,9 @@ export interface FakeWorld {
   until(predicate: () => boolean, timeoutMs?: number): Promise<void>;
 }
 
-export function createWorld(options: { degraded?: boolean; noStorage?: boolean } = {}): FakeWorld {
+export function createWorld(
+  options: { degraded?: boolean; noStorage?: boolean; reconRoot?: string } = {},
+): FakeWorld {
   const log = createLogger({ write() {} });
   const native = new FakeNative();
   const hosts: FakeHost[] = [];
@@ -503,6 +507,8 @@ export function createWorld(options: { degraded?: boolean; noStorage?: boolean }
           exec: async () => ({ stdout: '', stderr: '', exitCode: 1, timedOut: false }),
         }),
       },
+      // Lazy by design: no directory exists until a recon run creates one.
+      reconRoot: () => options.reconRoot ?? join(tmpdir(), 'threadhelm-test-recon'),
       appInfo: { version: '0.0.0-test', electronVersion: '44.0.0', arch: 'x64' },
       quit: vi.fn(),
     },

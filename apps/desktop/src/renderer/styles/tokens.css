@@ -1,0 +1,22 @@
+:root {
+  --mission-ink: #18242c;
+  --mission-fog: #edf1f3;
+  --mission-paper: #f8fafb;
+  --mission-copper: #ad5b3d;
+  --mission-verdigris: #2f7168;
+  --mission-steel: #3f647a;
+  --mission-font-heading: Bahnschrift, 'Segoe UI Variable Display', 'Segoe UI', sans-serif;
+  --mission-font-body: 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
+  --mission-font-code: 'Cascadia Code', Consolas, monospace;
+  --mission-focus-ring: 3px solid #3f647a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
+}

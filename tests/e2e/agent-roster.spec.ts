@@ -37,6 +37,7 @@ async function importByKeyboard(
   basename: string,
   text: string,
 ) {
+  await page.getByRole('button', { name: 'Agents', exact: true }).click();
   writeHireManifestFile(dir, basename, text);
   await selectProfileFile(app, `${dir}\\${basename}`);
   await press(page.getByRole('button', { name: 'Import profile…' }));
@@ -51,6 +52,7 @@ test('keyboard-only import previews the exact reviewed content before confirming
   const app = await launchApp();
   const dir = tempWorkspace('roster-import');
   try {
+    await app.page.getByRole('button', { name: 'Agents', exact: true }).click();
     const fx = MARVEL_ROSTER_FIXTURES[0]!;
     writeHireManifestFile(dir, fx.basename, fx.text);
     await selectProfileFile(app, `${dir}\\${fx.basename}`);

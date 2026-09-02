@@ -1,0 +1,55 @@
+.memory-library-workspace {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+.memory-library-grid {
+  display: grid;
+  grid-template-columns: minmax(15rem, 0.65fr) minmax(24rem, 1.5fr) minmax(16rem, 0.75fr);
+  gap: 1rem;
+  align-items: start;
+}
+.memory-librarian,
+.memory-reading-desk,
+.mission-reading-list {
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--mission-ink) 24%, transparent);
+  background: var(--mission-paper);
+}
+.memory-librarian {
+  border-top: 0.3rem solid var(--mission-copper);
+}
+.memory-librarian h2,
+.mission-reading-list h2 {
+  font-family: var(--mission-font-heading);
+}
+.librarian-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+}
+.memory-reading-desk > .panel {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.mission-reading-list {
+  border-top: 0.3rem solid var(--mission-verdigris);
+}
+@media (max-width: 1050px) {
+  .memory-library-grid {
+    grid-template-columns: 1fr 1.6fr;
+  }
+  .mission-reading-list {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 720px) {
+  .memory-library-grid {
+    grid-template-columns: 1fr;
+  }
+  .mission-reading-list {
+    grid-column: auto;
+  }
+}

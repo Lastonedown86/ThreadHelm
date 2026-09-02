@@ -1,8 +1,8 @@
 # Preview handoff to Verified Mission Delegation
 
 **Owner direction, 2026-08-31:** Do the work needed to reach the next feature, following the
-approved unsigned x64 preview deferrals. **State: P01-P05 accepted; repository review and main
-integration pending.**
+approved unsigned x64 preview deferrals. **State: P01-P05 accepted; PR #17 merged to `main` at
+`cb6758a`; the approved renderer follow-up is being verified separately.**
 
 This is an alternative development handoff, not full Feature 002 closure or release approval.
 It removes the need to finish D01-D06 before beginning the next specification. All retained
@@ -43,7 +43,7 @@ Populate these fields from completed evidence, not from intended actions:
 | P03: independent safety review and host scope reconciliation | Complete. Technical review passed and the owner approved the exact bounded three-file host exception on 2026-08-31. |
 | P04: x64 candidate controls and applicable CI | Complete for application candidate `d23d297` / PR head `ea33076`. CI, CodeQL and installed acceptance passed; hosted tested merge `f80d60b3`, unsigned x64 Setup SHA-256 `2eef36569824bb35c009e8d58c605c5d64eedb0a899faf13a8dacd394c8369a7`. D06 preserves the failed CPU measurements. |
 | P05: owner acceptance of exact candidate and limitations | Complete on 2026-08-31 for application candidate `d23d297` / tested PR head `ea33076`, with unsigned/x64-only, publisher-trust, private-persona, unproved-provider and D01/D05/D06 limitations retained. |
-| Required repository review and main integration | PR17 draft; no approval or merge recorded |
+| Required repository review and main integration | Complete. PR #17 merged to `main` at `cb6758a195d939c6d7e482d640b95bd818b278da`. The later approved renderer workspace remains a separate review candidate. |
 
 The initial NSIS Setup exited successfully on x64 and ARM64, but the harness looked for
 `Programs/ThreadHelm` instead of `Programs/@threadhelmdesktop`. The corrected harness uses the

@@ -1,0 +1,74 @@
+.mission-workspace-content,
+.mission-workspace-state,
+.mission-context-content {
+  padding: clamp(1rem, 3vw, 2.25rem);
+}
+
+.mission-workspace-content > header {
+  display: grid;
+  justify-items: start;
+  max-width: 58rem;
+}
+
+.mission-workspace-content h1 {
+  margin-top: 0.35rem;
+  font: 650 clamp(1.65rem, 4vw, 2.6rem) / 1.08 var(--mission-font-heading);
+}
+
+.mission-lifecycle,
+.course-state,
+.context-label,
+.mission-evidence {
+  color: var(--mission-steel);
+  font-family: var(--mission-font-code);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mission-course {
+  margin-top: 2rem;
+}
+
+.mission-course ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.mission-course li,
+.mission-result,
+.mission-session-summary,
+.mission-context-content section {
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--mission-ink) 22%, transparent);
+  border-radius: 0.45rem;
+  background: #fff;
+}
+
+.mission-course li[data-state='verified'] {
+  border-top: 0.3rem solid var(--mission-verdigris);
+}
+
+.mission-course li[data-state='current'] {
+  border-top: 0.3rem solid var(--mission-copper);
+}
+
+.mission-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.mission-context-content {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mission-context-content section > * {
+  display: block;
+  overflow-wrap: anywhere;
+}

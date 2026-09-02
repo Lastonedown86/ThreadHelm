@@ -35,7 +35,7 @@ test('two sessions keep input, output, identity, and attention isolated', async 
     // Input goes only to the selected session.
     await sessionOption(page, a).click();
     await expect(terminalRows(page)).toContainText('FAKE_AGENT_READY', { timeout: 30_000 });
-    await page.locator('.xterm-helper-textarea').focus();
+    await page.locator('.xterm-helper-textarea:visible').focus();
     await page.keyboard.type('alpha');
     await page.keyboard.press('Enter');
     await expect(terminalRows(page)).toContainText('ECHO:alpha', { timeout: 15_000 });
@@ -44,7 +44,7 @@ test('two sessions keep input, output, identity, and attention isolated', async 
     await expect(sessionOption(page, b)).toHaveAttribute('aria-selected', 'true');
     await expect(terminalRows(page)).toContainText('FAKE_AGENT_READY', { timeout: 30_000 });
     await expect(terminalRows(page)).not.toContainText('ECHO:alpha');
-    await page.locator('.xterm-helper-textarea').focus();
+    await page.locator('.xterm-helper-textarea:visible').focus();
     await page.keyboard.type('bravo');
     await page.keyboard.press('Enter');
     await expect(terminalRows(page)).toContainText('ECHO:bravo', { timeout: 15_000 });

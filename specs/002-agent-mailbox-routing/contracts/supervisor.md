@@ -11,6 +11,8 @@ Before autonomy starts, the user reviews and confirms:
 - exact objective and completion evidence;
 - approved workspace IDs and allowed read/write modes;
 - eligible provider/profile-revision/role set and supervisor profile revision;
+- each worker's bounded mission-specific assignment and required return evidence, kept separate from
+  the reusable profile goal and capability labels;
 - per-worker automatic-start permission, bound to the exact pinned profile revision, workspace,
   provider/model/effort, effective isolation/resource limits, and folder-access boundary;
 - maximum concurrent workers, work items, decomposition depth, attempts, elapsed time, and resource use;
@@ -51,6 +53,9 @@ confidence, or memory search rank cannot override a policy result.
 
 - A work item belongs to one mission, has bounded specification/acceptance criteria, and forms an
   acyclic dependency graph of at most 64 items and depth eight.
+- Initial and decomposed work must remain inside the confirmed worker assignment. Decomposition may
+  refine required return evidence but cannot erase it, replace it with confidence, or expand the
+  assignment without a revised preview and owner confirmation.
 - Main validates every proposed child/dependency before insertion. Equivalent decomposition detected
   three times within the latest eight decisions pauses the affected branch.
 - Assignment is allowed only to an eligible active pinned profile revision/session in an approved workspace.
@@ -84,6 +89,9 @@ confidence, or memory search rank cannot override a policy result.
   authority-required, permission-blocked, classifier-failed, timed-out, cancelled, no-progress,
   budget-exhausted, or unknown, plus deliberate artifact/evidence/memory references and bounded
   explanation.
+- A completion disposition is held when it does not deliberately reference the confirmed worker
+  binding's required return evidence. Raw transcript volume or an uncited success claim is not
+  completion evidence.
 - Main persists the result against the exact mission, work item, attempt, assignment handoff, worker
   session, and pinned profile revision before notifying the supervisor.
 - Raw transcripts, terminal input/output, reasoning traces, credentials, environment values, and

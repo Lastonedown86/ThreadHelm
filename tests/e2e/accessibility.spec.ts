@@ -65,6 +65,7 @@ test('keyboard-only journey with visible focus and accessible names', async () =
   const dir = tempWorkspace();
   const page = app.page;
   try {
+    await page.getByRole('button', { name: 'Sessions', exact: true }).click();
     await app.setPickerPath(dir);
     await page.locator('.status-bar').click(); // establish a focus origin only
     await tabTo(page, /^Choose folder/);
@@ -104,6 +105,7 @@ test('keyboard can leave the terminal to reach Stop and confirm it', async () =>
   const dir = tempWorkspace();
   const page = app.page;
   try {
+    await page.getByRole('button', { name: 'Sessions', exact: true }).click();
     await app.setPickerPath(dir);
     await page.locator('.status-bar').click();
     await tabTo(page, /^Choose folder/);
@@ -133,7 +135,8 @@ test('keyboard can leave the terminal to reach Stop and confirm it', async () =>
     await expect(interrupt).toBeEnabled();
     // Launch completion precedes the lazy terminal's mount and automatic focus.
     // Exercise F6 from xterm itself; do not send it to a loading/previous control.
-    await expect(page.locator('.terminal-host .xterm-helper-textarea')).toBeFocused();
+    await page.locator('.terminal-host:visible .xterm-helper-textarea').focus();
+    await expect(page.locator('.terminal-host:visible .xterm-helper-textarea')).toBeFocused();
     await page.keyboard.press('F6');
     await expect(interrupt).toBeFocused();
     await tabTo(page, /^Stop…$/);
@@ -152,6 +155,7 @@ test('text scaling, contrast, reduced motion, and idle rendering', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo' });
   const page = app.page;
   try {
+    await page.getByRole('button', { name: 'Sessions', exact: true }).click();
     // Contrast (WCAG 2.2 AA): text ≥ 4.5, borders ≥ 3 against effective backgrounds.
     const samples = await page.evaluate(() => {
       const bg = (el: Element | null): string => {
@@ -216,7 +220,7 @@ test('text scaling, contrast, reduced motion, and idle rendering', async () => {
       document.documentElement.style.fontSize = '200%';
     });
     await expect(page.getByRole('button', { name: 'Choose folder…' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Local sessions', exact: true })).toHaveCount(1);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
     );

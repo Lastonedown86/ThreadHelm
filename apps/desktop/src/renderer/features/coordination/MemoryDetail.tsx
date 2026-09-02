@@ -5,6 +5,7 @@ import type {
   MemorySupersedeDisclosureView,
 } from '@threadhelm/contracts';
 import { api, call } from '../../api.js';
+import { ContentDeletionReview } from '../control/ContentDeletionReview.js';
 import { ModalDialog } from './ModalDialog.js';
 
 function label(value: string): string {
@@ -268,38 +269,19 @@ export function MemoryDetail({
       ) : null}
 
       {deleteDisclosure ? (
-        <ModalDialog
-          label="Delete shared memory content"
-          onDismiss={() => setDeleteDisclosure(null)}
+        <ContentDeletionReview
+          title="Delete shared memory content"
+          summary={deleteDisclosure.safeSummary}
+          confirmed={deleteConfirmed}
+          onConfirmed={setDeleteConfirmed}
+          onCancel={() => setDeleteDisclosure(null)}
+          onDelete={() => void confirmDeletion()}
         >
-          <h3>Delete shared memory content</h3>
-          <p>{deleteDisclosure.safeSummary}</p>
           <p>
             Title, body, citations, size, and search index data are removed; content-free lineage
             remains.
           </p>
-          <label className="confirmation">
-            <input
-              type="checkbox"
-              checked={deleteConfirmed}
-              onChange={(event) => setDeleteConfirmed(event.target.checked)}
-            />{' '}
-            Permanently delete this content.
-          </label>
-          <div className="actions">
-            <button type="button" onClick={() => setDeleteDisclosure(null)}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="danger"
-              disabled={!deleteConfirmed}
-              onClick={() => void confirmDeletion()}
-            >
-              Delete permanently
-            </button>
-          </div>
-        </ModalDialog>
+        </ContentDeletionReview>
       ) : null}
 
       {supersedeOpen ? (

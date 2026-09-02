@@ -29,6 +29,7 @@ Reference contracts:
 - [shared-memory.md](contracts/shared-memory.md)
 - [agent-profiles.md](contracts/agent-profiles.md)
 - [agent-templates.md](contracts/agent-templates.md)
+- [mission-coaching.md](contracts/mission-coaching.md)
 - [supervisor.md](contracts/supervisor.md)
 - [data-model.md](data-model.md)
 

@@ -1,0 +1,49 @@
+.recovery-attention-workspace {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+.recovery-attention-grid {
+  display: grid;
+  grid-template-columns: minmax(15rem, 0.7fr) minmax(25rem, 1.6fr);
+  gap: 1rem;
+  align-items: start;
+}
+.recovery-queue {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.recovery-queue button {
+  display: grid;
+  width: 100%;
+  gap: 0.2rem;
+  text-align: left;
+  text-transform: capitalize;
+}
+.recovery-queue button.selected {
+  border-color: var(--mission-steel);
+  background: color-mix(in srgb, var(--mission-steel) 12%, white);
+}
+.recovery-queue span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.recovery-detail {
+  padding: 1rem;
+  border: 1px solid var(--mission-ink);
+  background: var(--mission-paper);
+}
+.recovery-coach {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border-left: 0.3rem solid var(--mission-copper);
+  background: var(--warning-bg);
+}
+@media (max-width: 740px) {
+  .recovery-attention-grid {
+    grid-template-columns: 1fr;
+  }
+}

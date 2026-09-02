@@ -17,6 +17,7 @@ test('approve → disclose → launch journey', async () => {
   const dir = tempWorkspace();
   const page = app.page;
   try {
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
     // Choose: the candidate disclosure shows selected and effective paths.
     await app.setPickerPath(dir);
     await page.getByRole('button', { name: 'Choose folder…' }).click();

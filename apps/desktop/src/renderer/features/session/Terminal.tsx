@@ -7,16 +7,23 @@ import { useEffect, useRef } from 'react';
 import type { SessionView } from '@threadhelm/contracts';
 import { api, call } from '../../api.js';
 import { describeScrollback, describeTruncation } from './buffer.js';
-import { ensureTerminal } from './terminals.js';
+import { ensureTerminal, flushPendingWrites } from './terminals.js';
 
 interface Props {
   session: SessionView;
+  active?: boolean;
   truncationCount: number;
   streamFailure: string | null;
   inputNotice: string | null;
 }
 
-export function TerminalPane({ session, truncationCount, streamFailure, inputNotice }: Props) {
+export function TerminalPane({
+  session,
+  active = true,
+  truncationCount,
+  streamFailure,
+  inputNotice,
+}: Props) {
   const host = useRef<HTMLDivElement>(null);
   const sessionId = session.id;
 
@@ -29,7 +36,6 @@ export function TerminalPane({ session, truncationCount, streamFailure, inputNot
       entry.term.open(entry.element);
       entry.opened = true;
     }
-
     let last = { columns: 0, rows: 0 };
     const applyFit = () => {
       entry.fit.fit();
@@ -39,6 +45,17 @@ export function TerminalPane({ session, truncationCount, streamFailure, inputNot
       void call(api.sessions.resize({ sessionId, columns: cols, rows })).catch(() => undefined);
     };
     applyFit();
+    // xterm keeps the logical buffer while its persistent surface is detached.
+    // Repaint it after a session switch so output received off-screen is visible.
+    flushPendingWrites(entry);
+    entry.term.refresh(0, Math.max(0, entry.term.rows - 1));
+    const repaint = requestAnimationFrame(() => {
+      applyFit();
+      // Queue after any pending output so parsing completes before repaint.
+      entry.term.write('\u001b[0m', () => {
+        entry.term.refresh(0, Math.max(0, entry.term.rows - 1));
+      });
+    });
     // A delayed mount or session switch must not take the user's next key
     // away from the session list, a dialog, or another focused control.
     const focused = document.activeElement;
@@ -49,10 +66,21 @@ export function TerminalPane({ session, truncationCount, streamFailure, inputNot
     const observer = new ResizeObserver(() => applyFit());
     observer.observe(container);
     return () => {
+      cancelAnimationFrame(repaint);
       observer.disconnect();
       entry.element.remove();
     };
   }, [sessionId]);
+
+  useEffect(() => {
+    if (!active) return;
+    const entry = ensureTerminal(sessionId);
+    const repaint = requestAnimationFrame(() => {
+      entry.fit.fit();
+      entry.term.refresh(0, Math.max(0, entry.term.rows - 1));
+    });
+    return () => cancelAnimationFrame(repaint);
+  }, [active, sessionId]);
 
   return (
     <section className="terminal-pane" aria-labelledby="terminal-heading">

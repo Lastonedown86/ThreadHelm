@@ -32,6 +32,7 @@ import {
   launchViaUi,
   launchWithFixtures,
   sessionOption,
+  showTerminal,
   terminalRows,
 } from '../../e2e/helpers/ui.js';
 
@@ -417,6 +418,10 @@ describe('performance budgets', () => {
     const sessionId = await launchViaUi(app, 'codex-cli', displayPath);
     await sessionOption(page, sessionId).click();
     await terminalRows(page).filter({ hasText: 'FAKE_AGENT_READY' }).waitFor({ timeout: 30_000 });
+    // The docked terminal starts below the fold of the scrolling workspace, and
+    // xterm stops painting while its screen element is out of the viewport, so
+    // the budget must be measured on a terminal the user is actually looking at.
+    await showTerminal(page);
 
     const samples: number[] = [];
     for (let i = 0; i < 40; i += 1) {

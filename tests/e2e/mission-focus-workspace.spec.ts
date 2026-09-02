@@ -262,7 +262,11 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await expect(node.getByRole('button', { name: 'Open terminal' })).toBeVisible();
 
     await select(waiting);
-    await expect(app.page.getByText('Needs your decision', { exact: true })).toBeVisible();
+    await expect(
+      app.page
+        .getByRole('complementary', { name: 'Mission context' })
+        .getByText('Needs your decision', { exact: true }),
+    ).toBeVisible();
     await expect(
       app.page
         .locator('.mission-action-row')
@@ -282,7 +286,7 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
 
     await select(uncertain);
     await expect(
-      app.page.locator('#mission-workspace').getByText('Outcome uncertain', { exact: true }),
+      app.page.getByRole('article').getByText('Outcome uncertain', { exact: true }),
     ).toBeVisible();
     await expect(
       app.page
@@ -367,7 +371,7 @@ test('narrow windows keep the mission heading in the first screen', async () => 
   }
 });
 
-test.fixme('medium windows keep an attention control when a decision waits', async () => {
+test('medium windows keep an attention control when a decision waits', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo' });
   const directories = [tempWorkspace('medium-leader'), tempWorkspace('medium-worker')];
   try {

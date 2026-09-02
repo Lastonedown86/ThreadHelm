@@ -6,6 +6,7 @@ import { MemoryLibraryWorkspace } from './features/coordination/MemoryLibraryWor
 import { MissionComposer } from './features/coordination/MissionComposer.js';
 import { MissionDetail } from './features/coordination/MissionDetail.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
+import { ContextToggle } from './features/mission-focus/ContextToggle.js';
 import { MissionContext } from './features/mission-focus/MissionContext.js';
 import { MissionContextFrame } from './features/mission-focus/MissionContextFrame.js';
 import { MissionRail } from './features/mission-focus/MissionRail.js';
@@ -79,6 +80,19 @@ function Shell() {
     setDetailMissionId(missionId);
   };
 
+  const contextContent = missionSelected ? (
+    <MissionContext
+      detail={workspace.detail}
+      presentation={workspace.presentation}
+      onAction={runMissionAction}
+      onOpenAttention={() => actions.selectDestination('attention')}
+    />
+  ) : (
+    <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
+      <SetupAttentionSummary />
+    </MissionContextFrame>
+  );
+
   return (
     <div className="app">
       {state.storageDegraded ? (
@@ -139,20 +153,15 @@ function Shell() {
             <LegacyDestination mission={workspace.detail} />
           )
         }
-        context={
-          missionSelected ? (
-            <MissionContext
-              detail={workspace.detail}
-              presentation={workspace.presentation}
-              onAction={runMissionAction}
-              onOpenAttention={() => actions.selectDestination('attention')}
-            />
-          ) : (
-            <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
-              <SetupAttentionSummary />
-            </MissionContextFrame>
-          )
+        contextToggle={
+          <ContextToggle
+            label={workspace.presentation?.attentionLabel ?? 'Context'}
+            attention={workspace.presentation?.attention ?? 'none'}
+          >
+            {contextContent}
+          </ContextToggle>
         }
+        context={contextContent}
         terminal={null}
       />
       <footer className="status-bar">

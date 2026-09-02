@@ -5,6 +5,7 @@ import {
   migrate,
   openDatabase,
   readSchemaVersion,
+  SCHEMA_VERSION,
   type Db,
   type Repositories,
 } from '@threadhelm/persistence';
@@ -82,7 +83,7 @@ describe('durable supervisor transactions', () => {
     expect(repos.supervisor).toBeDefined();
     const mission = create();
     migrate(db);
-    expect(readSchemaVersion(db)).toBe(3);
+    expect(readSchemaVersion(db)).toBe(SCHEMA_VERSION);
     expect(repos.supervisor.detail(mission.id).envelope!.bindings[1]!.profileRevisionId).toBe(
       bindings[1]!.profileRevisionId,
     );

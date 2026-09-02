@@ -258,7 +258,11 @@ describe('agent-template persistence', () => {
   it('rolls back a failed v3 upgrade and keeps the earlier rows available', () => {
     const db = openDatabase(':memory:');
     connections.push(db);
-    for (const migration of MIGRATIONS) db.exec(migration.sql);
+    // Build exactly a v3 database: replay migrations through v3 only, then stamp
+    // schema_meta at 3 by hand, so the later migrate(db) call exercises the
+    // v3->current delta from a known starting point instead of double-applying
+    // any migration already run by this loop.
+    for (const migration of MIGRATIONS) if (migration.version <= 3) db.exec(migration.sql);
     db.prepare('INSERT INTO schema_meta (version) VALUES (3)').run();
     db.exec(
       CURRENT_SCHEMA_EXTENSIONS.find((extension) => extension.table === 'agent_profile_templates')!
@@ -287,7 +291,11 @@ describe('agent-template persistence', () => {
   it('upgrades existing v3 foundation rows without losing identities or provenance', () => {
     const db = openDatabase(':memory:');
     connections.push(db);
-    for (const migration of MIGRATIONS) db.exec(migration.sql);
+    // Build exactly a v3 database: replay migrations through v3 only, then stamp
+    // schema_meta at 3 by hand, so the later migrate(db) call exercises the
+    // v3->current delta from a known starting point instead of double-applying
+    // any migration already run by this loop.
+    for (const migration of MIGRATIONS) if (migration.version <= 3) db.exec(migration.sql);
     db.prepare('INSERT INTO schema_meta (version) VALUES (3)').run();
     db.exec(
       CURRENT_SCHEMA_EXTENSIONS.find((extension) => extension.table === 'agent_profile_templates')!

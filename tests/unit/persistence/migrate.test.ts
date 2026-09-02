@@ -100,7 +100,7 @@ describe('migrate', () => {
       DROP TABLE agent_profile_revisions;
       DROP TABLE agent_profiles;
     `);
-    expect(readSchemaVersion(db)).toBe(3);
+    expect(readSchemaVersion(db)).toBe(SCHEMA_VERSION);
 
     migrate(db);
 
@@ -116,7 +116,7 @@ describe('migrate', () => {
       'agent_profiles',
       'mission_profile_pins',
     ]);
-    expect(readSchemaVersion(db)).toBe(3);
+    expect(readSchemaVersion(db)).toBe(SCHEMA_VERSION);
   });
 
   it('refuses a newer schema without touching it', () => {

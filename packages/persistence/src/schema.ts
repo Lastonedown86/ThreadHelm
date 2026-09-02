@@ -34,7 +34,7 @@ import {
   WorkOutcome,
 } from '@threadhelm/contracts';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 const inList = (values: readonly string[]): string =>
   `IN (${values.map((v) => `'${v}'`).join(', ')})`;
@@ -380,6 +380,11 @@ BEGIN
 END;
 `;
 
+// Migration text is a historical record: this is the literal body of the
+// version-3 migration and of a v3 database's agent_profiles table. It must
+// never change shape, even when the "current" shape (see CURRENT_AGENT_PROFILES
+// below) gains columns later, or the record of what that migration actually
+// did becomes a lie.
 const V3_AGENT_PROFILES = `
 CREATE TABLE agent_profiles (
   id TEXT PRIMARY KEY,
@@ -388,6 +393,58 @@ CREATE TABLE agent_profiles (
   state TEXT NOT NULL CHECK (state ${inList(ProfileState.options)}),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX agent_profiles_manifest_key ON agent_profiles (manifest_key);
+
+CREATE TABLE agent_profile_revisions (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL REFERENCES agent_profiles (id) ON DELETE RESTRICT,
+  digest TEXT NOT NULL CHECK (length(digest) = 64),
+  display_name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  requested_provider TEXT NOT NULL CHECK (requested_provider ${inList(ProfileProviderId.options)}),
+  requested_model TEXT NOT NULL,
+  capabilities TEXT NOT NULL,
+  isolate_requested INTEGER NOT NULL CHECK (isolate_requested IN (0, 1)),
+  token_cap_requested INTEGER NOT NULL CHECK (token_cap_requested > 0),
+  author TEXT NOT NULL,
+  goal TEXT NOT NULL,
+  manifest_spec TEXT NOT NULL,
+  compatibility TEXT NOT NULL CHECK (compatibility ${inList(ProfileCompatibility.options)}),
+  compatibility_reasons TEXT NOT NULL DEFAULT '[]',
+  source_basename TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE (profile_id, digest)
+);
+CREATE INDEX agent_profile_revisions_profile_created
+  ON agent_profile_revisions (profile_id, created_at, id);
+
+CREATE TABLE mission_profile_pins (
+  mission_id TEXT NOT NULL,
+  profile_id TEXT NOT NULL REFERENCES agent_profiles (id) ON DELETE RESTRICT,
+  revision_id TEXT NOT NULL REFERENCES agent_profile_revisions (id) ON DELETE RESTRICT,
+  pinned_at TEXT NOT NULL,
+  PRIMARY KEY (mission_id, profile_id)
+);
+CREATE INDEX mission_profile_pins_profile ON mission_profile_pins (profile_id);
+`;
+
+// The present-tense counterpart of V3_AGENT_PROFILES: what agent_profiles and
+// its companions look like today, recon columns included. CURRENT_SCHEMA_EXTENSIONS
+// uses this (not V3_AGENT_PROFILES) to repair a database that is already at
+// SCHEMA_VERSION but is somehow missing the table outright — that repair must
+// produce the current shape, not the v3 shape, or it silently reintroduces the
+// column-drift bug this constant exists to prevent.
+const CURRENT_AGENT_PROFILES = `
+CREATE TABLE agent_profiles (
+  id TEXT PRIMARY KEY,
+  manifest_key TEXT NOT NULL,
+  current_revision_id TEXT,
+  state TEXT NOT NULL CHECK (state ${inList(ProfileState.options)}),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  recon_run_id TEXT,
+  derived_from_commit TEXT
 );
 CREATE UNIQUE INDEX agent_profiles_manifest_key ON agent_profiles (manifest_key);
 
@@ -535,15 +592,21 @@ CREATE INDEX agent_profile_export_intents_draft_created
   ON agent_profile_export_intents (draft_id, created_at DESC);
 `;
 
+const V4_RECON_PROVENANCE = `
+ALTER TABLE agent_profiles ADD COLUMN recon_run_id TEXT;
+ALTER TABLE agent_profiles ADD COLUMN derived_from_commit TEXT;
+`;
+
 export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 1, sql: V1 },
   { version: 2, sql: V2 },
   { version: 3, sql: `${V3}\n${V3_AGENT_PROFILES}` },
+  { version: 4, sql: V4_RECON_PROVENANCE },
 ];
 
 /** Additive slices intentionally delivered under the still-unreleased v3 schema. */
 export const CURRENT_SCHEMA_EXTENSIONS: readonly { table: string; sql: string }[] = [
-  { table: 'agent_profiles', sql: V3_AGENT_PROFILES },
+  { table: 'agent_profiles', sql: CURRENT_AGENT_PROFILES },
   { table: 'agent_profile_templates', sql: V3_AGENT_TEMPLATES },
   { table: 'agent_template_storage_v1', sql: V3_TEMPLATE_LIFECYCLE },
   { table: 'agent_profile_export_intents', sql: V3_AGENT_EXPORT_INTENTS },

@@ -28,6 +28,8 @@ interface ProfileRow {
   state: ProfileState;
   created_at: string;
   updated_at: string;
+  recon_run_id: string | null;
+  derived_from_commit: string | null;
 }
 
 interface RevisionRow {
@@ -67,6 +69,10 @@ export interface ImportProfileManifestInput {
   compatibilityReasons?: readonly string[];
   sourceBasename: string;
   createdAt: string;
+  /** Which recon run proposed this profile; null for a hand-picked import. */
+  reconRunId?: string | null;
+  /** The repository commit the recon run read; null when not a Git working tree. */
+  derivedFromCommit?: string | null;
 }
 
 export interface ImportedProfileResult {
@@ -249,10 +255,20 @@ export class AgentProfileRepository {
           input.compatibility === 'compatible' ? 'active' : 'disabled';
         this.#db
           .prepare(
-            `INSERT INTO agent_profiles (id, manifest_key, current_revision_id, state, created_at, updated_at)
-             VALUES (?, ?, NULL, ?, ?, ?)`,
+            `INSERT INTO agent_profiles
+              (id, manifest_key, current_revision_id, state, created_at, updated_at,
+               recon_run_id, derived_from_commit)
+             VALUES (?, ?, NULL, ?, ?, ?, ?, ?)`,
           )
-          .run(profileId, input.manifestKey, initialState, input.createdAt, input.createdAt);
+          .run(
+            profileId,
+            input.manifestKey,
+            initialState,
+            input.createdAt,
+            input.createdAt,
+            input.reconRunId ?? null,
+            input.derivedFromCommit ?? null,
+          );
         const revisionId = this.#insertRevision(profileId, input);
         this.#db
           .prepare('UPDATE agent_profiles SET current_revision_id = ? WHERE id = ?')

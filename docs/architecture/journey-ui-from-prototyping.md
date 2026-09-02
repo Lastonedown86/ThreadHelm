@@ -228,6 +228,7 @@ as visual polish.
 | Recovery attention queue     | `apps/desktop/src/renderer/features/recovery/RecoveryAttentionQueue.tsx`     |
 | Page decisions               | `docs/architecture/mission-focus-page-decisions.md`                          |
 | Workspace design             | `docs/architecture/mission-focus-workspace-design.md`                        |
+| Selected prototype locations | `docs/architecture/journey-ui-selected-prototype-locations.md`               |
 
 The merged production renderer contains no prototype runtime path. The prototype journey remains in
 this document and the decision records as design evidence rather than shipped application content.

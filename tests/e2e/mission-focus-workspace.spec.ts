@@ -235,6 +235,12 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
       await option.click();
       await expect(app.page.locator('#mission-workspace h1')).toBeFocused();
       await expect(list.getByRole('option', { selected: true })).toHaveCount(1);
+      const text = await app.page
+        .locator('#mission-workspace, .mission-shell-context')
+        .allInnerTexts();
+      expect(text.join('\n'), 'no raw reason code on screen').not.toMatch(
+        /\b[A-Z]{3,}_[A-Z0-9_]+\b/,
+      );
     };
 
     await select(running);

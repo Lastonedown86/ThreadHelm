@@ -101,7 +101,12 @@ export interface ProfileService {
   ): AgentProfileSummaryView;
 }
 
-async function readBounded(path: string): Promise<{ raw: string; digest: string }> {
+/**
+ * The one bounded manifest read: the size check happens against the open
+ * handle, so a file that grows after it was listed cannot be read past the
+ * bound. Every untrusted manifest — picked file or recon proposal — uses it.
+ */
+export async function readBounded(path: string): Promise<{ raw: string; digest: string }> {
   let handle;
   try {
     handle = await open(path, 'r');

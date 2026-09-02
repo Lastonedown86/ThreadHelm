@@ -46,6 +46,8 @@ export type ReconOutcome =
   | 'no_output'
   | 'unparsable_output'
   | 'stopped_by_owner'
+  // Not produced by main today: ThreadHelm has no token accounting. Reachable
+  // once a provider reports usage labelled provider-reported or CLI-derived.
   | 'token_cap_reached'
   | 'provider_unauthenticated';
 

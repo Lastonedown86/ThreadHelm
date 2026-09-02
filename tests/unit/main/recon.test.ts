@@ -124,6 +124,22 @@ async function startRun(harness: ReconHarness): Promise<ReconRunView> {
   });
 }
 
+/** Makes every host reject terminal input, as a dead pipe would. */
+function rejectHostInput(world: FakeWorld): void {
+  const spawn = world.ctx.hosts.spawn.bind(world.ctx.hosts);
+  world.ctx.hosts = {
+    spawn: (sessionId) => {
+      const host = spawn(sessionId);
+      const post = host.postMessage.bind(host);
+      host.postMessage = (message, ports) => {
+        if (message.type === 'host.input') throw new Error('input pipe closed');
+        post(message, ports);
+      };
+      return host;
+    },
+  };
+}
+
 function writeFixtures(dir: string, basenames?: readonly string[]): void {
   for (const fixture of RECON_PROPOSAL_FIXTURES) {
     if (basenames && !basenames.includes(fixture.basename)) continue;
@@ -191,6 +207,22 @@ describe('previewLaunch', () => {
     expect(sent).toContain(preview.reconPrompt.split('\n')[0]!);
     // Input is never read back; the run only ever reads files it wrote.
     expect(harness.world.ctx.selection.selectedSessionId).toBeNull();
+    expect(run.promptSubmitted).toBe(true);
+  });
+
+  it('records that the agent was never asked when the prompt cannot be submitted', async () => {
+    const harness = await buildReconHarness();
+    rejectHostInput(harness.world);
+
+    const run = await startRun(harness);
+    expect(run.promptSubmitted).toBe(false);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    // The outcome set stays at seven; the flag is what separates "never asked"
+    // from "asked and silent", which no_output alone cannot express.
+    const collected = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(collected.outcome).toBe('no_output');
+    expect(collected.promptSubmitted).toBe(false);
   });
 
   it('routes through the coordinator handler table', async () => {
@@ -338,6 +370,36 @@ describe('provenance', () => {
 });
 
 describe('repeat runs', () => {
+  it('keeps the previous run when the new launch is refused', async () => {
+    const harness = await buildReconHarness();
+    const first = await startRun(harness);
+    writeFixtures(harness.outputDirOf(first.runId), ['supervisor.agent.json']);
+    await harness.completeSession(first.runId, { ownerStopped: false });
+    expect(harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals).toHaveLength(1);
+
+    const preview = await harness.service.previewLaunch({
+      workspaceId: harness.workspaceId,
+      providerId: 'claude-code',
+      terminal: TERMINAL,
+    });
+    // Revocation invalidates the session preview token, so launchSession
+    // refuses — the same shape as a lease conflict or a host spawn failure.
+    await harness.world.ok('workspaces.revoke', { workspaceId: harness.workspaceId });
+    await expect(
+      harness.service.confirmLaunch({
+        previewToken: preview.launch.previewToken,
+        boundaryConfirmation: true,
+      }),
+    ).rejects.toThrowError(expect.objectContaining({ code: 'PREVIEW_EXPIRED' }));
+
+    // A refused launch started no run, so the roster the owner had not yet
+    // accepted is still there.
+    const current = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(current.runId).toBe(first.runId);
+    expect(current.proposals).toHaveLength(1);
+    expect(existsSync(preview.outputDirectory)).toBe(false);
+  });
+
   it('discards the previous run proposals when a new run starts', async () => {
     const harness = await buildReconHarness();
     const first = await startRun(harness);

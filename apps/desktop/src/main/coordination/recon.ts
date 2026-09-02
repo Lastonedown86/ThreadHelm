@@ -20,8 +20,8 @@
  */
 
 import { execFile } from 'node:child_process';
-import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readdir, readFile, rm, stat } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { mkdir, readdir, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import {
@@ -39,13 +39,12 @@ import {
 } from '@threadhelm/contracts';
 import {
   classifyReconOutcome,
-  MAX_MANIFEST_BYTES,
   parseAgentManifest,
   reconRoleForBasename,
   selectReconFiles,
 } from '@threadhelm/domain';
 import type { Context } from '../context.js';
-import { evaluateManifestCompatibility } from './profiles.js';
+import { evaluateManifestCompatibility, readBounded } from './profiles.js';
 import { launchSession } from '../sessions/launch.js';
 import { DEFAULT_PROVIDER_EXECUTION_BOUNDS } from '../sessions/launch-policy.js';
 import { previewLaunch as previewSessionLaunch } from '../sessions/preview.js';
@@ -155,6 +154,7 @@ interface ReconRun {
   proposals: ReconProposalView[];
   rejected: ReconRejectionView[];
   ignoredFileCount: number;
+  promptSubmitted: boolean;
   collected: Promise<void>;
   finishCollection: () => void;
 }
@@ -171,6 +171,7 @@ function toView(run: ReconRun): ReconRunView {
     proposals: run.proposals,
     rejected: run.rejected,
     ignoredFileCount: run.ignoredFileCount,
+    promptSubmitted: run.promptSubmitted,
   });
 }
 
@@ -255,26 +256,17 @@ export function createReconService(ctx: Context): ReconService {
       const selection = selectReconFiles(candidates);
       for (const name of selection.considered) {
         try {
-          if (selection.oversized.includes(name)) {
-            throw new ThreadHelmError(
-              'PROFILE_OVERSIZED',
-              'Agent manifest exceeds the maximum read size.',
-            );
-          }
-          const bytes = await readFile(join(run.outputDirectory, name));
-          if (bytes.byteLength > MAX_MANIFEST_BYTES) {
-            throw new ThreadHelmError(
-              'PROFILE_OVERSIZED',
-              'Agent manifest exceeds the maximum read size.',
-            );
-          }
-          const manifest = parseAgentManifest(bytes.toString('utf8'));
+          // readBounded re-checks the size against the open handle and reports
+          // PROFILE_OVERSIZED itself, so selection.oversized needs no second
+          // check here — the listing it came from can already be stale.
+          const { raw, digest } = await readBounded(join(run.outputDirectory, name));
+          const manifest = parseAgentManifest(raw);
           const compatibility = evaluateManifestCompatibility(ctx, manifest);
           run.proposals.push({
             proposalId: randomUUID(),
             role: reconRoleForBasename(name),
             sourceBasename: name,
-            digest: createHash('sha256').update(bytes).digest('hex'),
+            digest,
             manifest,
             compatibility: compatibility.compatibility,
             compatibilityReasons: compatibility.reasons,
@@ -364,9 +356,9 @@ export function createReconService(ctx: Context): ReconService {
       if (!preview) {
         throw new ThreadHelmError('PREVIEW_EXPIRED', 'The recon preview expired. Open it again.');
       }
-      // A new run replaces the previous one entirely: proposals derived from a
-      // tree that has since moved are not evidence about the current tree, and
-      // a directory left by a crashed run must not be read as this run's work.
+      // Sibling directories only: a crashed run's leftovers must not be read as
+      // this run's work. The previous run's proposals live in memory and are
+      // kept until this launch actually succeeds.
       await discard(join(ctx.reconRoot(), preview.workspaceId));
       await mkdir(preview.outputDirectory, { recursive: true });
       const derivedFromCommit = await headCommit(preview.workspaceDisplayPath);
@@ -386,27 +378,31 @@ export function createReconService(ctx: Context): ReconService {
         proposals: [],
         rejected: [],
         ignoredFileCount: 0,
+        promptSubmitted: false,
         collected,
         finishCollection,
       };
-      runs.set(run.workspaceId, run);
 
       let session;
       try {
         session = await launchSession(ctx, request.previewToken, request.boundaryConfirmation);
       } catch (error) {
+        // A refused launch is not a new run. Only this run's own directory is
+        // removed and the previous run's proposals survive untouched: the owner
+        // must not lose a roster because a launch was blocked.
         await discard(run.outputDirectory);
-        if (!isUnauthenticated(error)) {
-          runs.delete(run.workspaceId);
-          run.finishCollection();
-          throw error;
-        }
+        run.finishCollection();
+        if (!isUnauthenticated(error)) throw error;
         run.outcome = 'provider_unauthenticated';
         run.completedAt = ctx.clock().toISOString();
-        run.finishCollection();
         return toView(run);
       }
       run.sessionId = session.id;
+      // Deliberate timing: the earlier run is discarded once this session
+      // exists, not when this one finishes. A proposal derived from a tree that
+      // has since moved is not evidence about the current tree, and holding a
+      // stale roster during a live run would make getRun ambiguous.
+      runs.set(run.workspaceId, run);
 
       // Main-owned first input, on the same serialized control channel the
       // coordination delivery path uses. The renderer selection guard governs
@@ -414,13 +410,23 @@ export function createReconService(ctx: Context): ReconService {
       const live = ctx.live.get(session.id);
       if (live) {
         const bytes = new TextEncoder().encode(`${preview.reconPrompt.replace(/\n/g, '\r\n')}\r\n`);
-        sendControl(ctx, live, (controlSequence) => ({
+        run.promptSubmitted = sendControl(ctx, live, (controlSequence) => ({
           type: 'host.input',
           sessionId: session.id,
           protocolVersion: 1,
           controlSequence,
           bytes,
-        }));
+        })).submitted;
+      }
+      if (!run.promptSubmitted) {
+        // ThreadHelm can prove the agent was never asked. It records that on the
+        // run so an empty directory is not reported as if the agent had been
+        // asked and stayed silent.
+        ctx.log.warn('recon.prompt_not_submitted', {
+          runId: run.runId,
+          sessionId: session.id,
+          reasonCode: 'RECON_PROMPT_NOT_SUBMITTED',
+        });
       }
       return toView(run);
     },

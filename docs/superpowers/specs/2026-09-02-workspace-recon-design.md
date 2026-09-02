@@ -157,9 +157,12 @@ Nothing on this screen accepts more than one role at a time, and there is no acc
 ### 1.6 Repeat runs and cleanup
 
 Recon may be run again at any time. Only the most recent run's proposals are listed; proposals from
-an earlier run that were never accepted are discarded when a new run completes, because a proposal
-derived from a tree that has since moved is not evidence about the current tree. Profiles already
-accepted are unaffected — they are profiles now, not proposals.
+an earlier run that were never accepted are discarded when a new run starts — specifically once
+its session has launched — because a proposal derived from a tree that has since moved is not
+evidence about the current tree. Waiting for the new run to finish would keep a stale roster on
+screen and leave it ambiguous which run the proposal list describes. A launch that is refused
+starts no run and discards nothing. Profiles already accepted are unaffected — they are profiles
+now, not proposals.
 
 A run's output directory is deleted once its proposals are collected and classified. A run that is
 stopped or produces nothing has its directory deleted on the next recon run for that workspace, so

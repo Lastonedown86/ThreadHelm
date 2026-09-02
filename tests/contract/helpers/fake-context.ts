@@ -5,6 +5,7 @@
  * coordinator touches, nothing real spawned.
  */
 
+import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { MessageChannel } from 'node:worker_threads';
@@ -451,6 +452,7 @@ export function createWorld(
   }
 
   let nextPid = 5000;
+  let reconRoot = '';
   const world: FakeWorld = {
     native,
     hosts,
@@ -507,8 +509,10 @@ export function createWorld(
           exec: async () => ({ stdout: '', stderr: '', exitCode: 1, timedOut: false }),
         }),
       },
-      // Lazy by design: no directory exists until a recon run creates one.
-      reconRoot: () => options.reconRoot ?? join(tmpdir(), 'threadhelm-test-recon'),
+      // Per-world and lazy: nothing is created until a recon run asks, and two
+      // parallel workers never share a root that confirmLaunch removes.
+      reconRoot: () =>
+        options.reconRoot ?? (reconRoot ||= mkdtempSync(join(tmpdir(), 'threadhelm-recon-'))),
       appInfo: { version: '0.0.0-test', electronVersion: '44.0.0', arch: 'x64' },
       quit: vi.fn(),
     },

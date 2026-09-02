@@ -1462,6 +1462,8 @@ export const ReconOutcome = z.enum([
   'no_output',
   'unparsable_output',
   'stopped_by_owner',
+  // Not produced today: ThreadHelm has no token accounting. Reachable once a
+  // provider reports usage labelled provider-reported or CLI-derived.
   'token_cap_reached',
   'provider_unauthenticated',
 ]);
@@ -1505,6 +1507,12 @@ export const ReconRunView = strictObject({
   proposals: z.array(ReconProposalView).max(12),
   rejected: z.array(ReconRejectionView).max(12),
   ignoredFileCount: z.number().int().min(0),
+  /**
+   * False when ThreadHelm could not submit the disclosed prompt to the session.
+   * A `no_output` run with this false means the agent was never asked, not that
+   * it was asked and produced nothing.
+   */
+  promptSubmitted: z.boolean(),
 });
 export type ReconRunView = z.infer<typeof ReconRunView>;
 

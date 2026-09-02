@@ -25,6 +25,7 @@ const RUN_BASE = {
   proposals: [],
   rejected: [],
   ignoredFileCount: 0,
+  promptSubmitted: true,
 };
 
 describe('recon outcomes', () => {
@@ -125,6 +126,15 @@ describe('ReconRunView', () => {
 
   it('records absence of a commit as null rather than an empty string', () => {
     expect(ReconRunView.safeParse({ ...RUN_BASE, derivedFromCommit: '' }).success).toBe(false);
+  });
+
+  it('separates a run that was never asked from one asked and silent', () => {
+    // no_output means "wrote nothing". Only promptSubmitted says whether the
+    // agent was ever given the prompt, so the view must always carry it.
+    expect(ReconRunView.safeParse({ ...RUN_BASE, outcome: 'no_output' }).success).toBe(true);
+    const withoutFlag: Record<string, unknown> = { ...RUN_BASE };
+    delete withoutFlag.promptSubmitted;
+    expect(ReconRunView.safeParse(withoutFlag).success).toBe(false);
   });
 });
 

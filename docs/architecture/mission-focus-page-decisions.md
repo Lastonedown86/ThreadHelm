@@ -32,3 +32,12 @@ walks through native folder approval, provider-specific readiness, and local app
 three explained checks. Folder revocation, effective native identity, provider authentication,
 storage degradation, Windows x64, unsigned release status, and sole-writer evidence remain visible.
 Mission context may show a read-only attention summary but does not host setup mutations.
+
+## Recovery and destructive actions
+
+**Selected: C — Cross-mission attention queue with B's mission-context detail.** The queue exposes
+every unresolved record, while opening one shows the exact mission, session, workspace, last known
+state, and retained evidence. Unknown outcomes are never replayed or classified automatically. A
+replacement session is reviewed as new work. Destructive reviews name exact removed content, linked
+memory, retained content-free receipts, explicit exclusions, and any active or unknown work that
+blocks confirmation.

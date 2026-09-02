@@ -545,7 +545,7 @@ Compare destination page, compact inspector, and task-oriented setup structures.
 folder selection, revocation, provider readiness, storage degradation, and app-information evidence.
 Record the selection before planning production files.
 
-- [ ] **Step 4: Present Recovery and destructive-action variants**
+- [x] **Step 4: Present Recovery and destructive-action variants**
 
 Compare dedicated recovery page, mission-context recovery, and attention-queue structures. Preserve
 exact target identity, explicit confirmation, no replay of unknown work, and content-deletion scope.

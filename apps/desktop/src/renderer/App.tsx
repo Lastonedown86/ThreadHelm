@@ -108,6 +108,9 @@ function Shell() {
             <MissionWorkspace
               workspace={workspace}
               onCreate={() => setCreatingMission(true)}
+              onOpenDetail={() => {
+                if (state.selectedMissionId) setDetailMissionId(state.selectedMissionId);
+              }}
               onAction={(kind) => {
                 const missionId = state.selectedMissionId;
                 if (!missionId) return;
@@ -118,6 +121,10 @@ function Shell() {
                   return;
                 }
                 setDetailMissionId(missionId);
+              }}
+              onOpenTerminal={(sessionId) => {
+                actions.select(sessionId);
+                actions.selectDestination('sessions');
               }}
             />
           ) : (

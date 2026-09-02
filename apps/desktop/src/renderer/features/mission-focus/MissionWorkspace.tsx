@@ -8,11 +8,15 @@ import type { MissionWorkspaceState } from './useMissionWorkspace.js';
 export function MissionWorkspace({
   workspace,
   onCreate,
+  onOpenDetail,
   onAction,
+  onOpenTerminal,
 }: {
   workspace: MissionWorkspaceState;
   onCreate(): void;
+  onOpenDetail(): void;
   onAction(kind: ActionKind): void;
+  onOpenTerminal(sessionId: string): void;
 }) {
   if (workspace.loading && !workspace.detail)
     return (
@@ -66,7 +70,11 @@ export function MissionWorkspace({
           ) : null}
         </div>
       </header>
-      <MissionCourse course={presentation.course} />
+      <MissionCourse
+        course={presentation.course}
+        onOpenDetail={onOpenDetail}
+        onOpenTerminal={onOpenTerminal}
+      />
       <div className="mission-summary-grid">
         <MissionResult result={presentation.verifiedResult} />
         <MissionSessionSummary detail={detail} />

@@ -30,15 +30,6 @@
   margin-top: 2rem;
 }
 
-.mission-course ol {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
-  gap: 0.75rem;
-  padding: 0;
-  list-style: none;
-}
-
-.mission-course li,
 .mission-result,
 .mission-session-summary,
 .mission-context-content section,
@@ -49,12 +40,106 @@
   background: #fff;
 }
 
-.mission-course li[data-state='verified'] {
-  border-top: 0.3rem solid var(--mission-verdigris);
+.mission-course-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
 }
-
-.mission-course li[data-state='current'] {
-  border-top: 0.3rem solid var(--mission-copper);
+.mission-course-line {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.course-node {
+  position: relative;
+  display: grid;
+  gap: 0.2rem;
+  padding-top: 3rem;
+}
+.course-node::before {
+  content: '';
+  position: absolute;
+  top: 1.1rem;
+  left: 2.4rem;
+  right: -1.5rem;
+  height: 2px;
+  background: color-mix(in srgb, var(--mission-ink) 25%, transparent);
+}
+.course-node:last-child::before {
+  display: none;
+}
+.node-mark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 2px solid var(--mission-steel);
+  border-radius: 50%;
+  background: #fff;
+  font: 650 0.95rem/1 var(--mission-font-heading);
+}
+.course-node[data-state='verified'] .node-mark {
+  border-color: var(--mission-verdigris);
+  background: var(--mission-verdigris);
+  color: #fff;
+}
+.course-node[data-state='current'] .node-mark {
+  border-color: var(--mission-copper);
+  background: var(--mission-copper);
+  color: #fff;
+}
+.course-node[data-state='waiting'] .node-mark,
+.course-node[data-state='uncertain'] .node-mark {
+  border-color: var(--mission-copper);
+  color: var(--mission-copper);
+  font-size: 0.7rem;
+}
+.course-node[data-state='held'] .node-mark {
+  border-color: var(--mission-ink);
+}
+.course-node strong {
+  font-family: var(--mission-font-heading);
+  font-size: 1.05rem;
+}
+.course-node p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.course-node button {
+  justify-self: start;
+  margin-top: 0.35rem;
+}
+@container workspace (max-width: 44rem) {
+  .mission-course-line {
+    grid-auto-flow: row;
+    gap: 1rem;
+  }
+  .course-node {
+    padding: 0 0 0 3rem;
+  }
+  .course-node::before {
+    top: 2.4rem;
+    bottom: -1rem;
+    left: 1.1rem;
+    right: auto;
+    width: 2px;
+    height: auto;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .node-mark {
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease;
+  }
 }
 
 .mission-summary-grid {

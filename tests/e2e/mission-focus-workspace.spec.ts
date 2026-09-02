@@ -213,6 +213,13 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
       await newEnvelope('paused-focus'),
       'Paused browser evidence mission',
     );
+    const pausedWork = await addWork(app, paused);
+    await app.bridgeRequest(pausedWork.supervisorId, 'threadhelm_work_assign', {
+      ...workDecision(paused.id),
+      idempotencyKey: randomUUID(),
+      workItemId: pausedWork.workItemId,
+      bindingId: pausedWork.binding.bindingId,
+    });
     await app.call('missions.pause', { missionId: paused.id });
     const running = await confirmMission(
       app,
@@ -241,11 +248,23 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await expect(
       app.page.getByRole('button', { name: 'Resume mission…', exact: true }),
     ).toBeVisible();
+    const course = app.page.getByRole('list', { name: 'Mission course' });
+    const node = course.getByRole('listitem').first();
+    await expect(node).toContainText('1');
+    await expect(node).toContainText('In focus');
+    await expect(node.getByRole('button', { name: 'Open terminal' })).toBeVisible();
 
     await select(waiting);
     await expect(app.page.getByText('Needs your decision', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Review choices…', exact: true }),
+      app.page
+        .locator('.mission-action-row')
+        .getByRole('button', { name: 'Review choices…', exact: true }),
+    ).toBeVisible();
+    await expect(
+      app.page.getByRole('list', { name: 'Mission course' }).getByRole('button', {
+        name: 'Review choices…',
+      }),
     ).toBeVisible();
 
     await select(uncertain);
@@ -253,7 +272,9 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
       app.page.locator('#mission-workspace').getByText('Outcome uncertain', { exact: true }),
     ).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Inspect evidence…', exact: true }),
+      app.page
+        .locator('.mission-action-row')
+        .getByRole('button', { name: 'Inspect evidence…', exact: true }),
     ).toBeVisible();
     await expect(app.page.getByRole('button', { name: /retry/i })).toHaveCount(0);
 
@@ -263,6 +284,9 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
       app.page.getByRole('button', { name: 'View evidence…', exact: true }),
     ).toBeVisible();
     await expect(app.page.getByText(/artifact · browser-report\.md/)).toBeVisible();
+    await expect(
+      app.page.getByRole('list', { name: 'Mission course' }).getByText('Verified', { exact: true }),
+    ).toBeVisible();
 
     const userData = app.userData;
     await app.crashCoordinator();
@@ -275,7 +299,9 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
       app.page.locator('#mission-workspace').getByText('Recovery required', { exact: true }),
     ).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Inspect evidence…', exact: true }),
+      app.page
+        .locator('.mission-action-row')
+        .getByRole('button', { name: 'Inspect evidence…', exact: true }),
     ).toBeVisible();
   } finally {
     await teardown(app, ...directories);

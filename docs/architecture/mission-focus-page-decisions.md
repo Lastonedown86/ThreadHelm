@@ -41,3 +41,13 @@ state, and retained evidence. Unknown outcomes are never replayed or classified 
 replacement session is reviewed as new work. Destructive reviews name exact removed content, linked
 memory, retained content-free receipts, explicit exclusions, and any active or unknown work that
 blocks confirmation.
+
+## Mission Course states
+
+**Selected: A — State-tinted.** Applies to waiting-for-owner, uncertain, recovery-required, and
+completed missions inside the approved D — Mission Course layout. The header keeps its objective;
+the state is carried by the lifecycle eyebrow, the status strip, the affected course node, and the
+decision-first context rail, with the same action label in the header and the rail. Reason codes
+never appear; each state carries a text label in every place it is expressed. Rejected: B —
+attention band (a third copy of the same action) and C — decision line (hides the objective while
+a decision waits). Decided 2026-09-02 from the disposable `mission-focus-states` prototype.

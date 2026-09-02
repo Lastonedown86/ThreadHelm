@@ -6,3 +6,4 @@ export * from './shared-memory.js';
 export * from './agent-profile.js';
 export * from './agent-template.js';
 export * from './supervisor.js';
+export * from './workspace-recon.js';

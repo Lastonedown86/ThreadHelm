@@ -1,7 +1,24 @@
 /** T090 — keyboard-only operation, visible focus, text scaling, contrast, reduced motion, idle. */
 
 import { expect, test, type Page } from '@playwright/test';
+import type {
+  MissionDetailView,
+  MissionEnvelopeInput,
+  MissionPreviewView,
+} from '@threadhelm/contracts';
+import type { LaunchedApp } from './helpers/app.js';
+import { prepareFixtureMission } from './helpers/mission.js';
 import { launchWithFixtures, sessionOption, teardown, tempWorkspace } from './helpers/ui.js';
+
+async function confirmMission(app: LaunchedApp, envelope: MissionEnvelopeInput, objective: string) {
+  const preview = await app.call<MissionPreviewView>('missions.preview', {
+    envelope: { ...envelope, objective },
+  });
+  return app.call<MissionDetailView>('missions.confirm', {
+    previewToken: preview.previewToken,
+    boundaryConfirmation: true,
+  });
+}
 
 interface Focused {
   tag: string;
@@ -262,5 +279,30 @@ test('mission form has named visible-focus controls, stable idle content and 200
     await expect(dialog).toBeHidden();
   } finally {
     await teardown(app);
+  }
+});
+
+test('keyboard order reaches mission rail and workspace controls once a mission is selected', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const directories = [tempWorkspace('kb-order-leader'), tempWorkspace('kb-order-worker')];
+  const page = app.page;
+  try {
+    const mission = await confirmMission(
+      app,
+      await prepareFixtureMission(app, directories),
+      'Keyboard order mission',
+    );
+    await page
+      .getByRole('listbox', { name: 'Missions', exact: true })
+      .getByRole('option', { name: new RegExp(mission.id.slice(0, 8), 'i') })
+      .click();
+    await expect(page.locator('#mission-workspace h1')).toBeFocused();
+    await page.locator('.status-bar').click(); // establish a focus origin only
+    await tabTo(page, /^New mission…$/);
+    await tabTo(page, /^Missions$/);
+    await tabTo(page, /mission|Pause|Review|Inspect|View evidence/);
+    await tabTo(page, /View full history…/);
+  } finally {
+    await teardown(app, ...directories);
   }
 });

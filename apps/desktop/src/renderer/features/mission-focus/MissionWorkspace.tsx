@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { LaunchError } from '../launch/LaunchErrors.js';
 import { MissionCourse } from './MissionCourse.js';
 import type { ActionKind } from './mission-presentation.js';
@@ -19,6 +20,25 @@ export function MissionWorkspace({
   onAction(kind: ActionKind): void;
   onOpenTerminal(sessionId: string): void;
 }) {
+  const [announcement, setAnnouncement] = useState('');
+  const detailId = workspace.detail?.id ?? null;
+  const attentionLabel = workspace.presentation?.attentionLabel ?? null;
+  const lifecycle = workspace.presentation?.lifecycleLabel ?? null;
+  const title = workspace.presentation?.title ?? null;
+  const lastId = useRef<string | null>(null);
+  const lastAttention = useRef<string | null>(null);
+  useEffect(() => {
+    if (!detailId || !title) return;
+    if (detailId !== lastId.current) {
+      lastId.current = detailId;
+      lastAttention.current = attentionLabel;
+      setAnnouncement(`Mission changed: ${title}, ${lifecycle}`);
+    } else if (attentionLabel && attentionLabel !== lastAttention.current) {
+      lastAttention.current = attentionLabel;
+      setAnnouncement(attentionLabel);
+    }
+  }, [detailId, title, lifecycle, attentionLabel]);
+
   if (workspace.loading && !workspace.detail)
     return (
       <p className="mission-workspace-state" role="status">
@@ -48,6 +68,9 @@ export function MissionWorkspace({
   const { detail, presentation } = workspace;
   return (
     <article className="mission-workspace-content">
+      <p className="visually-hidden" role="status" aria-live="polite">
+        {announcement}
+      </p>
       <header className="mission-header">
         <div>
           <span className="mission-lifecycle">

@@ -262,6 +262,9 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await expect(node.getByRole('button', { name: 'Open terminal' })).toBeVisible();
 
     await select(waiting);
+    await expect(app.page.getByRole('status').filter({ hasText: /Mission changed/ })).toContainText(
+      'Mission changed: Waiting browser decision mission, Waiting for you',
+    );
     await expect(
       app.page
         .getByRole('complementary', { name: 'Mission context' })

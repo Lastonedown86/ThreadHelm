@@ -28,30 +28,30 @@
 
 ## File structure
 
-| File | Responsibility |
-| --- | --- |
-| `apps/desktop/src/renderer/features/mission-focus/reason-labels.ts` | New. Reason code → human sentence map and fallback. |
-| `apps/desktop/src/renderer/features/mission-focus/mission-presentation.ts` | Rewritten. Single source of screen facts. |
-| `apps/desktop/src/renderer/features/mission-focus/MissionWorkspace.tsx` | Header, action row, strip, course header, summary grid. |
-| `apps/desktop/src/renderer/features/mission-focus/MissionStrip.tsx` | New. Status strip. |
-| `apps/desktop/src/renderer/features/mission-focus/MissionCourse.tsx` | Course line with numbered nodes and actions. |
-| `apps/desktop/src/renderer/features/mission-focus/MissionResult.tsx` | Renders `presentation.verifiedResult` only. |
-| `apps/desktop/src/renderer/features/mission-focus/MissionContext.tsx` | Decision-first rail sections. |
-| `apps/desktop/src/renderer/features/mission-focus/MissionContextFrame.tsx` | New. Padding + heading for any context content. |
-| `apps/desktop/src/renderer/features/mission-focus/ContextToggle.tsx` | New. Medium-width attention button + overlay. |
-| `apps/desktop/src/renderer/features/mission-focus/MissionRail.tsx` | Progress line per mission. |
-| `apps/desktop/src/renderer/features/mission-focus/useMissionWorkspace.ts` | Passes live session ids into presentation. |
-| `apps/desktop/src/renderer/features/shell/AppNavigation.tsx` | Badge counts. |
-| `apps/desktop/src/renderer/features/shell/AppShell.tsx` | Context toggle slot, live region. |
-| `apps/desktop/src/renderer/App.tsx` | Action dispatch by `kind`, frames non-mission context. |
-| `apps/desktop/src/renderer/styles/shell.css` | Container, narrow rows, nav badges, overlay. |
-| `apps/desktop/src/renderer/styles/mission-focus.css` | Strip, course line, cards, decision section. |
-| `apps/desktop/src/renderer/styles/memory-library.css` | Container queries. |
-| `apps/desktop/src/renderer/prototypes/mission-focus-states/` | Disposable variant round. Deleted before merge. |
-| `tests/unit/renderer/reason-labels.test.ts` | Coverage of emitted codes. |
-| `tests/unit/renderer/mission-presentation.test.ts` | Presentation matrix. |
-| `tests/e2e/mission-focus-workspace.spec.ts` | State, viewport, toggle, no-code assertions. |
-| `tests/e2e/parity-screenshots.spec.ts` | Opt-in screenshot capture for audit re-runs. |
+| File                                                                       | Responsibility                                          |
+| -------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `apps/desktop/src/renderer/features/mission-focus/reason-labels.ts`        | New. Reason code → human sentence map and fallback.     |
+| `apps/desktop/src/renderer/features/mission-focus/mission-presentation.ts` | Rewritten. Single source of screen facts.               |
+| `apps/desktop/src/renderer/features/mission-focus/MissionWorkspace.tsx`    | Header, action row, strip, course header, summary grid. |
+| `apps/desktop/src/renderer/features/mission-focus/MissionStrip.tsx`        | New. Status strip.                                      |
+| `apps/desktop/src/renderer/features/mission-focus/MissionCourse.tsx`       | Course line with numbered nodes and actions.            |
+| `apps/desktop/src/renderer/features/mission-focus/MissionResult.tsx`       | Renders `presentation.verifiedResult` only.             |
+| `apps/desktop/src/renderer/features/mission-focus/MissionContext.tsx`      | Decision-first rail sections.                           |
+| `apps/desktop/src/renderer/features/mission-focus/MissionContextFrame.tsx` | New. Padding + heading for any context content.         |
+| `apps/desktop/src/renderer/features/mission-focus/ContextToggle.tsx`       | New. Medium-width attention button + overlay.           |
+| `apps/desktop/src/renderer/features/mission-focus/MissionRail.tsx`         | Progress line per mission.                              |
+| `apps/desktop/src/renderer/features/mission-focus/useMissionWorkspace.ts`  | Passes live session ids into presentation.              |
+| `apps/desktop/src/renderer/features/shell/AppNavigation.tsx`               | Badge counts.                                           |
+| `apps/desktop/src/renderer/features/shell/AppShell.tsx`                    | Context toggle slot, live region.                       |
+| `apps/desktop/src/renderer/App.tsx`                                        | Action dispatch by `kind`, frames non-mission context.  |
+| `apps/desktop/src/renderer/styles/shell.css`                               | Container, narrow rows, nav badges, overlay.            |
+| `apps/desktop/src/renderer/styles/mission-focus.css`                       | Strip, course line, cards, decision section.            |
+| `apps/desktop/src/renderer/styles/memory-library.css`                      | Container queries.                                      |
+| `apps/desktop/src/renderer/prototypes/mission-focus-states/`               | Disposable variant round. Deleted before merge.         |
+| `tests/unit/renderer/reason-labels.test.ts`                                | Coverage of emitted codes.                              |
+| `tests/unit/renderer/mission-presentation.test.ts`                         | Presentation matrix.                                    |
+| `tests/e2e/mission-focus-workspace.spec.ts`                                | State, viewport, toggle, no-code assertions.            |
+| `tests/e2e/parity-screenshots.spec.ts`                                     | Opt-in screenshot capture for audit re-runs.            |
 
 ---
 
@@ -60,6 +60,7 @@
 The branch carries uncommitted edits (rail titles, session rows, pause action, flex fix). Land them first so every later diff is clean.
 
 **Files:**
+
 - Modify: the 14 files already listed by `git status --short`
 
 - [ ] **Step 1: Verify the working tree is green**
@@ -87,11 +88,13 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 1: Memory library sizes on its container (bug 1.1)
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/styles/shell.css` (`.mission-shell-workspace` block)
 - Modify: `apps/desktop/src/renderer/styles/memory-library.css` (grid + media queries)
 - Test: `tests/e2e/mission-focus-workspace.spec.ts`
 
 **Interfaces:**
+
 - Produces: `.mission-shell-workspace` is a `container-type: inline-size` container named `workspace`. Later tasks use `@container workspace (...)`.
 
 - [ ] **Step 1: Write the failing e2e assertion**
@@ -99,26 +102,26 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 Add to the first test in `tests/e2e/mission-focus-workspace.spec.ts`, after the existing 200% font-size overflow check:
 
 ```ts
-    await page.evaluate(() => {
-      document.documentElement.style.fontSize = '';
-    });
-    for (const width of [1400, 1100]) {
-      await page.setViewportSize({ width, height: 860 });
-      await page.getByRole('button', { name: 'Memory', exact: true }).click();
-      await expect(page.getByRole('heading', { name: /reading list/i })).toBeVisible();
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-        ),
-        `no horizontal overflow at ${width}px`,
-      ).toBe(false);
-      const clipped = await page.evaluate(() => {
-        const main = document.querySelector('.mission-shell-workspace')!;
-        return main.scrollWidth > main.clientWidth;
-      });
-      expect(clipped, `workspace column does not scroll sideways at ${width}px`).toBe(false);
-      await page.getByRole('button', { name: 'Missions', exact: true }).click();
-    }
+await page.evaluate(() => {
+  document.documentElement.style.fontSize = '';
+});
+for (const width of [1400, 1100]) {
+  await page.setViewportSize({ width, height: 860 });
+  await page.getByRole('button', { name: 'Memory', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /reading list/i })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    ),
+    `no horizontal overflow at ${width}px`,
+  ).toBe(false);
+  const clipped = await page.evaluate(() => {
+    const main = document.querySelector('.mission-shell-workspace')!;
+    return main.scrollWidth > main.clientWidth;
+  });
+  expect(clipped, `workspace column does not scroll sideways at ${width}px`).toBe(false);
+  await page.getByRole('button', { name: 'Missions', exact: true }).click();
+}
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -191,6 +194,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 2: Frame every non-mission context (bug 1.2)
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/features/mission-focus/MissionContextFrame.tsx`
 - Modify: `apps/desktop/src/renderer/App.tsx` (the `context=` prop)
 - Modify: `apps/desktop/src/renderer/features/workspaces/SetupAttentionSummary.tsx`
@@ -198,6 +202,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 - Test: `tests/e2e/mission-focus-workspace.spec.ts`
 
 **Interfaces:**
+
 - Produces: `MissionContextFrame({ heading: string; children })` renders `<div class="mission-context-content"><h2>{heading}</h2>{children}</div>`.
 
 - [ ] **Step 1: Write the failing e2e assertion**
@@ -205,17 +210,17 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 In the first test of `tests/e2e/mission-focus-workspace.spec.ts`, after the Sessions heading check:
 
 ```ts
-    await expect(page.getByText(/^sessions workspace$/)).toHaveCount(0);
-    await expect(
-      page.getByRole('complementary', { name: 'Mission context' }).getByRole('heading', {
-        name: 'Sessions',
-      }),
-    ).toBeVisible();
-    await expect(page.getByText('Ready for reviewed work')).toBeVisible();
-    const padding = await page
-      .locator('.mission-shell-context .mission-context-content')
-      .evaluate((el) => parseFloat(getComputedStyle(el).paddingTop));
-    expect(padding).toBeGreaterThan(8);
+await expect(page.getByText(/^sessions workspace$/)).toHaveCount(0);
+await expect(
+  page.getByRole('complementary', { name: 'Mission context' }).getByRole('heading', {
+    name: 'Sessions',
+  }),
+).toBeVisible();
+await expect(page.getByText('Ready for reviewed work')).toBeVisible();
+const padding = await page
+  .locator('.mission-shell-context .mission-context-content')
+  .evaluate((el) => parseFloat(getComputedStyle(el).paddingTop));
+expect(padding).toBeGreaterThan(8);
 ```
 
 Note: the cold app has no workspace approved, so `SetupAttentionSummary` reads "2 items need attention" there. Change the assertion text to `page.getByText(/need attention|Ready for reviewed work/)`.
@@ -231,7 +236,13 @@ Expected: FAIL on the Sessions heading in the complementary region.
 // apps/desktop/src/renderer/features/mission-focus/MissionContextFrame.tsx
 import type { ReactNode } from 'react';
 
-export function MissionContextFrame({ heading, children }: { heading: string; children: ReactNode }) {
+export function MissionContextFrame({
+  heading,
+  children,
+}: {
+  heading: string;
+  children: ReactNode;
+}) {
   return (
     <div className="mission-context-content">
       <h2>{heading}</h2>
@@ -303,6 +314,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 3: Narrow rail no longer takes half the viewport (bug 1.3)
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/styles/shell.css` (`@media (max-width: 700px)` block)
 - Test: `tests/e2e/mission-focus-workspace.spec.ts`
 
@@ -326,14 +338,15 @@ test('narrow windows keep the mission heading in the first screen', async () => 
     await expect(heading).toHaveText('Narrow window mission');
     const top = await heading.evaluate((el) => el.getBoundingClientRect().top);
     expect(top, 'mission heading inside the first viewport').toBeLessThan(400);
-    const scrollers = await app.page.evaluate(() =>
-      [...document.querySelectorAll('*')].filter((el) => {
-        const s = getComputedStyle(el);
-        return (
-          (s.overflowY === 'auto' || s.overflowY === 'scroll') &&
-          el.scrollHeight > el.clientHeight
-        );
-      }).length,
+    const scrollers = await app.page.evaluate(
+      () =>
+        [...document.querySelectorAll('*')].filter((el) => {
+          const s = getComputedStyle(el);
+          return (
+            (s.overflowY === 'auto' || s.overflowY === 'scroll') &&
+            el.scrollHeight > el.clientHeight
+          );
+        }).length,
     );
     expect(scrollers, 'one vertical scroller').toBeLessThanOrEqual(1);
   } finally {
@@ -406,6 +419,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 4: Expected-fail test for collapsed attention (bug 1.4)
 
 **Files:**
+
 - Test: `tests/e2e/mission-focus-workspace.spec.ts`
 
 - [ ] **Step 1: Add the fixme test**
@@ -477,10 +491,12 @@ Open PR 1 here: `gh pr create --title "fix: Mission Focus shell bugs (parity pha
 ### Task 5: Reason labels with emitted-code coverage
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/features/mission-focus/reason-labels.ts`
 - Test: `tests/unit/renderer/reason-labels.test.ts`
 
 **Interfaces:**
+
 - Produces: `reasonLabel(code: string | null | undefined): string | null` and `REASON_LABELS: Readonly<Record<string, string>>`.
 
 - [ ] **Step 1: Write the failing test**
@@ -613,6 +629,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 6: Presentation model rewrite
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/features/mission-focus/mission-presentation.ts` (full rewrite)
 - Modify: `apps/desktop/src/renderer/features/mission-focus/useMissionWorkspace.ts` (`presentation:` line)
 - Modify: `apps/desktop/src/renderer/features/mission-focus/MissionWorkspace.tsx` (action row only, to keep typecheck green)
@@ -621,29 +638,50 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 - Test: `tests/unit/renderer/mission-presentation.test.ts`
 
 **Interfaces:**
+
 - Produces (exact, used by every later task):
 
 ```ts
 export type MissionAttention = 'none' | 'decision' | 'recovery' | 'uncertain';
 export type CourseNodeState = 'verified' | 'current' | 'queued' | 'waiting' | 'uncertain' | 'held';
 export type ActionKind = 'pause' | 'resume' | 'review' | 'inspect' | 'view_evidence';
-export interface ActionSpec { kind: ActionKind; label: string }
+export interface ActionSpec {
+  kind: ActionKind;
+  label: string;
+}
 export type NodeAction =
   | { kind: 'open_terminal'; sessionId: string; label: 'Open terminal' }
   | { kind: 'review'; label: 'Review choices…' }
   | { kind: 'inspect'; label: 'Inspect evidence…' };
-export interface CourseNode { id: string; index: number; title: string; state: CourseNodeState; summary: string; action: NodeAction | null }
+export interface CourseNode {
+  id: string;
+  index: number;
+  title: string;
+  state: CourseNodeState;
+  summary: string;
+  action: NodeAction | null;
+}
 export interface MissionPresentation {
-  title: string; objective: string | null; lifecycleLabel: string;
-  attention: MissionAttention; attentionLabel: string | null; attentionSummary: string | null;
-  primaryAction: ActionSpec | null; secondaryAction: ActionSpec | null;
+  title: string;
+  objective: string | null;
+  lifecycleLabel: string;
+  attention: MissionAttention;
+  attentionLabel: string | null;
+  attentionSummary: string | null;
+  primaryAction: ActionSpec | null;
+  secondaryAction: ActionSpec | null;
   strip: { execution: string; decisionsPending: number; sessionsAttached: number };
   course: CourseNode[];
   verifiedResult: { explanation: string; evidence: string[] } | null;
 }
-export interface PresentationContext { liveSessionIds: ReadonlySet<string> }
-export function presentMission(detail: MissionDetailView, context?: PresentationContext): MissionPresentation
-export const ACTION_LABELS: Record<ActionKind, string>
+export interface PresentationContext {
+  liveSessionIds: ReadonlySet<string>;
+}
+export function presentMission(
+  detail: MissionDetailView,
+  context?: PresentationContext,
+): MissionPresentation;
+export const ACTION_LABELS: Record<ActionKind, string>;
 ```
 
 - [ ] **Step 1: Rewrite the unit test file**
@@ -654,9 +692,7 @@ Replace `tests/unit/renderer/mission-presentation.test.ts` body after the `unkno
 const workItemId = '00000000-0000-4000-8000-000000000003';
 const sessionId = '00000000-0000-4000-8000-000000000009';
 
-function workItem(
-  overrides: Partial<SupervisorWorkView> = {},
-): SupervisorWorkView {
+function workItem(overrides: Partial<SupervisorWorkView> = {}): SupervisorWorkView {
   return {
     id: workItemId,
     missionId,
@@ -813,9 +849,7 @@ describe('mission presentation', () => {
   it('never leaks a reason code into any string', () => {
     const result = presentMission(
       mission({
-        workItems: [
-          workItem({ state: 'failed', reasonCode: 'WORKER_START_FAILED_BEFORE_EFFECT' }),
-        ],
+        workItems: [workItem({ state: 'failed', reasonCode: 'WORKER_START_FAILED_BEFORE_EFFECT' })],
       }),
     );
     expect(JSON.stringify(result)).not.toMatch(/[A-Z]{3,}_[A-Z_]+/);
@@ -937,7 +971,10 @@ function hasRetainedEvidence(workItemId: string, attempts: SupervisorAttemptView
   );
 }
 
-function nodeState(workItem: SupervisorWorkView, attempts: SupervisorAttemptView[]): CourseNodeState {
+function nodeState(
+  workItem: SupervisorWorkView,
+  attempts: SupervisorAttemptView[],
+): CourseNodeState {
   if (latestAttempt(workItem.id, attempts)?.state === 'unknown') return 'uncertain';
   switch (workItem.state) {
     case 'completed':
@@ -960,7 +997,8 @@ function nodeState(workItem: SupervisorWorkView, attempts: SupervisorAttemptView
 function nodeSummary(workItem: SupervisorWorkView, state: CourseNodeState): string {
   if (state === 'uncertain') return 'The outcome is unknown; retained evidence is kept as it is.';
   if (state === 'verified') return 'Completed with retained evidence.';
-  if (workItem.state === 'completed') return 'Completion is held because no retained evidence is referenced.';
+  if (workItem.state === 'completed')
+    return 'Completion is held because no retained evidence is referenced.';
   const reason = reasonLabel(workItem.reasonCode);
   if (reason) return reason;
   switch (state) {
@@ -1117,22 +1155,22 @@ In `useMissionWorkspace.ts`, replace the `presentation:` line in the returned ob
 In `MissionWorkspace.tsx` delete the local `actionLabels` map, change the prop `onPause(): void` to `onAction(kind: ActionKind): void` (import `type { ActionKind }` from `./mission-presentation.js`), and replace the header action block:
 
 ```tsx
-        <div className="mission-action-row">
-          {presentation.secondaryAction ? (
-            <button type="button" onClick={() => onAction(presentation.secondaryAction!.kind)}>
-              {presentation.secondaryAction.label}
-            </button>
-          ) : null}
-          {presentation.primaryAction ? (
-            <button
-              type="button"
-              className="primary"
-              onClick={() => onAction(presentation.primaryAction!.kind)}
-            >
-              {presentation.primaryAction.label}
-            </button>
-          ) : null}
-        </div>
+<div className="mission-action-row">
+  {presentation.secondaryAction ? (
+    <button type="button" onClick={() => onAction(presentation.secondaryAction!.kind)}>
+      {presentation.secondaryAction.label}
+    </button>
+  ) : null}
+  {presentation.primaryAction ? (
+    <button
+      type="button"
+      className="primary"
+      onClick={() => onAction(presentation.primaryAction!.kind)}
+    >
+      {presentation.primaryAction.label}
+    </button>
+  ) : null}
+</div>
 ```
 
 In `App.tsx` replace the `onPause={...}` prop with:
@@ -1161,6 +1199,7 @@ Expected: PASS.
 - [ ] **Step 7: Update the existing e2e text expectations and run**
 
 In `tests/e2e/mission-focus-workspace.spec.ts`, in the five-state test:
+
 - `select(waiting)`: replace `getByText('decision', { exact: true })` with `getByText('Needs your decision', { exact: true })` and add `await expect(app.page.getByRole('button', { name: 'Review choices…', exact: true })).toBeVisible();`
 - `select(uncertain)`: replace `getByText('uncertain', ...)` with `getByText('Outcome uncertain', { exact: true })` and the button name `'Inspect mission…'` with `'Inspect evidence…'`; keep the retry absence check.
 - Recovered mission: button name `'Inspect evidence…'`.
@@ -1187,6 +1226,7 @@ Open PR 2 here: `gh pr create --title "feat: Mission Focus presentation model (p
 Disposable. No production imports. Deleted in Task 14.
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/prototypes/mission-focus-states/{NOTES.md,index.html,prototype.js,serve.mjs,styles.css}`
 - Modify (after the pick): `docs/architecture/mission-focus-page-decisions.md`
 
@@ -1212,12 +1252,25 @@ const missionStates = {
     eyebrow: 'Waiting for you · local',
     strip: 'Waiting for your decision',
     pending: 1,
-    attention: { label: 'Needs your decision', summary: 'Set the boundary', action: 'Review choices…' },
+    attention: {
+      label: 'Needs your decision',
+      summary: 'Set the boundary',
+      action: 'Review choices…',
+    },
     primary: 'Review choices…',
     secondary: 'Resume mission…',
     nodes: [
-      { state: 'verified', title: 'Feature 002 merged', summary: 'Profile authoring and bounded supervisor missions.' },
-      { state: 'waiting', title: 'Set the boundary', summary: 'The worker needs your decision before continuing.', action: 'Review choices…' },
+      {
+        state: 'verified',
+        title: 'Feature 002 merged',
+        summary: 'Profile authoring and bounded supervisor missions.',
+      },
+      {
+        state: 'waiting',
+        title: 'Set the boundary',
+        summary: 'The worker needs your decision before continuing.',
+        action: 'Review choices…',
+      },
       { state: 'queued', title: 'Write the specification', summary: 'Waiting on 1 earlier step.' },
     ],
   },
@@ -1225,12 +1278,25 @@ const missionStates = {
     eyebrow: 'Outcome uncertain · local',
     strip: 'Held with uncertain outcome',
     pending: 0,
-    attention: { label: 'Outcome uncertain', summary: 'Set the boundary', action: 'Inspect evidence…' },
+    attention: {
+      label: 'Outcome uncertain',
+      summary: 'Set the boundary',
+      action: 'Inspect evidence…',
+    },
     primary: 'Inspect evidence…',
     secondary: 'Resume mission…',
     nodes: [
-      { state: 'verified', title: 'Feature 002 merged', summary: 'Profile authoring and bounded supervisor missions.' },
-      { state: 'uncertain', title: 'Set the boundary', summary: 'The outcome is unknown; retained evidence is kept as it is.', action: 'Inspect evidence…' },
+      {
+        state: 'verified',
+        title: 'Feature 002 merged',
+        summary: 'Profile authoring and bounded supervisor missions.',
+      },
+      {
+        state: 'uncertain',
+        title: 'Set the boundary',
+        summary: 'The outcome is unknown; retained evidence is kept as it is.',
+        action: 'Inspect evidence…',
+      },
       { state: 'queued', title: 'Write the specification', summary: 'Waiting on 1 earlier step.' },
     ],
   },
@@ -1238,12 +1304,25 @@ const missionStates = {
     eyebrow: 'Recovery required · local',
     strip: 'Recovery required',
     pending: 0,
-    attention: { label: 'Recovery required', summary: 'ThreadHelm restarted and could not confirm this work.', action: 'Inspect evidence…' },
+    attention: {
+      label: 'Recovery required',
+      summary: 'ThreadHelm restarted and could not confirm this work.',
+      action: 'Inspect evidence…',
+    },
     primary: 'Inspect evidence…',
     secondary: null,
     nodes: [
-      { state: 'verified', title: 'Feature 002 merged', summary: 'Profile authoring and bounded supervisor missions.' },
-      { state: 'held', title: 'Set the boundary', summary: 'ThreadHelm restarted and could not confirm this work.', action: 'Inspect evidence…' },
+      {
+        state: 'verified',
+        title: 'Feature 002 merged',
+        summary: 'Profile authoring and bounded supervisor missions.',
+      },
+      {
+        state: 'held',
+        title: 'Set the boundary',
+        summary: 'ThreadHelm restarted and could not confirm this work.',
+        action: 'Inspect evidence…',
+      },
       { state: 'queued', title: 'Write the specification', summary: 'Waiting on 1 earlier step.' },
     ],
   },
@@ -1255,15 +1334,29 @@ const missionStates = {
     primary: 'View evidence…',
     secondary: null,
     nodes: [
-      { state: 'verified', title: 'Feature 002 merged', summary: 'Profile authoring and bounded supervisor missions.' },
-      { state: 'verified', title: 'Set the boundary', summary: 'Completed with retained evidence.' },
-      { state: 'verified', title: 'Write the specification', summary: 'Completed with retained evidence.' },
+      {
+        state: 'verified',
+        title: 'Feature 002 merged',
+        summary: 'Profile authoring and bounded supervisor missions.',
+      },
+      {
+        state: 'verified',
+        title: 'Set the boundary',
+        summary: 'Completed with retained evidence.',
+      },
+      {
+        state: 'verified',
+        title: 'Write the specification',
+        summary: 'Completed with retained evidence.',
+      },
     ],
   },
 };
 const stateParam = new URLSearchParams(location.search).get('state');
 const missionState = missionStates[stateParam] ?? missionStates.waiting;
-const stateVariant = ['A', 'B', 'C'].includes(new URLSearchParams(location.search).get('variant')?.toUpperCase())
+const stateVariant = ['A', 'B', 'C'].includes(
+  new URLSearchParams(location.search).get('variant')?.toUpperCase(),
+)
   ? new URLSearchParams(location.search).get('variant').toUpperCase()
   : 'A';
 ```
@@ -1314,17 +1407,49 @@ Replace the D header markup with `${renderStateHeader()}`, replace the D course 
 Append to `styles.css`:
 
 ```css
-.attention-band { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 1rem; align-items: center; margin-top: 1rem; padding: 0.9rem 1.1rem; border-left: 0.3rem solid var(--copper); background: color-mix(in srgb, var(--copper) 10%, white); }
-.attention-band .eyebrow { grid-column: 1; }
-.attention-band strong { grid-column: 1; }
-.attention-band button { grid-column: 2; grid-row: 1 / span 2; }
-.decision-line { border-left: 0.3rem solid var(--copper); padding-left: 0.75rem; }
-.course-node[data-state='waiting'] .node-mark { border-color: var(--copper); }
-.course-node[data-state='waiting'] .node-mark::after { content: '❚❚'; font-size: 0.6rem; }
-.course-node[data-state='uncertain'] .node-mark { border-color: var(--copper); }
-.course-node[data-state='uncertain'] .node-mark::after { content: '?'; }
-.course-node[data-state='held'] .node-mark { border-color: var(--ink); }
-.course-node[data-state='held'] .node-mark::after { content: '–'; }
+.attention-band {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 1rem;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 0.9rem 1.1rem;
+  border-left: 0.3rem solid var(--copper);
+  background: color-mix(in srgb, var(--copper) 10%, white);
+}
+.attention-band .eyebrow {
+  grid-column: 1;
+}
+.attention-band strong {
+  grid-column: 1;
+}
+.attention-band button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.decision-line {
+  border-left: 0.3rem solid var(--copper);
+  padding-left: 0.75rem;
+}
+.course-node[data-state='waiting'] .node-mark {
+  border-color: var(--copper);
+}
+.course-node[data-state='waiting'] .node-mark::after {
+  content: '❚❚';
+  font-size: 0.6rem;
+}
+.course-node[data-state='uncertain'] .node-mark {
+  border-color: var(--copper);
+}
+.course-node[data-state='uncertain'] .node-mark::after {
+  content: '?';
+}
+.course-node[data-state='held'] .node-mark {
+  border-color: var(--ink);
+}
+.course-node[data-state='held'] .node-mark::after {
+  content: '–';
+}
 ```
 
 Use the existing prototype's variable names if they differ from `--copper` / `--ink` (check the top of `styles.css`).
@@ -1380,6 +1505,7 @@ Do not `git add` the prototype directory. Add `apps/desktop/src/renderer/prototy
 ### Task 8: Workspace layout: action row, strip, course header, summary grid
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/features/mission-focus/MissionStrip.tsx`
 - Modify: `apps/desktop/src/renderer/features/mission-focus/MissionWorkspace.tsx`
 - Modify: `apps/desktop/src/renderer/features/mission-focus/MissionResult.tsx`
@@ -1387,6 +1513,7 @@ Do not `git add` the prototype directory. Add `apps/desktop/src/renderer/prototy
 - Test: `tests/e2e/mission-focus-workspace.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `MissionPresentation` from Task 6.
 - Produces: `MissionWorkspace` props `{ workspace, onCreate, onOpenDetail, onAction(kind: ActionKind), onOpenTerminal(sessionId: string) }`.
 
@@ -1395,20 +1522,20 @@ Do not `git add` the prototype directory. Add `apps/desktop/src/renderer/prototy
 In the five-state test after `await select(running);`:
 
 ```ts
-    const strip = app.page.getByRole('list', { name: 'Mission status' });
-    await expect(strip).toContainText('Work continues locally');
-    await expect(strip).toContainText('0 decisions pending');
-    await expect(strip).toContainText('2 sessions attached');
-    await expect(app.page.getByRole('button', { name: 'View full history…' })).toBeVisible();
-    await expect(app.page.getByText('No verified result yet.')).toBeVisible();
-    await expect(app.page.getByRole('heading', { name: 'Latest verified result' })).toHaveCount(0);
+const strip = app.page.getByRole('list', { name: 'Mission status' });
+await expect(strip).toContainText('Work continues locally');
+await expect(strip).toContainText('0 decisions pending');
+await expect(strip).toContainText('2 sessions attached');
+await expect(app.page.getByRole('button', { name: 'View full history…' })).toBeVisible();
+await expect(app.page.getByText('No verified result yet.')).toBeVisible();
+await expect(app.page.getByRole('heading', { name: 'Latest verified result' })).toHaveCount(0);
 ```
 
 After `await select(completed);`:
 
 ```ts
-    await expect(app.page.getByRole('heading', { name: 'Latest verified result' })).toBeVisible();
-    await expect(app.page.getByRole('button', { name: 'Open evidence…' })).toBeVisible();
+await expect(app.page.getByRole('heading', { name: 'Latest verified result' })).toBeVisible();
+await expect(app.page.getByRole('button', { name: 'Open evidence…' })).toBeVisible();
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -1474,51 +1601,51 @@ export function MissionResult({
 Replace everything from `const { detail, presentation } = workspace;` to the end of `MissionWorkspace` with:
 
 ```tsx
-  const { detail, presentation } = workspace;
-  return (
-    <article className="mission-workspace-content">
-      <header className="mission-header">
-        <div>
-          <span className="mission-lifecycle">{presentation.lifecycleLabel} · local</span>
-          <h1 tabIndex={-1}>{presentation.title}</h1>
-          {presentation.objective && presentation.objective !== presentation.title ? (
-            <p>{presentation.objective}</p>
-          ) : null}
-        </div>
-        <div className="mission-action-row">
-          {presentation.secondaryAction ? (
-            <button type="button" onClick={() => onAction(presentation.secondaryAction!.kind)}>
-              {presentation.secondaryAction.label}
-            </button>
-          ) : null}
-          {presentation.primaryAction ? (
-            <button
-              type="button"
-              className="primary"
-              onClick={() => onAction(presentation.primaryAction!.kind)}
-            >
-              {presentation.primaryAction.label}
-            </button>
-          ) : null}
-        </div>
-      </header>
-      <MissionStrip strip={presentation.strip} state={detail.state} />
-      <MissionCourse
-        course={presentation.course}
-        onOpenDetail={onOpenDetail}
-        onOpenTerminal={onOpenTerminal}
-      />
-      {presentation.verifiedResult ? null : (
-        <p className="mission-result-note">No verified result yet.</p>
-      )}
-      <div className="mission-summary-grid">
-        {presentation.verifiedResult ? (
-          <MissionResult result={presentation.verifiedResult} onOpenDetail={onOpenDetail} />
+const { detail, presentation } = workspace;
+return (
+  <article className="mission-workspace-content">
+    <header className="mission-header">
+      <div>
+        <span className="mission-lifecycle">{presentation.lifecycleLabel} · local</span>
+        <h1 tabIndex={-1}>{presentation.title}</h1>
+        {presentation.objective && presentation.objective !== presentation.title ? (
+          <p>{presentation.objective}</p>
         ) : null}
-        <MissionSessionSummary detail={detail} />
       </div>
-    </article>
-  );
+      <div className="mission-action-row">
+        {presentation.secondaryAction ? (
+          <button type="button" onClick={() => onAction(presentation.secondaryAction!.kind)}>
+            {presentation.secondaryAction.label}
+          </button>
+        ) : null}
+        {presentation.primaryAction ? (
+          <button
+            type="button"
+            className="primary"
+            onClick={() => onAction(presentation.primaryAction!.kind)}
+          >
+            {presentation.primaryAction.label}
+          </button>
+        ) : null}
+      </div>
+    </header>
+    <MissionStrip strip={presentation.strip} state={detail.state} />
+    <MissionCourse
+      course={presentation.course}
+      onOpenDetail={onOpenDetail}
+      onOpenTerminal={onOpenTerminal}
+    />
+    {presentation.verifiedResult ? null : (
+      <p className="mission-result-note">No verified result yet.</p>
+    )}
+    <div className="mission-summary-grid">
+      {presentation.verifiedResult ? (
+        <MissionResult result={presentation.verifiedResult} onOpenDetail={onOpenDetail} />
+      ) : null}
+      <MissionSessionSummary detail={detail} />
+    </div>
+  </article>
+);
 ```
 
 Add `onOpenTerminal(sessionId: string): void` to the props and import `MissionStrip`. `MissionCourse` gets its new props in Task 9; for this task, temporarily keep `<MissionCourse course={presentation.course} />` and add the history button inside `MissionCourse` in Task 9. To keep the strip test green now, add the history button to the header action row temporarily: `<button type="button" className="small" onClick={onOpenDetail}>View full history…</button>` (moved in Task 9).
@@ -1614,12 +1741,14 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 9: Course line with numbered nodes and actions
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/features/mission-focus/MissionCourse.tsx` (rewrite)
 - Modify: `apps/desktop/src/renderer/features/mission-focus/MissionWorkspace.tsx` (remove temporary history button, pass props)
 - Modify: `apps/desktop/src/renderer/styles/mission-focus.css`
 - Test: `tests/e2e/mission-focus-workspace.spec.ts`
 
 **Interfaces:**
+
 - Produces: `MissionCourse({ course: CourseNode[]; onOpenDetail(): void; onOpenTerminal(sessionId: string): void })`.
 
 - [ ] **Step 1: Write the failing e2e assertions**
@@ -1627,29 +1756,29 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 In the five-state test after `await select(running);` (after the strip checks):
 
 ```ts
-    const course = app.page.getByRole('list', { name: 'Mission course' });
-    const node = course.getByRole('listitem').first();
-    await expect(node).toContainText('1');
-    await expect(node).toContainText('In focus');
-    await expect(node.getByRole('button', { name: 'Open terminal' })).toBeVisible();
+const course = app.page.getByRole('list', { name: 'Mission course' });
+const node = course.getByRole('listitem').first();
+await expect(node).toContainText('1');
+await expect(node).toContainText('In focus');
+await expect(node.getByRole('button', { name: 'Open terminal' })).toBeVisible();
 ```
 
 After `await select(waiting);`:
 
 ```ts
-    await expect(
-      app.page.getByRole('list', { name: 'Mission course' }).getByRole('button', {
-        name: 'Review choices…',
-      }),
-    ).toBeVisible();
+await expect(
+  app.page.getByRole('list', { name: 'Mission course' }).getByRole('button', {
+    name: 'Review choices…',
+  }),
+).toBeVisible();
 ```
 
 After `await select(completed);`:
 
 ```ts
-    await expect(
-      app.page.getByRole('list', { name: 'Mission course' }).getByText('Verified', { exact: true }),
-    ).toBeVisible();
+await expect(
+  app.page.getByRole('list', { name: 'Mission course' }).getByText('Verified', { exact: true }),
+).toBeVisible();
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -1832,7 +1961,9 @@ Replace the `.mission-course ol`, `.mission-course li[data-state=…]` rules in 
 }
 @media (prefers-reduced-motion: no-preference) {
   .node-mark {
-    transition: background-color 180ms ease, border-color 180ms ease;
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease;
   }
 }
 ```
@@ -1857,12 +1988,14 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 10: Decision-first context rail with crew rows
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/features/mission-focus/MissionContext.tsx` (rewrite)
 - Modify: `apps/desktop/src/renderer/App.tsx` (pass `onAction`, recovery link)
 - Modify: `apps/desktop/src/renderer/styles/mission-focus.css`
 - Test: `tests/e2e/mission-focus-workspace.spec.ts`
 
 **Interfaces:**
+
 - Produces: `MissionContext({ detail, presentation, onAction(kind: ActionKind): void, onOpenAttention(): void })`.
 
 - [ ] **Step 1: Write the failing e2e assertions**
@@ -1870,22 +2003,22 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 After `await select(waiting);`:
 
 ```ts
-    const rail = app.page.getByRole('complementary', { name: 'Mission context' });
-    await expect(rail.locator('section').first()).toContainText('Needs your decision');
-    await expect(rail.getByRole('button', { name: 'Review choices…' })).toBeVisible();
-    await expect(rail.getByRole('list', { name: 'Crew' }).getByRole('listitem')).toHaveCount(2);
-    await expect(rail.getByRole('list', { name: 'Crew' })).toContainText('Supervisor');
-    await expect(rail.getByRole('list', { name: 'Crew' })).toContainText('failed');
+const rail = app.page.getByRole('complementary', { name: 'Mission context' });
+await expect(rail.locator('section').first()).toContainText('Needs your decision');
+await expect(rail.getByRole('button', { name: 'Review choices…' })).toBeVisible();
+await expect(rail.getByRole('list', { name: 'Crew' }).getByRole('listitem')).toHaveCount(2);
+await expect(rail.getByRole('list', { name: 'Crew' })).toContainText('Supervisor');
+await expect(rail.getByRole('list', { name: 'Crew' })).toContainText('failed');
 ```
 
 After the recovered-mission click at the end:
 
 ```ts
-    await expect(
-      app.page
-        .getByRole('complementary', { name: 'Mission context' })
-        .getByRole('button', { name: 'Open attention queue' }),
-    ).toBeVisible();
+await expect(
+  app.page
+    .getByRole('complementary', { name: 'Mission context' })
+    .getByRole('button', { name: 'Open attention queue' }),
+).toBeVisible();
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -2067,6 +2200,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 11: Rail progress line and nav badge counts
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/features/mission-focus/MissionRail.tsx` (row second line)
 - Modify: `apps/desktop/src/renderer/features/shell/AppNavigation.tsx`
 - Modify: `apps/desktop/src/renderer/App.tsx` (pass counts)
@@ -2074,6 +2208,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 - Test: `tests/e2e/mission-focus-workspace.spec.ts`
 
 **Interfaces:**
+
 - Produces: `AppNavigation({ selected, onSelect, counts: Partial<Record<WorkspaceDestination, number>> })`.
 
 - [ ] **Step 1: Write the failing e2e assertions**
@@ -2081,17 +2216,17 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 After `await select(completed);` add:
 
 ```ts
-    await expect(
-      list.getByRole('option', { name: new RegExp(completed.id.slice(0, 8), 'i') }),
-    ).toContainText('1/1');
+await expect(
+  list.getByRole('option', { name: new RegExp(completed.id.slice(0, 8), 'i') }),
+).toContainText('1/1');
 ```
 
 At the end after the recovered-mission checks:
 
 ```ts
-    await expect(
-      app.page.getByRole('button', { name: /^Attention, \d+ needing attention$/ }),
-    ).toBeVisible();
+await expect(
+  app.page.getByRole('button', { name: /^Attention, \d+ needing attention$/ }),
+).toBeVisible();
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -2104,12 +2239,10 @@ Expected: FAIL on `1/1`.
 In `MissionRail.tsx` replace the `<small>` content in the list item:
 
 ```tsx
-                <small>
-                  {mission.workItemCount > 0
-                    ? `${mission.completedWorkItemCount}/${mission.workItemCount} · `
-                    : ''}
-                  {mission.state.replaceAll('_', ' ')} · {mission.id.slice(0, 8)}
-                </small>
+<small>
+  {mission.workItemCount > 0 ? `${mission.completedWorkItemCount}/${mission.workItemCount} · ` : ''}
+  {mission.state.replaceAll('_', ' ')} · {mission.id.slice(0, 8)}
+</small>
 ```
 
 - [ ] **Step 4: Navigation counts**
@@ -2118,15 +2251,16 @@ In `MissionRail.tsx` replace the `<small>` content in the list item:
 // apps/desktop/src/renderer/features/shell/AppNavigation.tsx
 import type { WorkspaceDestination } from './navigation.js';
 
-const destinations: ReadonlyArray<{ id: WorkspaceDestination; label: string; countNoun: string }> = [
-  { id: 'missions', label: 'Missions', countNoun: '' },
-  { id: 'sessions', label: 'Sessions', countNoun: 'with new output' },
-  { id: 'agents', label: 'Agents', countNoun: '' },
-  { id: 'templates', label: 'Templates', countNoun: '' },
-  { id: 'memory', label: 'Memory', countNoun: '' },
-  { id: 'attention', label: 'Attention', countNoun: 'needing attention' },
-  { id: 'settings', label: 'Settings', countNoun: '' },
-];
+const destinations: ReadonlyArray<{ id: WorkspaceDestination; label: string; countNoun: string }> =
+  [
+    { id: 'missions', label: 'Missions', countNoun: '' },
+    { id: 'sessions', label: 'Sessions', countNoun: 'with new output' },
+    { id: 'agents', label: 'Agents', countNoun: '' },
+    { id: 'templates', label: 'Templates', countNoun: '' },
+    { id: 'memory', label: 'Memory', countNoun: '' },
+    { id: 'attention', label: 'Attention', countNoun: 'needing attention' },
+    { id: 'settings', label: 'Settings', countNoun: '' },
+  ];
 
 export interface AppNavigationProps {
   selected: WorkspaceDestination;
@@ -2209,6 +2343,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 12: Collapsed attention toggle at medium width (bug 1.4)
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/features/mission-focus/ContextToggle.tsx`
 - Modify: `apps/desktop/src/renderer/features/shell/AppShell.tsx`
 - Modify: `apps/desktop/src/renderer/App.tsx`
@@ -2216,6 +2351,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 - Test: `tests/e2e/mission-focus-workspace.spec.ts` (remove `.fixme`)
 
 **Interfaces:**
+
 - Produces: `AppShell` gains `contextToggle: ReactNode | null` rendered at the top of the workspace column; `ContextToggle({ label, attention, children })` owns open state.
 
 - [ ] **Step 1: Un-fixme the Task 4 test**
@@ -2295,18 +2431,18 @@ export function ContextToggle({
 In `AppShell.tsx` add `contextToggle: ReactNode | null` to the props and render it as the first child of `<main id="mission-workspace" …>`. In `App.tsx` build the context element once:
 
 ```tsx
-  const contextContent = missionSelected ? (
-    <MissionContext
-      detail={workspace.detail}
-      presentation={workspace.presentation}
-      onAction={runMissionAction}
-      onOpenAttention={() => actions.selectDestination('attention')}
-    />
-  ) : (
-    <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
-      <SetupAttentionSummary />
-    </MissionContextFrame>
-  );
+const contextContent = missionSelected ? (
+  <MissionContext
+    detail={workspace.detail}
+    presentation={workspace.presentation}
+    onAction={runMissionAction}
+    onOpenAttention={() => actions.selectDestination('attention')}
+  />
+) : (
+  <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
+    <SetupAttentionSummary />
+  </MissionContextFrame>
+);
 ```
 
 Pass `context={contextContent}` and:
@@ -2387,6 +2523,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 13: Live region announcements and keyboard order
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/features/mission-focus/MissionWorkspace.tsx`
 - Test: `tests/e2e/mission-focus-workspace.spec.ts`, `tests/e2e/accessibility.spec.ts`
 
@@ -2395,18 +2532,18 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 In the five-state test after `await select(waiting);`:
 
 ```ts
-    await expect(app.page.getByRole('status').filter({ hasText: /Mission changed/ })).toContainText(
-      'Mission changed: Waiting browser decision mission, Waiting for you',
-    );
+await expect(app.page.getByRole('status').filter({ hasText: /Mission changed/ })).toContainText(
+  'Mission changed: Waiting browser decision mission, Waiting for you',
+);
 ```
 
 In `tests/e2e/accessibility.spec.ts`, inside the keyboard test after the app has a selected mission (find the section that tabs through the mission rail; if none exists add a step after launch), add:
 
 ```ts
-    await tabTo(page, /^New mission…$/);
-    await tabTo(page, /^Missions$/);
-    await tabTo(page, /mission|Pause|Review|Inspect|View evidence/);
-    await tabTo(page, /View full history…/);
+await tabTo(page, /^New mission…$/);
+await tabTo(page, /^Missions$/);
+await tabTo(page, /mission|Pause|Review|Inspect|View evidence/);
+await tabTo(page, /View full history…/);
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -2419,32 +2556,32 @@ Expected: FAIL on the status region.
 In `MissionWorkspace.tsx` add near the top of the component (before early returns are fine since hooks must run unconditionally):
 
 ```tsx
-  const [announcement, setAnnouncement] = useState('');
-  const detailId = workspace.detail?.id ?? null;
-  const attentionLabel = workspace.presentation?.attentionLabel ?? null;
-  const lifecycle = workspace.presentation?.lifecycleLabel ?? null;
-  const title = workspace.presentation?.title ?? null;
-  const lastId = useRef<string | null>(null);
-  const lastAttention = useRef<string | null>(null);
-  useEffect(() => {
-    if (!detailId || !title) return;
-    if (detailId !== lastId.current) {
-      lastId.current = detailId;
-      lastAttention.current = attentionLabel;
-      setAnnouncement(`Mission changed: ${title}, ${lifecycle}`);
-    } else if (attentionLabel && attentionLabel !== lastAttention.current) {
-      lastAttention.current = attentionLabel;
-      setAnnouncement(attentionLabel);
-    }
-  }, [detailId, title, lifecycle, attentionLabel]);
+const [announcement, setAnnouncement] = useState('');
+const detailId = workspace.detail?.id ?? null;
+const attentionLabel = workspace.presentation?.attentionLabel ?? null;
+const lifecycle = workspace.presentation?.lifecycleLabel ?? null;
+const title = workspace.presentation?.title ?? null;
+const lastId = useRef<string | null>(null);
+const lastAttention = useRef<string | null>(null);
+useEffect(() => {
+  if (!detailId || !title) return;
+  if (detailId !== lastId.current) {
+    lastId.current = detailId;
+    lastAttention.current = attentionLabel;
+    setAnnouncement(`Mission changed: ${title}, ${lifecycle}`);
+  } else if (attentionLabel && attentionLabel !== lastAttention.current) {
+    lastAttention.current = attentionLabel;
+    setAnnouncement(attentionLabel);
+  }
+}, [detailId, title, lifecycle, attentionLabel]);
 ```
 
 Render inside `<article>` as the first child:
 
 ```tsx
-      <p className="visually-hidden" role="status" aria-live="polite">
-        {announcement}
-      </p>
+<p className="visually-hidden" role="status" aria-live="polite">
+  {announcement}
+</p>
 ```
 
 Add to `mission-focus.css`:
@@ -2485,6 +2622,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 14: Apply the picked state variant and delete the prototype
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/features/mission-focus/MissionWorkspace.tsx` (header only)
 - Modify: `apps/desktop/src/renderer/styles/mission-focus.css`
 - Delete: `apps/desktop/src/renderer/prototypes/mission-focus-states/`
@@ -2497,20 +2635,26 @@ Read the decision recorded in Task 7 and apply exactly one of the three blocks.
 After `await select(waiting);`, add one of:
 
 ```ts
-    // A — state-tinted: nothing new in the header; the strip and node carry the state.
-    await expect(app.page.locator('.mission-header')).not.toContainText('Needs your decision');
+// A — state-tinted: nothing new in the header; the strip and node carry the state.
+await expect(app.page.locator('.mission-header')).not.toContainText('Needs your decision');
 ```
 
 ```ts
-    // B — attention band.
-    await expect(app.page.locator('.attention-band')).toContainText('Needs your decision');
-    await expect(app.page.locator('.attention-band').getByRole('button', { name: 'Review choices…' })).toBeVisible();
+// B — attention band.
+await expect(app.page.locator('.attention-band')).toContainText('Needs your decision');
+await expect(
+  app.page.locator('.attention-band').getByRole('button', { name: 'Review choices…' }),
+).toBeVisible();
 ```
 
 ```ts
-    // C — decision line replaces the objective.
-    await expect(app.page.locator('.mission-header .decision-line')).toContainText('Needs your decision');
-    await expect(app.page.locator('.mission-header .decision-line')).toContainText('Verify browser evidence');
+// C — decision line replaces the objective.
+await expect(app.page.locator('.mission-header .decision-line')).toContainText(
+  'Needs your decision',
+);
+await expect(app.page.locator('.mission-header .decision-line')).toContainText(
+  'Verify browser evidence',
+);
 ```
 
 - [ ] **Step 2: Run to verify it fails (B or C) or passes (A)**
@@ -2524,19 +2668,21 @@ For **A**: no change.
 For **B**, in `MissionWorkspace.tsx` after `</header>` and before `<MissionStrip …>`:
 
 ```tsx
-      {presentation.attention !== 'none' && presentation.primaryAction ? (
-        <div className="attention-band" data-attention={presentation.attention}>
-          <span className="context-label">{presentation.attentionLabel}</span>
-          <strong>{presentation.attentionSummary}</strong>
-          <button
-            type="button"
-            className="primary"
-            onClick={() => onAction(presentation.primaryAction!.kind)}
-          >
-            {presentation.primaryAction.label}
-          </button>
-        </div>
-      ) : null}
+{
+  presentation.attention !== 'none' && presentation.primaryAction ? (
+    <div className="attention-band" data-attention={presentation.attention}>
+      <span className="context-label">{presentation.attentionLabel}</span>
+      <strong>{presentation.attentionSummary}</strong>
+      <button
+        type="button"
+        className="primary"
+        onClick={() => onAction(presentation.primaryAction!.kind)}
+      >
+        {presentation.primaryAction.label}
+      </button>
+    </div>
+  ) : null;
+}
 ```
 
 and remove the primary button from the header action row while a band shows (keep the secondary). CSS:
@@ -2552,21 +2698,28 @@ and remove the primary button from the header action row while a band shows (kee
   border-left: 0.3rem solid var(--mission-copper);
   background: color-mix(in srgb, var(--mission-copper) 10%, white);
 }
-.attention-band .context-label { color: var(--mission-copper); }
-.attention-band button { grid-column: 2; grid-row: 1 / span 2; }
+.attention-band .context-label {
+  color: var(--mission-copper);
+}
+.attention-band button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
 ```
 
 For **C**, replace the objective paragraph in the header:
 
 ```tsx
-          {presentation.attention !== 'none' ? (
-            <p className="decision-line">
-              <span className="context-label">{presentation.attentionLabel}</span>{' '}
-              {presentation.attentionSummary}
-            </p>
-          ) : presentation.objective && presentation.objective !== presentation.title ? (
-            <p>{presentation.objective}</p>
-          ) : null}
+{
+  presentation.attention !== 'none' ? (
+    <p className="decision-line">
+      <span className="context-label">{presentation.attentionLabel}</span>{' '}
+      {presentation.attentionSummary}
+    </p>
+  ) : presentation.objective && presentation.objective !== presentation.title ? (
+    <p>{presentation.objective}</p>
+  ) : null;
+}
 ```
 
 CSS:
@@ -2576,7 +2729,9 @@ CSS:
   border-left: 0.3rem solid var(--mission-copper);
   padding-left: 0.75rem;
 }
-.decision-line .context-label { color: var(--mission-copper); }
+.decision-line .context-label {
+  color: var(--mission-copper);
+}
 ```
 
 - [ ] **Step 4: Delete the prototype and its exclude entry**
@@ -2607,6 +2762,7 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 ### Task 15: No-code guard, opt-in parity screenshots, installed verification
 
 **Files:**
+
 - Test: `tests/e2e/mission-focus-workspace.spec.ts`
 - Create: `tests/e2e/parity-screenshots.spec.ts`
 
@@ -2615,8 +2771,8 @@ Claude-Session: https://claude.ai/code/session_013RSSo6ULod8jfAhiGutfKz"
 In the five-state test, inside the `select` helper after the focus assertion:
 
 ```ts
-      const text = await app.page.locator('#mission-workspace, .mission-shell-context').allInnerTexts();
-      expect(text.join('\n'), 'no raw reason code on screen').not.toMatch(/\b[A-Z]{3,}_[A-Z0-9_]+\b/);
+const text = await app.page.locator('#mission-workspace, .mission-shell-context').allInnerTexts();
+expect(text.join('\n'), 'no raw reason code on screen').not.toMatch(/\b[A-Z]{3,}_[A-Z0-9_]+\b/);
 ```
 
 Run: `pnpm desktop:build && pnpm exec playwright test tests/e2e/mission-focus-workspace.spec.ts`
@@ -2631,7 +2787,11 @@ Expected: PASS.
 import { expect, test } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
-import type { MissionDetailView, MissionEnvelopeInput, MissionPreviewView } from '@threadhelm/contracts';
+import type {
+  MissionDetailView,
+  MissionEnvelopeInput,
+  MissionPreviewView,
+} from '@threadhelm/contracts';
 import { launchApp, type LaunchedApp } from './helpers/app.js';
 import { prepareFixtureMission } from './helpers/mission.js';
 import { launchWithFixtures, teardown, tempWorkspace } from './helpers/ui.js';
@@ -2640,68 +2800,160 @@ const OUT = 'artifacts/parity';
 test.skip(!process.env['PARITY_SHOTS'], 'set PARITY_SHOTS=1 to capture');
 
 async function confirmMission(app: LaunchedApp, envelope: MissionEnvelopeInput, objective: string) {
-  const preview = await app.call<MissionPreviewView>('missions.preview', { envelope: { ...envelope, objective } });
-  return app.call<MissionDetailView>('missions.confirm', { previewToken: preview.previewToken, boundaryConfirmation: true });
+  const preview = await app.call<MissionPreviewView>('missions.preview', {
+    envelope: { ...envelope, objective },
+  });
+  return app.call<MissionDetailView>('missions.confirm', {
+    previewToken: preview.previewToken,
+    boundaryConfirmation: true,
+  });
 }
-async function assignWork(app: LaunchedApp, mission: MissionDetailView, disposition: 'completion' | 'unknown' | 'authority_required' | null) {
+async function assignWork(
+  app: LaunchedApp,
+  mission: MissionDetailView,
+  disposition: 'completion' | 'unknown' | 'authority_required' | null,
+) {
   const supervisorId = mission.supervisorSessionId!;
   const binding = mission.envelope!.bindings.find((item) => item.role === 'worker')!;
   const workItemId = randomUUID();
-  const decision = { missionId: mission.id, rationale: 'Parity capture', inputRefs: [], expectedEvidence: 'A retained report' };
+  const decision = {
+    missionId: mission.id,
+    rationale: 'Parity capture',
+    inputRefs: [],
+    expectedEvidence: 'A retained report',
+  };
   await app.bridgeRequest(supervisorId, 'threadhelm_work_decompose', {
-    ...decision, idempotencyKey: randomUUID(),
-    items: [{ id: workItemId, parentWorkItemId: null, workspaceId: binding.workspaceId, title: 'Verify browser evidence', specification: 'Produce one bounded result.', acceptanceCriteria: 'Reference the report.', dependencies: [], authorityClass: 'routine' }],
+    ...decision,
+    idempotencyKey: randomUUID(),
+    items: [
+      {
+        id: workItemId,
+        parentWorkItemId: null,
+        workspaceId: binding.workspaceId,
+        title: 'Verify browser evidence',
+        specification: 'Produce one bounded result.',
+        acceptanceCriteria: 'Reference the report.',
+        dependencies: [],
+        authorityClass: 'routine',
+      },
+    ],
   });
-  await app.bridgeRequest(supervisorId, 'threadhelm_work_assign', { ...decision, idempotencyKey: randomUUID(), workItemId, bindingId: binding.bindingId });
+  await app.bridgeRequest(supervisorId, 'threadhelm_work_assign', {
+    ...decision,
+    idempotencyKey: randomUUID(),
+    workItemId,
+    bindingId: binding.bindingId,
+  });
   if (!disposition) return;
   const detail = await app.call<MissionDetailView>('missions.detail', { missionId: mission.id });
   const attempt = detail.attempts[0]!;
   await app.bridgeRequest(attempt.sessionId!, 'threadhelm_work_result', {
-    missionId: mission.id, workItemId, attemptId: attempt.id, idempotencyKey: randomUUID(), disposition,
+    missionId: mission.id,
+    workItemId,
+    attemptId: attempt.id,
+    idempotencyKey: randomUUID(),
+    disposition,
     explanation: disposition === 'completion' ? 'Done with a report.' : 'The worker stopped here.',
     evidenceRefs: disposition === 'completion' ? [{ kind: 'artifact', id: 'report.md' }] : [],
   });
   if (disposition === 'completion')
-    await app.bridgeRequest(supervisorId, 'threadhelm_mission_complete', { ...decision, idempotencyKey: randomUUID(), evidenceRefs: [{ kind: 'work_item', id: workItemId }] });
+    await app.bridgeRequest(supervisorId, 'threadhelm_mission_complete', {
+      ...decision,
+      idempotencyKey: randomUUID(),
+      evidenceRefs: [{ kind: 'work_item', id: workItemId }],
+    });
 }
 
 test('capture parity screenshots', async () => {
   test.setTimeout(600_000);
   mkdirSync(OUT, { recursive: true });
-  const shot = (app: LaunchedApp, name: string) => app.page.screenshot({ path: `${OUT}/${name}.png` });
-  const nav = (app: LaunchedApp, label: string) => app.page.getByRole('button', { name: label, exact: true }).click();
+  const shot = (app: LaunchedApp, name: string) =>
+    app.page.screenshot({ path: `${OUT}/${name}.png` });
+  const nav = (app: LaunchedApp, label: string) =>
+    app.page.getByRole('button', { name: label, exact: true }).click();
 
   let app = await launchApp();
   await app.page.setViewportSize({ width: 1400, height: 860 });
   await expect(app.page.locator('.status-bar')).toContainText('ThreadHelm v');
   await shot(app, '01-missions-empty');
-  for (const d of ['Sessions', 'Agents', 'Templates', 'Memory', 'Attention', 'Settings']) { await nav(app, d); await shot(app, `02-empty-${d.toLowerCase()}`); }
+  for (const d of ['Sessions', 'Agents', 'Templates', 'Memory', 'Attention', 'Settings']) {
+    await nav(app, d);
+    await shot(app, `02-empty-${d.toLowerCase()}`);
+  }
   await app.close();
 
   app = await launchWithFixtures({ 'codex-cli': 'echo' });
   await app.page.setViewportSize({ width: 1400, height: 860 });
   const directories: string[] = [];
-  const envelope = async (tag: string) => { const pair = [tempWorkspace(`${tag}-leader`), tempWorkspace(`${tag}-worker`)]; directories.push(...pair); return prepareFixtureMission(app, pair); };
+  const envelope = async (tag: string) => {
+    const pair = [tempWorkspace(`${tag}-leader`), tempWorkspace(`${tag}-worker`)];
+    directories.push(...pair);
+    return prepareFixtureMission(app, pair);
+  };
   try {
-    const completed = await confirmMission(app, await envelope('done'), 'Ship cited release notes for v0.3'); await assignWork(app, completed, 'completion');
-    const uncertain = await confirmMission(app, await envelope('unk'), 'Migrate config loader to schema v2'); await assignWork(app, uncertain, 'unknown');
-    const waiting = await confirmMission(app, await envelope('wait'), 'Audit auth middleware token expiry'); await assignWork(app, waiting, 'authority_required');
-    const running = await confirmMission(app, await envelope('run'), 'Refactor session stream backpressure'); await assignWork(app, running, null);
+    const completed = await confirmMission(
+      app,
+      await envelope('done'),
+      'Ship cited release notes for v0.3',
+    );
+    await assignWork(app, completed, 'completion');
+    const uncertain = await confirmMission(
+      app,
+      await envelope('unk'),
+      'Migrate config loader to schema v2',
+    );
+    await assignWork(app, uncertain, 'unknown');
+    const waiting = await confirmMission(
+      app,
+      await envelope('wait'),
+      'Audit auth middleware token expiry',
+    );
+    await assignWork(app, waiting, 'authority_required');
+    const running = await confirmMission(
+      app,
+      await envelope('run'),
+      'Refactor session stream backpressure',
+    );
+    await assignWork(app, running, null);
     const list = app.page.getByRole('listbox', { name: 'Missions', exact: true });
-    const select = async (m: MissionDetailView) => { await list.getByRole('option', { name: new RegExp(m.id.slice(0, 8), 'i') }).click(); await app.page.waitForTimeout(300); };
-    for (const [name, m] of [['10-mission-running', running], ['11-mission-waiting', waiting], ['12-mission-uncertain', uncertain], ['13-mission-completed', completed]] as const) { await select(m); await shot(app, name); }
+    const select = async (m: MissionDetailView) => {
+      await list.getByRole('option', { name: new RegExp(m.id.slice(0, 8), 'i') }).click();
+      await app.page.waitForTimeout(300);
+    };
+    for (const [name, m] of [
+      ['10-mission-running', running],
+      ['11-mission-waiting', waiting],
+      ['12-mission-uncertain', uncertain],
+      ['13-mission-completed', completed],
+    ] as const) {
+      await select(m);
+      await shot(app, name);
+    }
     await select(running);
-    for (const d of ['Sessions', 'Agents', 'Memory', 'Settings', 'Attention']) { await nav(app, d); await shot(app, `20-${d.toLowerCase()}`); }
-    await nav(app, 'Missions'); await select(waiting);
-    await app.page.setViewportSize({ width: 960, height: 800 }); await shot(app, '30-medium-waiting');
-    await app.page.setViewportSize({ width: 680, height: 800 }); await shot(app, '31-narrow-waiting');
+    for (const d of ['Sessions', 'Agents', 'Memory', 'Settings', 'Attention']) {
+      await nav(app, d);
+      await shot(app, `20-${d.toLowerCase()}`);
+    }
+    await nav(app, 'Missions');
+    await select(waiting);
+    await app.page.setViewportSize({ width: 960, height: 800 });
+    await shot(app, '30-medium-waiting');
+    await app.page.setViewportSize({ width: 680, height: 800 });
+    await shot(app, '31-narrow-waiting');
     await app.page.setViewportSize({ width: 1400, height: 860 });
-    const userData = app.userData; await app.crashCoordinator();
+    const userData = app.userData;
+    await app.crashCoordinator();
     app = await launchWithFixtures({ 'codex-cli': 'echo' }, userData);
     await app.page.setViewportSize({ width: 1400, height: 860 });
-    await app.page.getByRole('listbox', { name: 'Missions', exact: true }).getByRole('option').filter({ hasText: 'recovery required' }).first().click();
+    await app.page
+      .getByRole('listbox', { name: 'Missions', exact: true })
+      .getByRole('option')
+      .filter({ hasText: 'recovery required' })
+      .first()
+      .click();
     await shot(app, '17-mission-recovery');
-    await nav(app, 'Attention'); await shot(app, '25-attention-populated');
+    await nav(app, 'Attention');
+    await shot(app, '25-attention-populated');
   } finally {
     await teardown(app, ...directories);
   }

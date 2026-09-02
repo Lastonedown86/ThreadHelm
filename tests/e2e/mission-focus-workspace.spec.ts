@@ -292,14 +292,15 @@ test('narrow windows keep the mission heading in the first screen', async () => 
     await expect(heading).toHaveText('Narrow window mission');
     const top = await heading.evaluate((el) => el.getBoundingClientRect().top);
     expect(top, 'mission heading inside the first viewport').toBeLessThan(400);
-    const scrollers = await app.page.evaluate(() =>
-      [...document.querySelectorAll('*')].filter((el) => {
-        const s = getComputedStyle(el);
-        return (
-          (s.overflowY === 'auto' || s.overflowY === 'scroll') &&
-          el.scrollHeight > el.clientHeight
-        );
-      }).length,
+    const scrollers = await app.page.evaluate(
+      () =>
+        [...document.querySelectorAll('*')].filter((el) => {
+          const s = getComputedStyle(el);
+          return (
+            (s.overflowY === 'auto' || s.overflowY === 'scroll') &&
+            el.scrollHeight > el.clientHeight
+          );
+        }).length,
     );
     expect(scrollers, 'one vertical scroller').toBeLessThanOrEqual(1);
   } finally {

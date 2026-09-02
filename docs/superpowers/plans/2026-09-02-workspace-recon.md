@@ -42,11 +42,13 @@ Copied verbatim from the spec. Every task's requirements implicitly include this
 Pure functions with no I/O, so they can be driven entirely by unit tests before anything else exists.
 
 **Files:**
+
 - Create: `packages/domain/src/workspace-recon.ts`
 - Modify: `packages/domain/src/index.ts`
 - Test: `tests/unit/domain/workspace-recon.test.ts`
 
 **Interfaces:**
+
 - Consumes: `MAX_MANIFEST_BYTES` from `packages/domain/src/agent-profile.ts`.
 - Produces:
   - `MAX_RECON_FILES: 12`
@@ -142,13 +144,16 @@ describe('classifyReconOutcome', () => {
   });
 
   it.each([
-    [{ providerUnauthenticated: true, ownerStopped: true, tokenCapReached: true }, 'provider_unauthenticated'],
+    [
+      { providerUnauthenticated: true, ownerStopped: true, tokenCapReached: true },
+      'provider_unauthenticated',
+    ],
     [{ ownerStopped: true, tokenCapReached: true }, 'stopped_by_owner'],
     [{ tokenCapReached: true }, 'token_cap_reached'],
   ] as const)('prefers the run-level explanation %#', (overrides, expected) => {
-    expect(
-      classifyReconOutcome({ ...FACTS, ...overrides, filesWritten: 2, parsedCount: 2 }),
-    ).toBe(expected);
+    expect(classifyReconOutcome({ ...FACTS, ...overrides, filesWritten: 2, parsedCount: 2 })).toBe(
+      expected,
+    );
   });
 });
 
@@ -289,10 +294,12 @@ git commit -m "feat: add recon collection bounds and outcome classification"
 ### Task 2: Contracts — recon views and operations
 
 **Files:**
+
 - Modify: `packages/contracts/src/index.ts`
 - Test: `tests/contract/workspace-recon.test.ts`
 
 **Interfaces:**
+
 - Consumes: `AgentManifestV1`, `LaunchPreviewView`, `ProfileCompatibility`, `ProfileDigest`, `Uuid`, `Timestamp`, `OpaqueToken`, `ProviderId`, `TerminalSize`, `MAX_TOKEN_CAP` — all already exported from this file.
 - Produces: `ReconOutcome`, `ReconProposalView`, `ReconRejectionView`, `ReconRunView`, `ReconLaunchPreviewView`, `RECON_NO_AUTO_HIRE_STATEMENT`, and the three `workspaceRecon.*` operations. Also widens `PreviewImportProfileRequest`.
 
@@ -315,6 +322,19 @@ import {
   PreviewImportProfileRequest,
 } from '@threadhelm/contracts';
 
+const RUN_BASE = {
+  runId: '11111111-1111-4111-8111-111111111111',
+  workspaceId: '22222222-2222-4222-8222-222222222222',
+  sessionId: null,
+  outcome: null,
+  derivedFromCommit: null,
+  startedAt: '2026-09-02T00:00:00.000Z',
+  completedAt: null,
+  proposals: [],
+  rejected: [],
+  ignoredFileCount: 0,
+};
+
 describe('recon outcomes', () => {
   it('keeps all seven outcomes distinct with no blanket failure', () => {
     expect(ReconOutcome.options).toEqual([
@@ -327,6 +347,35 @@ describe('recon outcomes', () => {
       'provider_unauthenticated',
     ]);
     expect(ReconOutcome.options).not.toContain('failed');
+  });
+});
+
+describe('contracts agree with domain policy', () => {
+  it('keeps the zod enum and the domain union identical', async () => {
+    const domain = await import('@threadhelm/domain');
+    // A domain-side exhaustive map: adding an outcome to one side and not the
+    // other fails to compile here, and a reordering fails the assertion below.
+    const fromDomain: Record<import('@threadhelm/domain').ReconOutcome, true> = {
+      completed: true,
+      partial: true,
+      no_output: true,
+      unparsable_output: true,
+      stopped_by_owner: true,
+      token_cap_reached: true,
+      provider_unauthenticated: true,
+    };
+    expect([...ReconOutcome.options].sort()).toEqual(Object.keys(fromDomain).sort());
+    expect(domain.MAX_RECON_FILES).toBe(12);
+  });
+
+  it('bounds ReconRunView collections at the domain collection limit', async () => {
+    const { MAX_RECON_FILES } = await import('@threadhelm/domain');
+    const rejection = ReconRejectionView.parse({ sourceBasename: 'x.json', errorCode: 'X' });
+    const atLimit = Array.from({ length: MAX_RECON_FILES }, () => rejection);
+    expect(ReconRunView.safeParse({ ...RUN_BASE, rejected: atLimit }).success).toBe(true);
+    expect(ReconRunView.safeParse({ ...RUN_BASE, rejected: [...atLimit, rejection] }).success).toBe(
+      false,
+    );
   });
 });
 
@@ -354,31 +403,12 @@ describe('workspaceRecon operations', () => {
 });
 
 describe('ReconRunView', () => {
-  const base = {
-    runId: '11111111-1111-4111-8111-111111111111',
-    workspaceId: '22222222-2222-4222-8222-222222222222',
-    sessionId: null,
-    outcome: null,
-    derivedFromCommit: null,
-    startedAt: '2026-09-02T00:00:00.000Z',
-    completedAt: null,
-    proposals: [],
-    rejected: [],
-    ignoredFileCount: 0,
-  };
-
   it('accepts a run that is still in flight', () => {
-    expect(ReconRunView.safeParse(base).success).toBe(true);
+    expect(ReconRunView.safeParse(RUN_BASE).success).toBe(true);
   });
 
   it('records absence of a commit as null rather than an empty string', () => {
-    expect(ReconRunView.safeParse({ ...base, derivedFromCommit: '' }).success).toBe(false);
-  });
-
-  it('bounds proposals to the collection limit', () => {
-    const rejection = ReconRejectionView.parse({ sourceBasename: 'x.json', errorCode: 'X' });
-    const rejected = Array.from({ length: 13 }, () => rejection);
-    expect(ReconRunView.safeParse({ ...base, rejected }).success).toBe(false);
+    expect(ReconRunView.safeParse({ ...RUN_BASE, derivedFromCommit: '' }).success).toBe(false);
   });
 });
 
@@ -417,8 +447,6 @@ In `packages/contracts/src/index.ts`, immediately after the agent-profile sectio
 
 export const RECON_NO_AUTO_HIRE_STATEMENT =
   'Recon proposes roles only. No agent is hired and no authority is granted until you review and confirm each one.';
-
-export const MAX_RECON_PROPOSALS = 12;
 
 export const ReconOutcome = z.enum([
   'completed',
@@ -459,11 +487,15 @@ export const ReconRunView = strictObject({
   /** Null while the run is still in flight. */
   outcome: ReconOutcome.nullable(),
   /** Null when the approved folder is not a Git working tree. */
-  derivedFromCommit: z.string().regex(/^[0-9a-f]{40}$/).nullable(),
+  derivedFromCommit: z
+    .string()
+    .regex(/^[0-9a-f]{40}$/)
+    .nullable(),
   startedAt: Timestamp,
   completedAt: Timestamp.nullable(),
-  proposals: z.array(ReconProposalView).max(MAX_RECON_PROPOSALS),
-  rejected: z.array(ReconRejectionView).max(MAX_RECON_PROPOSALS),
+  /** Bound mirrors MAX_RECON_FILES in @threadhelm/domain; contracts cannot import domain. */
+  proposals: z.array(ReconProposalView).max(12),
+  rejected: z.array(ReconRejectionView).max(12),
   ignoredFileCount: z.number().int().min(0),
 });
 export type ReconRunView = z.infer<typeof ReconRunView>;
@@ -520,7 +552,18 @@ In the `OPERATIONS` map, immediately after the `'profiles.confirmDelete'` entry,
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pnpm vitest run --project contract tests/contract/workspace-recon.test.ts && pnpm typecheck`
-Expected: PASS, 8 tests, and typecheck clean. If typecheck reports an error at `apps/desktop/src/main/coordination/profiles.ts` on `request.fileHandle`, that is the widened request type surfacing correctly — fix it in Task 5, not here, by leaving the call site as `if (request.fileHandle === undefined) throw ...` for now.
+Expected: PASS, and typecheck clean.
+
+Widening `PreviewImportProfileRequest` makes `request.fileHandle` optional, which breaks `apps/desktop/src/main/coordination/profiles.ts`. Fix it **in this task**, not later — every task must commit on a green tree, and Tasks 3 and 4 sit between this one and the real implementation. Add the guard at the top of `previewImport`:
+
+```ts
+if (request.fileHandle === undefined) {
+  // Proposal-sourced imports arrive in Task 5.
+  throw new ThreadHelmError('PROFILE_UNREADABLE', 'The selected profile file is unavailable.');
+}
+```
+
+Task 5 replaces this guard with the real proposal branch.
 
 - [ ] **Step 5: Commit**
 
@@ -534,11 +577,13 @@ git commit -m "feat: add workspace recon contract shapes and operations"
 ### Task 3: Persistence — recon provenance on accepted profiles
 
 **Files:**
+
 - Modify: `packages/persistence/src/schema.ts`
 - Modify: `packages/persistence/src/repositories/agent-profiles.ts`
 - Test: `tests/unit/persistence/workspace-recon.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ImportProfileManifestInput` from `packages/persistence/src/repositories/agent-profiles.ts`.
 - Produces: `ImportProfileManifestInput` gains `reconRunId?: string | null` and `derivedFromCommit?: string | null`; `AgentProfileDetailView` rows carry them back.
 
@@ -570,17 +615,41 @@ describe('recon provenance columns', () => {
     db.close();
   });
 
-  it('defaults both columns to null for an import with no recon provenance', () => {
-    const db = openDatabase(':memory:');
-    migrate(db);
+  it('reads both columns back as null for an import with no recon provenance', () => {
+    const { repositories, db } = openTestStorage();
+    const imported = repositories.agentProfiles.importManifest(importInput());
     const row = db
-      .prepare(`SELECT recon_run_id, derived_from_commit FROM agent_profiles LIMIT 0`)
-      .all();
-    expect(row).toEqual([]);
+      .prepare('SELECT recon_run_id, derived_from_commit FROM agent_profiles WHERE profile_id = ?')
+      .get(imported.profileId) as {
+      recon_run_id: string | null;
+      derived_from_commit: string | null;
+    };
+    expect(row.recon_run_id).toBeNull();
+    expect(row.derived_from_commit).toBeNull();
+    db.close();
+  });
+
+  it('round-trips provenance supplied by a recon import', () => {
+    const { repositories, db } = openTestStorage();
+    const imported = repositories.agentProfiles.importManifest({
+      ...importInput(),
+      reconRunId: '44444444-4444-4444-8444-444444444444',
+      derivedFromCommit: 'a'.repeat(40),
+    });
+    const row = db
+      .prepare('SELECT recon_run_id, derived_from_commit FROM agent_profiles WHERE profile_id = ?')
+      .get(imported.profileId) as {
+      recon_run_id: string | null;
+      derived_from_commit: string | null;
+    };
+    expect(row.recon_run_id).toBe('44444444-4444-4444-8444-444444444444');
+    expect(row.derived_from_commit).toBe('a'.repeat(40));
     db.close();
   });
 });
 ```
+
+`openTestStorage()` and `importInput()` are the storage-open helper and the valid `ImportProfileManifestInput` fixture used by `tests/unit/persistence/agent-profiles.test.ts` — import or copy them from there rather than writing new ones.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -632,6 +701,7 @@ git commit -m "feat: record recon provenance on accepted profiles"
 Everything downstream is tested with no credentials, no network and no token spend, so this comes before main and renderer.
 
 **Files:**
+
 - Modify: `packages/test-fixtures/src/fake-agent.cjs`
 - Modify: `packages/test-fixtures/src/runtime.ts`
 - Create: `packages/test-fixtures/src/recon.ts`
@@ -639,6 +709,7 @@ Everything downstream is tested with no credentials, no network and no token spe
 - Test: `tests/unit/test-fixtures/recon-mode.test.ts`
 
 **Interfaces:**
+
 - Consumes: `FakeAgentMode`, `fakeAgentLaunch` from `packages/test-fixtures/src/runtime.ts`.
 - Produces: `FakeAgentMode` gains `'recon'`; `fakeAgentLaunch('recon', { outDir })`; `RECON_PROPOSAL_FIXTURES: readonly { basename: string; text: string }[]` — four valid manifests (one `supervisor.agent.json`, three specialists) plus one malformed file, so every collection path is exercised by one run.
 
@@ -838,6 +909,7 @@ git commit -m "feat: add a recon mode to the deterministic fake agent"
 The largest task. It stays one task because its three parts (preview, launch, collect) cannot be reviewed independently — a preview that no launch consumes is not testable.
 
 **Files:**
+
 - Create: `apps/desktop/src/main/coordination/recon.ts`
 - Modify: `apps/desktop/src/main/coordinator.ts`
 - Modify: `apps/desktop/src/main/coordination/profiles.ts:170-190` (the `previewImport` call site)
@@ -845,15 +917,26 @@ The largest task. It stays one task because its three parts (preview, launch, co
 - Test: `tests/unit/main/recon.test.ts`
 
 **Interfaces:**
+
 - Consumes: `selectReconFiles`, `classifyReconOutcome`, `reconRoleForBasename`, `parseAgentManifest`, `evaluateProfileCompatibility` from `@threadhelm/domain`; `ReconRunView`, `ReconLaunchPreviewView`, `RECON_NO_AUTO_HIRE_STATEMENT` from `@threadhelm/contracts`; the existing session preview and launch services on `Context`.
 - Produces:
   ```ts
   export interface ReconService {
-    previewLaunch(request: OperationRequest<'workspaceRecon.previewLaunch'>): Promise<ReconLaunchPreviewView>;
+    previewLaunch(
+      request: OperationRequest<'workspaceRecon.previewLaunch'>,
+    ): Promise<ReconLaunchPreviewView>;
     confirmLaunch(request: OperationRequest<'workspaceRecon.confirmLaunch'>): Promise<ReconRunView>;
     getRun(request: OperationRequest<'workspaceRecon.getRun'>): ReconRunView | null;
     /** Consumed by profiles.previewImport when the source is a proposal. */
-    takeProposal(proposalId: string): { manifest: AgentManifestV1; digest: string; sourceBasename: string; runId: string; derivedFromCommit: string | null } | null;
+    takeProposal(
+      proposalId: string,
+    ): {
+      manifest: AgentManifestV1;
+      digest: string;
+      sourceBasename: string;
+      runId: string;
+      derivedFromCommit: string | null;
+    } | null;
     /** Resolves once collection for this run has finished. Deterministic waiting for tests. */
     whenCollected(runId: string): Promise<void>;
   }
@@ -1097,7 +1180,45 @@ In `apps/desktop/src/main/coordination/profiles.ts`, change `previewImport` to b
     },
 ```
 
-Extract the existing tail of `previewImport` (from `evaluateProfileCompatibility` onward) into a local `snapshotPreview(manifest, digest, sourceBasename)` so both sources share one path. Do not duplicate it.
+Extract the existing tail of `previewImport` (from `evaluateProfileCompatibility` onward) into a local `snapshotPreview(manifest, digest, sourceBasename, provenance)` so both sources share one path. Do not duplicate it.
+
+Carry the provenance through to storage, or Task 3's columns stay dead schema. Widen `saveReviewedManifest` and store what it is given:
+
+```ts
+export interface ReconProvenance {
+  readonly reconRunId: string;
+  readonly derivedFromCommit: string | null;
+}
+
+  saveReviewedManifest(
+    manifest: AgentManifestV1,
+    digest: string,
+    sourceBasename: string,
+    provenance?: ReconProvenance,
+  ): AgentProfileSummaryView;
+```
+
+The `ImportProfileManifestInput` it builds gains `reconRunId: provenance?.reconRunId ?? null` and `derivedFromCommit: provenance?.derivedFromCommit ?? null`. The preview snapshot carries the provenance from `previewImport` to `confirmImport` so the file-picker path keeps passing nothing and the proposal path passes the run's values.
+
+Add one test to `tests/unit/main/recon.test.ts` proving the round trip, since nothing else covers it:
+
+```ts
+it('stamps an accepted proposal with the run it came from', async () => {
+  const { service, ctx, completeSession, outputDirOf } = buildReconHarness();
+  const run = await startRun(service);
+  writeFileSync(
+    join(outputDirOf(run.runId), 'supervisor.agent.json'),
+    RECON_PROPOSAL_FIXTURES[0]!.text,
+    'utf8',
+  );
+  await completeSession(run.runId, { ownerStopped: false });
+
+  const proposal = service.getRun({ workspaceId: WORKSPACE_ID })!.proposals[0]!;
+  const taken = service.takeProposal(proposal.proposalId)!;
+  expect(taken.runId).toBe(run.runId);
+  expect(taken.derivedFromCommit).toBe(run.derivedFromCommit);
+});
+```
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -1116,12 +1237,14 @@ git commit -m "feat: add the workspace recon service"
 ### Task 6: Renderer — roster region and proposal review
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/features/workspaces/WorkspaceRoster.tsx`
 - Modify: the workspace view that renders an approved workspace (find it with `rg -l "workspaces.list" apps/desktop/src/renderer`)
 - Modify: `apps/desktop/src/preload/` bridge surface, if operations are enumerated there
 - Test: `tests/e2e/workspace-recon.spec.ts` (written in Task 7)
 
 **Interfaces:**
+
 - Consumes: `api.workspaceRecon.previewLaunch` / `confirmLaunch` / `getRun`, and `api.profiles.previewImport({ proposalId })` / `confirmImport`.
 - Produces: no exports other than the component.
 
@@ -1133,7 +1256,9 @@ Render, when `getRun` returns `null` or a run with no proposals:
 <section aria-labelledby="roster-heading">
   <h2 id="roster-heading">Roster</h2>
   <p>No roster yet. Recon can read this workspace and propose one.</p>
-  <button type="button" onClick={openReconDisclosure}>Run recon</button>
+  <button type="button" onClick={openReconDisclosure}>
+    Run recon
+  </button>
 </section>
 ```
 
@@ -1183,10 +1308,12 @@ git commit -m "feat: show the proposed roster and route review through profile i
 ### Task 7: Windows integration and end-to-end coverage
 
 **Files:**
+
 - Create: `tests/integration/windows/workspace-recon.test.ts`
 - Create: `tests/e2e/workspace-recon.spec.ts`
 
 **Interfaces:**
+
 - Consumes: everything from Tasks 1–6. Produces nothing.
 
 - [ ] **Step 1: Write the Windows integration test**
@@ -1195,9 +1322,7 @@ Model it on `tests/integration/windows/agent-profile-import.test.ts`, reusing it
 
 ```ts
 /** Approves a temp workspace, previews and confirms a recon launch against the fixture agent. */
-async function startReconAgainstFixture(
-  opts: { mode?: FakeAgentMode } = {},
-): Promise<ReconRunView>;
+async function startReconAgainstFixture(opts: { mode?: FakeAgentMode } = {}): Promise<ReconRunView>;
 
 /** Awaits service.whenCollected(runId) and returns the collected run. */
 async function waitForOutcome(runId: string): Promise<ReconRunView>;
@@ -1313,22 +1438,22 @@ git commit -m "test: cover recon containment, honest outcomes and owner-typed na
 
 ## Coverage against the spec
 
-| Spec section | Task |
-| --- | --- |
-| § Owner decisions 1 (offered, never automatic) | 6 (empty state), 7 (guard test) |
-| § Owner decisions 2 (recon is a normal session) | 5 (reuses preview/launch), 7 (job object, force stop) |
-| § Owner decisions 3 (both roles, never a name) | 4 (placeholder fixtures), 6 (empty name field), 7 (owner-typed assertion) |
-| § Owner decisions 4 (files, not transcript) | 5 (no output subscription) |
-| § Owner decisions 5 (`derivedFromCommit`) | 3 (column), 5 (git rev-parse, null on failure) |
-| § Owner decisions 6 (standalone) | Branch dependency note only |
-| § The honesty boundary | 2 (`boundaryWarning` embedded whole), 5 (prompt wording), 6 (verbatim render) |
-| § Trust model | 5 (routes through `parseAgentManifest`) |
-| § 1.1 entry point | 6 |
-| § 1.2 launch disclosure | 2, 5, 6 |
-| § 1.3 the session | 5 |
-| § 1.4 collection | 1 (bounds), 5 (parse and classify) |
-| § 1.5 acceptance | 5 (`takeProposal`), 6 (review handoff) |
-| § 1.6 repeat runs and cleanup | 5 (discard + delete), 7 (stale directory) |
-| § Phase 2 contract surface | 2 |
-| § Phase 3 outcomes | 1 (classification), 6 (seven sentences) |
-| § Testing | 1, 3, 4, 5, 7 |
+| Spec section                                    | Task                                                                          |
+| ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| § Owner decisions 1 (offered, never automatic)  | 6 (empty state), 7 (guard test)                                               |
+| § Owner decisions 2 (recon is a normal session) | 5 (reuses preview/launch), 7 (job object, force stop)                         |
+| § Owner decisions 3 (both roles, never a name)  | 4 (placeholder fixtures), 6 (empty name field), 7 (owner-typed assertion)     |
+| § Owner decisions 4 (files, not transcript)     | 5 (no output subscription)                                                    |
+| § Owner decisions 5 (`derivedFromCommit`)       | 3 (column), 5 (git rev-parse, null on failure)                                |
+| § Owner decisions 6 (standalone)                | Branch dependency note only                                                   |
+| § The honesty boundary                          | 2 (`boundaryWarning` embedded whole), 5 (prompt wording), 6 (verbatim render) |
+| § Trust model                                   | 5 (routes through `parseAgentManifest`)                                       |
+| § 1.1 entry point                               | 6                                                                             |
+| § 1.2 launch disclosure                         | 2, 5, 6                                                                       |
+| § 1.3 the session                               | 5                                                                             |
+| § 1.4 collection                                | 1 (bounds), 5 (parse and classify)                                            |
+| § 1.5 acceptance                                | 5 (`takeProposal`), 6 (review handoff)                                        |
+| § 1.6 repeat runs and cleanup                   | 5 (discard + delete), 7 (stale directory)                                     |
+| § Phase 2 contract surface                      | 2                                                                             |
+| § Phase 3 outcomes                              | 1 (classification), 6 (seven sentences)                                       |
+| § Testing                                       | 1, 3, 4, 5, 7                                                                 |

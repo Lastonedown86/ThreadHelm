@@ -47,7 +47,28 @@ blocks confirmation.
 **Selected: A — State-tinted.** Applies to waiting-for-owner, uncertain, recovery-required, and
 completed missions inside the approved D — Mission Course layout. The header keeps its objective;
 the state is carried by the lifecycle eyebrow, the status strip, the affected course node, and the
-decision-first context rail, with the same action label in the header and the rail. Reason codes
-never appear; each state carries a text label in every place it is expressed. Rejected: B —
-attention band (a third copy of the same action) and C — decision line (hides the objective while
-a decision waits). Decided 2026-09-02 from the disposable `mission-focus-states` prototype.
+decision-first context rail. Reason codes never appear; each state carries a text label in every
+place it is expressed. Rejected: B — attention band (a third copy of the same action) and C —
+decision line (hides the objective while a decision waits). Decided 2026-09-02 from the disposable
+`mission-focus-states` prototype.
+
+**Exception — recovery's action label differs between header and rail on purpose.** Every other
+attention state repeats its `primaryAction` label verbatim in both places. Recovery does not: the
+header offers "Inspect evidence…" (spec 2.3, consistent with uncertain/held) while the rail offers
+"Open attention queue" (spec 2.1, which asks the rail's recovery control to route to the Attention
+destination rather than re-open the mission detail dialog). Where 2.1 and 2.3 disagree for recovery
+specifically, 2.1 wins, so the label difference is intentional, not a miss.
+
+**Deferred — the rail's recovery link is not filtered to this mission.** Spec 2.1 asks
+`onOpenAttention` to open the Attention destination scoped to this mission's records. The shipped
+control (`App.tsx`'s `onOpenAttention`) opens the destination unfiltered
+(`actions.selectDestination('attention')`), same as any other route there. Filtering it would mean
+teaching the Attention/Recovery screen about a mission-scoped view, which the Global Constraints for
+this branch forbid outside bugs 1.1/1.2 (no changes to destinations other than Mission Focus).
+Per-mission filtering is deferred to whichever phase next owns the Attention/Recovery page.
+
+**The keyboard-order test stands in for an axe pass.** Spec 2.7 asks to extend "the existing axe
+pass." This repo has no axe dependency (checked `tests/` and every `package.json`), so there is no
+existing axe pass to extend. `tests/e2e/accessibility.spec.ts`'s keyboard-order test is the
+accessibility coverage for the Mission Course states added here; treat 2.7 as met by that test, not
+by an axe run that doesn't exist in this codebase.

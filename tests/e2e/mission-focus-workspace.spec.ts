@@ -262,6 +262,8 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await expect(node.getByRole('button', { name: 'Open terminal' })).toBeVisible();
 
     await select(waiting);
+    // A — state-tinted: nothing new in the header; the strip and node carry the state.
+    await expect(app.page.locator('.mission-header')).not.toContainText('Needs your decision');
     await expect(app.page.getByRole('status').filter({ hasText: /Mission changed/ })).toContainText(
       'Mission changed: Waiting browser decision mission, Waiting for you',
     );

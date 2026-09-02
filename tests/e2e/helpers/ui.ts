@@ -4,7 +4,7 @@
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ProviderId } from '@threadhelm/contracts';
@@ -17,7 +17,16 @@ export const PROVIDER_NAME: Record<ProviderId, string> = {
 };
 
 export function tempWorkspace(tag = 'thm ünï 空間'): string {
-  return mkdtempSync(join(tmpdir(), `${tag}-`));
+  const created = mkdtempSync(join(tmpdir(), `${tag}-`));
+  // mkdtempSync's random suffix draws per-character from [A-Za-z0-9], so it
+  // occasionally lands all-uppercase (e.g. "W7KARK") and, once this path is
+  // rendered in the workspace, trips assertNoRawReasonCode's raw-reason-code
+  // guard (mission-focus-workspace.spec.ts), which requires every displayed
+  // /^[A-Z][A-Z0-9_]{2,63}$/ token to be allowlisted UI copy. Lowercase the
+  // whole path so it can never masquerade as one.
+  const lowered = created.toLowerCase();
+  if (lowered !== created) renameSync(created, lowered);
+  return lowered;
 }
 
 /** Launches the app with fixture providers and the readiness panel refreshed. */

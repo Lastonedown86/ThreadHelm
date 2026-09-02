@@ -173,6 +173,13 @@ export function createProfileService(ctx: Context): ProfileService {
     },
 
     async previewImport(request) {
+      if (request.fileHandle === undefined) {
+        // Proposal-sourced imports arrive in Task 5.
+        throw new ThreadHelmError(
+          'PROFILE_UNREADABLE',
+          'The selected profile file is unavailable.',
+        );
+      }
       const path = handles.get(request.fileHandle);
       handles.delete(request.fileHandle);
       if (!path) {

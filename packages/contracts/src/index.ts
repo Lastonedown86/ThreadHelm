@@ -295,6 +295,8 @@ export const ErrorCode = z.enum([
   'COORDINATION_BRIDGE_UNAVAILABLE',
   'COORDINATION_AUTHORITY_REQUIRED',
   'COORDINATION_CLOSED',
+  // workspace recon
+  'RECON_UNAVAILABLE',
   // shared memory
   'MEMORY_NOT_FOUND',
   'MEMORY_SCOPE_UNAUTHORIZED',
@@ -1449,10 +1451,84 @@ export const AgentProfileDetailView = strictObject({
 });
 export type AgentProfileDetailView = z.infer<typeof AgentProfileDetailView>;
 
-/** Accepts only a renderer file-selection handle, never arbitrary provider input. */
-export const PreviewImportProfileRequest = strictObject({
-  fileHandle: z.string().min(1).max(256),
+// Workspace Recon (docs/superpowers/specs/2026-09-02-workspace-recon-design.md).
+// A recon session is an ordinary session; these shapes add only the bounds and
+// provenance a proposed roster needs.
+
+export const RECON_NO_AUTO_HIRE_STATEMENT =
+  'Recon proposes roles only. No agent is hired and no authority is granted until you review and confirm each one.';
+
+export const ReconOutcome = z.enum([
+  'completed',
+  'partial',
+  'no_output',
+  'unparsable_output',
+  'stopped_by_owner',
+  'token_cap_reached',
+  'provider_unauthenticated',
+]);
+export type ReconOutcome = z.infer<typeof ReconOutcome>;
+
+export const ReconRole = z.enum(['supervisor', 'specialist']);
+export type ReconRole = z.infer<typeof ReconRole>;
+
+export const ReconProposalView = strictObject({
+  proposalId: Uuid,
+  role: ReconRole,
+  sourceBasename: z.string().min(1).max(200),
+  digest: ProfileDigest,
+  manifest: AgentManifestV1,
+  compatibility: ProfileCompatibility,
+  compatibilityReasons: z.array(z.string().max(300)).max(20),
 });
+export type ReconProposalView = z.infer<typeof ReconProposalView>;
+
+export const ReconRejectionView = strictObject({
+  sourceBasename: z.string().min(1).max(200),
+  /** A stable ThreadHelmError code; never a raw parser message. */
+  errorCode: z.string().min(1).max(64),
+});
+export type ReconRejectionView = z.infer<typeof ReconRejectionView>;
+
+export const ReconRunView = strictObject({
+  runId: Uuid,
+  workspaceId: Uuid,
+  sessionId: Uuid.nullable(),
+  /** Null while the run is still in flight. */
+  outcome: ReconOutcome.nullable(),
+  /** Null when the approved folder is not a Git working tree. */
+  derivedFromCommit: z
+    .string()
+    .regex(/^[0-9a-f]{40}$/)
+    .nullable(),
+  startedAt: Timestamp,
+  completedAt: Timestamp.nullable(),
+  /** Bound mirrors MAX_RECON_FILES in @threadhelm/domain; contracts cannot import domain. */
+  proposals: z.array(ReconProposalView).max(12),
+  rejected: z.array(ReconRejectionView).max(12),
+  ignoredFileCount: z.number().int().min(0),
+});
+export type ReconRunView = z.infer<typeof ReconRunView>;
+
+export const ReconLaunchPreviewView = strictObject({
+  /** The unmodified session disclosure, boundary warning included. */
+  launch: LaunchPreviewView,
+  outputDirectory: z.string().min(1),
+  tokenCap: z.number().int().positive().max(MAX_TOKEN_CAP),
+  /** The exact text sent as this session's first input. */
+  reconPrompt: z.string().min(1).max(8000),
+  autoHireStatement: z.literal(RECON_NO_AUTO_HIRE_STATEMENT),
+});
+export type ReconLaunchPreviewView = z.infer<typeof ReconLaunchPreviewView>;
+
+/** Accepts a renderer file-selection handle or a recon proposal, never both. */
+export const PreviewImportProfileRequest = strictObject({
+  fileHandle: z.string().min(1).max(256).optional(),
+  proposalId: Uuid.optional(),
+}).refine(
+  (value) => (value.fileHandle === undefined) !== (value.proposalId === undefined),
+  'exactly one import source',
+);
 export type PreviewImportProfileRequest = z.infer<typeof PreviewImportProfileRequest>;
 
 export const ProfilePreviewView = strictObject({
@@ -2431,6 +2507,25 @@ export const operations = {
   'profiles.confirmDelete': {
     request: ConfirmDeleteProfileRequest,
     response: AgentProfileSummaryView,
+  },
+  'workspaceRecon.previewLaunch': {
+    request: strictObject({
+      workspaceId: Uuid,
+      providerId: ProviderId,
+      terminal: TerminalSize,
+    }),
+    response: ReconLaunchPreviewView,
+  },
+  'workspaceRecon.confirmLaunch': {
+    request: strictObject({
+      previewToken: OpaqueToken,
+      boundaryConfirmation: z.literal(true),
+    }),
+    response: ReconRunView,
+  },
+  'workspaceRecon.getRun': {
+    request: strictObject({ workspaceId: Uuid }),
+    response: ReconRunView.nullable(),
   },
   'agentWizard.createDraft': {
     request: CreateAgentWizardDraftRequest,

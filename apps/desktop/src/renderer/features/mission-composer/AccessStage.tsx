@@ -33,12 +33,16 @@ export function AccessStage({
   const approved = workspaces.filter((w) => !w.revokedAt);
   const setWorkspace = (index: number, workspaceId: string | null) => {
     const next = workers.map((w, i) => (i === index ? { ...w, workspaceId } : w));
-    const ids = [
-      ...new Set(next.map((w) => w.workspaceId).filter((id): id is string => id !== null)),
-    ];
+    // Add-only: the supervisor's own access entry (added on the Crew stage,
+    // since only that stage knows its workspaceId) has no representation here
+    // and must survive a worker's folder choice changing.
+    const existing = fields.workspaces ?? [];
+    const additions = workspaceId && !existing.some((w) => w.workspaceId === workspaceId)
+      ? [{ workspaceId, mode: (modes.get(workspaceId) ?? 'write') as 'read' | 'write' }]
+      : [];
     setFields({
       workers: next,
-      workspaces: ids.map((id) => ({ workspaceId: id, mode: modes.get(id) ?? 'write' })),
+      workspaces: [...existing, ...additions],
     });
   };
   const setMode = (workspaceId: string, mode: 'read' | 'write') =>

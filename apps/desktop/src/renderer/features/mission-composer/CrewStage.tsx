@@ -118,9 +118,19 @@ export function CrewStage({
             data-field="supervisor.sessionId"
             aria-invalid={invalid === 'supervisor.sessionId' || undefined}
             value={supervisor.sessionId ?? ''}
-            onChange={(event) =>
-              setFields({ supervisor: { ...supervisor, sessionId: event.target.value || null } })
-            }
+            onChange={(event) => {
+              const chosen = eligible.find((s) => s.sessionId === event.target.value);
+              setFields({ supervisor: { ...supervisor, sessionId: event.target.value || null } });
+              // The supervisor's own workspace needs an access entry too (it is
+              // resolved from the live session, not chosen on the Access stage).
+              if (chosen && !(fields.workspaces ?? []).some((w) => w.workspaceId === chosen.workspaceId))
+                setFields({
+                  workspaces: [
+                    ...(fields.workspaces ?? []),
+                    { workspaceId: chosen.workspaceId, mode: 'write' },
+                  ],
+                });
+            }}
           >
             <option value="">Choose a live session</option>
             {eligible.map((s) => (
@@ -182,12 +192,35 @@ export function CrewStage({
               Worker {n} session
               <select
                 value={worker.sessionId ?? ''}
-                onChange={(event) =>
+                onChange={(event) => {
+                  const chosen = sessions.find((s) => s.sessionId === event.target.value);
                   patchWorker(index, {
                     sessionId: event.target.value || null,
-                    ...(event.target.value ? { autoStart: false } : {}),
-                  })
-                }
+                    ...(chosen
+                      ? {
+                          autoStart: false,
+                          workspaceId: chosen.workspaceId,
+                          // A live session's bound worker must match its recorded
+                          // launch exactly; these are read-only once a session is chosen.
+                          runtimeSelection: chosen.runtimeSelection,
+                          permissionSelection: chosen.permissionSelection,
+                          executionBounds: chosen.executionBounds,
+                        }
+                      : {}),
+                  });
+                  if (chosen) {
+                    const already = (fields.workspaces ?? []).some(
+                      (w) => w.workspaceId === chosen.workspaceId,
+                    );
+                    if (!already)
+                      setFields({
+                        workspaces: [
+                          ...(fields.workspaces ?? []),
+                          { workspaceId: chosen.workspaceId, mode: 'write' },
+                        ],
+                      });
+                  }
+                }}
               >
                 <option value="">Start a new session at launch</option>
                 {sessions.map((s) => (

@@ -69,9 +69,10 @@ function Shell() {
   const { state, actions } = useStore();
   const workspace = useMissionWorkspace(state.selectedMissionId);
   const [composerDraftId, setComposerDraftId] = useState<string | null>(null);
-  const [composerState, setComposerState] = useState<{ stage: Stage; workers: WorkerFields[] } | null>(
-    null,
-  );
+  const [composerState, setComposerState] = useState<{
+    stage: Stage;
+    workers: WorkerFields[];
+  } | null>(null);
   const [detailMissionId, setDetailMissionId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<MissionComposerDraftSummaryView[]>([]);
   const missionSelected = state.selectedDestination === 'missions';
@@ -110,20 +111,21 @@ function Shell() {
     setDetailMissionId(missionId);
   };
 
-  const contextContent = missionSelected && composerDraftId && composerState ? (
-    <ComposerContext stage={composerState.stage} workers={composerState.workers} />
-  ) : missionSelected ? (
-    <MissionContext
-      detail={workspace.detail}
-      presentation={workspace.presentation}
-      onAction={runMissionAction}
-      onOpenAttention={() => actions.selectDestination('attention')}
-    />
-  ) : (
-    <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
-      <SetupAttentionSummary />
-    </MissionContextFrame>
-  );
+  const contextContent =
+    missionSelected && composerDraftId && composerState ? (
+      <ComposerContext stage={composerState.stage} workers={composerState.workers} />
+    ) : missionSelected ? (
+      <MissionContext
+        detail={workspace.detail}
+        presentation={workspace.presentation}
+        onAction={runMissionAction}
+        onOpenAttention={() => actions.selectDestination('attention')}
+      />
+    ) : (
+      <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
+        <SetupAttentionSummary />
+      </MissionContextFrame>
+    );
 
   return (
     <div className="app">

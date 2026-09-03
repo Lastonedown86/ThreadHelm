@@ -123,7 +123,10 @@ export function CrewStage({
               setFields({ supervisor: { ...supervisor, sessionId: event.target.value || null } });
               // The supervisor's own workspace needs an access entry too (it is
               // resolved from the live session, not chosen on the Access stage).
-              if (chosen && !(fields.workspaces ?? []).some((w) => w.workspaceId === chosen.workspaceId))
+              if (
+                chosen &&
+                !(fields.workspaces ?? []).some((w) => w.workspaceId === chosen.workspaceId)
+              )
                 setFields({
                   workspaces: [
                     ...(fields.workspaces ?? []),

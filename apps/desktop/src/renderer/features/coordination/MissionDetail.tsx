@@ -127,18 +127,16 @@ export function MissionDetail({
               <p>{detail.envelope.objective}</p>
               <h3>Completion evidence</h3>
               <p>{detail.envelope.completionEvidence}</p>
-              {
-                detail.envelope.exclusions.length ? (
-                  <>
-                    <h3>Outside this mission</h3>
-                    <ul>
-                      {detail.envelope.exclusions.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  </>
-                ) : null
-              }
+              {detail.envelope.exclusions.length ? (
+                <>
+                  <h3>Outside this mission</h3>
+                  <ul>
+                    {detail.envelope.exclusions.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
               <h3>Pinned roster and authority</h3>
               {detail.envelope.bindings.map((binding) => (
                 <details key={binding.bindingId}>
@@ -153,14 +151,10 @@ export function MissionDetail({
                     Automatic start: {String(binding.autoStart)}. Session:{' '}
                     {binding.sessionId ?? 'offline'}.
                   </p>
-                  {
-                    binding.assignment ? <p>Assignment: {binding.assignment}</p> : null
-                  }
-                  {
-                    binding.requiredReturnEvidence.length ? (
-                      <p>Must bring back: {binding.requiredReturnEvidence.join('; ')}</p>
-                    ) : null
-                  }
+                  {binding.assignment ? <p>Assignment: {binding.assignment}</p> : null}
+                  {binding.requiredReturnEvidence.length ? (
+                    <p>Must bring back: {binding.requiredReturnEvidence.join('; ')}</p>
+                  ) : null}
                   <pre>{JSON.stringify(binding, null, 2)}</pre>
                 </details>
               ))}

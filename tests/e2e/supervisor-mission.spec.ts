@@ -19,7 +19,9 @@ test('mission creation is keyboard accessible and explains an empty roster', asy
     await app.page.getByLabel('Finish line', { exact: true }).fill('x');
     await app.page.getByLabel('Proof of completion', { exact: true }).fill('y');
     await app.page.getByRole('button', { name: 'Continue to crew', exact: true }).click();
-    await expect(app.page.locator('.composer-notice').getByText('No reviewed profile yet.')).toBeVisible();
+    await expect(
+      app.page.locator('.composer-notice').getByText('No reviewed profile yet.'),
+    ).toBeVisible();
     await expect(
       app.page.getByRole('button', { name: 'Continue to access and limits', exact: true }),
     ).toBeDisabled();
@@ -121,7 +123,10 @@ test('offline worker review discloses exact typed tool patterns and restores for
       .getByRole('combobox', { name: 'Worker 1 permission', exact: true })
       .selectOption('bounded_allowlist');
     const tools = page.getByRole('textbox', { name: 'Worker 1 allowed tools', exact: true });
-    const addTool = page.getByRole('button', { name: 'Add to worker 1 allowed tools', exact: true });
+    const addTool = page.getByRole('button', {
+      name: 'Add to worker 1 allowed tools',
+      exact: true,
+    });
     await tools.fill('Read');
     await addTool.click();
     await tools.fill('Glob');

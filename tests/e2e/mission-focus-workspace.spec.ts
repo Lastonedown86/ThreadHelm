@@ -547,7 +547,9 @@ test('composer never surfaces a raw reason code at any of its four stages', asyn
     await page
       .getByLabel('What worker 1 contributes', { exact: true })
       .fill('Reproduce and fix the test.');
-    await page.getByLabel('What worker 1 must bring back', { exact: true }).fill('A passing run log');
+    await page
+      .getByLabel('What worker 1 must bring back', { exact: true })
+      .fill('A passing run log');
     await page
       .getByRole('button', { name: 'Add to what worker 1 must bring back', exact: true })
       .click();
@@ -556,9 +558,9 @@ test('composer never surfaces a raw reason code at any of its four stages', asyn
     await page.getByRole('button', { name: 'Continue to access and limits', exact: true }).click();
     // Worker 1 is bound to a live session, so CrewStage already copied its
     // workspaceId; Access doesn't need another folder pick to become ready.
-    await expect(
-      page.getByRole('combobox', { name: 'Worker 1 folder', exact: true }),
-    ).toHaveValue(workerSession.workspaceId);
+    await expect(page.getByRole('combobox', { name: 'Worker 1 folder', exact: true })).toHaveValue(
+      workerSession.workspaceId,
+    );
     await assertNoRawReasonCode(page, '.composer');
 
     await page.getByRole('button', { name: 'Continue to review', exact: true }).click();

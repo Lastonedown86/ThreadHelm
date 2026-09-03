@@ -14,8 +14,7 @@
   /* min() with a vw ceiling keeps the rail/context from claiming the whole
      viewport when text-only zoom doubles rem without changing viewport px
      (WCAG 1.4.4 reflow: media queries alone don't catch this case). */
-  grid-template-columns:
-    minmax(0, min(19rem, 26vw)) minmax(0, 1fr) minmax(0, min(20rem, 26vw));
+  grid-template-columns: minmax(0, min(19rem, 26vw)) minmax(0, 1fr) minmax(0, min(20rem, 26vw));
   min-height: 0;
 }
 

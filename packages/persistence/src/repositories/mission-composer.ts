@@ -76,8 +76,7 @@ export class MissionComposerRepository {
 
   private mutable(draftId: string, expectedVersion: number): Row {
     const row = this.row(draftId);
-    if (row.state === 'converted')
-      throw new ThreadHelmError('INVALID_STATE');
+    if (row.state === 'converted') throw new ThreadHelmError('INVALID_STATE');
     if (!Number.isSafeInteger(expectedVersion) || row.version !== expectedVersion) stale();
     return row;
   }
@@ -94,8 +93,7 @@ export class MissionComposerRepository {
           `SELECT COUNT(*) AS count FROM mission_composer_drafts WHERE state IN ${OPEN_STATES}`,
         )
         .get() as { count: number };
-      if (open.count >= MAX_OPEN_MISSION_DRAFTS)
-        throw new ThreadHelmError('MISSION_DRAFT_LIMIT');
+      if (open.count >= MAX_OPEN_MISSION_DRAFTS) throw new ThreadHelmError('MISSION_DRAFT_LIMIT');
       if (!STAGES.includes(input.currentStage)) throw new ThreadHelmError('INVALID_REQUEST');
       const draftId = randomUUID();
       this.db

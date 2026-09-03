@@ -294,9 +294,7 @@ export function MissionComposerWorkspace({
           />
         ) : null}
       </div>
-      <p className={`composer-readiness${readiness.ready ? ' ready' : ''}`}>
-        {readiness.message}
-      </p>
+      <p className={`composer-readiness${readiness.ready ? ' ready' : ''}`}>{readiness.message}</p>
       <div className="mission-action-row composer-actions">
         <button type="button" onClick={() => void close()} disabled={blocked || draft.saving}>
           Close

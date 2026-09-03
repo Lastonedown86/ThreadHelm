@@ -37,9 +37,10 @@ export function AccessStage({
     // since only that stage knows its workspaceId) has no representation here
     // and must survive a worker's folder choice changing.
     const existing = fields.workspaces ?? [];
-    const additions = workspaceId && !existing.some((w) => w.workspaceId === workspaceId)
-      ? [{ workspaceId, mode: (modes.get(workspaceId) ?? 'write') as 'read' | 'write' }]
-      : [];
+    const additions =
+      workspaceId && !existing.some((w) => w.workspaceId === workspaceId)
+        ? [{ workspaceId, mode: (modes.get(workspaceId) ?? 'write') as 'read' | 'write' }]
+        : [];
     setFields({
       workers: next,
       workspaces: [...existing, ...additions],
@@ -63,8 +64,8 @@ export function AccessStage({
         </p>
         {approved.length === 0 ? (
           <p className="hint">
-            No approved folder yet. Go to Settings and approve a folder, then come back to choose
-            it here.
+            No approved folder yet. Go to Settings and approve a folder, then come back to choose it
+            here.
           </p>
         ) : null}
         {workers.map((worker, index) => {

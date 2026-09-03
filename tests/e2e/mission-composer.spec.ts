@@ -142,9 +142,9 @@ test('crew stage names every missing worker field and collapses runtime under a 
     ).toBeFocused();
     // A worker bound to a live session already has its folder: CrewStage
     // copies the session's workspaceId, so Access shouldn't ask again.
-    await expect(
-      page.getByRole('combobox', { name: 'Worker 1 folder', exact: true }),
-    ).toHaveValue(workerSession.workspaceId);
+    await expect(page.getByRole('combobox', { name: 'Worker 1 folder', exact: true })).toHaveValue(
+      workerSession.workspaceId,
+    );
   } finally {
     await teardown(app, dir, workerDir);
   }

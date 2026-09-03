@@ -138,7 +138,11 @@ export function MissionRail({
           <ul className="list">
             {drafts.map((draft) => (
               <li key={draft.draftId}>
-                <button type="button" className="small" onClick={() => onResumeDraft(draft.draftId)}>
+                <button
+                  type="button"
+                  className="small"
+                  onClick={() => onResumeDraft(draft.draftId)}
+                >
                   Resume draft · {STAGE_LABEL[draft.currentStage]} · {relativeTime(draft.updatedAt)}
                 </button>
               </li>

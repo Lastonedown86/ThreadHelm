@@ -139,3 +139,65 @@ test('crew stage names every missing worker field and collapses runtime under a 
     await teardown(app, dir);
   }
 });
+
+async function fillCrew(app: Awaited<ReturnType<typeof launchWithFixtures>>, dir: string) {
+  const page = app.page;
+  const leader = await missionProfile(app, 'Access coordinator');
+  const worker = await missionProfile(app, 'Access worker');
+  const session = await missionSession(app, dir);
+  await page.reload();
+  await fillOutcome(app);
+  await page
+    .getByRole('combobox', { name: 'Supervisor profile', exact: true })
+    .selectOption(leader.profileId);
+  await page
+    .getByRole('combobox', { name: 'Supervisor session', exact: true })
+    .selectOption(session.id);
+  await page.getByRole('button', { name: 'Add worker', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Worker 1 profile', exact: true })
+    .selectOption(worker.profileId);
+  await page
+    .getByLabel('What worker 1 contributes', { exact: true })
+    .fill('Reproduce and fix the test.');
+  await page.getByLabel('What worker 1 must bring back', { exact: true }).fill('A passing run log');
+  await page
+    .getByRole('button', { name: 'Add to what worker 1 must bring back', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Continue to access and limits', exact: true }).click();
+  return { leader, worker, session };
+}
+
+test('access stage explains read or write, shows readiness, and keeps limits collapsed in words', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const dir = tempWorkspace('composer-access');
+  try {
+    const page = app.page;
+    await fillCrew(app, dir);
+    const next = page.getByRole('button', { name: 'Continue to review', exact: true });
+    await expect(next).toBeDisabled();
+    await expect(page.getByText('Choose an approved folder for worker 1.')).toBeVisible();
+    await page
+      .getByRole('combobox', { name: 'Worker 1 folder', exact: true })
+      .selectOption({ index: 1 });
+    await expect(
+      page.getByText('Write: this worker changes files inside this folder only.'),
+    ).toBeVisible();
+    await page.getByRole('radio', { name: 'Read', exact: true }).check();
+    await expect(page.getByText('Read: this worker inspects files and reports.')).toBeVisible();
+    await expect(page.getByText('Codex CLI').first()).toBeVisible();
+    await expect(page.getByText('Available').first()).toBeVisible();
+    const limits = page.locator('details', { hasText: 'Customize limits' });
+    await expect(limits.locator('summary')).toContainText('Stops after 30 minutes, 64 turns');
+    await expect(page.getByLabel('Elapsed limit (ms)', { exact: true })).toBeHidden();
+    await expect(page.getByText('What stays off')).toBeVisible();
+    await expect(page.getByText('Break-glass bypass')).toBeVisible();
+    await expect(next).toBeEnabled();
+    await next.click();
+    await expect(
+      page.getByRole('heading', { name: 'Review the exact mission before anything starts.' }),
+    ).toBeFocused();
+  } finally {
+    await teardown(app, dir);
+  }
+});

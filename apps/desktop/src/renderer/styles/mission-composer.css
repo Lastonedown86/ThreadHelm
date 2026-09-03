@@ -101,6 +101,21 @@
 .composer-card > details > summary {
   cursor: pointer;
 }
+.composer-access-row {
+  display: grid;
+  gap: 0.5rem;
+}
+.composer-mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.mission-limits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+}
 .composer-notice {
   border: 1px solid var(--border);
   border-left: 4px solid var(--mission-steel);

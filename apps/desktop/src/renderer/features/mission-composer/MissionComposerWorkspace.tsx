@@ -11,6 +11,7 @@ import {
   stageReadiness,
   type Stage,
 } from './composer-fields.js';
+import { AccessStage } from './AccessStage.js';
 import { CrewStage } from './CrewStage.js';
 import { DraftBanner } from './DraftBanner.js';
 import { OutcomeStage } from './OutcomeStage.js';
@@ -242,7 +243,31 @@ export function MissionComposerWorkspace({
             onRetryLoad={() => setReload((n) => n + 1)}
           />
         ) : null}
-        {/* Task 9 mounts AccessStage and ReviewStage. */}
+        {stage === 'access' ? (
+          <AccessStage
+            fields={draft.fields}
+            setFields={draft.setFields}
+            invalid={invalid}
+            workspaces={state.workspaces}
+            readiness={state.readiness}
+            providersInUse={[
+              ...new Set([
+                ...eligible
+                  .filter((s) => s.sessionId === draft.fields.supervisor?.sessionId)
+                  .map((s) => s.providerId),
+                ...(draft.fields.workers ?? []).map((w) => {
+                  const requested = profiles.find(
+                    (p) => p.profileId === w.profileId,
+                  )?.requestedProvider;
+                  return requested === 'codex' || requested === 'codex-cli'
+                    ? ('codex-cli' as const)
+                    : ('claude-code' as const);
+                }),
+              ]),
+            ]}
+          />
+        ) : null}
+        {/* Task 9 mounts ReviewStage. */}
       </div>
       <p className={`composer-readiness${readiness.ready ? ' ready' : ''}`}>
         {readiness.message}

@@ -3,15 +3,16 @@ import { api, call, errorCode } from './api.js';
 import { CloseBlockedDialog } from './features/control/CloseBlockedDialog.js';
 import { AgentLibraryWorkspace } from './features/coordination/AgentLibraryWorkspace.js';
 import { MemoryLibraryWorkspace } from './features/coordination/MemoryLibraryWorkspace.js';
-import { MissionComposer } from './features/coordination/MissionComposer.js';
 import { MissionDetail } from './features/coordination/MissionDetail.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
+import { MissionComposerWorkspace } from './features/mission-composer/MissionComposerWorkspace.js';
 import { ContextToggle } from './features/mission-focus/ContextToggle.js';
 import { MissionContext } from './features/mission-focus/MissionContext.js';
 import { MissionContextFrame } from './features/mission-focus/MissionContextFrame.js';
 import { MissionRail } from './features/mission-focus/MissionRail.js';
 import { MissionWorkspace } from './features/mission-focus/MissionWorkspace.js';
 import type { ActionKind } from './features/mission-focus/mission-presentation.js';
+import { reasonLabel } from './features/mission-focus/reason-labels.js';
 import { useMissionWorkspace } from './features/mission-focus/useMissionWorkspace.js';
 import { terminalSize } from './features/session/terminal-loader.js';
 import { SessionWorkspace } from './features/sessions/SessionWorkspace.js';
@@ -64,9 +65,17 @@ const destinationHeading: Record<WorkspaceDestination, string> = {
 function Shell() {
   const { state, actions } = useStore();
   const workspace = useMissionWorkspace(state.selectedMissionId);
-  const [creatingMission, setCreatingMission] = useState(false);
+  const [composerDraftId, setComposerDraftId] = useState<string | null>(null);
   const [detailMissionId, setDetailMissionId] = useState<string | null>(null);
   const missionSelected = state.selectedDestination === 'missions';
+
+  const openComposer = (sourceMissionId?: string) => {
+    void call(api.missionComposer.createDraft(sourceMissionId ? { sourceMissionId } : undefined))
+      .then((draft) => setComposerDraftId(draft.draftId))
+      .catch((cause) =>
+        actions.setNotice(reasonLabel(errorCode(cause)) ?? 'The draft could not be created.'),
+      );
+  };
 
   const runMissionAction = (kind: ActionKind) => {
     const missionId = state.selectedMissionId;
@@ -122,7 +131,7 @@ function Shell() {
               titles={workspace.titles}
               selectedMissionId={state.selectedMissionId}
               onSelect={actions.selectMission}
-              onCreate={() => setCreatingMission(true)}
+              onCreate={() => openComposer()}
             />
             <AppNavigation
               selected={state.selectedDestination}
@@ -136,10 +145,20 @@ function Shell() {
           </>
         }
         workspace={
-          missionSelected ? (
+          composerDraftId ? (
+            <MissionComposerWorkspace
+              draftId={composerDraftId}
+              onClose={() => setComposerDraftId(null)}
+              onStarted={(mission) => {
+                setComposerDraftId(null);
+                actions.selectMission(mission.id);
+                setDetailMissionId(mission.id);
+              }}
+            />
+          ) : missionSelected ? (
             <MissionWorkspace
               workspace={workspace}
-              onCreate={() => setCreatingMission(true)}
+              onResumeDraft={setComposerDraftId}
               onOpenDetail={() => {
                 if (state.selectedMissionId) setDetailMissionId(state.selectedMissionId);
               }}
@@ -169,16 +188,6 @@ function Shell() {
           ? `ThreadHelm v${state.appInfo.version} · Electron ${state.appInfo.electronVersion} · ${state.appInfo.arch}`
           : 'ThreadHelm'}
       </footer>
-      {creatingMission ? (
-        <MissionComposer
-          onClose={() => setCreatingMission(false)}
-          onSaved={(mission) => {
-            actions.selectMission(mission.id);
-            setCreatingMission(false);
-            setDetailMissionId(mission.id);
-          }}
-        />
-      ) : null}
       {detailMissionId ? (
         <MissionDetail missionId={detailMissionId} onClose={() => setDetailMissionId(null)} />
       ) : null}

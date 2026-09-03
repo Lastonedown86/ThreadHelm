@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { DraftList } from '../mission-composer/DraftList.js';
 import { LaunchError } from '../launch/LaunchErrors.js';
 import { MissionCourse } from './MissionCourse.js';
 import type { ActionKind } from './mission-presentation.js';
@@ -9,13 +10,13 @@ import type { MissionWorkspaceState } from './useMissionWorkspace.js';
 
 export function MissionWorkspace({
   workspace,
-  onCreate,
+  onResumeDraft,
   onOpenDetail,
   onAction,
   onOpenTerminal,
 }: {
   workspace: MissionWorkspaceState;
-  onCreate(): void;
+  onResumeDraft(draftId: string): void;
   onOpenDetail(): void;
   onAction(kind: ActionKind): void;
   onOpenTerminal(sessionId: string): void;
@@ -57,11 +58,10 @@ export function MissionWorkspace({
       <div className="mission-workspace-state">
         <h1 tabIndex={-1}>Start a mission</h1>
         <p>
-          Create one bounded outcome, review its exact authority, then decide whether to start it.
+          Use <strong>New mission…</strong> in the rail. You will describe one outcome, choose the
+          crew, set access and limits, then review the exact mission before anything starts.
         </p>
-        <button type="button" className="primary" onClick={onCreate}>
-          Create mission
-        </button>
+        <DraftList onResume={onResumeDraft} />
       </div>
     );
 

@@ -1,5 +1,131 @@
-.mission-limits-grid {
+.composer,
+.composer-receipt {
+  padding: clamp(1rem, 3vw, 2.25rem);
+  max-width: 56rem;
+  min-width: 0;
+}
+.composer h1,
+.composer-receipt h1 {
+  font-family: var(--mission-font-heading);
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  margin: 0.25rem 0 0.75rem;
+}
+.composer h1:focus,
+.composer-receipt h1:focus {
+  outline: var(--mission-focus-ring);
+  outline-offset: 4px;
+}
+.composer-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  counter-reset: stage;
+}
+.composer-strip li {
+  counter-increment: stage;
+  color: var(--muted);
+}
+.composer-strip li::before {
+  content: counter(stage) '. ';
+}
+.composer-strip li[aria-current='step'] {
+  color: var(--text);
+  font-weight: 600;
+}
+.composer-strip li[data-done] {
+  color: var(--mission-verdigris);
+}
+.composer-stage-body {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 0.75rem;
+  gap: 1rem;
+}
+.composer-stage-body .field {
+  display: grid;
+  gap: 0.35rem;
+}
+.composer-stage-body textarea,
+.composer-stage-body input,
+.composer-stage-body select {
+  max-width: 100%;
+  min-width: 0;
+}
+.composer-readiness {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--mission-copper);
+  background: var(--mission-fog);
+}
+.composer-readiness.ready {
+  border-left-color: var(--mission-verdigris);
+}
+.composer-actions {
+  position: sticky;
+  bottom: 0;
+  padding: 0.75rem 0;
+  background: var(--mission-paper);
+  justify-content: flex-start;
+}
+.composer-list-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.composer-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.composer-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+  overflow-wrap: anywhere;
+}
+.composer-banner {
+  display: grid;
+  gap: 0.5rem;
+}
+.composer-card {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+.composer-card > details > summary {
+  cursor: pointer;
+}
+.composer-notice {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--mission-steel);
+  padding: 0.75rem 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+.composer-receipt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.composer-receipt-grid dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.composer-discard {
+  border: 1px solid var(--danger);
+  padding: 1rem;
+  margin-top: 1rem;
+}
+@container workspace (max-width: 40rem) {
+  .composer-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

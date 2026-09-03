@@ -184,8 +184,10 @@ export function accessReason(mode: 'read' | 'write'): string {
 }
 
 export class IncompleteDraft extends Error {
-  constructor(readonly paths: string[]) {
+  paths: string[];
+  constructor(paths: string[]) {
     super(`Draft incomplete: ${paths.join(', ')}`);
+    this.paths = paths;
   }
 }
 /** Same parse main runs; the renderer uses it only to explain, never to authorize. */

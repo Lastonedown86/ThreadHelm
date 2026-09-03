@@ -443,6 +443,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       api.on('agentWizard.changed', () => dispatch({ type: 'agentAuthoringEvent' })),
       api.on('agentTemplates.changed', () => dispatch({ type: 'agentAuthoringEvent' })),
       api.on('mission.changed', () => dispatch({ type: 'missionEvent' })),
+      api.on('missionComposer.changed', () => dispatch({ type: 'missionEvent' })),
     ];
     void refresh();
     return () => {

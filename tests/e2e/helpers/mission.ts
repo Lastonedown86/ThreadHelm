@@ -95,6 +95,7 @@ export async function prepareFixtureMission(
   return {
     objective: 'Review a bounded fixture mission',
     completionEvidence: 'A cited fixture report',
+    exclusions: [],
     workspaces: snapshots.map((snapshot) => ({ workspaceId: snapshot.workspaceId, mode: 'write' })),
     supervisor: {
       profileId: profiles[0]!.profileId,
@@ -111,6 +112,8 @@ export async function prepareFixtureMission(
       runtimeSelection: snapshot.runtimeSelection,
       permissionSelection: snapshot.permissionSelection,
       executionBounds: snapshot.executionBounds,
+      assignment: 'Inspect the fixture and report.',
+      requiredReturnEvidence: ['A cited fixture report'],
     })),
     bounds: {
       maxWorkers: 4,

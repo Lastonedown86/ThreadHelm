@@ -328,6 +328,13 @@ export const ErrorCode = z.enum([
   'WORKER_AUTOSTART_PREFLIGHT_FAILED',
   'SUPERVISOR_DECISION_LOOP',
   'MISSION_AUTHORITY_REQUIRED',
+  // mission composer drafts
+  'MISSION_DRAFT_NOT_FOUND',
+  'MISSION_DRAFT_STALE',
+  'MISSION_DRAFT_LIMIT',
+  'MISSION_DRAFT_SAVE_FAILED',
+  'MISSION_DRAFT_DISCARD_STALE',
+  'MISSION_CONFIRMATION_EXPIRED',
   // agent templates and wizard drafts
   'TEMPLATE_VARIABLE_UNRESOLVED',
   'TEMPLATE_DRAFT_INCOMPLETE',
@@ -1895,6 +1902,8 @@ export const MissionRoutineAction = z.enum([
   'complete',
 ]);
 const MissionWorkspaceInput = strictObject({ workspaceId: Uuid, mode: z.enum(['read', 'write']) });
+const MissionAssignment = MissionText(2000);
+const MissionEvidenceItem = MissionText(500);
 const MissionWorkerInput = strictObject({
   profileId: Uuid,
   profileRevisionId: Uuid,
@@ -1905,6 +1914,9 @@ const MissionWorkerInput = strictObject({
   runtimeSelection: LaunchRuntimeSelection,
   permissionSelection: LaunchPermissionSelection,
   executionBounds: ProviderExecutionBounds,
+  /** One bounded contribution for this mission; mission authority, not profile data. */
+  assignment: MissionAssignment,
+  requiredReturnEvidence: z.array(MissionEvidenceItem).min(1).max(8),
 }).refine(
   (v) => v.permissionSelection.policy !== 'break_glass_bypass',
   'mission bypass is prohibited',
@@ -1912,6 +1924,7 @@ const MissionWorkerInput = strictObject({
 export const MissionEnvelopeInput = strictObject({
   objective: MissionText(4000),
   completionEvidence: MissionText(2000),
+  exclusions: z.array(MissionEvidenceItem).max(8).default([]),
   workspaces: z.array(MissionWorkspaceInput).min(1).max(16),
   supervisor: strictObject({ profileId: Uuid, profileRevisionId: Uuid, sessionId: Uuid }),
   workers: z.array(MissionWorkerInput).min(1).max(16),
@@ -1950,11 +1963,14 @@ export const MissionBindingView = strictObject({
   effectiveTokenBudget: z.number().int().positive(),
   launchDisposition: z.enum(['ready', 'held']),
   reasonCode: ReasonCode.nullable(),
+  assignment: MissionAssignment.nullable().default(null),
+  requiredReturnEvidence: z.array(MissionEvidenceItem).max(8).default([]),
 });
 export type MissionBindingView = z.infer<typeof MissionBindingView>;
 export const MissionEnvelopeView = strictObject({
   objective: MissionText(4000),
   completionEvidence: MissionText(2000),
+  exclusions: z.array(MissionEvidenceItem).max(8).default([]),
   workspaces: z.array(MissionWorkspaceInput).min(1).max(16),
   bindings: z.array(MissionBindingView).min(2).max(17),
   bounds: MissionBounds,
@@ -1975,6 +1991,82 @@ export const MissionPreviewView = strictObject({
   expiresAt: Timestamp,
 });
 export type MissionPreviewView = z.infer<typeof MissionPreviewView>;
+export const MissionComposerStage = z.enum(['outcome', 'crew', 'access', 'review']);
+export type MissionComposerStage = z.infer<typeof MissionComposerStage>;
+export const MissionComposerDraftState = z.enum([
+  'editing',
+  'ready_for_review',
+  'converted',
+  'deleted',
+]);
+export type MissionComposerDraftState = z.infer<typeof MissionComposerDraftState>;
+/** Every envelope key optional; element shapes match the envelope so a draft never lies. */
+export const MissionComposerFields = strictObject({
+  objective: z.string().max(4000).optional(),
+  completionEvidence: z.string().max(2000).optional(),
+  exclusions: z.array(z.string().max(500)).max(8).optional(),
+  workspaces: z.array(MissionWorkspaceInput).max(16).optional(),
+  supervisor: strictObject({
+    profileId: Uuid.nullable(),
+    profileRevisionId: Uuid.nullable(),
+    sessionId: Uuid.nullable(),
+  }).optional(),
+  workers: z
+    .array(
+      strictObject({
+        profileId: Uuid.nullable(),
+        profileRevisionId: Uuid.nullable(),
+        workspaceId: Uuid.nullable(),
+        sessionId: Uuid.nullable(),
+        role: z.enum(['worker', 'reviewer', 'triage']),
+        autoStart: z.boolean(),
+        runtimeSelection: LaunchRuntimeSelection,
+        permissionSelection: LaunchPermissionSelection,
+        executionBounds: ProviderExecutionBounds,
+        assignment: z.string().max(2000),
+        requiredReturnEvidence: z.array(z.string().max(500)).max(8),
+      }),
+    )
+    .max(16)
+    .optional(),
+  bounds: MissionBounds.optional(),
+  permittedRoutineActions: z.array(MissionRoutineAction).max(6).optional(),
+});
+export type MissionComposerFields = z.infer<typeof MissionComposerFields>;
+const MissionComposerIssueCode = z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/);
+export const MissionComposerDraftSummaryView = strictObject({
+  draftId: Uuid,
+  version: z.number().int().positive(),
+  state: MissionComposerDraftState,
+  currentStage: MissionComposerStage,
+  sourceMissionId: Uuid.nullable(),
+  issueCodes: z.array(MissionComposerIssueCode).max(20),
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+});
+export type MissionComposerDraftSummaryView = z.infer<typeof MissionComposerDraftSummaryView>;
+export const MissionComposerDraftDetailView = strictObject({
+  ...MissionComposerDraftSummaryView.shape,
+  fieldValues: MissionComposerFields,
+  convertedMissionId: Uuid.nullable(),
+});
+export type MissionComposerDraftDetailView = z.infer<typeof MissionComposerDraftDetailView>;
+export const MissionComposerSaveReceipt = strictObject({
+  draftId: Uuid,
+  version: z.number().int().positive(),
+  savedAt: Timestamp,
+  currentStage: MissionComposerStage,
+});
+export type MissionComposerSaveReceipt = z.infer<typeof MissionComposerSaveReceipt>;
+export const MissionComposerChangedEvent = strictObject({
+  type: z.literal('missionComposer.changed'),
+  draftId: Uuid,
+  version: z.number().int().positive(),
+  state: MissionComposerDraftState,
+  currentStage: MissionComposerStage,
+  occurredAt: Timestamp,
+});
+export type MissionComposerChangedEvent = z.infer<typeof MissionComposerChangedEvent>;
 export const MissionEligibleSessionView = strictObject({
   sessionId: Uuid,
   workspaceId: Uuid,
@@ -2273,6 +2365,63 @@ export const operations = {
   'missions.confirmDelete': {
     request: strictObject({ previewToken: OpaqueToken }),
     response: MissionDetailView,
+  },
+  'missionComposer.createDraft': {
+    request: strictObject({ sourceMissionId: Uuid.optional() }).optional(),
+    response: MissionComposerDraftDetailView,
+  },
+  'missionComposer.listDrafts': {
+    request: strictObject({ limit: z.number().int().min(1).max(20).optional() }).optional(),
+    response: strictObject({ drafts: z.array(MissionComposerDraftSummaryView).max(20) }),
+  },
+  'missionComposer.getDraft': {
+    request: strictObject({ draftId: Uuid }),
+    response: MissionComposerDraftDetailView,
+  },
+  'missionComposer.updateDraft': {
+    request: strictObject({
+      draftId: Uuid,
+      expectedVersion: z.number().int().positive(),
+      fieldValues: MissionComposerFields,
+      currentStage: MissionComposerStage,
+    }),
+    response: MissionComposerSaveReceipt,
+  },
+  'missionComposer.preview': {
+    request: strictObject({ draftId: Uuid, version: z.number().int().positive() }),
+    response: strictObject({
+      ...MissionPreviewView.shape,
+      draftVersion: z.number().int().positive(),
+    }),
+  },
+  'missionComposer.confirm': {
+    request: strictObject({
+      draftId: Uuid,
+      version: z.number().int().positive(),
+      previewToken: OpaqueToken,
+    }),
+    response: MissionDetailView,
+  },
+  'missionComposer.previewDiscard': {
+    request: strictObject({ draftId: Uuid, version: z.number().int().positive() }),
+    response: strictObject({
+      discardToken: OpaqueToken,
+      currentStage: MissionComposerStage,
+      expiresAt: Timestamp,
+    }),
+  },
+  'missionComposer.confirmDiscard': {
+    request: strictObject({
+      draftId: Uuid,
+      version: z.number().int().positive(),
+      discardToken: OpaqueToken,
+    }),
+    response: strictObject({
+      draftId: Uuid,
+      state: z.literal('deleted'),
+      version: z.number().int().positive(),
+      deletedAt: Timestamp,
+    }),
   },
   'workspaces.choose': { request: none, response: WorkspaceCandidateView },
   'workspaces.approve': {
@@ -2675,6 +2824,7 @@ export type OperationResponse<N extends OperationName> = z.output<
 
 export const events = {
   'mission.changed': MissionChangedEvent,
+  'missionComposer.changed': MissionComposerChangedEvent,
   'workspace.changed': ApprovedWorkspaceView,
   'provider.readinessChanged': ReadinessView,
   'session.changed': z.object({

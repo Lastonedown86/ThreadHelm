@@ -14,6 +14,14 @@ export const operationNames = Object.freeze([
   'missions.resolveEscalation',
   'missions.previewDelete',
   'missions.confirmDelete',
+  'missionComposer.createDraft',
+  'missionComposer.listDrafts',
+  'missionComposer.getDraft',
+  'missionComposer.updateDraft',
+  'missionComposer.preview',
+  'missionComposer.confirm',
+  'missionComposer.previewDiscard',
+  'missionComposer.confirmDiscard',
   'workspaces.choose',
   'workspaces.approve',
   'workspaces.list',
@@ -95,6 +103,7 @@ export type OperationName = (typeof operationNames)[number];
 
 export const eventNames = Object.freeze([
   'mission.changed',
+  'missionComposer.changed',
   'workspace.changed',
   'provider.readinessChanged',
   'session.changed',

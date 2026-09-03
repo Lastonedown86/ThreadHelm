@@ -61,6 +61,7 @@ export async function supervisorWorld(workerCount = 1) {
   const input: MissionEnvelopeInput = {
     objective: 'Verify fixture reports',
     completionEvidence: 'Deliberate report references',
+    exclusions: [],
     workspaces: workspaces.map((workspaceId) => ({ workspaceId, mode: 'write' })),
     supervisor: {
       profileId: profiles[0]!.profileId,
@@ -77,6 +78,8 @@ export async function supervisorWorld(workerCount = 1) {
       runtimeSelection: { model: null, effort: null },
       permissionSelection: { policy: null, boundedAllowlist: [] },
       executionBounds,
+      assignment: 'Inspect the fixture and report.',
+      requiredReturnEvidence: ['A cited fixture report'],
     })),
     bounds: {
       ...SUPERVISOR_FIXTURE_BOUNDS,

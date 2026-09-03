@@ -191,7 +191,11 @@ function Shell() {
           : 'ThreadHelm'}
       </footer>
       {detailMissionId ? (
-        <MissionDetail missionId={detailMissionId} onClose={() => setDetailMissionId(null)} />
+        <MissionDetail
+          missionId={detailMissionId}
+          onClose={() => setDetailMissionId(null)}
+          onRevise={(id) => openComposer(id)}
+        />
       ) : null}
       {state.launchRequest ? (
         <LaunchDialog

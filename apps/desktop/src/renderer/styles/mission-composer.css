@@ -144,3 +144,21 @@
     align-items: stretch;
   }
 }
+.composer-state {
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--mission-steel);
+  background: var(--mission-fog);
+  display: grid;
+  gap: 0.5rem;
+}
+.composer-state.ready {
+  border-left-color: var(--mission-verdigris);
+}
+.composer-state.held,
+.composer-state.changed {
+  border-left-color: var(--mission-copper);
+}
+.composer-state.expired,
+.composer-state.failed {
+  border-left-color: var(--danger);
+}

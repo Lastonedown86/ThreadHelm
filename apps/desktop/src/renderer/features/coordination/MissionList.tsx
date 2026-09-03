@@ -96,6 +96,9 @@ export function MissionList() {
             setSelected(null);
             setRefresh((n) => n + 1);
           }}
+          // ponytail: this legacy list is unmounted dead code (superseded by
+          // the Mission Focus workspace); revision here is a no-op.
+          onRevise={() => undefined}
         />
       ) : null}
     </section>

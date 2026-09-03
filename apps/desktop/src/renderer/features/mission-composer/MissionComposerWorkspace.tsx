@@ -15,6 +15,7 @@ import { AccessStage } from './AccessStage.js';
 import { CrewStage } from './CrewStage.js';
 import { DraftBanner } from './DraftBanner.js';
 import { OutcomeStage } from './OutcomeStage.js';
+import { ReviewStage } from './ReviewStage.js';
 import { useDraft } from './useDraft.js';
 
 type Profile = OperationResponse<'profiles.list'>['profiles'][number];
@@ -23,8 +24,7 @@ type Eligible = OperationResponse<'missions.eligibleSessions'>[number];
 export function MissionComposerWorkspace({
   draftId,
   onClose,
-  // Wired for Task 9, which mounts the Review stage and calls it after confirm.
-  onStarted: _onStarted,
+  onStarted,
 }: {
   draftId: string;
   onClose(): void;
@@ -43,6 +43,7 @@ export function MissionComposerWorkspace({
   const [loadError, setLoadError] = useState<unknown>(null);
   const [invalid, setInvalid] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  const [everReviewed, setEverReviewed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +77,9 @@ export function MissionComposerWorkspace({
     heading.current?.focus();
     setInvalid(null);
   }, [stage, index]);
+  useEffect(() => {
+    if (stage === 'review' || draft.draft?.state === 'ready_for_review') setEverReviewed(true);
+  }, [stage, draft.draft]);
   // One live region for the whole composer: step entry and readiness changes
   // both flow through this announcement instead of a second aria-live source.
   useEffect(() => {
@@ -183,21 +187,25 @@ export function MissionComposerWorkspace({
         onKeepMine={draft.keepMyEdits}
       />
       <ol className="composer-strip" aria-label="Mission stages">
-        {STAGES.map((item, i) => (
-          <li
-            key={item}
-            aria-current={item === stage ? 'step' : undefined}
-            data-done={i < index || undefined}
-          >
-            {i < index ? (
-              <button type="button" className="small" onClick={() => void draft.goTo(item)}>
-                {STAGE_LABEL[item]}
-              </button>
-            ) : (
-              <span>{STAGE_LABEL[item]}</span>
-            )}
-          </li>
-        ))}
+        {STAGES.map((item, i) => {
+          const canJump =
+            item !== stage && (i < index || everReviewed || Boolean(draft.draft?.sourceMissionId));
+          return (
+            <li
+              key={item}
+              aria-current={item === stage ? 'step' : undefined}
+              data-done={i < index || undefined}
+            >
+              {canJump ? (
+                <button type="button" className="small" onClick={() => void draft.goTo(item)}>
+                  {STAGE_LABEL[item]}
+                </button>
+              ) : (
+                <span>{STAGE_LABEL[item]}</span>
+              )}
+            </li>
+          );
+        })}
       </ol>
       <p className="eyebrow">
         Step {index + 1} of 4 · {STAGE_LABEL[stage]}
@@ -267,7 +275,16 @@ export function MissionComposerWorkspace({
             ]}
           />
         ) : null}
-        {/* Task 9 mounts ReviewStage. */}
+        {stage === 'review' ? (
+          <ReviewStage
+            draftId={draftId}
+            version={draft.version}
+            isRevision={isRevision}
+            profiles={profiles}
+            onStarted={onStarted}
+            onGoTo={(target) => void draft.goTo(target)}
+          />
+        ) : null}
       </div>
       <p className={`composer-readiness${readiness.ready ? ' ready' : ''}`}>
         {readiness.message}

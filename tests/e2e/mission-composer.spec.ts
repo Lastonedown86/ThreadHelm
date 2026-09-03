@@ -201,3 +201,105 @@ test('access stage explains read or write, shows readiness, and keeps limits col
     await teardown(app, dir);
   }
 });
+
+async function fillAccess(app: Awaited<ReturnType<typeof launchWithFixtures>>, dir: string) {
+  const crew = await fillCrew(app, dir);
+  const page = app.page;
+  await page
+    .getByRole('combobox', { name: 'Worker 1 folder', exact: true })
+    .selectOption({ index: 1 });
+  await page.getByRole('button', { name: 'Continue to review', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Review the exact mission before anything starts.' }),
+  ).toBeFocused();
+  return crew;
+}
+
+test('review shows a launch brief, requires confirmation, and starts the mission', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const dir = tempWorkspace('composer-review');
+  try {
+    const page = app.page;
+    await fillAccess(app, dir);
+    await expect(page.getByText('Ready to start')).toBeVisible();
+    const brief = page.getByRole('region', { name: 'Launch brief' });
+    await expect(brief).toContainText('Fix the flaky terminal test.');
+    await expect(brief).toContainText('Reproduce and fix the test.');
+    await expect(brief).toContainText('A passing run log');
+    await expect(brief).toContainText('Stops after 30 minutes');
+    await expect(page.getByRole('heading', { name: 'Review mission authority' })).toBeVisible();
+    const start = page.getByRole('button', { name: 'Start mission', exact: true });
+    await expect(start).toBeDisabled();
+    await page.getByRole('checkbox', { name: 'I reviewed this exact mission authority' }).check();
+    await start.click();
+    const detail = page.getByRole('dialog', { name: 'Mission detail', exact: true });
+    await expect(detail).toBeVisible();
+    await expect(detail).toContainText('Assignment: Reproduce and fix the test.');
+    await expect(detail).toContainText('Must bring back: A passing run log');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('heading', { name: /Fix the flaky terminal test/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Resume draft/ })).toHaveCount(0);
+  } finally {
+    await teardown(app, dir);
+  }
+});
+
+test('editing after preview shows Mission changed, and an expired review returns to access', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const dir = tempWorkspace('composer-states');
+  try {
+    const page = app.page;
+    await fillAccess(app, dir);
+    await expect(page.getByText('Ready to start')).toBeVisible();
+    await page.getByRole('button', { name: 'Outcome', exact: true }).click();
+    await page
+      .getByLabel('Finish line', { exact: true })
+      .fill('Fix the flaky terminal test, quickly.');
+    await page.getByRole('button', { name: 'Continue to crew', exact: true }).click();
+    await page.getByRole('button', { name: 'Continue to access and limits', exact: true }).click();
+    await page.getByRole('button', { name: 'Continue to review', exact: true }).click();
+    await expect(page.getByText('Ready to start')).toBeVisible();
+    await page.getByRole('checkbox', { name: 'I reviewed this exact mission authority' }).check();
+    await app.advanceClock(121_000);
+    await page.getByRole('button', { name: 'Start mission', exact: true }).click();
+    await expect(page.getByText('Approval expired')).toBeVisible();
+    await expect(
+      page.getByText('The review expired. Return to access and limits for a fresh approval.'),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Return to access and limits', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Set where the mission may work and when it must stop.' }),
+    ).toBeFocused();
+    await expect(page.getByText('approval stale')).toBeVisible();
+    expect(await app.liveSessions()).toHaveLength(1);
+  } finally {
+    await teardown(app, dir);
+  }
+});
+
+test('revision reuses the composer and applies through the revision path', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const dir = tempWorkspace('composer-revise');
+  try {
+    const page = app.page;
+    await fillAccess(app, dir);
+    await page.getByRole('checkbox', { name: 'I reviewed this exact mission authority' }).check();
+    await page.getByRole('button', { name: 'Start mission', exact: true }).click();
+    const detail = page.getByRole('dialog', { name: 'Mission detail', exact: true });
+    await detail.getByRole('button', { name: 'Pause mission', exact: true }).click();
+    await expect(detail.getByRole('status')).toContainText('paused');
+    await detail.getByRole('button', { name: 'Revise envelope…', exact: true }).click();
+    await expect(detail).toBeHidden();
+    await expect(page.getByText('Step 4 of 4 · Review · Revise mission')).toBeVisible();
+    await page.getByRole('button', { name: 'Outcome', exact: true }).click();
+    await page.getByLabel('Finish line', { exact: true }).fill('Revised finish line.');
+    await page.getByRole('button', { name: 'Review', exact: true }).click();
+    await page.getByRole('checkbox', { name: 'I reviewed this exact mission authority' }).check();
+    await page.getByRole('button', { name: 'Apply revision', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Mission detail', exact: true })).toContainText(
+      'Revised finish line.',
+    );
+  } finally {
+    await teardown(app, dir);
+  }
+});

@@ -4,17 +4,23 @@ import { api, call } from '../../api.js';
 import { useStore } from '../../store.js';
 import { LaunchError } from '../launch/LaunchErrors.js';
 import { ModalDialog } from './ModalDialog.js';
-import { MissionComposer } from './MissionComposer.js';
 import { missionTitle } from '../mission-focus/mission-presentation.js';
 
-export function MissionDetail({ missionId, onClose }: { missionId: string; onClose(): void }) {
+export function MissionDetail({
+  missionId,
+  onClose,
+  onRevise,
+}: {
+  missionId: string;
+  onClose(): void;
+  onRevise(missionId: string): void;
+}) {
   const { state } = useStore();
   const [detail, setDetail] = useState<MissionDetailView | null>(null);
   const [sessions, setSessions] = useState<OperationResponse<'missions.eligibleSessions'>>([]);
   const [resumeSession, setResumeSession] = useState('');
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  const [editing, setEditing] = useState(false);
   const [action, setAction] = useState<'cancel' | 'delete' | null>(null);
   const [deleteToken, setDeleteToken] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -93,17 +99,6 @@ export function MissionDetail({ missionId, onClose }: { missionId: string; onClo
       setBusy(false);
     }
   }
-  if (editing && detail)
-    return (
-      <MissionComposer
-        current={detail}
-        onClose={() => setEditing(false)}
-        onSaved={(value) => {
-          setDetail(value);
-          setEditing(false);
-        }}
-      />
-    );
   return (
     <ModalDialog
       label="Mission detail"
@@ -201,7 +196,10 @@ export function MissionDetail({ missionId, onClose }: { missionId: string; onClo
               <>
                 <button
                   disabled={busy || state.storageDegraded || detail.state === 'running'}
-                  onClick={() => setEditing(true)}
+                  onClick={() => {
+                    onRevise(detail.id);
+                    onClose();
+                  }}
                 >
                   Revise envelope…
                 </button>

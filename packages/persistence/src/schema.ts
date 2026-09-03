@@ -444,13 +444,14 @@ ALTER TABLE agent_profiles ADD COLUMN derived_from_commit TEXT;
 const V5_MISSION_COMPOSER = `
 CREATE TABLE mission_composer_drafts (
   id TEXT PRIMARY KEY,
-  source_mission_id TEXT,
+  source_mission_id TEXT REFERENCES supervisor_missions (id) ON DELETE RESTRICT,
   state TEXT NOT NULL CHECK (state IN ('editing', 'ready_for_review', 'converted', 'deleted')),
   version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
   current_stage TEXT NOT NULL DEFAULT 'outcome'
     CHECK (current_stage IN ('outcome', 'crew', 'access', 'review')),
   field_values TEXT NOT NULL DEFAULT '{}' CHECK (length(CAST(field_values AS BLOB)) <= 65536),
   issue_codes TEXT NOT NULL DEFAULT '[]',
+  -- no FK: markConverted may reference a mission id not yet in supervisor_missions
   converted_mission_id TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,

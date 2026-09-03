@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { MissionComposerDraftSummaryView } from '@threadhelm/contracts';
 import { api, call, errorCode } from './api.js';
 import { CloseBlockedDialog } from './features/control/CloseBlockedDialog.js';
 import { AgentLibraryWorkspace } from './features/coordination/AgentLibraryWorkspace.js';
 import { MemoryLibraryWorkspace } from './features/coordination/MemoryLibraryWorkspace.js';
 import { MissionDetail } from './features/coordination/MissionDetail.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
+import { ComposerContext } from './features/mission-composer/ComposerContext.js';
+import type { Stage, WorkerFields } from './features/mission-composer/composer-fields.js';
 import { MissionComposerWorkspace } from './features/mission-composer/MissionComposerWorkspace.js';
 import { ContextToggle } from './features/mission-focus/ContextToggle.js';
 import { MissionContext } from './features/mission-focus/MissionContext.js';
@@ -66,8 +69,26 @@ function Shell() {
   const { state, actions } = useStore();
   const workspace = useMissionWorkspace(state.selectedMissionId);
   const [composerDraftId, setComposerDraftId] = useState<string | null>(null);
+  const [composerState, setComposerState] = useState<{ stage: Stage; workers: WorkerFields[] } | null>(
+    null,
+  );
   const [detailMissionId, setDetailMissionId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<MissionComposerDraftSummaryView[]>([]);
   const missionSelected = state.selectedDestination === 'missions';
+
+  useEffect(() => {
+    if (state.storageDegraded) {
+      setDrafts([]);
+      return;
+    }
+    let cancelled = false;
+    void call(api.missionComposer.listDrafts(undefined))
+      .then((page) => !cancelled && setDrafts(page.drafts))
+      .catch(() => !cancelled && setDrafts([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [state.missionSequence, state.storageDegraded]);
 
   const openComposer = (sourceMissionId?: string) => {
     void call(api.missionComposer.createDraft(sourceMissionId ? { sourceMissionId } : undefined))
@@ -89,7 +110,9 @@ function Shell() {
     setDetailMissionId(missionId);
   };
 
-  const contextContent = missionSelected ? (
+  const contextContent = missionSelected && composerDraftId && composerState ? (
+    <ComposerContext stage={composerState.stage} workers={composerState.workers} />
+  ) : missionSelected ? (
     <MissionContext
       detail={workspace.detail}
       presentation={workspace.presentation}
@@ -132,6 +155,8 @@ function Shell() {
               selectedMissionId={state.selectedMissionId}
               onSelect={actions.selectMission}
               onCreate={() => openComposer()}
+              drafts={drafts}
+              onResumeDraft={setComposerDraftId}
             />
             <AppNavigation
               selected={state.selectedDestination}
@@ -150,17 +175,21 @@ function Shell() {
           ) : composerDraftId ? (
             <MissionComposerWorkspace
               draftId={composerDraftId}
-              onClose={() => setComposerDraftId(null)}
+              onClose={() => {
+                setComposerDraftId(null);
+                setComposerState(null);
+              }}
               onStarted={(mission) => {
                 setComposerDraftId(null);
+                setComposerState(null);
                 actions.selectMission(mission.id);
                 setDetailMissionId(mission.id);
               }}
+              onState={setComposerState}
             />
           ) : missionSelected ? (
             <MissionWorkspace
               workspace={workspace}
-              onResumeDraft={setComposerDraftId}
               onOpenDetail={() => {
                 if (state.selectedMissionId) setDetailMissionId(state.selectedMissionId);
               }}

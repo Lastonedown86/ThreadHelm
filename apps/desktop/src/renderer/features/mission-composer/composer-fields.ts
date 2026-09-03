@@ -58,6 +58,14 @@ export const BOUND_LABELS: Record<keyof MissionBounds, string> = {
 };
 const ROUTINE_ACTIONS = ['decompose', 'assign', 'retry', 'reassign', 'pause', 'complete'] as const;
 
+export function relativeTime(iso: string): string {
+  const minutes = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60_000));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  return hours < 24 ? `${hours} h ago` : `${Math.round(hours / 24)} d ago`;
+}
+
 export function newWorker(): WorkerFields {
   return {
     profileId: null,

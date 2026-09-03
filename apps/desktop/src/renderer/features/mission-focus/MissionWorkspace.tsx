@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { DraftList } from '../mission-composer/DraftList.js';
 import { LaunchError } from '../launch/LaunchErrors.js';
 import { MissionCourse } from './MissionCourse.js';
 import type { ActionKind } from './mission-presentation.js';
@@ -10,13 +9,11 @@ import type { MissionWorkspaceState } from './useMissionWorkspace.js';
 
 export function MissionWorkspace({
   workspace,
-  onResumeDraft,
   onOpenDetail,
   onAction,
   onOpenTerminal,
 }: {
   workspace: MissionWorkspaceState;
-  onResumeDraft(draftId: string): void;
   onOpenDetail(): void;
   onAction(kind: ActionKind): void;
   onOpenTerminal(sessionId: string): void;
@@ -61,7 +58,6 @@ export function MissionWorkspace({
           Use <strong>New mission…</strong> in the rail. You will describe one outcome, choose the
           crew, set access and limits, then review the exact mission before anything starts.
         </p>
-        <DraftList onResume={onResumeDraft} />
       </div>
     );
 

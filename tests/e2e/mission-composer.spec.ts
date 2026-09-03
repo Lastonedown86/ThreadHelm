@@ -200,8 +200,9 @@ test('access stage explains read or write, shows readiness, and keeps limits col
     const limits = page.locator('details', { hasText: 'Customize limits' });
     await expect(limits.locator('summary')).toContainText('Stops after 30 minutes, 64 turns');
     await expect(page.getByLabel('Elapsed limit (ms)', { exact: true })).toBeHidden();
-    await expect(page.getByText('What stays off')).toBeVisible();
-    await expect(page.getByText('Break-glass bypass')).toBeVisible();
+    const withheld = page.locator('section', { has: page.getByText('What stays off') });
+    await expect(withheld.getByText('What stays off')).toBeVisible();
+    await expect(withheld.getByText('Break-glass bypass')).toBeVisible();
     await expect(next).toBeEnabled();
     await next.click();
     await expect(
@@ -314,5 +315,53 @@ test('revision reuses the composer and applies through the revision path', async
     );
   } finally {
     await teardown(app, dir);
+  }
+});
+
+test('drafts appear in the rail and the context rail explains the draft', async () => {
+  const app = await launchApp();
+  try {
+    const page = app.page;
+    await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+    await page.getByLabel('Finish line', { exact: true }).fill('Draft one.');
+    const context = page.getByRole('complementary', { name: 'Mission context' });
+    await expect(context.getByText('Mission draft')).toBeVisible();
+    await expect(context.getByText('Outcome')).toBeVisible();
+    await expect(context.getByText('No crew chosen')).toBeVisible();
+    await expect(context.getByText('Break-glass bypass')).toBeVisible();
+    await page.getByRole('button', { name: 'Close', exact: true }).click();
+    await page.getByRole('button', { name: 'Close composer', exact: true }).click();
+    const rail = page.getByRole('navigation', { name: 'Mission workspace' });
+    await expect(rail.getByText('Drafts (1)')).toBeVisible();
+    await rail.getByRole('button', { name: /^Resume draft · Outcome/ }).click();
+    await expect(page.getByLabel('Finish line', { exact: true })).toHaveValue('Draft one.');
+  } finally {
+    await teardown(app);
+  }
+});
+
+test('a save failure keeps the composer open and offers retry, keep editing, discard', async () => {
+  const app = await launchApp();
+  try {
+    const page = app.page;
+    await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+    await page.getByLabel('Finish line', { exact: true }).fill('Before the failure.');
+    await expect(page.getByRole('status').filter({ hasText: 'Draft saved' })).toBeVisible();
+    await app.breakStorage();
+    await page.getByLabel('Finish line', { exact: true }).fill('Before the failure. And after.');
+    const banner = page.getByRole('alert').filter({ hasText: 'Nothing has been discarded' });
+    await expect(banner).toBeVisible();
+    await expect(page.getByLabel('Finish line', { exact: true })).toHaveValue(
+      'Before the failure. And after.',
+    );
+    await expect(
+      page.getByRole('button', { name: 'Continue to crew', exact: true }),
+    ).toBeDisabled();
+    await expect(banner.getByRole('button', { name: 'Retry', exact: true })).toBeVisible();
+    await expect(banner.getByRole('button', { name: 'Keep editing', exact: true })).toBeVisible();
+    await expect(banner.getByRole('button', { name: 'Discard draft…', exact: true })).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  } finally {
+    await teardown(app);
   }
 });

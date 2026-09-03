@@ -10,6 +10,7 @@ import {
   STAGE_LABEL,
   stageReadiness,
   type Stage,
+  type WorkerFields,
 } from './composer-fields.js';
 import { AccessStage } from './AccessStage.js';
 import { CrewStage } from './CrewStage.js';
@@ -25,10 +26,12 @@ export function MissionComposerWorkspace({
   draftId,
   onClose,
   onStarted,
+  onState,
 }: {
   draftId: string;
   onClose(): void;
   onStarted(mission: MissionDetailView): void;
+  onState?(state: { stage: Stage; workers: WorkerFields[] }): void;
 }) {
   const { state, actions } = useStore();
   const draft = useDraft(draftId);
@@ -66,6 +69,7 @@ export function MissionComposerWorkspace({
   }, [state.profilesSequence, state.missionSequence, reload]);
 
   const stage = draft.stage;
+  const workers = draft.fields.workers ?? [];
   const index = STAGES.indexOf(stage);
   const context = { hasProfiles: profiles.length > 0, hasEligibleSessions: eligible.length > 0 };
   const readiness = useMemo(
@@ -88,6 +92,9 @@ export function MissionComposerWorkspace({
   useEffect(() => {
     if (draft.receipt) setAnnouncement('Draft saved');
   }, [draft.receipt]);
+  useEffect(() => {
+    onState?.({ stage, workers });
+  }, [stage, workers]);
 
   const blocked = state.storageDegraded || draft.failure !== null;
   const isRevision = draft.draft?.sourceMissionId !== null && draft.draft !== null;

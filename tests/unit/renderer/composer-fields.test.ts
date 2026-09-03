@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   CONTINUE_LABEL,
   DEFAULT_BOUNDS,
-  envelopeFrom,
   limitsSummary,
   newWorker,
   runtimeSummary,
@@ -99,27 +98,5 @@ describe('composer fields', () => {
     expect(runtimeSummary(newWorker())).toBe(
       'Provider default model · provider default effort · manual permission · starts only when you launch it',
     );
-  });
-
-  it('assembles an exact envelope or lists the missing paths', () => {
-    expect(() => envelopeFrom({})).toThrow(/objective/);
-    const worker = {
-      ...newWorker(),
-      profileId: uuid,
-      profileRevisionId: uuid,
-      workspaceId: uuid,
-      assignment: 'Inspect.',
-      requiredReturnEvidence: ['A report'],
-    };
-    const envelope = envelopeFrom({
-      objective: 'Fix it.',
-      completionEvidence: 'Green.',
-      supervisor: { profileId: uuid, profileRevisionId: uuid, sessionId: uuid },
-      workers: [worker],
-      workspaces: [{ workspaceId: uuid, mode: 'write' }],
-    });
-    expect(envelope.bounds).toEqual(DEFAULT_BOUNDS);
-    expect(envelope.escalationRules).toHaveLength(4);
-    expect(envelope.exclusions).toEqual([]);
   });
 });

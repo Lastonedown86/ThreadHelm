@@ -1,8 +1,7 @@
-import {
-  MissionEnvelopeInput,
-  type MissionBounds,
-  type MissionComposerFields,
-  type MissionComposerStage,
+import type {
+  MissionBounds,
+  MissionComposerFields,
+  MissionComposerStage,
 } from '@threadhelm/contracts';
 
 export type Stage = MissionComposerStage;
@@ -191,28 +190,6 @@ export function accessReason(mode: 'read' | 'write'): string {
     : 'Write: this worker changes files inside this folder only.';
 }
 
-export class IncompleteDraft extends Error {
-  paths: string[];
-  constructor(paths: string[]) {
-    super(`Draft incomplete: ${paths.join(', ')}`);
-    this.paths = paths;
-  }
-}
-/** Same parse main runs; the renderer uses it only to explain, never to authorize. */
-export function envelopeFrom(fields: MissionComposerFields): MissionEnvelopeInput {
-  const candidate = {
-    ...fields,
-    exclusions: fields.exclusions ?? [],
-    bounds: fields.bounds ?? DEFAULT_BOUNDS,
-    permittedRoutineActions: fields.permittedRoutineActions ?? [...ROUTINE_ACTIONS],
-    knownSafeRetryClasses: ['failed_before_effect'],
-    escalationRules: ['consequential', 'unknown', 'bounds', 'supervisor_loss'],
-  };
-  const parsed = MissionEnvelopeInput.safeParse(candidate);
-  if (!parsed.success)
-    throw new IncompleteDraft([...new Set(parsed.error.issues.map((i) => i.path.join('.')))]);
-  return parsed.data;
-}
 /** Fields the main service will parse; strips nothing, adds the fixed policy arrays. */
 export function fieldsForSave(fields: MissionComposerFields): MissionComposerFields {
   return {

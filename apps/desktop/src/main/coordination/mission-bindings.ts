@@ -118,6 +118,8 @@ export async function resolveMissionEnvelope(
       runtimeSelection: supervisor.launchSnapshot.runtimeSelection,
       permissionSelection: supervisor.launchSnapshot.permissionSelection,
       executionBounds: supervisor.launchSnapshot.executionBounds,
+      assignment: null,
+      requiredReturnEvidence: [],
     },
     ...input.workers,
   ];
@@ -213,6 +215,8 @@ export async function resolveMissionEnvelope(
       effectiveTokenBudget: Math.min(profile.tokenCapRequested, input.bounds.maxTokenBudget),
       launchDisposition: reason ? 'held' : 'ready',
       reasonCode: reason,
+      assignment: request.assignment,
+      requiredReturnEvidence: request.requiredReturnEvidence,
     });
     bindings.push(binding);
   }
@@ -224,6 +228,7 @@ export async function resolveMissionEnvelope(
   return MissionEnvelopeView.parse({
     objective: input.objective,
     completionEvidence: input.completionEvidence,
+    exclusions: input.exclusions,
     workspaces: input.workspaces,
     bindings,
     bounds: input.bounds,

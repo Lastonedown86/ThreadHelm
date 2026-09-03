@@ -2031,6 +2031,11 @@ export const MissionComposerFields = strictObject({
     .optional(),
   bounds: MissionBounds.optional(),
   permittedRoutineActions: z.array(MissionRoutineAction).max(6).optional(),
+  knownSafeRetryClasses: z.array(z.literal('failed_before_effect')).max(1).optional(),
+  escalationRules: z
+    .array(z.enum(['consequential', 'unknown', 'bounds', 'supervisor_loss']))
+    .max(4)
+    .optional(),
 });
 export type MissionComposerFields = z.infer<typeof MissionComposerFields>;
 const MissionComposerIssueCode = z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/);

@@ -11,6 +11,7 @@ import {
   stageReadiness,
   type Stage,
 } from './composer-fields.js';
+import { CrewStage } from './CrewStage.js';
 import { DraftBanner } from './DraftBanner.js';
 import { OutcomeStage } from './OutcomeStage.js';
 import { useDraft } from './useDraft.js';
@@ -37,11 +38,14 @@ export function MissionComposerWorkspace({
   const [discarding, setDiscarding] = useState<{ token: string; stage: Stage } | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [eligible, setEligible] = useState<Eligible[]>([]);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [invalid, setInvalid] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     void Promise.all([
       call(api.profiles.list({ state: 'active', limit: 100 })),
       call(api.missions.eligibleSessions(undefined)),
@@ -52,11 +56,12 @@ export function MissionComposerWorkspace({
         setEligible(sessions);
         setLoadError(null);
       })
-      .catch((cause) => !cancelled && setLoadError(cause));
+      .catch((cause) => !cancelled && setLoadError(cause))
+      .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [state.profilesSequence, state.missionSequence]);
+  }, [state.profilesSequence, state.missionSequence, reload]);
 
   const stage = draft.stage;
   const index = STAGES.indexOf(stage);
@@ -205,7 +210,38 @@ export function MissionComposerWorkspace({
         {stage === 'outcome' ? (
           <OutcomeStage fields={draft.fields} setFields={draft.setFields} invalid={invalid} />
         ) : null}
-        {/* Task 7 mounts CrewStage and AccessStage; Task 9 mounts ReviewStage. */}
+        {stage === 'crew' ? (
+          <CrewStage
+            fields={draft.fields}
+            setFields={draft.setFields}
+            invalid={invalid}
+            profiles={profiles}
+            eligible={eligible}
+            loading={loading}
+            loadError={loadError !== null}
+            onCreateAgent={() =>
+              void draft.saveNow().then((s) => {
+                if (!s) return;
+                actions.selectDestination('agents');
+                onClose();
+              })
+            }
+            onLaunchSession={() => {
+              const workspace = state.workspaces.find((w) => !w.revokedAt);
+              void draft.saveNow().then((s) => {
+                if (!s) return;
+                if (workspace) {
+                  actions.openLaunch({ workspaceId: workspace.id, providerId: 'codex-cli' });
+                } else {
+                  actions.selectDestination('settings');
+                  onClose();
+                }
+              });
+            }}
+            onRetryLoad={() => setReload((n) => n + 1)}
+          />
+        ) : null}
+        {/* Task 9 mounts AccessStage and ReviewStage. */}
       </div>
       <p className={`composer-readiness${readiness.ready ? ' ready' : ''}`}>
         {readiness.message}

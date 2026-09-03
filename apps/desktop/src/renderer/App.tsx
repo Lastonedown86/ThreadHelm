@@ -145,7 +145,9 @@ function Shell() {
           </>
         }
         workspace={
-          composerDraftId ? (
+          state.selectedDestination !== 'missions' ? (
+            <LegacyDestination mission={workspace.detail} />
+          ) : composerDraftId ? (
             <MissionComposerWorkspace
               draftId={composerDraftId}
               onClose={() => setComposerDraftId(null)}

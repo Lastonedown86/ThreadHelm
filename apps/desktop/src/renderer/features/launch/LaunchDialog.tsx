@@ -16,6 +16,7 @@ import type {
 import { api, call } from '../../api.js';
 import { Modal } from '../control/Modal.js';
 import type { LaunchRequest } from '../../store.js';
+import { LaunchDisclosureFacts } from './LaunchDisclosureFacts.js';
 import { LaunchError } from './LaunchErrors.js';
 
 interface Props {
@@ -43,26 +44,6 @@ const MODEL_OPTIONS = {
     { value: 'sonnet', label: 'Claude Sonnet' },
   ],
 } as const;
-
-function abbreviate(path: string | null): string {
-  if (!path) return 'unknown';
-  return path.length > 60 ? `…${path.slice(-57)}` : path;
-}
-
-function sourceLabel(kind: LaunchPreviewView['runtimeResolution']['modelSource']['kind']): string {
-  switch (kind) {
-    case 'one_run':
-      return 'One-run choice';
-    case 'profile_revision':
-      return 'Exact profile revision';
-    case 'task_type_policy':
-      return 'Task-type policy';
-    case 'project_policy':
-      return 'Project policy';
-    case 'cli_default':
-      return 'CLI default';
-  }
-}
 
 function modelLabel(providerId: keyof typeof MODEL_OPTIONS, model: string): string {
   return MODEL_OPTIONS[providerId].find((option) => option.value === model)?.label ?? model;
@@ -339,84 +320,7 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
               />
             </label>
           ) : null}
-          <dl className="facts">
-            <dt>Agent</dt>
-            <dd>
-              {preview.readiness.displayName} {preview.readiness.version ?? '(version unknown)'}
-            </dd>
-            <dt>Executable</dt>
-            <dd className="mono" title={preview.readiness.resolvedExecutable ?? ''}>
-              {abbreviate(preview.readiness.resolvedExecutable)}
-            </dd>
-            <dt>Authentication</dt>
-            <dd>{preview.readiness.authentication}</dd>
-            <dt>Model</dt>
-            <dd>{preview.runtimeSelection.model ?? 'CLI default'}</dd>
-            <dt>Model source</dt>
-            <dd>{sourceLabel(preview.runtimeResolution.modelSource.kind)}</dd>
-            <dt>Effort</dt>
-            <dd>
-              {preview.runtimeSelection.effort
-                ? preview.runtimeSelection.effort === 'xhigh'
-                  ? 'Extra high'
-                  : preview.runtimeSelection.effort === 'max'
-                    ? 'Maximum'
-                    : `${preview.runtimeSelection.effort[0]!.toUpperCase()}${preview.runtimeSelection.effort.slice(1)}`
-                : 'CLI default'}
-            </dd>
-            <dt>Effort source</dt>
-            <dd>{sourceLabel(preview.runtimeResolution.effortSource.kind)}</dd>
-            <dt>Runtime permission</dt>
-            <dd>{preview.permissionResolution.policy.replaceAll('_', ' ')}</dd>
-            <dt>Permission source</dt>
-            <dd>{preview.permissionResolution.source.replaceAll('_', ' ')}</dd>
-            <dt>Provider mapping</dt>
-            <dd>{preview.permissionResolution.providerMapping?.replaceAll('_', ' ') ?? 'held'}</dd>
-            <dt>Execution bounds</dt>
-            <dd>
-              {Math.round(preview.executionBounds.maxElapsedMs / 60_000)} min ·{' '}
-              {preview.executionBounds.maxTurns} turns ·{' '}
-              {Math.round(preview.executionBounds.maxNoProgressMs / 60_000)} min without progress
-              {' · '}
-              {preview.executionBounds.maxOutputBytes} output bytes
-              {' · '}
-              {preview.executionBounds.maxConcurrentProcesses} contained processes
-            </dd>
-            <dt>Effective folder</dt>
-            <dd className="mono">{preview.workspace.displayPath}</dd>
-            {preview.workspace.displayPath !== preview.workspace.selectedPath ? (
-              <>
-                <dt>Selected as</dt>
-                <dd className="mono">{preview.workspace.selectedPath}</dd>
-              </>
-            ) : null}
-            <dt>Terminal</dt>
-            <dd>
-              {preview.terminal.columns}×{preview.terminal.rows}
-            </dd>
-            {preview.coordinationBridge ? (
-              <>
-                <dt>Local coordination</dt>
-                <dd>{preview.coordinationBridge.tools.join(', ')}</dd>
-              </>
-            ) : null}
-          </dl>
-          {preview.coordinationBridge ? (
-            <p className="notice">
-              This session receives a local coordination tool. Messages and replies are stored
-              durably only when deliberately created. If the bridge is unavailable, the session
-              stays running and coordination falls back to manual presentation.
-            </p>
-          ) : null}
-          {preview.permissionResolution.disposition === 'held' ? (
-            <p className="notice warning" role="status">
-              This permission choice is held. Choose Manual
-              {preview.permissionResolution.fallbackActions.includes('bounded_allowlist')
-                ? ' or provide a bounded allowlist'
-                : ''}
-              . ThreadHelm will not substitute bypass permission.
-            </p>
-          ) : null}
+          <LaunchDisclosureFacts preview={preview} />
           {preview.runtimeResolution.disposition === 'held' ? (
             <p className="notice warning" role="status">
               Record why this higher-cost model or effort is required before launch. The reason is

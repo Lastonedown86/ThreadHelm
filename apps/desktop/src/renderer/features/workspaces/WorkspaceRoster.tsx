@@ -22,6 +22,7 @@ import { api, call } from '../../api.js';
 import { useStore } from '../../store.js';
 import { Modal } from '../control/Modal.js';
 import { AgentProfileImportPreview } from '../coordination/AgentProfileDetail.js';
+import { LaunchDisclosureFacts } from '../launch/LaunchDisclosureFacts.js';
 import { LaunchError } from '../launch/LaunchErrors.js';
 
 /** Every outcome gets its own sentence; there is no blanket failure text. */
@@ -146,21 +147,23 @@ function ReconDisclosureDialog({
           ) : null}
           {preview ? (
             <>
-              <dl className="facts">
-                <dt>Agent</dt>
-                <dd>
-                  {preview.launch.readiness.displayName}{' '}
-                  {preview.launch.readiness.version ?? '(version unknown)'}
-                </dd>
-                <dt>Executable</dt>
-                <dd className="mono">{preview.launch.readiness.resolvedExecutable ?? 'unknown'}</dd>
-                <dt>Effective folder</dt>
-                <dd className="mono">{preview.launch.workspace.displayPath}</dd>
-                <dt>Output directory</dt>
-                <dd className="mono">{preview.outputDirectory}</dd>
-                <dt>Token cap requested of the agent</dt>
-                <dd>{preview.tokenCapRequested.toLocaleString()}</dd>
-              </dl>
+              {/*
+                The same facts an ordinary launch discloses — model, effort,
+                permission and, above all, the execution bounds ThreadHelm can
+                actually enforce — plus the two recon adds. A recon session has
+                full workspace reach; this gate discloses no less than any other.
+              */}
+              <LaunchDisclosureFacts
+                preview={preview.launch}
+                extraFacts={
+                  <>
+                    <dt>Output directory</dt>
+                    <dd className="mono">{preview.outputDirectory}</dd>
+                    <dt>Token cap requested of the agent</dt>
+                    <dd>{preview.tokenCapRequested.toLocaleString()}</dd>
+                  </>
+                }
+              />
               <p className="notice">{preview.autoHireStatement}</p>
               <h3>Recon prompt</h3>
               <pre>{preview.reconPrompt}</pre>

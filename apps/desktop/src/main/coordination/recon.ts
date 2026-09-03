@@ -313,8 +313,15 @@ export function createReconService(ctx: Context): ReconService {
 
   return {
     async previewLaunch(request) {
+      const workspace = findWorkspace(ctx, request.workspaceId);
+      const runId = randomUUID();
+      const outputDirectory = join(ctx.reconRoot(), request.workspaceId, runId);
+      const reconPrompt = buildReconPrompt(outputDirectory, RECON_TOKEN_CAP_REQUESTED);
       // The ordinary session disclosure, unchanged: same preflight, same
       // revalidation, same boundary warning. Recon only adds fields beside it.
+      // The output directory is threaded through as the one piece of recon-
+      // specific launch data, so the fixture adapter can make its deterministic
+      // agent write to the real, run-scoped directory rather than a static one.
       const launch = await previewSessionLaunch(
         ctx,
         request.workspaceId,
@@ -326,11 +333,10 @@ export function createReconService(ctx: Context): ReconService {
         // justifies looser execution bounds or a special work type.
         DEFAULT_PROVIDER_EXECUTION_BOUNDS,
         'general',
+        null,
+        { profileRevisionRequest: null, taskTypePolicy: null, projectPolicy: null },
+        outputDirectory,
       );
-      const workspace = findWorkspace(ctx, request.workspaceId);
-      const runId = randomUUID();
-      const outputDirectory = join(ctx.reconRoot(), request.workspaceId, runId);
-      const reconPrompt = buildReconPrompt(outputDirectory, RECON_TOKEN_CAP_REQUESTED);
       pending.set(launch.previewToken, {
         runId,
         workspaceId: request.workspaceId,

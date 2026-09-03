@@ -87,6 +87,12 @@ export function fixtureAdapter(options: FixtureAdapterOptions): ProviderAdapter 
         join(ctx.canonicalWorkspacePath, `.threadhelm-fixture-${options.id}.ready`),
       ];
       if (options.lines !== undefined) args.push('--lines', String(options.lines));
+      // Workspace Recon only: main discloses the real output directory and
+      // threads it through LaunchContext; a real provider is told the same
+      // directory by the prompt instead, since it accepts no ThreadHelm flags.
+      if (options.mode === 'recon' && ctx.reconOutputDirectory) {
+        args.push('--out-dir', ctx.reconOutputDirectory);
+      }
       return {
         executable: ctx.resolvedExecutable,
         args,

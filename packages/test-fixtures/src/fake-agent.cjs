@@ -232,6 +232,14 @@ switch (mode) {
       fs.writeFileSync(path.join(outDir, file.basename), file.text, 'utf8');
     }
     write(`RECON_WROTE:${RECON_FILES.length}\n`);
+    // A real recon agent finishes the assessment and its process exits; this
+    // fixture models the same "write the files, then stop" ending instead of
+    // running forever like the interactive modes. The 500ms delay is a ponytail
+    // shortcut: it gives the launch's containment verification (host ready,
+    // job assignment, host launched) time to finish before this process is
+    // gone, so a real agent's much-slower turnaround never needs it. Bump the
+    // delay if launch verification ever proves slower than that in practice.
+    setTimeout(() => process.exit(0), 500);
     break;
   }
   case 'spawn-bridge': {

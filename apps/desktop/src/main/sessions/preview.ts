@@ -58,6 +58,8 @@ export async function previewLaunch(
     taskTypePolicy: PersistedRuntimePolicy | null;
     projectPolicy: PersistedRuntimePolicy | null;
   } = { profileRevisionRequest: null, taskTypePolicy: null, projectPolicy: null },
+  /** Set only by Workspace Recon; every ordinary session leaves this null. */
+  reconOutputDirectory: string | null = null,
 ): Promise<LaunchPreviewView> {
   const workspace = findWorkspace(ctx, workspaceId);
   if (workspace.revokedAt) {
@@ -119,6 +121,10 @@ export async function previewLaunch(
     permissionSelection,
     permissionResolution,
     executionBounds: boundedExecution,
+    // Present only for a recon launch: MissionBindingView (mission-bindings.ts)
+    // spreads a whole PreviewPayload into a strictObject parse, so an ordinary
+    // session's payload must carry no key that schema does not know about.
+    ...(reconOutputDirectory ? { reconOutputDirectory } : {}),
   };
   const { token, expiresAt } = ctx.tokens.previews.issue(payload);
   const coordinationBridge: LaunchPreviewView['coordinationBridge'] =

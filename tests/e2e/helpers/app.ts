@@ -78,6 +78,8 @@ export interface LaunchedApp {
     method: string,
     params: Record<string, unknown>,
   ): Promise<T>;
+  /** Deterministic wait for a Workspace Recon run's collection to finish. */
+  reconWhenCollected(runId: string): Promise<void>;
   /** Hard-kills the coordinator with no cleanup; resolves once the process is gone. */
   crashCoordinator(): Promise<void>;
   close(): Promise<void>;
@@ -187,6 +189,7 @@ export async function launchApp(options: LaunchOptions = {}): Promise<LaunchedAp
         method,
         params,
       }),
+    reconWhenCollected: (runId) => hooks('hooks.reconWhenCollected(arg)', runId),
     async crashCoordinator() {
       // app.process() is Playwright's cli wrapper; the coordinator is the browser process.
       const pid = await app.evaluate(() => process.pid);

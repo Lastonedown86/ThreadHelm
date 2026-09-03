@@ -252,6 +252,9 @@ export async function launchSession(
         ...(missionAuthorization
           ? { profileBinding: ctx.supervisor!.profileLaunchBinding(missionAuthorization) }
           : {}),
+        ...(preview.reconOutputDirectory
+          ? { reconOutputDirectory: preview.reconOutputDirectory }
+          : {}),
       }),
     );
     if (descriptor.cwd !== workspace.displayPath) throw new Error('DESCRIPTOR_CWD_MISMATCH');

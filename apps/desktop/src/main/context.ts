@@ -176,6 +176,8 @@ export interface PreviewPayload {
   permissionSelection: LaunchPermissionSelection;
   permissionResolution: LaunchPermissionResolution;
   executionBounds: ProviderExecutionBounds;
+  /** Set only when this preview is for a Workspace Recon launch. */
+  reconOutputDirectory?: string | null;
 }
 
 export interface ControlTokenPayload {

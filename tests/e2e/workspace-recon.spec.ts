@@ -39,6 +39,18 @@ test('approve, run recon, accept two roles, and name them yourself', async () =>
     await expect(launchDialog).toBeVisible();
     // The disclosed boundary warning, verbatim — no "read-only scan" wording.
     await expect(launchDialog.getByText(BOUNDARY_WARNING, { exact: true })).toBeVisible();
+    // The shared LaunchDisclosureFacts rows (the F1 fix): the recon gate must
+    // disclose the same resolved facts an ordinary launch does, not the old,
+    // narrower five-fact list. Execution bounds is the load-bearing row — the
+    // only ceiling ThreadHelm actually enforces — so pin its real, enforced
+    // numbers rather than just the row's presence.
+    await expect(launchDialog.getByText('Execution bounds', { exact: true })).toBeVisible();
+    await expect(launchDialog).toContainText(
+      '30 min · 64 turns · 5 min without progress · 8388608 output bytes · 1 contained processes',
+    );
+    await expect(launchDialog.getByText('Model', { exact: true })).toBeVisible();
+    await expect(launchDialog.getByText('Effort', { exact: true })).toBeVisible();
+    await expect(launchDialog.getByText('Runtime permission', { exact: true })).toBeVisible();
     await launchDialog.getByRole('checkbox').check();
     await launchDialog.getByRole('button', { name: 'Start recon' }).click();
     await expect(launchDialog).toBeHidden();

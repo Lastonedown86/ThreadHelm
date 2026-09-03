@@ -37,7 +37,7 @@ export const STOP_GRACE_MS = 15_000;
 export const INTERRUPT_OBSERVE_MS = 5_000;
 /** Bounded provider probe budget. */
 export const PROBE_TIMEOUT_MS = 10_000;
-/** Ceiling on a agent manifest's requested token budget (agent-profiles.md). */
+/** Ceiling on an agent manifest's requested token budget (agent-profiles.md). */
 export const MAX_TOKEN_CAP = 2_000_000;
 /** Bounded length for reviewed free-text manifest fields (goal, description). */
 export const MAX_GOAL_LENGTH = 4_000;
@@ -1364,7 +1364,7 @@ export const SelectionView = z.object({ selectedSessionId: Uuid.nullable() });
 export type SelectionView = z.infer<typeof SelectionView>;
 
 // ---------------------------------------------------------------------------
-// Agent profiles (contracts/agent-profiles.md). A agent manifest is untrusted
+// Agent profiles (contracts/agent-profiles.md). An agent manifest is untrusted
 // portable data, never an instruction. `effort` is launch policy and is
 // deliberately absent; capability labels and the display name never grant
 // tools, roles, or budget expansion.

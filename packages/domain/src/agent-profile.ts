@@ -20,7 +20,7 @@ import {
 
 export { MAX_GOAL_LENGTH, MAX_TOKEN_CAP };
 
-/** Bounded read size for a agent manifest file, independent of any single field. */
+/** Bounded read size for an agent manifest file, independent of any single field. */
 export const MAX_MANIFEST_BYTES = 64 * 1024;
 
 // ponytail: minimal top-level-only duplicate-key scanner; the manifest schema
@@ -72,7 +72,7 @@ function hasDuplicateTopLevelKey(text: string): boolean {
 }
 
 /**
- * Strictly parses, size-bounds, and normalizes a agent manifest read from
+ * Strictly parses, size-bounds, and normalizes an agent manifest read from
  * disk. Throws a stable `ThreadHelmError` for every failure mode; raw parse
  * errors never cross this boundary.
  */

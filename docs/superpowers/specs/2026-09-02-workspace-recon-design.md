@@ -105,11 +105,13 @@ resolves, plus recon-specific bounds:
 | Agent, version, effective executable path | existing preflight probe |
 | Workspace path and access-boundary warning | existing launch disclosure, unmodified |
 | Model and effort | existing resolution order |
-| Token cap for this run | recon-specific, owner-adjustable |
+| Token cap for this run | recon-specific, fixed |
 | Output directory | `%LOCALAPPDATA%\ThreadHelm\recon\<workspaceId>\<runId>\` |
 | Statement that nothing is hired automatically | recon-specific |
 
 One confirmation, as with any session.
+
+The token cap is fixed rather than owner-adjustable — specifically a module constant disclosed as `tokenCapRequested` — because ThreadHelm has no token accounting and carries the number to the agent in the prompt: a control over a value the application cannot enforce would present the owner with a ceiling they do not have.
 
 ### 1.3 The session
 

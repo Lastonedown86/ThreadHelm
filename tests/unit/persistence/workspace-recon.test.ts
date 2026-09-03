@@ -137,6 +137,72 @@ describe('recon provenance columns', () => {
     db.close();
   });
 
+  it('restamps provenance when a later run revises the same manifest key', () => {
+    // The recon prompt mandates supervisor.agent.json, so a second run's
+    // supervisor lands on the same manifest key and takes the existing-profile
+    // branch. The columns describe the run the current revision came from, or
+    // they permanently describe the wrong commit — and provenance is
+    // write-only, so nothing would ever surface the error.
+    const { repositories, db } = openTestStorage();
+    const first = repositories.agentProfiles.importManifest({
+      ...importInput(),
+      reconRunId: '11111111-1111-4111-8111-111111111111',
+      derivedFromCommit: 'a'.repeat(40),
+    });
+    const second = repositories.agentProfiles.importManifest({
+      ...importInput(),
+      digest: 'b'.repeat(64),
+      goal: 'A different goal, so this is a new revision of the same role.',
+      createdAt: '2026-02-02T00:00:00.000Z',
+      reconRunId: '22222222-2222-4222-8222-222222222222',
+      derivedFromCommit: 'c'.repeat(40),
+    });
+
+    expect(second.profileId).toBe(first.profileId);
+    expect(second.isNewRevision).toBe(true);
+    expect(second.revisionId).not.toBe(first.revisionId);
+    const row = db
+      .prepare(
+        'SELECT current_revision_id, recon_run_id, derived_from_commit FROM agent_profiles WHERE id = ?',
+      )
+      .get(second.profileId) as {
+      current_revision_id: string;
+      recon_run_id: string | null;
+      derived_from_commit: string | null;
+    };
+    expect(row.current_revision_id).toBe(second.revisionId);
+    expect(row.recon_run_id).toBe('22222222-2222-4222-8222-222222222222');
+    expect(row.derived_from_commit).toBe('c'.repeat(40));
+    db.close();
+  });
+
+  it('clears provenance when a hand-picked file revises a profile a recon run created', () => {
+    // The mirror of the case above: the current revision came from a file the
+    // owner picked, so there is no run and no commit to report.
+    const { repositories, db } = openTestStorage();
+    repositories.agentProfiles.importManifest({
+      ...importInput(),
+      reconRunId: '11111111-1111-4111-8111-111111111111',
+      derivedFromCommit: 'a'.repeat(40),
+    });
+    const second = repositories.agentProfiles.importManifest({
+      ...importInput(),
+      digest: 'b'.repeat(64),
+      goal: 'A different goal, so this is a new revision of the same role.',
+      createdAt: '2026-02-02T00:00:00.000Z',
+    });
+
+    const row = db
+      .prepare('SELECT recon_run_id, derived_from_commit FROM agent_profiles WHERE id = ?')
+      .get(second.profileId) as {
+      recon_run_id: string | null;
+      derived_from_commit: string | null;
+    };
+    expect(row.recon_run_id).toBeNull();
+    expect(row.derived_from_commit).toBeNull();
+    db.close();
+  });
+
   it('repairs a current-version database missing agent_profiles with the current shape, columns included', () => {
     const db = openDatabase(':memory:');
     migrate(db);

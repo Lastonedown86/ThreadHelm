@@ -316,11 +316,27 @@ export class AgentProfileRepository {
       const revisionId = this.#insertRevision(existingProfile.id, input);
       const nextState: ProfileState =
         input.compatibility === 'compatible' ? existingProfile.state : 'disabled';
+      // Provenance is restamped with the revision it describes. The recon
+      // prompt mandates supervisor.agent.json, so a second run's supervisor
+      // lands on this branch; leaving the columns alone would make them
+      // permanently describe the run that produced an older revision, and
+      // provenance is write-only, so nothing would ever surface that.
+      // Absence is written as absence: a hand-picked file clears them.
       this.#db
         .prepare(
-          'UPDATE agent_profiles SET current_revision_id = ?, state = ?, updated_at = ? WHERE id = ?',
+          `UPDATE agent_profiles
+             SET current_revision_id = ?, state = ?, updated_at = ?,
+                 recon_run_id = ?, derived_from_commit = ?
+           WHERE id = ?`,
         )
-        .run(revisionId, nextState, input.createdAt, existingProfile.id);
+        .run(
+          revisionId,
+          nextState,
+          input.createdAt,
+          input.reconRunId ?? null,
+          input.derivedFromCommit ?? null,
+          existingProfile.id,
+        );
       return {
         profileId: existingProfile.id,
         revisionId,

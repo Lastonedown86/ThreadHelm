@@ -1,6 +1,6 @@
 # ThreadHelm Journey UI: From Prototyping to Production
 
-**Status:** Production journey implemented
+**Status:** Phases 1, 2 and 4a shipped (Mission Course, shell fixes, guided mission composer). Phase 3 (terminal dock), 4b (coach generation), 5 (secondary destinations) and 6 (legacy stylesheet retirement) remain.
 
 **Decision window:** 2026-08-31 through 2026-09-02
 
@@ -42,15 +42,15 @@ publishes memory, resends unknown work, or launches a provider without the requi
 
 ## Prototype-to-production decisions
 
-| Journey area     | Prototype direction selected                                                                  | Production outcome                                                                                                                |
-| ---------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Mission home     | **D — Mission Course**, combining the mission queue and context rail with an outcome timeline | One selected mission owns the main workspace, course, evidence, attention, crew, and attached sessions                            |
-| Mission creation | Continuous guided flow with outcome, crew, access and limits, and exact review coaching       | Existing validated mission authoring remains the authority; guided copy and reviewed worker paths help users form the envelope    |
-| Sessions         | **B — Mission dock**, with lifecycle evidence from the inspector direction                    | Mission-scoped session tabs, exact-target controls, persistent terminal buffers, handoffs, conversations, and recovery evidence   |
-| Agents           | **C — Guided library with Profile Studio detail**                                             | Generic starters, local profile creation, exact JSON import, profile goal and abilities, provenance, compatibility, and revisions |
-| Memory           | **B — Search-led Reading Desk and Librarian**, plus **C — mission context packs**             | Exact local search, cited volume detail, Librarian guidance, and a bounded mission reading list                                   |
-| Setup            | **C — Task-oriented guided setup**, plus **B — compact attention summary**                    | Three explained checks for workspace access, provider readiness, and application evidence                                         |
-| Recovery         | **C — Cross-mission attention queue**, plus **B — mission-context detail**                    | Unresolved evidence queue, exact session and workspace detail, dismissal, and reviewed replacement work                           |
+| Journey area     | Prototype direction selected                                                                  | Production outcome                                                                                                                                                    |
+| ---------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mission home     | **D — Mission Course**, combining the mission queue and context rail with an outcome timeline | One selected mission owns the main workspace, course, evidence, attention, crew, and attached sessions                                                                |
+| Mission creation | Continuous guided flow with outcome, crew, access and limits, and exact review coaching       | Four-stage guided composer with main-owned autosave drafts, per-worker assignment and return evidence, and four Review states. Coach generation deferred to phase 4b. |
+| Sessions         | **B — Mission dock**, with lifecycle evidence from the inspector direction                    | Mission-scoped session tabs, exact-target controls, persistent terminal buffers, handoffs, conversations, and recovery evidence                                       |
+| Agents           | **C — Guided library with Profile Studio detail**                                             | Generic starters, local profile creation, exact JSON import, profile goal and abilities, provenance, compatibility, and revisions                                     |
+| Memory           | **B — Search-led Reading Desk and Librarian**, plus **C — mission context packs**             | Exact local search, cited volume detail, Librarian guidance, and a bounded mission reading list                                                                       |
+| Setup            | **C — Task-oriented guided setup**, plus **B — compact attention summary**                    | Three explained checks for workspace access, provider readiness, and application evidence                                                                             |
+| Recovery         | **C — Cross-mission attention queue**, plus **B — mission-context detail**                    | Unresolved evidence queue, exact session and workspace detail, dismissal, and reviewed replacement work                                                               |
 
 ## The production journey
 

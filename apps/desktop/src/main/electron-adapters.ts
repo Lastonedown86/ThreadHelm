@@ -12,6 +12,9 @@ import type {
   ProfileFilePicker,
   StreamChannelFactory,
 } from './context.js';
+// The default the dialog offers is the validator's own constant, so accepting
+// what the picker suggests can never be refused by the operation behind it.
+import { AGENT_EXPORT_DEFAULT_FILENAME } from './coordination/profile-wizard.js';
 
 export function electronHostSpawner(hostEntry: string): HostSpawner {
   return {
@@ -96,7 +99,7 @@ export function electronAgentExportTargetPicker(
       const window = getWindow();
       const options = {
         title: 'Export agent profile',
-        defaultPath: 'agent-manifest.json',
+        defaultPath: AGENT_EXPORT_DEFAULT_FILENAME,
         filters: [{ name: 'ThreadHelm agent manifests', extensions: ['agent.json'] }],
       };
       const result = window

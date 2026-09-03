@@ -43,6 +43,21 @@ const TESTED_MODELS: Readonly<Record<ProviderId, readonly string[]>> = {
   'codex-cli': ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
 };
 
+/**
+ * The filename the Save dialog offers. It lives beside the validator below
+ * because the two are one decision: a default the validator rejects is an
+ * export the owner cannot complete by accepting what they were offered.
+ */
+export const AGENT_EXPORT_DEFAULT_FILENAME = 'agent-manifest.agent.json';
+
+/** The one rule for an export target, applied to every path the picker returns. */
+export function isAgentExportTarget(path: string): boolean {
+  return (
+    extname(path).toLocaleLowerCase('en-US') === '.json' &&
+    path.toLocaleLowerCase('en-US').endsWith('.agent.json')
+  );
+}
+
 type CompletionSnapshot = {
   action: 'profile' | 'export';
   draftId: string;
@@ -568,11 +583,7 @@ export function createAgentWizardService(
         throw new ThreadHelmError('CONFIRMATION_EXPIRED', 'The export review expired or was used.');
       if (snapshot.action !== 'export')
         throw new ThreadHelmError('INVALID_REQUEST', 'This preview is not bound to export.');
-      if (
-        !path ||
-        extname(path).toLocaleLowerCase('en-US') !== '.json' ||
-        !path.toLocaleLowerCase('en-US').endsWith('.agent.json')
-      )
+      if (!path || !isAgentExportTarget(path))
         throw new ThreadHelmError('INVALID_REQUEST', 'Choose a .agent.json export target.');
       const parent = await realpath(dirname(path)).catch(() => {
         throw new ThreadHelmError('TARGET_CHANGED', 'The export folder is unavailable.');

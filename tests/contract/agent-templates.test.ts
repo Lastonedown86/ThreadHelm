@@ -7,11 +7,17 @@ import {
   operationNames,
 } from '@threadhelm/contracts';
 import { createHash } from 'node:crypto';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createWorld, eventsNamed } from './helpers/fake-context.js';
 import { openStorage } from '@threadhelm/persistence';
 import { GENERIC_AGENT_TEMPLATE_FIXTURES } from '@threadhelm/test-fixtures/desktop';
-import { createAgentWizardService } from '../../apps/desktop/src/main/coordination/profile-wizard.js';
+import {
+  AGENT_EXPORT_DEFAULT_FILENAME,
+  createAgentWizardService,
+} from '../../apps/desktop/src/main/coordination/profile-wizard.js';
 import { createProfileService } from '../../apps/desktop/src/main/coordination/profiles.js';
 
 describe('agent wizard contracts', () => {
@@ -169,6 +175,38 @@ describe('agent wizard contracts', () => {
       );
       expect(JSON.parse(preview.manifestJson).spec).toBe('threadhelm/agent-profile@1');
       expect(preview.digest).toBe(createHash('sha256').update(preview.manifestJson).digest('hex'));
+    }
+  });
+
+  it('offers a Save-dialog default filename its own export validator accepts', async () => {
+    // The half of the rename nothing caught: the picker offered
+    // 'agent-manifest.json' while previewExport required '.agent.json', so an
+    // owner who accepted the offered name was refused by the operation behind
+    // the dialog. Every other export test constructs its own path.
+    const world = createWorld();
+    const listed = await world.ok<{ templates: { currentRevisionId: string }[] }>(
+      'agentTemplates.list',
+    );
+    const draft = await world.ok<{ draftId: string; version: number }>('agentWizard.createDraft', {
+      source: { kind: 'template', templateRevisionId: listed.templates[0]!.currentRevisionId },
+    });
+    const completion = await world.ok<{ completionToken: string }>(
+      'agentWizard.previewCompletion',
+      { draftId: draft.draftId, version: draft.version, action: 'export' },
+    );
+    const dir = mkdtempSync(join(tmpdir(), 'agent-export-default-'));
+    try {
+      world.ctx.agentExportPicker = {
+        pickTarget: async () => join(dir, AGENT_EXPORT_DEFAULT_FILENAME),
+      };
+      const chosen = await world.ok<{ targetHandle: string }>('agentWizard.chooseExportTarget');
+      const result = await world.call('agentWizard.previewExport', {
+        completionToken: completion.completionToken,
+        targetHandle: chosen.targetHandle,
+      });
+      expect(result.ok ? 'OK' : result.error.code).toBe('OK');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 

@@ -20,15 +20,24 @@ export function AgentProfileImportPreview({
   preview,
   onCancel,
   onImported,
+  requireDisplayName = false,
 }: {
   preview: ProfilePreviewView;
   onCancel(): void;
   onImported(summary: AgentProfileSummaryView): void;
+  /**
+   * Recon proposals ship with a placeholder manifest name; the owner types the
+   * real one here and Confirm stays disabled until they do. The file-picker
+   * import path is unaffected and keeps using the manifest's own name.
+   */
+  requireDisplayName?: boolean;
 }) {
   const [confirmed, setConfirmed] = useState(false);
+  const [displayName, setDisplayName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const manifest = preview.normalized;
+  const nameReady = !requireDisplayName || displayName.trim().length > 0;
 
   const confirm = async () => {
     setBusy(true);
@@ -38,6 +47,7 @@ export function AgentProfileImportPreview({
         api.profiles.confirmImport({
           previewToken: preview.previewToken,
           importConfirmation: true,
+          ...(requireDisplayName ? { displayName: displayName.trim() } : {}),
         }),
       );
       onImported(summary);
@@ -53,6 +63,18 @@ export function AgentProfileImportPreview({
       <p className="hint">
         {preview.basename} · digest {preview.digest.slice(0, 12)}
       </p>
+      {requireDisplayName ? (
+        <label className="field">
+          Display name
+          <input
+            value={displayName}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="Name this agent"
+            onChange={(event) => setDisplayName(event.target.value)}
+          />
+        </label>
+      ) : null}
       <dl className="facts">
         <dt>Name</dt>
         <dd>{manifest.name}</dd>
@@ -102,7 +124,7 @@ export function AgentProfileImportPreview({
         <button
           type="button"
           className="primary"
-          disabled={!confirmed || busy}
+          disabled={!confirmed || !nameReady || busy}
           onClick={() => void confirm()}
         >
           Import profile

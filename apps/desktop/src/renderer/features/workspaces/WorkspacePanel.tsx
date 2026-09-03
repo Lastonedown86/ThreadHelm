@@ -9,6 +9,7 @@ import { api, call, errorCode } from '../../api.js';
 import { useStore } from '../../store.js';
 import { Modal } from '../control/Modal.js';
 import { describeError, LaunchError } from '../launch/LaunchErrors.js';
+import { WorkspaceRoster } from './WorkspaceRoster.js';
 
 export function WorkspacePanel() {
   const { state, actions } = useStore();
@@ -75,6 +76,7 @@ export function WorkspacePanel() {
             >
               Revoke
             </button>
+            <WorkspaceRoster workspaceId={workspace.id} displayPath={workspace.displayPath} />
           </li>
         ))}
       </ul>

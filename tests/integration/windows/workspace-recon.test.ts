@@ -156,21 +156,30 @@ describe('workspace recon', () => {
   }, 90_000);
 
   /**
-   * A previous review flagged, and could not resolve by reading, that
-   * confirmLaunch discards <reconRoot>/<workspaceId> unconditionally before
-   * attempting the launch. If a second confirmLaunch for the same workspace
-   * is reachable while a first run is still alive, that discard would delete
-   * the first run's output directory before its collect() ever runs — even
-   * if the second launch itself is then refused.
+   * A previous review flagged that confirmLaunch discarded
+   * <reconRoot>/<workspaceId> unconditionally before attempting the launch.
+   * A second confirmLaunch for the same workspace, issued while a first run
+   * was still alive, would delete the first run's output directory before
+   * its collect() ever ran — even though the second launch was itself then
+   * correctly refused by the one-writer lease. Confirmed empirically (see
+   * task-7-report.md) before the fix below landed: the second launch failed
+   * with WRITE_LEASE_HELD, but the first run's manifests were gone, and its
+   * eventual collection reported no_output — telling the owner the agent
+   * produced nothing when ThreadHelm had in fact deleted it.
    *
-   * Settled empirically below rather than by re-reading the code: both
-   * previews are issued while no session is running yet (so neither is
+   * confirmLaunch now creates only its own run's directory before launching,
+   * and discards siblings only after this run has proved — by acquiring the
+   * one-writer lease inside launchSession — that no other session is live
+   * for this workspace. This test pins that fix: the second launch is still
+   * refused, but the first run's manifests survive and collect truthfully.
+   *
+   * Both previews are issued while no session is running yet (so neither is
    * refused by the one-writer lease at preview time — see lease.ts's
    * assertLeaseFree, which only inspects the *current* holder), then A is
    * confirmed and kept alive on a non-exiting fixture mode, and only then is
    * B confirmed with its earlier token.
    */
-  it("probes whether an overlapping confirmLaunch destroys a live run's output directory", async () => {
+  it("a second confirmLaunch for the same workspace never destroys a live run's output", async () => {
     await app.useFixtureAdapters({ [PROVIDER]: 'ignore-interrupt' });
     const previewA = await app.call<ReconLaunchPreviewView>('workspaceRecon.previewLaunch', {
       workspaceId,
@@ -199,41 +208,26 @@ describe('workspace recon', () => {
     expect(existsSync(dirA)).toBe(true);
 
     // The owner starts a second recon run for the same workspace while A is
-    // still alive and uncollected.
+    // still alive and uncollected. It must be refused: the write lease A
+    // already holds proves a second write-capable session cannot coexist.
     const attemptB = await app.dispatch<ReconRunView>('workspaceRecon.confirmLaunch', {
       previewToken: previewB.launch.previewToken,
       boundaryConfirmation: true,
     });
+    expect(attemptB.ok).toBe(false);
+    if (!attemptB.ok) expect(attemptB.error.code).toBe('WRITE_LEASE_HELD');
 
-    const dirASurvived = existsSync(dirA);
-    console.log('WORKSPACE_RECON_CONCURRENCY_PROBE', {
-      attemptBOk: attemptB.ok,
-      attemptBErrorCode: attemptB.ok ? null : attemptB.error.code,
-      firstRunDirectorySurvived: dirASurvived,
-    });
+    // The refused launch must not have touched A's still-live output.
+    expect(existsSync(dirA)).toBe(true);
 
-    // Whatever the outcome, the second launch must never be silently treated
-    // as if it started a second, independent run: recon tracks one run per
-    // workspace.
-    if (attemptB.ok) {
-      expect(attemptB.value.runId).not.toBe(runA.runId);
-    }
-
+    // Ending A now must read exactly what it wrote — a truthful outcome, not
+    // no_output from files that were never actually lost.
     await forceStop(runA.sessionId!);
     const collectedA = await waitForOutcome(runA.runId);
-
-    if (!dirASurvived) {
-      // The hazard is real: confirmLaunch's unconditional discard destroyed a
-      // live, uncollected run's manifests before the conflicting launch was
-      // even refused. Collection for A now finds nothing, even though five
-      // fixture files — four valid, one malformed — were written moments
-      // earlier and never read.
-      expect(collectedA.proposals).toHaveLength(0);
-      expect(collectedA.rejected).toHaveLength(0);
-    } else {
-      // No clobber occurred: whatever guard stopped the second launch also
-      // left the first run's files intact, so collection sees them.
-      expect(collectedA.proposals.length + collectedA.rejected.length).toBeGreaterThan(0);
-    }
+    expect(collectedA.outcome).toBe('stopped_by_owner');
+    expect(collectedA.proposals).toHaveLength(4);
+    expect(collectedA.rejected).toEqual([
+      { sourceBasename: 'malformed.agent.json', errorCode: 'PROFILE_SCHEMA_INVALID' },
+    ]);
   }, 60_000);
 });

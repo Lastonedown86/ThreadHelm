@@ -244,6 +244,25 @@ export function createReconService(ctx: Context): ReconService {
     await rm(dir, { recursive: true, force: true }).catch(() => undefined);
   };
 
+  /**
+   * Removes every other run's leftovers under this workspace's recon root —
+   * a previous run's directory, or crash residue — but never the run named
+   * by `keepRunId`. Only safe to call once that run has acquired the
+   * one-writer lease (i.e. after `launchSession` has returned successfully):
+   * that lease is the proof no other session is live for this workspace, so
+   * nothing still writing to a sibling directory can be deleted out from
+   * under it.
+   */
+  const discardSiblings = async (workspaceId: string, keepRunId: string): Promise<void> => {
+    const root = join(ctx.reconRoot(), workspaceId);
+    const entries = await readdir(root, { withFileTypes: true }).catch(() => []);
+    await Promise.all(
+      entries
+        .filter((entry) => entry.isDirectory() && entry.name !== keepRunId)
+        .map((entry) => discard(join(root, entry.name))),
+    );
+  };
+
   const collect = async (run: ReconRun): Promise<void> => {
     try {
       const entries = await readdir(run.outputDirectory, { withFileTypes: true }).catch(() => []);
@@ -362,10 +381,11 @@ export function createReconService(ctx: Context): ReconService {
       if (!preview) {
         throw new ThreadHelmError('PREVIEW_EXPIRED', 'The recon preview expired. Open it again.');
       }
-      // Sibling directories only: a crashed run's leftovers must not be read as
-      // this run's work. The previous run's proposals live in memory and are
-      // kept until this launch actually succeeds.
-      await discard(join(ctx.reconRoot(), preview.workspaceId));
+      // Only this run's own directory is created here. A sibling — a previous
+      // run's leftovers, or crash residue — is never touched yet: deleting it
+      // before this run has proved (by holding the one-writer lease below)
+      // that no other session is live for this workspace would delete a
+      // still-live sibling run's output out from under it.
       await mkdir(preview.outputDirectory, { recursive: true });
       const derivedFromCommit = await headCommit(preview.workspaceDisplayPath);
       let finishCollection!: () => void;
@@ -404,11 +424,15 @@ export function createReconService(ctx: Context): ReconService {
         return toView(run);
       }
       run.sessionId = session.id;
-      // Deliberate timing: the earlier run is discarded once this session
-      // exists, not when this one finishes. A proposal derived from a tree that
-      // has since moved is not evidence about the current tree, and holding a
-      // stale roster during a live run would make getRun ambiguous.
+      // Deliberate timing: the earlier run's memory is replaced, and its
+      // on-disk leftovers discarded, once this session exists and holds the
+      // one-writer lease for this workspace — launchSession above just
+      // proved that by succeeding, so no other session can still be writing
+      // to a sibling directory. A proposal derived from a tree that has since
+      // moved is not evidence about the current tree, and holding a stale
+      // roster during a live run would make getRun ambiguous.
       runs.set(run.workspaceId, run);
+      await discardSiblings(run.workspaceId, run.runId);
 
       // Main-owned first input, on the same serialized control channel the
       // coordination delivery path uses. The renderer selection guard governs

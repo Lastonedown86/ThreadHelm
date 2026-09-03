@@ -34,7 +34,7 @@ import {
   WorkOutcome,
 } from '@threadhelm/contracts';
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 const inList = (values: readonly string[]): string =>
   `IN (${values.map((v) => `'${v}'`).join(', ')})`;
@@ -441,6 +441,25 @@ ALTER TABLE agent_profiles ADD COLUMN recon_run_id TEXT;
 ALTER TABLE agent_profiles ADD COLUMN derived_from_commit TEXT;
 `;
 
+const V5_MISSION_COMPOSER = `
+CREATE TABLE mission_composer_drafts (
+  id TEXT PRIMARY KEY,
+  source_mission_id TEXT,
+  state TEXT NOT NULL CHECK (state IN ('editing', 'ready_for_review', 'converted', 'deleted')),
+  version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
+  current_stage TEXT NOT NULL DEFAULT 'outcome'
+    CHECK (current_stage IN ('outcome', 'crew', 'access', 'review')),
+  field_values TEXT NOT NULL DEFAULT '{}' CHECK (length(CAST(field_values AS BLOB)) <= 65536),
+  issue_codes TEXT NOT NULL DEFAULT '[]',
+  converted_mission_id TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  converted_at TEXT,
+  deleted_at TEXT
+);
+CREATE INDEX mission_composer_drafts_state ON mission_composer_drafts (state, updated_at, id);
+`;
+
 // The present-tense counterpart of V3_AGENT_PROFILES: what agent_profiles and
 // its companions look like today. Composed as history-plus-deltas — the v3
 // text followed by every migration applied since — rather than duplicated,
@@ -566,6 +585,7 @@ export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 2, sql: V2 },
   { version: 3, sql: `${V3}\n${V3_AGENT_PROFILES}` },
   { version: 4, sql: V4_RECON_PROVENANCE },
+  { version: 5, sql: V5_MISSION_COMPOSER },
 ];
 
 /** Additive slices intentionally delivered under the still-unreleased v3 schema. */
@@ -575,4 +595,5 @@ export const CURRENT_SCHEMA_EXTENSIONS: readonly { table: string; sql: string }[
   { table: 'agent_template_storage_v1', sql: V3_TEMPLATE_LIFECYCLE },
   { table: 'agent_profile_export_intents', sql: V3_AGENT_EXPORT_INTENTS },
   { table: 'supervisor_missions', sql: V3_SUPERVISOR },
+  { table: 'mission_composer_drafts', sql: V5_MISSION_COMPOSER },
 ];

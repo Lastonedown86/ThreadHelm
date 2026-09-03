@@ -82,11 +82,13 @@ test('crew stage explains prerequisites and routes to the fix', async () => {
 test('crew stage names every missing worker field and collapses runtime under a summary', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo' });
   const dir = tempWorkspace('composer-crew');
+  const workerDir = tempWorkspace('composer-crew-worker');
   try {
     const page = app.page;
     const leader = await missionProfile(app, 'Crew coordinator');
     const worker = await missionProfile(app, 'Crew worker');
     const session = await missionSession(app, dir);
+    const workerSession = await missionSession(app, workerDir);
     await page.reload();
     await fillOutcome(app);
     await page
@@ -131,12 +133,20 @@ test('crew stage names every missing worker field and collapses runtime under a 
     await expect(page.getByLabel('Worker 1 model', { exact: true })).toBeHidden();
     await runtime.locator('summary').click();
     await expect(page.getByLabel('Worker 1 model', { exact: true })).toBeVisible();
+    await page
+      .getByRole('combobox', { name: 'Worker 1 session', exact: true })
+      .selectOption(workerSession.id);
     await next.click();
     await expect(
       page.getByRole('heading', { name: 'Set where the mission may work and when it must stop.' }),
     ).toBeFocused();
+    // A worker bound to a live session already has its folder: CrewStage
+    // copies the session's workspaceId, so Access shouldn't ask again.
+    await expect(
+      page.getByRole('combobox', { name: 'Worker 1 folder', exact: true }),
+    ).toHaveValue(workerSession.workspaceId);
   } finally {
-    await teardown(app, dir);
+    await teardown(app, dir, workerDir);
   }
 });
 

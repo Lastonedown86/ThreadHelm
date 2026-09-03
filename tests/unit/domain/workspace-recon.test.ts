@@ -22,34 +22,20 @@ const FACTS: ReconRunFacts = {
 
 describe('selectReconFiles', () => {
   it('considers files in name order so a run is reproducible', () => {
-    const selection = selectReconFiles([
-      { name: 'c.agent.json', sizeBytes: 10 },
-      { name: 'a.agent.json', sizeBytes: 10 },
-      { name: 'b.agent.json', sizeBytes: 10 },
-    ]);
+    const selection = selectReconFiles(['c.agent.json', 'a.agent.json', 'b.agent.json']);
     expect(selection.considered).toEqual(['a.agent.json', 'b.agent.json', 'c.agent.json']);
     expect(selection.ignoredForCount).toEqual([]);
-    expect(selection.oversized).toEqual([]);
   });
 
   it('considers at most MAX_RECON_FILES and reports the rest as ignored', () => {
-    const files = Array.from({ length: MAX_RECON_FILES + 3 }, (_, i) => ({
-      name: `role-${String(i).padStart(2, '0')}.agent.json`,
-      sizeBytes: 10,
-    }));
+    const files = Array.from(
+      { length: MAX_RECON_FILES + 3 },
+      (_, i) => `role-${String(i).padStart(2, '0')}.agent.json`,
+    );
     const selection = selectReconFiles(files);
     expect(selection.considered).toHaveLength(MAX_RECON_FILES);
     expect(selection.ignoredForCount).toHaveLength(3);
     expect(selection.considered).not.toContain('role-12.agent.json');
-  });
-
-  it('reports an oversized considered file instead of reading it', () => {
-    const selection = selectReconFiles([
-      { name: 'big.agent.json', sizeBytes: 65537 },
-      { name: 'small.agent.json', sizeBytes: 65536 },
-    ]);
-    expect(selection.oversized).toEqual(['big.agent.json']);
-    expect(selection.considered).toEqual(['big.agent.json', 'small.agent.json']);
   });
 });
 

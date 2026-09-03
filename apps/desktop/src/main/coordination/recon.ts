@@ -21,7 +21,7 @@
 
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdir, readdir, rm, stat } from 'node:fs/promises';
+import { mkdir, readdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import {
@@ -62,6 +62,9 @@ const RECON_TOKEN_CAP_REQUESTED = 200_000;
 
 /** `git rev-parse HEAD` is provenance, not a dependency; it fails fast or not at all. */
 const GIT_TIMEOUT_MS = 2_000;
+
+/** How many runs' collection waiters are kept. Bounded like every other in-memory map here. */
+const RETAINED_RUNS = 16;
 
 /**
  * Recon runs with no model or effort escalation and no permission selection,
@@ -121,8 +124,15 @@ export interface ReconService {
   ): Promise<ReconLaunchPreviewView>;
   confirmLaunch(request: OperationRequest<'workspaceRecon.confirmLaunch'>): Promise<ReconRunView>;
   getRun(request: OperationRequest<'workspaceRecon.getRun'>): ReconRunView | null;
-  /** Consumed by profiles.previewImport when the source is a proposal. */
-  takeProposal(proposalId: string): TakenReconProposal | null;
+  /**
+   * Read by profiles.previewImport when the source is a proposal. A peek, not
+   * a take: reviewing a role must leave it where it was, because a cancelled
+   * preview — or one whose token expired — has no equivalent of re-picking a
+   * file. `profiles.confirmImport` calls `consumeProposal` on acceptance.
+   */
+  peekProposal(proposalId: string): TakenReconProposal | null;
+  /** Removes a proposal once it has been accepted. Unknown ids are already gone. */
+  consumeProposal(proposalId: string): void;
   /** Resolves once collection for this run has finished. Deterministic waiting for tests. */
   whenCollected(runId: string): Promise<void>;
   /**
@@ -211,9 +221,21 @@ export function createReconService(ctx: Context): ReconService {
   const pending = new Map<string, ReconPreview>();
   /** The current run per workspace. An earlier run is discarded, never merged. */
   const runs = new Map<string, ReconRun>();
+  /**
+   * Keyed by runId and bounded, so `whenCollected` still answers for a run
+   * that has since been replaced in `runs` — collection outlives the run's
+   * place in that map, and a waiter that silently resolved for a replaced run
+   * would report "collected" for a collection still in flight.
+   */
+  const collectedByRunId = new Map<string, Promise<void>>();
 
-  const runById = (runId: string): ReconRun | null =>
-    [...runs.values()].find((run) => run.runId === runId) ?? null;
+  const locateProposal = (proposalId: string): { run: ReconRun; index: number } | null => {
+    for (const run of runs.values()) {
+      const index = run.proposals.findIndex((p) => p.proposalId === proposalId);
+      if (index >= 0) return { run, index };
+    }
+    return null;
+  };
 
   /**
    * True when the owner asked this session to stop by any of the three
@@ -247,11 +269,18 @@ export function createReconService(ctx: Context): ReconService {
   /**
    * Removes every other run's leftovers under this workspace's recon root —
    * a previous run's directory, or crash residue — but never the run named
-   * by `keepRunId`. Only safe to call once that run has acquired the
-   * one-writer lease (i.e. after `launchSession` has returned successfully):
-   * that lease is the proof no other session is live for this workspace, so
-   * nothing still writing to a sibling directory can be deleted out from
-   * under it.
+   * by `keepRunId`.
+   *
+   * Two separate conditions have to hold before this is safe, and the lease
+   * only proves the first:
+   *
+   * 1. No other *session* is writing to a sibling directory. The one-writer
+   *    lease this run holds after `launchSession` succeeds proves that.
+   * 2. No previous run is still *reading* a sibling directory. The lease
+   *    proves nothing here: collection is not a session, it is fired from
+   *    session teardown after the lease has already been released, and it
+   *    outlives the lease by design. Only awaiting the previous run's
+   *    `collected` proves it.
    */
   const discardSiblings = async (workspaceId: string, keepRunId: string): Promise<void> => {
     const root = join(ctx.reconRoot(), workspaceId);
@@ -266,18 +295,17 @@ export function createReconService(ctx: Context): ReconService {
   const collect = async (run: ReconRun): Promise<void> => {
     try {
       const entries = await readdir(run.outputDirectory, { withFileTypes: true }).catch(() => []);
-      const candidates: { name: string; sizeBytes: number }[] = [];
-      for (const entry of entries) {
-        if (!entry.isFile()) continue;
-        const stats = await stat(join(run.outputDirectory, entry.name)).catch(() => null);
-        if (stats) candidates.push({ name: entry.name, sizeBytes: stats.size });
-      }
+      // Every file the listing reports, on its name alone. No second metadata
+      // read stands between the listing and the bounded read: a file the run
+      // wrote that ThreadHelm could not stat would otherwise vanish from the
+      // count, and a run that wrote output would report no_output.
+      const candidates = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
       const selection = selectReconFiles(candidates);
       for (const name of selection.considered) {
         try {
-          // readBounded re-checks the size against the open handle and reports
-          // PROFILE_OVERSIZED itself, so selection.oversized needs no second
-          // check here — the listing it came from can already be stale.
+          // readBounded checks size and file-ness against the open handle and
+          // reports PROFILE_OVERSIZED or PROFILE_UNREADABLE itself, so an
+          // unreadable file is reported by name with its reason.
           const { raw, digest } = await readBounded(join(run.outputDirectory, name));
           const manifest = parseAgentManifest(raw);
           const compatibility = evaluateManifestCompatibility(ctx, manifest);
@@ -408,6 +436,10 @@ export function createReconService(ctx: Context): ReconService {
         collected,
         finishCollection,
       };
+      collectedByRunId.set(run.runId, collected);
+      while (collectedByRunId.size > RETAINED_RUNS) {
+        collectedByRunId.delete(collectedByRunId.keys().next().value!);
+      }
 
       let session;
       try {
@@ -424,14 +456,21 @@ export function createReconService(ctx: Context): ReconService {
         return toView(run);
       }
       run.sessionId = session.id;
-      // Deliberate timing: the earlier run's memory is replaced, and its
-      // on-disk leftovers discarded, once this session exists and holds the
-      // one-writer lease for this workspace — launchSession above just
-      // proved that by succeeding, so no other session can still be writing
-      // to a sibling directory. A proposal derived from a tree that has since
+      // Deliberate timing: the earlier run's memory is replaced once this
+      // session exists, because a proposal derived from a tree that has since
       // moved is not evidence about the current tree, and holding a stale
       // roster during a live run would make getRun ambiguous.
+      const previous = runs.get(run.workspaceId);
       runs.set(run.workspaceId, run);
+      // Its files, though, outlive its place in `runs`. Collection is fired
+      // from session teardown *after* the one-writer lease is released, so the
+      // lease says nothing about whether the previous run is still reading its
+      // own directory. Deleting it mid-read would make that run report
+      // no_output for output ThreadHelm deleted. This cannot hang: the run
+      // only reached `runs` because its launchSession succeeded, which means
+      // the previous session had already ended, so its onSessionEnded has
+      // already fired and `collected` is pending or resolved.
+      await previous?.collected;
       await discardSiblings(run.workspaceId, run.runId);
 
       // Main-owned first input, on the same serialized control channel the
@@ -466,24 +505,28 @@ export function createReconService(ctx: Context): ReconService {
       return run ? toView(run) : null;
     },
 
-    takeProposal(proposalId) {
-      for (const run of runs.values()) {
-        const index = run.proposals.findIndex((p) => p.proposalId === proposalId);
-        if (index < 0) continue;
-        const [proposal] = run.proposals.splice(index, 1);
-        return {
-          manifest: proposal!.manifest,
-          digest: proposal!.digest,
-          sourceBasename: proposal!.sourceBasename,
-          runId: run.runId,
-          derivedFromCommit: run.derivedFromCommit,
-        };
-      }
-      return null;
+    peekProposal(proposalId) {
+      const found = locateProposal(proposalId);
+      if (!found) return null;
+      const proposal = found.run.proposals[found.index]!;
+      return {
+        manifest: proposal.manifest,
+        digest: proposal.digest,
+        sourceBasename: proposal.sourceBasename,
+        runId: found.run.runId,
+        derivedFromCommit: found.run.derivedFromCommit,
+      };
+    },
+
+    consumeProposal(proposalId) {
+      const found = locateProposal(proposalId);
+      if (found) found.run.proposals.splice(found.index, 1);
     },
 
     whenCollected(runId) {
-      return runById(runId)?.collected ?? Promise.resolve();
+      // An unknown runId — never started, or evicted after RETAINED_RUNS newer
+      // runs — has no collection to wait for, so this resolves immediately.
+      return collectedByRunId.get(runId) ?? Promise.resolve();
     },
 
     onSessionEnded(sessionId) {

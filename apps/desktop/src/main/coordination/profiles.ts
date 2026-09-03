@@ -74,6 +74,8 @@ interface PreviewSnapshot {
   compatibility: ProfileCompatibility;
   compatibilityReasons: readonly string[];
   provenance: ReconProvenance | null;
+  /** The recon proposal this preview reviews; consumed on acceptance, not on review. */
+  proposalId: string | null;
 }
 
 interface DeleteSnapshot {
@@ -207,6 +209,7 @@ export function createProfileService(ctx: Context): ProfileService {
     sourceBasename: string,
     path: string | null,
     provenance: ReconProvenance | null,
+    proposalId: string | null,
   ): ProfilePreviewView => {
     const compatibilityResult = evaluateManifestCompatibility(ctx, manifest);
     const issued = previews.issue({
@@ -217,6 +220,7 @@ export function createProfileService(ctx: Context): ProfileService {
       compatibility: compatibilityResult.compatibility,
       compatibilityReasons: compatibilityResult.reasons,
       provenance,
+      proposalId,
     });
     return ProfilePreviewView.parse({
       previewToken: issued.token,
@@ -243,19 +247,25 @@ export function createProfileService(ctx: Context): ProfileService {
 
     async previewImport(request) {
       if (request.proposalId !== undefined) {
-        // A proposal is single-use. An absent recon service and an already
-        // reviewed proposal are the same fact to the owner: it is not there.
-        const proposal = ctx.recon?.takeProposal(request.proposalId) ?? null;
+        // Reviewing is a peek: the proposal is consumed by confirmImport, not
+        // by being looked at, so a cancelled or expired preview costs the owner
+        // nothing. An absent recon service and an already accepted proposal are
+        // the same fact to the owner: it is not there.
+        const proposal = ctx.recon?.peekProposal(request.proposalId) ?? null;
         if (!proposal) {
           throw new ThreadHelmError(
             'PROFILE_UNREADABLE',
             'That proposed role is no longer available.',
           );
         }
-        return snapshotPreview(proposal.manifest, proposal.digest, proposal.sourceBasename, null, {
-          reconRunId: proposal.runId,
-          derivedFromCommit: proposal.derivedFromCommit,
-        });
+        return snapshotPreview(
+          proposal.manifest,
+          proposal.digest,
+          proposal.sourceBasename,
+          null,
+          { reconRunId: proposal.runId, derivedFromCommit: proposal.derivedFromCommit },
+          request.proposalId,
+        );
       }
       const path = request.fileHandle !== undefined ? handles.get(request.fileHandle) : undefined;
       if (request.fileHandle !== undefined) handles.delete(request.fileHandle);
@@ -266,7 +276,7 @@ export function createProfileService(ctx: Context): ProfileService {
         );
       }
       const { raw, digest } = await readBounded(path);
-      return snapshotPreview(parseAgentManifest(raw), digest, basename(path), path, null);
+      return snapshotPreview(parseAgentManifest(raw), digest, basename(path), path, null, null);
     },
 
     async confirmImport(request) {
@@ -284,9 +294,17 @@ export function createProfileService(ctx: Context): ProfileService {
         ...(request.displayName !== undefined ? { displayName: request.displayName } : {}),
       };
       if (snapshot.path === null) {
-        // A proposal's bytes left the run when it was taken and its directory
-        // is gone; the reviewed manifest is the only copy and cannot drift.
-        return saveReviewedManifest(snapshot.manifest, snapshot.digest, snapshot.basename, options);
+        // A proposal's directory is deleted at collection, so these reviewed
+        // bytes are the only copy and cannot drift. Acceptance — not review —
+        // is what removes the role from the proposal list.
+        const summary = saveReviewedManifest(
+          snapshot.manifest,
+          snapshot.digest,
+          snapshot.basename,
+          options,
+        );
+        if (snapshot.proposalId) ctx.recon?.consumeProposal(snapshot.proposalId);
+        return summary;
       }
       const current = await readBounded(snapshot.path);
       let parsed: AgentManifestV1;

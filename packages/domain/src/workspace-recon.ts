@@ -5,38 +5,33 @@
  * Design: docs/superpowers/specs/2026-09-02-workspace-recon-design.md
  */
 
-import { MAX_MANIFEST_BYTES } from './agent-profile.js';
-
 /** A run considers a bounded number of files so a hostile run cannot fan out. */
 export const MAX_RECON_FILES = 12;
 
 /** The one filename a run may use to propose the supervisor role. */
 export const SUPERVISOR_BASENAME = 'supervisor.agent.json';
 
-export interface ReconFileCandidate {
-  readonly name: string;
-  readonly sizeBytes: number;
-}
-
 export interface ReconSelection {
   readonly considered: readonly string[];
-  readonly oversized: readonly string[];
   readonly ignoredForCount: readonly string[];
 }
 
 /**
  * Orders by name and takes the first `MAX_RECON_FILES`, so the same output
- * directory always yields the same selection. Oversized files stay in
- * `considered` and are reported separately: a file that was too big to read
- * is a rejection with a reason, not a file that silently vanished.
+ * directory always yields the same selection.
+ *
+ * Selection deliberately takes names alone. Size is not consulted here: the
+ * bounded read re-checks it against the open handle and reports
+ * `PROFILE_OVERSIZED` itself, so a size read from a directory listing could
+ * only ever be a staler copy of a fact the read already establishes — and a
+ * file dropped on the strength of a metadata read that failed is a file the
+ * run wrote and ThreadHelm then failed to report.
  */
-export function selectReconFiles(files: readonly ReconFileCandidate[]): ReconSelection {
-  const ordered = [...files].sort((a, b) => a.name.localeCompare(b.name, 'en-US'));
-  const considered = ordered.slice(0, MAX_RECON_FILES);
+export function selectReconFiles(names: readonly string[]): ReconSelection {
+  const ordered = [...names].sort((a, b) => a.localeCompare(b, 'en-US'));
   return {
-    considered: considered.map((file) => file.name),
-    oversized: considered.filter((f) => f.sizeBytes > MAX_MANIFEST_BYTES).map((f) => f.name),
-    ignoredForCount: ordered.slice(MAX_RECON_FILES).map((file) => file.name),
+    considered: ordered.slice(0, MAX_RECON_FILES),
+    ignoredForCount: ordered.slice(MAX_RECON_FILES),
   };
 }
 

@@ -10,9 +10,10 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import type * as FsPromises from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   RECON_NO_AUTO_HIRE_STATEMENT,
   type LaunchPreviewView,
@@ -26,6 +27,42 @@ import { createWorld, identity, type FakeWorld } from '../../contract/helpers/fa
 
 const TERMINAL = { columns: 120, rows: 30 };
 
+/**
+ * Two filesystem conditions no test can produce on Windows from inside the
+ * process: an entry `readdir` lists whose metadata the OS will not hand back,
+ * and a directory read suspended long enough for a second run to start. Both
+ * pass straight through unless a test opts in, so every other test in this
+ * file runs against the real filesystem.
+ */
+const fsHooks = vi.hoisted(() => ({
+  failStatFor: null as string | null,
+  gatedReaddir: null as { dir: string; release: Promise<void> } | null,
+}));
+
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof FsPromises>();
+  return {
+    ...actual,
+    default: actual,
+    async readdir(path: never, options: never) {
+      const gate = fsHooks.gatedReaddir;
+      if (gate && String(path) === gate.dir) await gate.release;
+      return actual.readdir(path, options);
+    },
+    async stat(path: never, options: never) {
+      if (fsHooks.failStatFor && String(path).endsWith(fsHooks.failStatFor)) {
+        throw Object.assign(new Error('EPERM: metadata unavailable'), { code: 'EPERM' });
+      }
+      return actual.stat(path, options);
+    },
+  };
+});
+
+afterEach(() => {
+  fsHooks.failStatFor = null;
+  fsHooks.gatedReaddir = null;
+});
+
 interface ReconHarness {
   world: FakeWorld;
   service: ReconService;
@@ -34,6 +71,8 @@ interface ReconHarness {
   /** The exact LaunchPreviewView the session preview path returns. */
   launchPreview(): Promise<LaunchPreviewView>;
   outputDirOf(runId: string): string;
+  /** Drives the session to a terminal lifecycle state; returns before collection finishes. */
+  endSession(opts: { ownerStopped: boolean }): Promise<void>;
   /** Drives the session to a terminal lifecycle state and lets collection run. */
   completeSession(runId: string, opts: { ownerStopped: boolean }): Promise<void>;
 }
@@ -72,6 +111,17 @@ async function buildReconHarness(
     return ids[0]!;
   };
 
+  const endSession = async (opts: { ownerStopped: boolean }): Promise<void> => {
+    const sessionId = runningSessionId();
+    if (opts.ownerStopped) {
+      const stop = await world.ok<{ stopToken: string }>('sessions.requestStop', { sessionId });
+      await world.ok('sessions.confirmStop', { stopToken: stop.stopToken });
+    } else {
+      world.hosts.find((host) => host.sessionId === sessionId)!.providerExits(0);
+    }
+    await world.until(() => !world.ctx.live.has(sessionId));
+  };
+
   return {
     world,
     service,
@@ -85,15 +135,9 @@ async function buildReconHarness(
         terminal: TERMINAL,
       }),
     outputDirOf: (runId) => join(reconRoot, workspace.id, runId),
+    endSession,
     async completeSession(runId, opts) {
-      const sessionId = runningSessionId();
-      if (opts.ownerStopped) {
-        const stop = await world.ok<{ stopToken: string }>('sessions.requestStop', { sessionId });
-        await world.ok('sessions.confirmStop', { stopToken: stop.stopToken });
-      } else {
-        world.hosts.find((host) => host.sessionId === sessionId)!.providerExits(0);
-      }
-      await world.until(() => !world.ctx.live.has(sessionId));
+      await endSession(opts);
       await service.whenCollected(runId);
     },
   };
@@ -338,6 +382,27 @@ describe('collection', () => {
     expect(collected.proposals.some((p) => p.role === 'supervisor')).toBe(false);
   });
 
+  it('considers a file the directory lists even when its metadata cannot be read', async () => {
+    // A run that wrote output must never report no_output because ThreadHelm
+    // could not stat one of the files. The file is read and rejected with its
+    // real reason, which is the true report; dropping it silently is not.
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), [
+      'supervisor.agent.json',
+      'malformed.agent.json',
+    ]);
+    fsHooks.failStatFor = 'malformed.agent.json';
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    const collected = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(collected.rejected).toEqual([
+      { sourceBasename: 'malformed.agent.json', errorCode: 'PROFILE_SCHEMA_INVALID' },
+    ]);
+    expect(collected.proposals).toHaveLength(1);
+    expect(collected.outcome).toBe('partial');
+  });
+
   it('rejects an oversized file by size rather than dropping it', async () => {
     const harness = await buildReconHarness();
     const run = await startRun(harness);
@@ -413,6 +478,56 @@ describe('repeat runs', () => {
     expect(current.proposals).toEqual([]);
   });
 
+  it('never discards a previous run directory while its collection is still reading it', async () => {
+    // The one-writer lease proves no other *session* is live. Collection is not
+    // a session: it is fired from teardown, after the lease has been released,
+    // and outlives it. Without waiting for it, a new run's discardSiblings can
+    // delete the previous run's files between its readdir and its reads, and
+    // that run then reports no_output for output ThreadHelm itself deleted.
+    const harness = await buildReconHarness();
+    const first = await startRun(harness);
+    writeFixtures(harness.outputDirOf(first.runId), [
+      'supervisor.agent.json',
+      'malformed.agent.json',
+    ]);
+
+    const outcomes: Record<string, unknown> = {};
+    const realLog = harness.world.ctx.log;
+    harness.world.ctx.log = {
+      ...realLog,
+      info(event, fields) {
+        if (event === 'recon.collected') outcomes[String(fields!.runId)] = fields!.outcome;
+        realLog.info(event, fields);
+      },
+    };
+
+    let release!: () => void;
+    fsHooks.gatedReaddir = {
+      dir: harness.outputDirOf(first.runId),
+      release: new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+    };
+
+    // The session ends, so collection starts — and stops before it reads a byte.
+    await harness.endSession({ ownerStopped: false });
+    expect(outcomes).toEqual({});
+
+    // A second run starts while that collection is still in flight. Released
+    // only once its session is live and it has had time to reach
+    // discardSiblings — the exact window the lease was wrongly held to close.
+    const second = startRun(harness);
+    await harness.world.until(() => harness.world.ctx.live.size === 1);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    release();
+    const secondRun = await second;
+    await harness.service.whenCollected(first.runId);
+
+    expect(secondRun.runId).not.toBe(first.runId);
+    // The first run read the files it wrote: one parsed, one malformed.
+    expect(outcomes[first.runId]).toBe('partial');
+  });
+
   it('deletes a stale directory left behind by a crash mid-run', async () => {
     const harness = await buildReconHarness();
     // A previous process died before collection could delete its directory.
@@ -428,8 +543,8 @@ describe('repeat runs', () => {
   });
 });
 
-describe('takeProposal', () => {
-  it('returns a proposal once and then reports it gone', async () => {
+describe('peekProposal', () => {
+  it('reads a proposal repeatedly and reports it gone only once consumed', async () => {
     const harness = await buildReconHarness();
     const run = await startRun(harness);
     writeFixtures(harness.outputDirOf(run.runId), ['supervisor.agent.json']);
@@ -437,8 +552,11 @@ describe('takeProposal', () => {
 
     const id = harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals[0]!
       .proposalId;
-    expect(harness.service.takeProposal(id)).not.toBeNull();
-    expect(harness.service.takeProposal(id)).toBeNull();
+    expect(harness.service.peekProposal(id)).not.toBeNull();
+    // Reviewing is not taking: the role survives being looked at.
+    expect(harness.service.peekProposal(id)).not.toBeNull();
+    harness.service.consumeProposal(id);
+    expect(harness.service.peekProposal(id)).toBeNull();
   });
 
   it('stamps an accepted proposal with the run it came from', async () => {
@@ -448,7 +566,7 @@ describe('takeProposal', () => {
     await harness.completeSession(run.runId, { ownerStopped: false });
 
     const proposal = harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals[0]!;
-    const taken = harness.service.takeProposal(proposal.proposalId)!;
+    const taken = harness.service.peekProposal(proposal.proposalId)!;
     expect(taken.runId).toBe(run.runId);
     expect(taken.derivedFromCommit).toBe(run.derivedFromCommit);
   });
@@ -508,19 +626,37 @@ describe('acceptance through the existing profile gate', () => {
     expect(summary.displayName).toBe('Unnamed supervisor');
   });
 
-  it('reports a proposal that was already taken as unavailable', async () => {
+  it('keeps a reviewed proposal until it is accepted, and only then removes it', async () => {
+    // Reviewing must not destroy the role: a cancelled preview, or one whose
+    // token expired, has to leave the owner exactly where they started. There
+    // is no re-picking a proposal the way there is a re-picking of a file.
     const harness = await buildReconHarness();
     const run = await startRun(harness);
     writeFixtures(harness.outputDirOf(run.runId), ['supervisor.agent.json']);
     await harness.completeSession(run.runId, { ownerStopped: false });
-    const proposal = harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals[0]!;
+    const listed = () =>
+      harness.service
+        .getRun({ workspaceId: harness.workspaceId })!
+        .proposals.map((proposal) => proposal.proposalId);
+    const proposalId = listed()[0]!;
 
-    await harness.world.ok('profiles.previewImport', { proposalId: proposal.proposalId });
-    const second = await harness.world.call('profiles.previewImport', {
-      proposalId: proposal.proposalId,
+    // Reviewed, then cancelled: nothing was accepted, so nothing was lost.
+    await harness.world.ok('profiles.previewImport', { proposalId });
+    expect(listed()).toContain(proposalId);
+
+    // Reviewed again and confirmed: acceptance is what consumes it.
+    const preview = await harness.world.ok<{ previewToken: string }>('profiles.previewImport', {
+      proposalId,
     });
-    expect(second.ok).toBe(false);
-    expect(second.ok ? 'OK' : second.error.code).toBe('PROFILE_UNREADABLE');
+    await harness.world.ok('profiles.confirmImport', {
+      previewToken: preview.previewToken,
+      importConfirmation: true,
+      displayName: 'Roster lead',
+    });
+    expect(listed()).not.toContain(proposalId);
+
+    const third = await harness.world.call('profiles.previewImport', { proposalId });
+    expect(third.ok ? 'OK' : third.error.code).toBe('PROFILE_UNREADABLE');
   });
 
   it('leaves the file-picker import path unstamped and honours a typed name there too', async () => {

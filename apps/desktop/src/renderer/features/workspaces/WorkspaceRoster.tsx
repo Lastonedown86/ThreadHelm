@@ -210,7 +210,10 @@ export function WorkspaceRoster({
   const { state } = useStore();
   const [run, setRun] = useState<ReconRunView | null>(null);
   const [disclosureOpen, setDisclosureOpen] = useState(false);
-  const [reviewPreview, setReviewPreview] = useState<ProfilePreviewView | null>(null);
+  const [reviewPreview, setReviewPreview] = useState<{
+    proposalId: string;
+    preview: ProfilePreviewView;
+  } | null>(null);
   const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
@@ -275,15 +278,10 @@ export function WorkspaceRoster({
   const review = async (proposalId: string) => {
     setError(null);
     try {
+      // A peek on the main side: the proposal stays listed until the owner
+      // accepts it, so cancelling this dialog loses nothing.
       const preview = await call(api.profiles.previewImport({ proposalId }));
-      // previewImport already consumed the proposal on the main side, whether
-      // or not this preview is ever confirmed. Reflect that immediately.
-      setRun((current) =>
-        current
-          ? { ...current, proposals: current.proposals.filter((p) => p.proposalId !== proposalId) }
-          : current,
-      );
-      setReviewPreview(preview);
+      setReviewPreview({ proposalId, preview });
     } catch (cause) {
       setError(cause);
     }
@@ -364,10 +362,23 @@ export function WorkspaceRoster({
       ) : null}
       {reviewPreview ? (
         <AgentProfileImportPreview
-          preview={reviewPreview}
+          preview={reviewPreview.preview}
           requireDisplayName
           onCancel={() => setReviewPreview(null)}
-          onImported={() => setReviewPreview(null)}
+          onImported={() => {
+            // confirmImport consumed the proposal on the main side. Reflect it
+            // here rather than waiting for the next getRun.
+            const accepted = reviewPreview.proposalId;
+            setRun((current) =>
+              current
+                ? {
+                    ...current,
+                    proposals: current.proposals.filter((p) => p.proposalId !== accepted),
+                  }
+                : current,
+            );
+            setReviewPreview(null);
+          }}
         />
       ) : null}
     </section>

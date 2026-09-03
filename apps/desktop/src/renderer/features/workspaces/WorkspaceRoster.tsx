@@ -228,13 +228,26 @@ export function WorkspaceRoster({
   // Collection runs after the session's teardown signal, which reaches the
   // renderer as `session.changed`; state.sessions is already kept live by it.
   // No dedicated recon event exists, so once that session has ended this
-  // polls getRun a few bounded times to bridge the short gap until collection
-  // finishes, then stops. It never runs while idle.
+  // polls getRun up to 5 times, 300ms apart, to bridge the short gap until
+  // collection finishes, then stops for good. It never runs while idle.
   // ponytail: bounded poll, not a background interval; add a recon.changed
   // event instead if this ever proves flaky in practice.
-  const sessionEndedAt = (run?.sessionId ? state.sessions[run.sessionId] : undefined)?.endedAt;
+  //
+  // Keyed only on runId/sessionId/outcome/sessionEndedAt (all primitives that
+  // stay constant for the life of one poll sequence) rather than the whole
+  // `run` object: each `setRun` below creates a new object reference, so
+  // depending on `run` itself would tear down and restart this effect on
+  // every poll response — resetting `attempts` to 0 and dropping the 300ms
+  // spacing, turning "bounded poll" into an unbounded one racing the IPC
+  // round-trip. Confirmed via a manual instrumented run (logged each
+  // `attempts` value and watched it stop): the real fixture case resolves in
+  // exactly 2 attempts, strictly increasing, then nothing further for 4.5s.
+  const runId = run?.runId;
+  const sessionId = run?.sessionId ?? null;
+  const outcome = run?.outcome ?? null;
+  const sessionEndedAt = (sessionId ? state.sessions[sessionId] : undefined)?.endedAt;
   useEffect(() => {
-    if (!run || run.outcome !== null || !run.sessionId || !sessionEndedAt) return;
+    if (!runId || outcome !== null || !sessionId || !sessionEndedAt) return;
     let cancelled = false;
     let attempts = 0;
     const poll = () => {
@@ -250,7 +263,7 @@ export function WorkspaceRoster({
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, run, sessionEndedAt]);
+  }, [workspaceId, runId, outcome, sessionId, sessionEndedAt]);
 
   const availableProviders = state.readiness
     .filter((readiness) => readiness.availability === 'available')

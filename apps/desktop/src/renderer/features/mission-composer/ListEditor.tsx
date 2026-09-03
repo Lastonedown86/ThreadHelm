@@ -6,6 +6,8 @@ export function ListEditor({
   max,
   itemMax = 500,
   hint,
+  dataField,
+  invalid,
   onChange,
 }: {
   label: string;
@@ -13,6 +15,8 @@ export function ListEditor({
   max: number;
   itemMax?: number;
   hint?: string;
+  dataField?: string;
+  invalid?: boolean;
   onChange(items: string[]): void;
 }) {
   const [text, setText] = useState('');
@@ -33,6 +37,8 @@ export function ListEditor({
       <div className="composer-list-row">
         <input
           id={id}
+          data-field={dataField}
+          aria-invalid={invalid || undefined}
           value={text}
           maxLength={itemMax}
           disabled={items.length >= max}

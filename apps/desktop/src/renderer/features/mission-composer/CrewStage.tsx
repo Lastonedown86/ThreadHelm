@@ -1,4 +1,4 @@
-import type { OperationResponse } from '@threadhelm/contracts';
+import type { ApprovedWorkspaceView, OperationResponse } from '@threadhelm/contracts';
 import { ListEditor } from './ListEditor.js';
 import type { StageProps } from './OutcomeStage.js';
 import { newWorker, runtimeSummary, type WorkerFields } from './composer-fields.js';
@@ -12,6 +12,7 @@ export function CrewStage({
   invalid,
   profiles,
   eligible,
+  workspaces,
   loading,
   loadError,
   onCreateAgent,
@@ -20,13 +21,16 @@ export function CrewStage({
 }: StageProps & {
   profiles: Profile[];
   eligible: Eligible[];
+  workspaces: ApprovedWorkspaceView[];
   loading: boolean;
   loadError: boolean;
   onCreateAgent(): void;
   onLaunchSession(): void;
   onRetryLoad(): void;
 }) {
-  if (loading) return <p role="status">Loading profiles…</p>;
+  // ponytail: a plain paragraph, not role="status" — the composer's one shared
+  // live region (MissionComposerWorkspace) already owns announcements.
+  if (loading) return <p>Loading profiles…</p>;
   if (loadError)
     return (
       <div className="composer-notice">
@@ -72,7 +76,8 @@ export function CrewStage({
     const requested = profileOf(worker.profileId)?.requestedProvider;
     return requested === 'codex' || requested === 'codex-cli' ? 'codex-cli' : 'claude-code';
   };
-  const pathOf = (s: Eligible) => s.workspaceId.slice(0, 8);
+  const pathOf = (s: Eligible) =>
+    workspaces.find((w) => w.id === s.workspaceId)?.displayPath ?? 'an approved folder';
 
   return (
     <div className="composer-stage-body">
@@ -213,6 +218,8 @@ export function CrewStage({
               hint="Evidence you can judge the result by. At least one."
               items={worker.requiredReturnEvidence}
               max={8}
+              dataField={`workers.${index}.requiredReturnEvidence`}
+              invalid={invalid === `workers.${index}.requiredReturnEvidence`}
               onChange={(requiredReturnEvidence) => patchWorker(index, { requiredReturnEvidence })}
             />
             <details>

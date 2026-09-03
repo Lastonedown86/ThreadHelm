@@ -112,6 +112,12 @@ test('crew stage names every missing worker field and collapses runtime under a 
     await expect(
       page.getByText('Add one thing worker 1 must bring back.', { exact: true }),
     ).toBeVisible();
+    // The blocked-continue focus target for this exact readiness message
+    // (workers.0.requiredReturnEvidence) must resolve to a real, focusable
+    // control — not nothing, as it did before ListEditor accepted data-field.
+    const evidenceInput = page.locator('[data-field="workers.0.requiredReturnEvidence"]');
+    await evidenceInput.focus();
+    await expect(evidenceInput).toBeFocused();
     await page
       .getByLabel('What worker 1 must bring back', { exact: true })
       .fill('A passing run log');

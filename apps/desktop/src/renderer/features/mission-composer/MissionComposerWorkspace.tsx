@@ -217,6 +217,7 @@ export function MissionComposerWorkspace({
             invalid={invalid}
             profiles={profiles}
             eligible={eligible}
+            workspaces={state.workspaces}
             loading={loading}
             loadError={loadError !== null}
             onCreateAgent={() =>

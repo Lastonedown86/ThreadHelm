@@ -18,7 +18,7 @@
 9. The supervisor is an ordinary participant role; main owns mission policy, leases, and effects.
 10. Mission-envelope bounds are durable and monotonic unless the user approves a revision.
 11. Recovery never replays an uncertain action or silently replaces or resumes a supervisor.
-12. Hire manifests are untrusted, revisioned profile data; names, goals, and capabilities are never authority.
+12. Agent manifests are untrusted, revisioned profile data; names, goals, and capabilities are never authority.
 13. Templates and wizard drafts are non-executable scaffolds; generation must end in the same strict reviewed manifest contract.
 
 ## Enumerations
@@ -297,7 +297,7 @@ existing escalation remains authoritative.
 
 ### AgentProfile
 
-Current local identity and selection state for one reviewed portable hire.
+Current local identity and selection state for one reviewed portable agent manifest.
 
 | Field | Type | Rules |
 |---|---|---|
@@ -349,7 +349,7 @@ Stable identity and lifecycle for a generic shipped or local user-created scaffo
 |---|---|---|
 | `id`, `templateId` | UUID | Primary key and owner. |
 | `revision` | integer | Starts at 1; unique/monotonic per template. |
-| `manifestFields` | strict bounded JSON | Only supported hire fields/scaffolds; no tools or authority fields. |
+| `manifestFields` | strict bounded JSON | Only supported agent manifest fields/scaffolds; no tools or authority fields. |
 | `variables` | bounded declarations | At most 16 named literal-text variables with type/length/default metadata. |
 | `sourceProfileRevisionId` | UUID nullable | Provenance when saved from a reviewed profile. |
 | `contentSha256` | 32-byte digest | Immutable revision identity. |

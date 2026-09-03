@@ -24,19 +24,19 @@ export {
 export {
   CHANGED_AFTER_PREVIEW_EDITED_FIXTURE,
   CHANGED_AFTER_PREVIEW_ORIGINAL_FIXTURE,
-  DUPLICATE_HIRE_MANIFEST_FIXTURE,
-  EXCESSIVE_BOUND_HIRE_MANIFEST_FIXTURE,
-  HIRE_MANIFEST_SPEC,
-  HOSTILE_TEXT_HIRE_MANIFEST_FIXTURE,
-  MALFORMED_HIRE_MANIFEST_TEXT_FIXTURES,
+  DUPLICATE_AGENT_MANIFEST_FIXTURE,
+  EXCESSIVE_BOUND_AGENT_MANIFEST_FIXTURE,
+  LEGACY_MANIFEST_SPEC,
+  HOSTILE_TEXT_AGENT_MANIFEST_FIXTURE,
+  MALFORMED_AGENT_MANIFEST_TEXT_FIXTURES,
   MARVEL_ROSTER_FIXTURES,
-  MAX_HIRE_MANIFEST_TOKEN_CAP,
-  REVISED_HIRE_MANIFEST_FIXTURE,
-  UNAVAILABLE_MODEL_HIRE_MANIFEST_FIXTURE,
-  hireManifestDigest,
-  writeHireManifestFile,
-  type HireManifestFixture,
-  type HireManifestFixtureFields,
+  MAX_AGENT_MANIFEST_TOKEN_CAP,
+  REVISED_AGENT_MANIFEST_FIXTURE,
+  UNAVAILABLE_MODEL_AGENT_MANIFEST_FIXTURE,
+  agentManifestDigest,
+  writeAgentManifestFile,
+  type AgentManifestFixture,
+  type AgentManifestFixtureFields,
 } from './agent-profiles.js';
 export { GENERIC_AGENT_TEMPLATE_FIXTURES, type AgentTemplateFixture } from './agent-templates.js';
 export {
@@ -60,3 +60,4 @@ export {
   type ProviderLifecycleFixture,
 } from './coordination-bridge.js';
 export * from './supervisor.js';
+export { RECON_PROPOSAL_FIXTURES } from './recon.js';

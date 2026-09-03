@@ -80,6 +80,8 @@ export interface TestHooks {
     params: Record<string, unknown>,
   ): Promise<unknown>;
   dropProviderPipe(sessionId: string): Promise<void>;
+  /** Deterministic wait for a recon run's collection, instead of polling disk. */
+  reconWhenCollected(runId: string): Promise<void>;
   storagePath(): string;
   breakStorage(): void;
   version(): string;
@@ -345,6 +347,10 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
         socket.once('connect', () => socket.end());
       });
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    },
+    reconWhenCollected: (runId) => {
+      if (!ctx.recon) throw new Error('TEST_RECON_NOT_AVAILABLE');
+      return ctx.recon.whenCollected(runId);
     },
     storagePath: () => ctx.storage?.db.name ?? '',
     breakStorage: () => {

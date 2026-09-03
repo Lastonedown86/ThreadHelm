@@ -34,7 +34,7 @@ import {
   WorkOutcome,
 } from '@threadhelm/contracts';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 const inList = (values: readonly string[]): string =>
   `IN (${values.map((v) => `'${v}'`).join(', ')})`;
@@ -380,6 +380,11 @@ BEGIN
 END;
 `;
 
+// Migration text is a historical record: this is the literal body of the
+// version-3 migration and of a v3 database's agent_profiles table. It must
+// never change shape, even when the "current" shape (see CURRENT_AGENT_PROFILES
+// below) gains columns later, or the record of what that migration actually
+// did becomes a lie.
 const V3_AGENT_PROFILES = `
 CREATE TABLE agent_profiles (
   id TEXT PRIMARY KEY,
@@ -423,6 +428,27 @@ CREATE TABLE mission_profile_pins (
 );
 CREATE INDEX mission_profile_pins_profile ON mission_profile_pins (profile_id);
 `;
+
+// Assumes agent_profiles already exists — every real version-3 database has
+// it (it shipped in the same migration, see V3_AGENT_PROFILES above). A v3
+// database that is somehow missing agent_profiles will fail this ALTER with
+// a raw SqliteError, because the migration runner applies pending migrations
+// before it repairs missing CURRENT_SCHEMA_EXTENSIONS tables (see migrate.ts).
+// Known limitation, not fixed here: see tests/unit/persistence/workspace-recon.test.ts
+// "fails to migrate a v3 database that is missing agent_profiles (known limitation)".
+const V4_RECON_PROVENANCE = `
+ALTER TABLE agent_profiles ADD COLUMN recon_run_id TEXT;
+ALTER TABLE agent_profiles ADD COLUMN derived_from_commit TEXT;
+`;
+
+// The present-tense counterpart of V3_AGENT_PROFILES: what agent_profiles and
+// its companions look like today. Composed as history-plus-deltas — the v3
+// text followed by every migration applied since — rather than duplicated,
+// so this can never drift from what a fully-migrated database actually looks
+// like; CURRENT_SCHEMA_EXTENSIONS uses this (not V3_AGENT_PROFILES) to repair
+// a database that is already at SCHEMA_VERSION but is somehow missing the
+// table outright.
+const CURRENT_AGENT_PROFILES = `${V3_AGENT_PROFILES}${V4_RECON_PROVENANCE}`;
 
 const V3_AGENT_TEMPLATES = `
 CREATE TABLE agent_profile_templates (
@@ -539,11 +565,12 @@ export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 1, sql: V1 },
   { version: 2, sql: V2 },
   { version: 3, sql: `${V3}\n${V3_AGENT_PROFILES}` },
+  { version: 4, sql: V4_RECON_PROVENANCE },
 ];
 
 /** Additive slices intentionally delivered under the still-unreleased v3 schema. */
 export const CURRENT_SCHEMA_EXTENSIONS: readonly { table: string; sql: string }[] = [
-  { table: 'agent_profiles', sql: V3_AGENT_PROFILES },
+  { table: 'agent_profiles', sql: CURRENT_AGENT_PROFILES },
   { table: 'agent_profile_templates', sql: V3_AGENT_TEMPLATES },
   { table: 'agent_template_storage_v1', sql: V3_TEMPLATE_LIFECYCLE },
   { table: 'agent_profile_export_intents', sql: V3_AGENT_EXPORT_INTENTS },

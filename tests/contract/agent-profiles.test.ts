@@ -1,5 +1,5 @@
 /**
- * T092 (Feature 002, US6) — failing-first contract tests for reviewed hire
+ * T092 (Feature 002, US6) — failing-first contract tests for reviewed agent
  * manifests. None of the `@threadhelm/contracts` exports below exist yet
  * (T096/T100); every assertion is expected to fail until then.
  *
@@ -11,7 +11,7 @@ import {
   AgentProfileSummaryView,
   ConfirmDeleteProfileRequest,
   ConfirmImportProfileRequest,
-  HireManifestV1,
+  AgentManifestV1,
   MAX_TOKEN_CAP,
   operationNames,
   PreviewImportProfileRequest,
@@ -26,7 +26,7 @@ import {
 } from '@threadhelm/contracts';
 import { CoordinationDisclosureStore } from '../../apps/desktop/src/main/coordination/disclosures.js';
 import { describe, expect, it } from 'vitest';
-import { parseHireManifest } from '@threadhelm/domain';
+import { parseAgentManifest } from '@threadhelm/domain';
 
 const ID_A = '11111111-1111-4111-8111-111111111111';
 const ID_B = '22222222-2222-4222-8222-222222222222';
@@ -63,11 +63,11 @@ describe('profile identifiers are stable UUIDs, never persona names', () => {
   });
 });
 
-describe('hire manifest strict schema (unknown fields never grant authority)', () => {
+describe('agent manifest strict schema (unknown fields never grant authority)', () => {
   it('rejects credentials even when shaped like valid model or capability identifiers', () => {
     for (const value of ['sk-ant-syntheticexample', 'ghp_syntheticexample']) {
-      expect(HireManifestV1.safeParse({ ...VALID_MANIFEST, model: value }).success).toBe(false);
-      expect(HireManifestV1.safeParse({ ...VALID_MANIFEST, capabilities: [value] }).success).toBe(
+      expect(AgentManifestV1.safeParse({ ...VALID_MANIFEST, model: value }).success).toBe(false);
+      expect(AgentManifestV1.safeParse({ ...VALID_MANIFEST, capabilities: [value] }).success).toBe(
         false,
       );
     }
@@ -75,7 +75,7 @@ describe('hire manifest strict schema (unknown fields never grant authority)', (
   it('rejects escaped duplicate JSON keys rather than accepting a hidden replacement', () => {
     const raw = JSON.stringify(VALID_MANIFEST);
     for (const replacement of ['"\\u0067oal":"hidden"', '"\\u006eame":"hidden"']) {
-      expect(() => parseHireManifest(raw.slice(0, -1) + ',' + replacement + '}')).toThrow();
+      expect(() => parseAgentManifest(raw.slice(0, -1) + ',' + replacement + '}')).toThrow();
     }
   });
 
@@ -94,44 +94,44 @@ describe('hire manifest strict schema (unknown fields never grant authority)', (
     for (const field of ['name', 'description', 'goal', 'author']) {
       for (const value of unsafe) {
         expect(
-          HireManifestV1.safeParse({ ...VALID_MANIFEST, [field]: value }).success,
+          AgentManifestV1.safeParse({ ...VALID_MANIFEST, [field]: value }).success,
           `${field}: ${JSON.stringify(value)}`,
         ).toBe(false);
       }
     }
     expect(
-      HireManifestV1.parse({ ...VALID_MANIFEST, goal: 'Review 😀\nThen report.\tNo execution.' })
+      AgentManifestV1.parse({ ...VALID_MANIFEST, goal: 'Review 😀\nThen report.\tNo execution.' })
         .goal,
     ).toBe('Review 😀\nThen report.\tNo execution.');
   });
 
   it('accepts the exact supported field set', () => {
-    expect(HireManifestV1.parse(VALID_MANIFEST)).toEqual(VALID_MANIFEST);
+    expect(AgentManifestV1.parse(VALID_MANIFEST)).toEqual(VALID_MANIFEST);
   });
 
   it('rejects an unknown field, including a role-shaped one', () => {
-    expect(() => HireManifestV1.parse({ ...VALID_MANIFEST, role: 'supervisor' })).toThrow();
-    expect(() => HireManifestV1.parse({ ...VALID_MANIFEST, effort: 'high' })).toThrow();
+    expect(() => AgentManifestV1.parse({ ...VALID_MANIFEST, role: 'supervisor' })).toThrow();
+    expect(() => AgentManifestV1.parse({ ...VALID_MANIFEST, effort: 'high' })).toThrow();
   });
 
   it('stores hostile-looking goal text inertly without throwing or executing it', () => {
     const hostile = '<script>alert(1)</script>; DROP TABLE agent_profiles;--';
-    expect(HireManifestV1.parse({ ...VALID_MANIFEST, goal: hostile }).goal).toBe(hostile);
+    expect(AgentManifestV1.parse({ ...VALID_MANIFEST, goal: hostile }).goal).toBe(hostile);
   });
 
   it('bounds tokenCap at the two-million ceiling (token-budget contract)', () => {
     expect(MAX_TOKEN_CAP).toBe(2_000_000);
-    expect(HireManifestV1.parse({ ...VALID_MANIFEST, tokenCap: MAX_TOKEN_CAP }).tokenCap).toBe(
+    expect(AgentManifestV1.parse({ ...VALID_MANIFEST, tokenCap: MAX_TOKEN_CAP }).tokenCap).toBe(
       MAX_TOKEN_CAP,
     );
     expect(() =>
-      HireManifestV1.parse({ ...VALID_MANIFEST, tokenCap: MAX_TOKEN_CAP + 1 }),
+      AgentManifestV1.parse({ ...VALID_MANIFEST, tokenCap: MAX_TOKEN_CAP + 1 }),
     ).toThrow();
   });
 
   it('requires isolate to be an exact boolean, not a truthy string (isolation contract)', () => {
-    expect(HireManifestV1.parse({ ...VALID_MANIFEST, isolate: false }).isolate).toBe(false);
-    expect(() => HireManifestV1.parse({ ...VALID_MANIFEST, isolate: 'true' })).toThrow();
+    expect(AgentManifestV1.parse({ ...VALID_MANIFEST, isolate: false }).isolate).toBe(false);
+    expect(() => AgentManifestV1.parse({ ...VALID_MANIFEST, isolate: 'true' })).toThrow();
   });
 });
 
@@ -191,7 +191,7 @@ describe('preview/confirm import never accepts arbitrary provider input', () => 
     const preview = {
       previewToken: 'p'.repeat(24),
       digest: 'a'.repeat(64),
-      basename: 'tony-stark.hire.json',
+      basename: 'tony-stark.agent.json',
       normalized: VALID_MANIFEST,
       warnings: [] as string[],
       compatibility: 'compatible' as const,
@@ -223,7 +223,7 @@ describe('preview/confirm import never accepts arbitrary provider input', () => 
     const store = new CoordinationDisclosureStore<{ digest: string; basename: string }>(() =>
       Date.parse(AT),
     );
-    const snapshot = { digest: 'a'.repeat(64), basename: 'tony-stark.hire.json' };
+    const snapshot = { digest: 'a'.repeat(64), basename: 'tony-stark.agent.json' };
     const issued = store.issue('profiles.confirmImport', snapshot);
 
     expect(

@@ -1,7 +1,7 @@
 import { expect, test, type Locator } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MARVEL_ROSTER_FIXTURES, writeHireManifestFile } from '@threadhelm/test-fixtures';
+import { MARVEL_ROSTER_FIXTURES, writeAgentManifestFile } from '@threadhelm/test-fixtures';
 import { launchApp, type LaunchedApp } from './helpers/app.js';
 import { teardown, tempWorkspace } from './helpers/ui.js';
 
@@ -145,7 +145,7 @@ test('export discloses the selected target and requires explicit overwrite conse
   const app = await launchApp();
   const dir = tempWorkspace('wizard-export');
   try {
-    const target = join(dir, 'quality.hire.json');
+    const target = join(dir, 'quality.agent.json');
     writeFileSync(target, 'existing file');
     await app.app.evaluate((_electron, path) => {
       (
@@ -183,7 +183,7 @@ test('local themed templates come from reviewed profiles and remain separate fro
   try {
     await openAgents(app);
     const profile = MARVEL_ROSTER_FIXTURES[7]!;
-    const path = writeHireManifestFile(dir, profile.basename, profile.text);
+    const path = writeAgentManifestFile(dir, profile.basename, profile.text);
     await app.app.evaluate((_electron, filePath) => {
       (
         globalThis as unknown as {

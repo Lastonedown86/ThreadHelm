@@ -82,7 +82,7 @@ async function exportDraft(target: string, overwrite = false) {
 describe('agent creation wizard export', () => {
   it('uses the main-owned picker, atomically writes exact UTF-8 JSON, and preserves completion across restart', async () => {
     const dir = tempDir();
-    const target = join(dir, 'reviewer.hire.json');
+    const target = join(dir, 'reviewer.agent.json');
     const exported = await exportDraft(target);
     expect(exported.result.ok).toBe(true);
     expect(readFileSync(target, 'utf8')).toBe(exported.completion.manifestJson);
@@ -100,7 +100,7 @@ describe('agent creation wizard export', () => {
 
   it('requires a distinct overwrite confirmation after an existing target is disclosed', async () => {
     const dir = tempDir();
-    const target = join(dir, 'collision.hire.json');
+    const target = join(dir, 'collision.agent.json');
     writeFileSync(target, 'keep-me', 'utf8');
     const listed = await app.call<{ templates: { currentRevisionId: string }[] }>(
       'agentTemplates.list',
@@ -134,7 +134,7 @@ describe('agent creation wizard export', () => {
 
   it('fails closed when the selected target changes after preview', async () => {
     const dir = tempDir();
-    const target = join(dir, 'changed.hire.json');
+    const target = join(dir, 'changed.agent.json');
     const listed = await app.call<{ templates: { currentRevisionId: string }[] }>(
       'agentTemplates.list',
     );
@@ -167,12 +167,12 @@ describe('agent creation wizard export', () => {
 
   it('records a write failure without creating a partial target', async () => {
     const dir = tempDir();
-    const target = join(dir, 'failed.hire.json');
+    const target = join(dir, 'failed.agent.json');
     await failNextExport('beforeWrite');
     const exported = await exportDraft(target);
     expect(exported.result.ok).toBe(false);
     if (!exported.result.ok) expect(exported.result.error.code).toBe('STORAGE_UNAVAILABLE');
-    expect(readdirSync(dir)).not.toContain('failed.hire.json');
+    expect(readdirSync(dir)).not.toContain('failed.agent.json');
     const db = new Database(join(app.userData, 'threadhelm.sqlite'), { readonly: true });
     try {
       expect(
@@ -187,7 +187,7 @@ describe('agent creation wizard export', () => {
 
   it('retains an unknown post-install cleanup outcome across restart and never replays it', async () => {
     const dir = tempDir();
-    const target = join(dir, 'unknown.hire.json');
+    const target = join(dir, 'unknown.agent.json');
     await failNextExport('tempCleanup');
     const exported = await exportDraft(target);
     expect(exported.result.ok).toBe(false);
@@ -271,7 +271,7 @@ describe('agent creation wizard export', () => {
 
   it('allows only one concurrent export to an initially absent target', async () => {
     const dir = tempDir();
-    const target = join(dir, 'shared.hire.json');
+    const target = join(dir, 'shared.agent.json');
     const listed = await app.call<{ templates: { currentRevisionId: string }[] }>(
       'agentTemplates.list',
     );

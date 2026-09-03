@@ -42,7 +42,7 @@ profiles, personas, templates, missions, and persisted bypass. Automated tests u
 authoring/failure analysis recommends the lowest-cost capable approved model at low/medium effort;
 high-cost/high-effort requires explicit selection or recorded escalation. Planning providers remain
 ChatGPT/OpenAI, Claude, and Google Antigravity; runtime providers remain Codex CLI and Claude Code.
-Effort and permission policy are launch state, not hire-schema data.
+Effort and permission policy are launch state, not agent-manifest data.
 
 ## Decision 2: Keep Electron main as the sole router and SQLite writer
 
@@ -354,7 +354,7 @@ turning coordination into a transcript/secret archive.
 - [SQLite FTS5](https://www.sqlite.org/fts5.html)
 - `.specify/memory/constitution.md`
 
-## Decision 13: Import Munder hire manifests only through a digest-bound review
+## Decision 13: Import Munder agent manifests only through a digest-bound review
 
 **Decision**: Treat `munder-difflin/hire@1` files as portable, untrusted agent-profile data. Electron
 main performs bounded strict parsing, documented normalization, compatibility evaluation, and a
@@ -371,16 +371,16 @@ it. Unsupported models stay visibly incompatible/disabled rather than being sile
 
 | File | Name | Model request | Isolate | Token cap | Goal chars | SHA-256 |
 |---|---|---|---:|---:|---:|---|
-| `maria-hill-issue-triage.hire.json` | Maria Hill | `claude-sonnet-5` | true | 2000000 | 3296 | `88d8b9677c564e530c6a306878d62d08299e0c16a1e25a775e63863b0768eb31` |
-| `black-panther-commerce-engineer.hire.json` | Black Panther | `claude-opus-5` | true | 2000000 | 1059 | `7cf5af78041346cb91eabcc1d485900097ad2c0a1d1cf4252fa5b38d9de49214` |
-| `captain-america-pr-deployment-gatekeeper.hire.json` | Captain America | `claude-opus-5` | false | 2000000 | 1902 | `17a94e34540a37cc43b49a0df2c85af5da4851584a9c872475d5ef3ae189373b` |
-| `doctor-strange-square-event-sentinel.hire.json` | Doctor Strange | `claude-opus-5` | true | 2000000 | 1205 | `2a0aa5268a3cc413d3598a5b9e660866a89ab7d7ca2bec7bc2462dea27345b3a` |
-| `nick-fury-release-commander.hire.json` | Nick Fury | `claude-sonnet-5` | false | 2000000 | 1026 | `a0be866432d56d47bce9123425a37ff8dee0ee5cf1fb99cae0241dc919248521` |
-| `she-hulk-spec-review-counsel.hire.json` | She-Hulk | `claude-sonnet-5` | true | 2000000 | 1412 | `17db7fa89b4403ecbd6e1aac66a0be62e86890e9539da3cb5728c423862eb7cb` |
-| `shuri-ui-ux.hire.json` | Shuri | `claude-sonnet-5` | true | 2000000 | 1126 | `932ea6d8870af3fe9774bf310d457220febe306363032876016de671737f64c0` |
-| `spider-man-quality-engineer.hire.json` | Spider-Man | `claude-sonnet-5` | true | 2000000 | 1126 | `18a234d108fccdce28cee2a12882431c2f1952eb3d1697b5aaca390d0e6c38e7` |
-| `vision-authority-flags-architect.hire.json` | Vision | `claude-opus-5` | true | 2000000 | 1258 | `9b1cee77bdc0a4b740a7ad07709a161ca2a41eff0ceef3849d3d3f9838a86515` |
-| `war-machine-devops-operator.hire.json` | War Machine | `claude-sonnet-5` | true | 2000000 | 1147 | `332ca412f71ada3f8238686836d0a76efc40bff85b2973fac20b457c4a3f2e6e` |
+| `maria-hill-issue-triage.agent.json` | Maria Hill | `claude-sonnet-5` | true | 2000000 | 3296 | `88d8b9677c564e530c6a306878d62d08299e0c16a1e25a775e63863b0768eb31` |
+| `black-panther-commerce-engineer.agent.json` | Black Panther | `claude-opus-5` | true | 2000000 | 1059 | `7cf5af78041346cb91eabcc1d485900097ad2c0a1d1cf4252fa5b38d9de49214` |
+| `captain-america-pr-deployment-gatekeeper.agent.json` | Captain America | `claude-opus-5` | false | 2000000 | 1902 | `17a94e34540a37cc43b49a0df2c85af5da4851584a9c872475d5ef3ae189373b` |
+| `doctor-strange-square-event-sentinel.agent.json` | Doctor Strange | `claude-opus-5` | true | 2000000 | 1205 | `2a0aa5268a3cc413d3598a5b9e660866a89ab7d7ca2bec7bc2462dea27345b3a` |
+| `nick-fury-release-commander.agent.json` | Nick Fury | `claude-sonnet-5` | false | 2000000 | 1026 | `a0be866432d56d47bce9123425a37ff8dee0ee5cf1fb99cae0241dc919248521` |
+| `she-hulk-spec-review-counsel.agent.json` | She-Hulk | `claude-sonnet-5` | true | 2000000 | 1412 | `17db7fa89b4403ecbd6e1aac66a0be62e86890e9539da3cb5728c423862eb7cb` |
+| `shuri-ui-ux.agent.json` | Shuri | `claude-sonnet-5` | true | 2000000 | 1126 | `932ea6d8870af3fe9774bf310d457220febe306363032876016de671737f64c0` |
+| `spider-man-quality-engineer.agent.json` | Spider-Man | `claude-sonnet-5` | true | 2000000 | 1126 | `18a234d108fccdce28cee2a12882431c2f1952eb3d1697b5aaca390d0e6c38e7` |
+| `vision-authority-flags-architect.agent.json` | Vision | `claude-opus-5` | true | 2000000 | 1258 | `9b1cee77bdc0a4b740a7ad07709a161ca2a41eff0ceef3849d3d3f9838a86515` |
+| `war-machine-devops-operator.agent.json` | War Machine | `claude-sonnet-5` | true | 2000000 | 1147 | `332ca412f71ada3f8238686836d0a76efc40bff85b2973fac20b457c4a3f2e6e` |
 
 **Rationale**: This preserves the user's named agent style and makes the supervisor roster concrete
 without allowing persona prose or capability labels to become an authorization channel. Immutable
@@ -395,7 +395,7 @@ digests/revisions also prevent a file from changing between review and import un
 
 **Sources**:
 
-- The ten user-supplied `*.hire.json` files reviewed on 2026-08-28
+- The ten user-supplied `*.agent.json` files reviewed on 2026-08-28
 - `munder-difflin/hire@1` manifest shape and observed validation bounds
 - `.specify/memory/constitution.md`
 

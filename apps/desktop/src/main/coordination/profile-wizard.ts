@@ -18,7 +18,7 @@ import {
   AgentWizardDraftDetailView,
   AgentWizardDraftSummaryView,
   AgentWizardExportPreviewView,
-  HireManifestV1,
+  AgentManifestV1,
   ThreadHelmError,
   TOKEN_TTL_MS,
   type AgentWizardStep,
@@ -43,11 +43,26 @@ const TESTED_MODELS: Readonly<Record<ProviderId, readonly string[]>> = {
   'codex-cli': ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
 };
 
+/**
+ * The filename the Save dialog offers. It lives beside the validator below
+ * because the two are one decision: a default the validator rejects is an
+ * export the owner cannot complete by accepting what they were offered.
+ */
+export const AGENT_EXPORT_DEFAULT_FILENAME = 'agent-manifest.agent.json';
+
+/** The one rule for an export target, applied to every path the picker returns. */
+export function isAgentExportTarget(path: string): boolean {
+  return (
+    extname(path).toLocaleLowerCase('en-US') === '.json' &&
+    path.toLocaleLowerCase('en-US').endsWith('.agent.json')
+  );
+}
+
 type CompletionSnapshot = {
   action: 'profile' | 'export';
   draftId: string;
   version: number;
-  manifest: HireManifestV1;
+  manifest: AgentManifestV1;
   manifestJson: string;
   digest: string;
 };
@@ -106,7 +121,7 @@ export interface AgentWizardService {
   deleteTemplate(request: OperationRequest<'agentTemplates.delete'>): ReturnType<typeof summaryOf>;
 }
 
-function canonicalManifest(manifest: HireManifestV1): string {
+function canonicalManifest(manifest: AgentManifestV1): string {
   return `${JSON.stringify({ ...manifest, spec: AGENT_PROFILE_MANIFEST_SPEC }, null, 2)}\n`;
 }
 function digest(value: string): string {
@@ -120,7 +135,7 @@ function storage(ctx: Context) {
 }
 function compatibility(
   ctx: Context,
-  manifest: HireManifestV1,
+  manifest: AgentManifestV1,
 ): { compatibility: ProfileCompatibility; reasons: readonly string[] } {
   return evaluateProfileCompatibility({
     requestedProvider: manifest.provider,
@@ -133,12 +148,12 @@ function compatibility(
 function manifestOf(
   draft: TemplateDraftDetail,
   templates: ReturnType<typeof storage>['agentTemplates'],
-): HireManifestV1 {
+): AgentManifestV1 {
   if (draft.sourceTemplateRevisionId) templates.getDraftSource(draft.sourceTemplateRevisionId);
   try {
     return completeTemplateDraft(
       createTemplateDraft({
-        manifest: draft.fieldValues as HireManifestV1,
+        manifest: draft.fieldValues as AgentManifestV1,
         variables: draft.variableValues,
       }),
     );
@@ -166,7 +181,7 @@ const VARIABLE_FIELDS = ['name', 'description', 'model', 'goal', 'author'] as co
 type VariableField = (typeof VARIABLE_FIELDS)[number];
 
 function fieldAcceptsExpandedValue(field: VariableField, value: string): boolean {
-  return HireManifestV1.safeParse({
+  return AgentManifestV1.safeParse({
     spec: AGENT_PROFILE_MANIFEST_SPEC,
     name: 'Agent',
     description: 'Bounded description',
@@ -397,7 +412,7 @@ export function createAgentWizardService(
   const templates = repos.agentTemplates;
   repos.agentProfileExports.recoverUnknown(ctx.clock().toISOString());
   for (const fixture of GENERIC_AGENT_TEMPLATE_FIXTURES) {
-    const manifestJson = canonicalManifest(fixture.manifest as HireManifestV1);
+    const manifestJson = canonicalManifest(fixture.manifest as AgentManifestV1);
     templates.createBundled({
       key: fixture.key,
       name: fixture.manifest.name,
@@ -545,7 +560,7 @@ export function createAgentWizardService(
         summary = profiles.saveReviewedManifest(
           current.manifest,
           current.digest,
-          `${current.digest.slice(0, 12)}.hire.json`,
+          `${current.digest.slice(0, 12)}.agent.json`,
         );
       });
       emitDraft(templates.getDraft(current.draftId));
@@ -568,12 +583,8 @@ export function createAgentWizardService(
         throw new ThreadHelmError('CONFIRMATION_EXPIRED', 'The export review expired or was used.');
       if (snapshot.action !== 'export')
         throw new ThreadHelmError('INVALID_REQUEST', 'This preview is not bound to export.');
-      if (
-        !path ||
-        extname(path).toLocaleLowerCase('en-US') !== '.json' ||
-        !path.toLocaleLowerCase('en-US').endsWith('.hire.json')
-      )
-        throw new ThreadHelmError('INVALID_REQUEST', 'Choose a .hire.json export target.');
+      if (!path || !isAgentExportTarget(path))
+        throw new ThreadHelmError('INVALID_REQUEST', 'Choose a .agent.json export target.');
       const parent = await realpath(dirname(path)).catch(() => {
         throw new ThreadHelmError('TARGET_CHANGED', 'The export folder is unavailable.');
       });
@@ -797,7 +808,7 @@ export function createAgentWizardService(
       return detailTemplate(templates, templateId);
     },
     saveRevision(request) {
-      let manifest: HireManifestV1;
+      let manifest: AgentManifestV1;
       let manifestJson: string;
       let sourceProfileRevisionId: string | null;
       let sourceProfileIsHistorical = false;
@@ -817,7 +828,7 @@ export function createAgentWizardService(
           // `review` above validated the literal expansion. Persist the draft's
           // raw scaffold so user edits to a placeholder-bearing field remain a
           // reusable template expression rather than a frozen expanded value.
-          manifestJson = canonicalManifest(draft.fieldValues as HireManifestV1);
+          manifestJson = canonicalManifest(draft.fieldValues as AgentManifestV1);
         } else manifestJson = canonicalManifest(manifest);
       } else {
         const profile = repos.agentProfiles.getDetailByRevision(request.source.profileRevisionId);

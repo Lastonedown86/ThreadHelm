@@ -4,7 +4,7 @@
  * Deterministic fake terminal agent (T023). Plain CommonJS, no dependencies,
  * so it runs under any Node/Electron runtime without a build step.
  *
- *   node fake-agent.cjs --mode <echo|burst|control|ignore-interrupt|spawn-children|spawn-bridge> [--lines N]
+ *   node fake-agent.cjs --mode <echo|burst|control|ignore-interrupt|spawn-children|spawn-bridge|recon> [--lines N] [--out-dir DIR]
  *
  * Under ConPTY stdin is raw: 0x03 is Ctrl+C, '\r' or '\n' ends a line.
  */
@@ -12,6 +12,64 @@
 
 const { spawn } = require('node:child_process');
 const { writeFileSync } = require('node:fs');
+
+// Deterministic recon proposal set (Workspace Recon). Must stay byte-for-byte
+// identical to packages/test-fixtures/src/recon.ts — see the drift guard in
+// tests/unit/test-fixtures/recon-mode.test.ts. Names are placeholders by design.
+function reconManifest(fields) {
+  return `${JSON.stringify(fields, null, 2)}\n`;
+}
+const RECON_COMMON = {
+  spec: 'threadhelm/agent-profile@1',
+  provider: 'claude-code',
+  model: 'claude-sonnet-5',
+  isolate: false,
+  tokenCap: 200_000,
+  author: 'ThreadHelm recon fixture',
+};
+const RECON_FILES = [
+  {
+    basename: 'supervisor.agent.json',
+    text: reconManifest({
+      ...RECON_COMMON,
+      name: 'Unnamed supervisor',
+      description: 'Owns the outcome and delegates bounded work.',
+      goal: 'Decompose one outcome into bounded assignments and verify each result before reporting done.',
+      capabilities: ['delegation', 'verification'],
+    }),
+  },
+  {
+    basename: 'native-addon.agent.json',
+    text: reconManifest({
+      ...RECON_COMMON,
+      name: 'Unnamed specialist',
+      description: 'Rust Node-API addon work.',
+      goal: 'Change the Rust supervisor addon and keep cargo fmt, check and test green.',
+      capabilities: ['rust', 'node-api'],
+    }),
+  },
+  {
+    basename: 'renderer.agent.json',
+    text: reconManifest({
+      ...RECON_COMMON,
+      name: 'Unnamed specialist',
+      description: 'React renderer and accessibility.',
+      goal: 'Change renderer features and keep keyboard access and visible focus intact.',
+      capabilities: ['react', 'accessibility'],
+    }),
+  },
+  {
+    basename: 'testing.agent.json',
+    text: reconManifest({
+      ...RECON_COMMON,
+      name: 'Unnamed specialist',
+      description: 'Vitest and Playwright Electron suites.',
+      goal: 'Write failing tests first and keep the unit, contract and e2e projects green.',
+      capabilities: ['vitest', 'playwright'],
+    }),
+  },
+  { basename: 'malformed.agent.json', text: '{ "spec": "threadhelm/agent-profile@1", ' },
+];
 
 // Interactive agent CLIs put their terminal into raw mode. Without this,
 // ConPTY converts 0x03 into a Windows console-control termination before the
@@ -159,6 +217,29 @@ switch (mode) {
     });
     if (descendantPidFile) writeFileSync(descendantPidFile, String(child.pid), 'utf8');
     write(`FAKE_AGENT_READY\nCHILD_PID:${child.pid}\n`);
+    break;
+  }
+  case 'recon': {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const outDir = flag('out-dir', '');
+    if (!outDir) {
+      write('RECON_NO_OUT_DIR\n');
+      break;
+    }
+    fs.mkdirSync(outDir, { recursive: true });
+    for (const file of RECON_FILES) {
+      fs.writeFileSync(path.join(outDir, file.basename), file.text, 'utf8');
+    }
+    write(`RECON_WROTE:${RECON_FILES.length}\n`);
+    // A real recon agent finishes the assessment and its process exits; this
+    // fixture models the same "write the files, then stop" ending instead of
+    // running forever like the interactive modes. The 500ms delay is a ponytail
+    // shortcut: it gives the launch's containment verification (host ready,
+    // job assignment, host launched) time to finish before this process is
+    // gone, so a real agent's much-slower turnaround never needs it. Bump the
+    // delay if launch verification ever proves slower than that in practice.
+    setTimeout(() => process.exit(0), 500);
     break;
   }
   case 'spawn-bridge': {

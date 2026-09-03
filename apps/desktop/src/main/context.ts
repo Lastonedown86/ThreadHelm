@@ -31,6 +31,7 @@ import type { BridgeSessionManager } from './coordination/bridge.js';
 import type { MemoryService } from './coordination/memory.js';
 import type { ProfileService } from './coordination/profiles.js';
 import type { AgentWizardService } from './coordination/profile-wizard.js';
+import type { ReconService } from './coordination/recon.js';
 import type { SupervisorService } from './coordination/supervisor.js';
 
 // --- native boundary (contracts/windows-supervisor.md) ----------------------
@@ -93,7 +94,7 @@ export interface ProfileFilePicker {
   pickFile(): Promise<string | null>;
 }
 
-/** Main-owned Save dialog for a portable hire manifest export. */
+/** Main-owned Save dialog for a portable agent manifest export. */
 export interface AgentExportTargetPicker {
   pickTarget(): Promise<string | null>;
 }
@@ -175,6 +176,8 @@ export interface PreviewPayload {
   permissionSelection: LaunchPermissionSelection;
   permissionResolution: LaunchPermissionResolution;
   executionBounds: ProviderExecutionBounds;
+  /** Set only when this preview is for a Workspace Recon launch. */
+  reconOutputDirectory?: string | null;
 }
 
 export interface ControlTokenPayload {
@@ -217,6 +220,10 @@ export interface Context {
   profiles?: ProfileService;
   /** Main-owned wizard/template authority; drafts remain non-executable. */
   agentWizard?: AgentWizardService;
+  /** Root of the ThreadHelm-owned recon output tree. Never inside a workspace. */
+  reconRoot: () => string;
+  /** Main-owned recon authority; absent until handler composition. */
+  recon?: ReconService;
   /** Main-owned mission authority. No renderer/provider receives this object. */
   supervisor?: SupervisorService;
   /** Session-scoped provider bridge authority; absent in degraded/test compositions. */

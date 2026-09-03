@@ -1,0 +1,546 @@
+/**
+ * Workspace Recon: one owner-confirmed assessment session per workspace whose
+ * only return channel is a directory of manifest files outside the workspace.
+ *
+ * Design: docs/superpowers/specs/2026-09-02-workspace-recon-design.md
+ *
+ * Three disciplines this file exists to hold:
+ *
+ * 1. **Honesty.** ThreadHelm cannot enforce what a CLI agent does inside an
+ *    approved folder. The prompt asks the agent to leave the workspace alone;
+ *    the disclosure embeds the ordinary session boundary warning unchanged and
+ *    adds no softer claim on top of it.
+ * 2. **No transcript ingestion.** Nothing here reads, buffers or interprets
+ *    session output. Collection is triggered by the terminal-lifecycle signal
+ *    the session teardown already emits, and reads only files the run wrote to
+ *    a ThreadHelm-owned directory.
+ * 3. **Nothing is hired.** A collected manifest is untrusted portable data. It
+ *    reaches storage only through the existing preview-then-confirm profile
+ *    gate, one role at a time.
+ */
+
+import { execFile } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { mkdir, readdir, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
+import {
+  RECON_NO_AUTO_HIRE_STATEMENT,
+  ReconLaunchPreviewView,
+  ReconRunView,
+  ThreadHelmError,
+  type AgentManifestV1,
+  type LaunchPermissionSelection,
+  type LaunchRuntimeSelection,
+  type OperationRequest,
+  type ReconOutcome,
+  type ReconProposalView,
+  type ReconRejectionView,
+} from '@threadhelm/contracts';
+import {
+  classifyReconOutcome,
+  parseAgentManifest,
+  reconRoleForBasename,
+  selectReconFiles,
+} from '@threadhelm/domain';
+import type { Context } from '../context.js';
+import { evaluateManifestCompatibility, readBounded } from './profiles.js';
+import { launchSession } from '../sessions/launch.js';
+import { DEFAULT_PROVIDER_EXECUTION_BOUNDS } from '../sessions/launch-policy.js';
+import { previewLaunch as previewSessionLaunch } from '../sessions/preview.js';
+import { sendControl } from '../sessions/registry.js';
+import { findWorkspace } from '../workspaces/service.js';
+
+const execFileAsync = promisify(execFile);
+
+/**
+ * A request carried to the agent in the prompt, disclosed to the owner as
+ * `tokenCapRequested`. ThreadHelm has no token accounting and does not enforce
+ * it — see `tokenCapReached` below for the same limit on the outcome side.
+ */
+const RECON_TOKEN_CAP_REQUESTED = 200_000;
+
+/** `git rev-parse HEAD` is provenance, not a dependency; it fails fast or not at all. */
+const GIT_TIMEOUT_MS = 2_000;
+
+/** How many runs' collection waiters are kept. Bounded like every other in-memory map here. */
+const RETAINED_RUNS = 16;
+
+/**
+ * Recon runs with no model or effort escalation and no permission selection,
+ * so the provider's own default (manual approval) applies. A run that reads a
+ * repository has no business asking for automatic approval of anything.
+ */
+const RECON_RUNTIME_SELECTION: LaunchRuntimeSelection = { model: null, effort: null };
+const RECON_PERMISSION_SELECTION: LaunchPermissionSelection = {
+  policy: null,
+  boundedAllowlist: [],
+};
+
+/**
+ * The exact text sent as the session's first input, disclosed verbatim before
+ * launch. It asks for restraint in concrete terms — "write nothing inside the
+ * workspace" — rather than claiming a guarantee the product cannot make.
+ */
+function buildReconPrompt(outputDirectory: string, tokenCapRequested: number): string {
+  return [
+    'Assess this repository so ThreadHelm can propose a roster of agent roles for it.',
+    '',
+    'First, understand the shape of the work. Look at package and project manifests,',
+    'lockfiles, workspace configuration, CI definitions, test configuration, README,',
+    'CONTRIBUTING, and the directory layout.',
+    '',
+    'Then write one JSON file per proposed role into exactly this directory:',
+    `  ${outputDirectory}`,
+    '',
+    'Each file is a threadhelm/agent-profile@1 manifest with these fields and no others:',
+    '  spec, name, description, provider, model, capabilities, isolate, tokenCap, author, goal',
+    '',
+    'Rules:',
+    '- Name the supervisor file exactly supervisor.agent.json. Give every other file a',
+    '  short kebab-case basename ending in .agent.json.',
+    '- Propose one supervisor and between three and eight specialists.',
+    '- Leave every name field a placeholder such as "Unnamed specialist". The owner',
+    '  types the real name when accepting the role.',
+    '- Write nothing inside the workspace. Create, change and delete no file there.',
+    '  Every file you write goes in the directory above.',
+    `- Stay within about ${tokenCapRequested} tokens for this assessment.`,
+    '- Write the files, then stop. Do not run builds, tests, installs or migrations.',
+  ].join('\n');
+}
+
+/** What `profiles.previewImport` needs to review one proposed role. */
+export interface TakenReconProposal {
+  manifest: AgentManifestV1;
+  digest: string;
+  sourceBasename: string;
+  runId: string;
+  derivedFromCommit: string | null;
+}
+
+export interface ReconService {
+  previewLaunch(
+    request: OperationRequest<'workspaceRecon.previewLaunch'>,
+  ): Promise<ReconLaunchPreviewView>;
+  confirmLaunch(request: OperationRequest<'workspaceRecon.confirmLaunch'>): Promise<ReconRunView>;
+  getRun(request: OperationRequest<'workspaceRecon.getRun'>): ReconRunView | null;
+  /**
+   * Read by profiles.previewImport when the source is a proposal. A peek, not
+   * a take: reviewing a role must leave it where it was, because a cancelled
+   * preview — or one whose token expired — has no equivalent of re-picking a
+   * file. `profiles.confirmImport` calls `consumeProposal` on acceptance.
+   */
+  peekProposal(proposalId: string): TakenReconProposal | null;
+  /** Removes a proposal once it has been accepted. Unknown ids are already gone. */
+  consumeProposal(proposalId: string): void;
+  /** Resolves once collection for this run has finished. Deterministic waiting for tests. */
+  whenCollected(runId: string): Promise<void>;
+  /**
+   * The session reached a terminal lifecycle state. Called from session
+   * teardown, the one signal main already emits for every ending; recon never
+   * subscribes to session output.
+   */
+  onSessionEnded(sessionId: string): void;
+}
+
+interface ReconPreview {
+  runId: string;
+  workspaceId: string;
+  /** Win32 form of the approved folder, the cwd `git rev-parse` runs in. */
+  workspaceDisplayPath: string;
+  outputDirectory: string;
+  reconPrompt: string;
+}
+
+interface ReconRun {
+  runId: string;
+  workspaceId: string;
+  sessionId: string | null;
+  outcome: ReconOutcome | null;
+  derivedFromCommit: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  outputDirectory: string;
+  proposals: ReconProposalView[];
+  rejected: ReconRejectionView[];
+  ignoredFileCount: number;
+  promptSubmitted: boolean;
+  collected: Promise<void>;
+  finishCollection: () => void;
+}
+
+function toView(run: ReconRun): ReconRunView {
+  return ReconRunView.parse({
+    runId: run.runId,
+    workspaceId: run.workspaceId,
+    sessionId: run.sessionId,
+    outcome: run.outcome,
+    derivedFromCommit: run.derivedFromCommit,
+    startedAt: run.startedAt,
+    completedAt: run.completedAt,
+    proposals: run.proposals,
+    rejected: run.rejected,
+    ignoredFileCount: run.ignoredFileCount,
+    promptSubmitted: run.promptSubmitted,
+  });
+}
+
+/** Provenance, best effort: absence is recorded as absence, never as a failure. */
+async function headCommit(cwd: string): Promise<string | null> {
+  try {
+    const { stdout } = await execFileAsync('git', ['rev-parse', 'HEAD'], {
+      cwd,
+      timeout: GIT_TIMEOUT_MS,
+      windowsHide: true,
+    });
+    const head = stdout.trim();
+    return /^[0-9a-f]{40}$/.test(head) ? head : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A launch refused for authentication is its own outcome, not a blanket
+ * failure: the preflight probe and the pre-launch revalidation both report it.
+ */
+function isUnauthenticated(error: unknown): boolean {
+  if (!(error instanceof ThreadHelmError) || error.code !== 'PROVIDER_UNAVAILABLE') return false;
+  return (
+    error.details.authentication === 'unauthenticated' ||
+    error.details.drift === 'AUTHENTICATION_CHANGED'
+  );
+}
+
+export function createReconService(ctx: Context): ReconService {
+  /**
+   * Keyed by the session preview token so recon adds no second confirmation:
+   * the owner confirms one disclosure, and `launchSession` remains the single
+   * authority that consumes the token.
+   */
+  const pending = new Map<string, ReconPreview>();
+  /** The current run per workspace. An earlier run is discarded, never merged. */
+  const runs = new Map<string, ReconRun>();
+  /**
+   * Keyed by runId and bounded, so `whenCollected` still answers for a run
+   * that has since been replaced in `runs` — collection outlives the run's
+   * place in that map, and a waiter that silently resolved for a replaced run
+   * would report "collected" for a collection still in flight.
+   */
+  const collectedByRunId = new Map<string, Promise<void>>();
+
+  const locateProposal = (proposalId: string): { run: ReconRun; index: number } | null => {
+    for (const run of runs.values()) {
+      const index = run.proposals.findIndex((p) => p.proposalId === proposalId);
+      if (index >= 0) return { run, index };
+    }
+    return null;
+  };
+
+  /**
+   * True when the owner asked this session to stop by any of the three
+   * controls. Read from the durable event history, which teardown has already
+   * written; the stop kind alone cannot tell an owner stop from a provider
+   * that happened to exit cleanly on its own.
+   */
+  const ownerStopped = (sessionId: string | null): boolean => {
+    if (!sessionId) return false;
+    try {
+      return (
+        ctx.storage?.repositories.events
+          .listBySession(sessionId)
+          .some(
+            (event) =>
+              event.actor === 'user' &&
+              (event.kind === 'stop_requested' ||
+                event.kind === 'interrupt_requested' ||
+                event.kind === 'force_stop_requested'),
+          ) ?? false
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  const discard = async (dir: string): Promise<void> => {
+    await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+  };
+
+  /**
+   * Removes every other run's leftovers under this workspace's recon root —
+   * a previous run's directory, or crash residue — but never the run named
+   * by `keepRunId`.
+   *
+   * Two separate conditions have to hold before this is safe, and the lease
+   * only proves the first:
+   *
+   * 1. No other *session* is writing to a sibling directory. The one-writer
+   *    lease this run holds after `launchSession` succeeds proves that.
+   * 2. No previous run is still *reading* a sibling directory. The lease
+   *    proves nothing here: collection is not a session, it is fired from
+   *    session teardown after the lease has already been released, and it
+   *    outlives the lease by design. Only awaiting the previous run's
+   *    `collected` proves it.
+   */
+  const discardSiblings = async (workspaceId: string, keepRunId: string): Promise<void> => {
+    const root = join(ctx.reconRoot(), workspaceId);
+    const entries = await readdir(root, { withFileTypes: true }).catch(() => []);
+    await Promise.all(
+      entries
+        .filter((entry) => entry.isDirectory() && entry.name !== keepRunId)
+        .map((entry) => discard(join(root, entry.name))),
+    );
+  };
+
+  const collect = async (run: ReconRun): Promise<void> => {
+    try {
+      const entries = await readdir(run.outputDirectory, { withFileTypes: true }).catch(() => []);
+      // Every file the listing reports, on its name alone. No second metadata
+      // read stands between the listing and the bounded read: a file the run
+      // wrote that ThreadHelm could not stat would otherwise vanish from the
+      // count, and a run that wrote output would report no_output.
+      const candidates = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
+      const selection = selectReconFiles(candidates);
+      for (const name of selection.considered) {
+        try {
+          // readBounded checks size and file-ness against the open handle and
+          // reports PROFILE_OVERSIZED or PROFILE_UNREADABLE itself, so an
+          // unreadable file is reported by name with its reason.
+          const { raw, digest } = await readBounded(join(run.outputDirectory, name));
+          const manifest = parseAgentManifest(raw);
+          const compatibility = evaluateManifestCompatibility(ctx, manifest);
+          run.proposals.push({
+            proposalId: randomUUID(),
+            role: reconRoleForBasename(name),
+            sourceBasename: name,
+            digest,
+            manifest,
+            compatibility: compatibility.compatibility,
+            compatibilityReasons: compatibility.reasons,
+          });
+        } catch (error) {
+          // Reported with its reason, never silently dropped.
+          run.rejected.push({
+            sourceBasename: name,
+            errorCode: error instanceof ThreadHelmError ? error.code : 'PROFILE_UNREADABLE',
+          });
+        }
+      }
+      // Supervisor first, so the review order matches the roster being proposed.
+      run.proposals.sort(
+        (a, b) => Number(b.role === 'supervisor') - Number(a.role === 'supervisor'),
+      );
+      run.ignoredFileCount = selection.ignoredForCount.length;
+      run.outcome = classifyReconOutcome({
+        providerUnauthenticated: false,
+        ownerStopped: ownerStopped(run.sessionId),
+        // Always false today: ThreadHelm has no token accounting, so the cap
+        // is asked of the agent and never measured. Upgrade path — when a
+        // provider reports usage labelled provider-reported or CLI-derived,
+        // read it here. An estimate must never be reported as a reached cap.
+        tokenCapReached: false,
+        filesWritten: candidates.length,
+        parsedCount: run.proposals.length,
+        rejectedCount: run.rejected.length,
+      });
+      run.completedAt = ctx.clock().toISOString();
+      ctx.log.info('recon.collected', {
+        runId: run.runId,
+        outcome: run.outcome,
+        parsed: run.proposals.length,
+        rejected: run.rejected.length,
+      });
+    } finally {
+      // The manifests are held in memory now; the directory has no reason to
+      // outlive the run, and a failed collection must not leave one behind.
+      await discard(run.outputDirectory);
+      run.finishCollection();
+    }
+  };
+
+  return {
+    async previewLaunch(request) {
+      const workspace = findWorkspace(ctx, request.workspaceId);
+      const runId = randomUUID();
+      const outputDirectory = join(ctx.reconRoot(), request.workspaceId, runId);
+      const reconPrompt = buildReconPrompt(outputDirectory, RECON_TOKEN_CAP_REQUESTED);
+      // The ordinary session disclosure, unchanged: same preflight, same
+      // revalidation, same boundary warning. Recon only adds fields beside it.
+      // The output directory is threaded through as the one piece of recon-
+      // specific launch data, so the fixture adapter can make its deterministic
+      // agent write to the real, run-scoped directory rather than a static one.
+      const launch = await previewSessionLaunch(
+        ctx,
+        request.workspaceId,
+        request.providerId,
+        request.terminal,
+        RECON_RUNTIME_SELECTION,
+        RECON_PERMISSION_SELECTION,
+        // A recon run is an ordinary run: nothing about reading a repository
+        // justifies looser execution bounds or a special work type.
+        DEFAULT_PROVIDER_EXECUTION_BOUNDS,
+        'general',
+        null,
+        { profileRevisionRequest: null, taskTypePolicy: null, projectPolicy: null },
+        outputDirectory,
+      );
+      pending.set(launch.previewToken, {
+        runId,
+        workspaceId: request.workspaceId,
+        workspaceDisplayPath: workspace.displayPath,
+        outputDirectory,
+        reconPrompt,
+      });
+      // Unconfirmed previews are bounded; the session token store remains the
+      // authority on whether a token is still usable.
+      while (pending.size > 16) pending.delete(pending.keys().next().value!);
+      return ReconLaunchPreviewView.parse({
+        launch,
+        outputDirectory,
+        tokenCapRequested: RECON_TOKEN_CAP_REQUESTED,
+        reconPrompt,
+        autoHireStatement: RECON_NO_AUTO_HIRE_STATEMENT,
+      });
+    },
+
+    async confirmLaunch(request) {
+      const preview = pending.get(request.previewToken);
+      pending.delete(request.previewToken);
+      if (!preview) {
+        throw new ThreadHelmError('PREVIEW_EXPIRED', 'The recon preview expired. Open it again.');
+      }
+      // Only this run's own directory is created here. A sibling — a previous
+      // run's leftovers, or crash residue — is never touched yet: deleting it
+      // before this run has proved (by holding the one-writer lease below)
+      // that no other session is live for this workspace would delete a
+      // still-live sibling run's output out from under it.
+      await mkdir(preview.outputDirectory, { recursive: true });
+      const derivedFromCommit = await headCommit(preview.workspaceDisplayPath);
+      let finishCollection!: () => void;
+      const collected = new Promise<void>((resolve) => {
+        finishCollection = resolve;
+      });
+      const run: ReconRun = {
+        runId: preview.runId,
+        workspaceId: preview.workspaceId,
+        sessionId: null,
+        outcome: null,
+        derivedFromCommit,
+        startedAt: ctx.clock().toISOString(),
+        completedAt: null,
+        outputDirectory: preview.outputDirectory,
+        proposals: [],
+        rejected: [],
+        ignoredFileCount: 0,
+        promptSubmitted: false,
+        collected,
+        finishCollection,
+      };
+      collectedByRunId.set(run.runId, collected);
+      while (collectedByRunId.size > RETAINED_RUNS) {
+        collectedByRunId.delete(collectedByRunId.keys().next().value!);
+      }
+
+      let session;
+      try {
+        session = await launchSession(ctx, request.previewToken, request.boundaryConfirmation);
+      } catch (error) {
+        // A refused launch is not a new run. Only this run's own directory is
+        // removed and the previous run's proposals survive untouched: the owner
+        // must not lose a roster because a launch was blocked.
+        await discard(run.outputDirectory);
+        run.finishCollection();
+        if (!isUnauthenticated(error)) throw error;
+        run.outcome = 'provider_unauthenticated';
+        run.completedAt = ctx.clock().toISOString();
+        return toView(run);
+      }
+      run.sessionId = session.id;
+      // Deliberate timing: the earlier run's memory is replaced once this
+      // session exists, because a proposal derived from a tree that has since
+      // moved is not evidence about the current tree, and holding a stale
+      // roster during a live run would make getRun ambiguous.
+      const previous = runs.get(run.workspaceId);
+      runs.set(run.workspaceId, run);
+      // Its files, though, outlive its place in `runs`. Collection is fired
+      // from session teardown *after* the one-writer lease is released, so the
+      // lease says nothing about whether the previous run is still reading its
+      // own directory. Deleting it mid-read would make that run report
+      // no_output for output ThreadHelm deleted. This cannot hang: the run
+      // only reached `runs` because its launchSession succeeded, which means
+      // the previous session had already ended, so its onSessionEnded has
+      // already fired and `collected` is pending or resolved.
+      await previous?.collected;
+      await discardSiblings(run.workspaceId, run.runId);
+
+      // Main-owned first input, on the same serialized control channel the
+      // coordination delivery path uses. The renderer selection guard governs
+      // renderer-originated bytes and is left exactly as it is.
+      const live = ctx.live.get(session.id);
+      if (live) {
+        const bytes = new TextEncoder().encode(`${preview.reconPrompt.replace(/\n/g, '\r\n')}\r\n`);
+        run.promptSubmitted = sendControl(ctx, live, (controlSequence) => ({
+          type: 'host.input',
+          sessionId: session.id,
+          protocolVersion: 1,
+          controlSequence,
+          bytes,
+        })).submitted;
+      }
+      if (!run.promptSubmitted) {
+        // ThreadHelm can prove the agent was never asked. It records that on the
+        // run so an empty directory is not reported as if the agent had been
+        // asked and stayed silent.
+        ctx.log.warn('recon.prompt_not_submitted', {
+          runId: run.runId,
+          sessionId: session.id,
+          reasonCode: 'RECON_PROMPT_NOT_SUBMITTED',
+        });
+      }
+      return toView(run);
+    },
+
+    getRun(request) {
+      const run = runs.get(request.workspaceId);
+      return run ? toView(run) : null;
+    },
+
+    peekProposal(proposalId) {
+      const found = locateProposal(proposalId);
+      if (!found) return null;
+      const proposal = found.run.proposals[found.index]!;
+      return {
+        manifest: proposal.manifest,
+        digest: proposal.digest,
+        sourceBasename: proposal.sourceBasename,
+        runId: found.run.runId,
+        derivedFromCommit: found.run.derivedFromCommit,
+      };
+    },
+
+    consumeProposal(proposalId) {
+      const found = locateProposal(proposalId);
+      if (found) found.run.proposals.splice(found.index, 1);
+    },
+
+    whenCollected(runId) {
+      // An unknown runId — never started, or evicted after RETAINED_RUNS newer
+      // runs — has no collection to wait for, so this resolves immediately.
+      return collectedByRunId.get(runId) ?? Promise.resolve();
+    },
+
+    onSessionEnded(sessionId) {
+      const run = [...runs.values()].find((r) => r.sessionId === sessionId && r.outcome === null);
+      // Teardown is synchronous and must never be destabilised by collection:
+      // the run keeps a null outcome and the waiter is already resolved.
+      if (run) {
+        void collect(run).catch((error: unknown) => {
+          ctx.log.warn('recon.collection_failed', {
+            runId: run.runId,
+            reasonCode: error instanceof ThreadHelmError ? error.code : 'RECON_COLLECTION_FAILED',
+          });
+        });
+      }
+    },
+  };
+}

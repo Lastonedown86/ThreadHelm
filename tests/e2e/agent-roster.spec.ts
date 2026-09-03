@@ -10,8 +10,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import {
   MARVEL_ROSTER_FIXTURES,
-  REVISED_HIRE_MANIFEST_FIXTURE,
-  writeHireManifestFile,
+  REVISED_AGENT_MANIFEST_FIXTURE,
+  writeAgentManifestFile,
 } from '@threadhelm/test-fixtures';
 import { launchApp, type LaunchedApp } from './helpers/app.js';
 import { teardown, tempWorkspace } from './helpers/ui.js';
@@ -38,7 +38,7 @@ async function importByKeyboard(
   text: string,
 ) {
   await page.getByRole('button', { name: 'Agents', exact: true }).click();
-  writeHireManifestFile(dir, basename, text);
+  writeAgentManifestFile(dir, basename, text);
   await selectProfileFile(app, `${dir}\\${basename}`);
   await press(page.getByRole('button', { name: 'Import profile…' }));
   const review = page.getByRole('dialog', { name: 'Review reviewed agent profile' });
@@ -54,7 +54,7 @@ test('keyboard-only import previews the exact reviewed content before confirming
   try {
     await app.page.getByRole('button', { name: 'Agents', exact: true }).click();
     const fx = MARVEL_ROSTER_FIXTURES[0]!;
-    writeHireManifestFile(dir, fx.basename, fx.text);
+    writeAgentManifestFile(dir, fx.basename, fx.text);
     await selectProfileFile(app, `${dir}\\${fx.basename}`);
 
     await press(app.page.getByRole('button', { name: 'Import profile…' }));
@@ -142,8 +142,8 @@ test('re-importing an unchanged file is idempotent; re-importing a revised file 
       app.page,
       app,
       dir,
-      REVISED_HIRE_MANIFEST_FIXTURE.basename,
-      REVISED_HIRE_MANIFEST_FIXTURE.text,
+      REVISED_AGENT_MANIFEST_FIXTURE.basename,
+      REVISED_AGENT_MANIFEST_FIXTURE.text,
     );
     await press(roster.getByRole('listitem').filter({ hasText: fx.fields.name }));
     const detail = app.page.getByRole('region', { name: 'Agent profile detail' });

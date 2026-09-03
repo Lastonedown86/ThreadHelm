@@ -155,6 +155,8 @@ export function bootstrap(paths: BootstrapPaths): void {
       selection: { selectedSessionId: null },
       adapters: builtInAdapters,
       probes: createProbeRunner(),
+      // Recon output lives under userData, never inside an approved workspace.
+      reconRoot: () => join(userData, 'recon'),
       appInfo: {
         version: app.getVersion(),
         electronVersion: process.versions.electron,

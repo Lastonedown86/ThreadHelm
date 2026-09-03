@@ -261,7 +261,7 @@ describe('performance budgets', () => {
           goal: manifest.goal,
           manifestSpec: manifest.spec,
           compatibility: 'compatible',
-          sourceBasename: `perf-${index}.hire.json`,
+          sourceBasename: `perf-${index}.agent.json`,
           createdAt: at,
         });
         repos.agentTemplates.saveRevision({

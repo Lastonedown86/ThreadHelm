@@ -44,7 +44,7 @@ describeRoster('user-selected reviewed agent-profile manifests', () => {
 
   it('imports the exact ten files with the expected bounded request distribution', async () => {
     const basenames = readdirSync(manifestDir!)
-      .filter((name) => name.endsWith('.hire.json'))
+      .filter((name) => name.endsWith('.agent.json'))
       .sort();
     expect(basenames).toHaveLength(10);
 

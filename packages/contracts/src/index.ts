@@ -37,7 +37,7 @@ export const STOP_GRACE_MS = 15_000;
 export const INTERRUPT_OBSERVE_MS = 5_000;
 /** Bounded provider probe budget. */
 export const PROBE_TIMEOUT_MS = 10_000;
-/** Ceiling on a hire manifest's requested token budget (agent-profiles.md). */
+/** Ceiling on an agent manifest's requested token budget (agent-profiles.md). */
 export const MAX_TOKEN_CAP = 2_000_000;
 /** Bounded length for reviewed free-text manifest fields (goal, description). */
 export const MAX_GOAL_LENGTH = 4_000;
@@ -49,7 +49,7 @@ export const MAX_GOAL_LENGTH = 4_000;
 export const ProviderId = z.enum(['codex-cli', 'claude-code']);
 export type ProviderId = z.infer<typeof ProviderId>;
 
-/** Portable hire-provider labels are data, not runtime adapter identifiers. */
+/** Portable agent-provider labels are data, not runtime adapter identifiers. */
 export const ProfileProviderId = z.enum(['claude', 'codex', 'claude-code', 'codex-cli']);
 export type ProfileProviderId = z.infer<typeof ProfileProviderId>;
 
@@ -1364,7 +1364,7 @@ export const SelectionView = z.object({ selectedSessionId: Uuid.nullable() });
 export type SelectionView = z.infer<typeof SelectionView>;
 
 // ---------------------------------------------------------------------------
-// Agent profiles (contracts/agent-profiles.md). A hire manifest is untrusted
+// Agent profiles (contracts/agent-profiles.md). An agent manifest is untrusted
 // portable data, never an instruction. `effort` is launch policy and is
 // deliberately absent; capability labels and the display name never grant
 // tools, roles, or budget expansion.
@@ -1396,7 +1396,7 @@ export const AgentProfileManifestSpec = z.enum([
 ]);
 export type AgentProfileManifestSpec = z.infer<typeof AgentProfileManifestSpec>;
 
-export const HireManifestV1 = strictObject({
+export const AgentManifestV1 = strictObject({
   spec: AgentProfileManifestSpec,
   name: AuthoredText.trim().min(1).max(200),
   description: AuthoredText.trim().min(1).max(MAX_GOAL_LENGTH),
@@ -1408,7 +1408,7 @@ export const HireManifestV1 = strictObject({
   tokenCap: z.number().int().positive().max(MAX_TOKEN_CAP),
   author: AuthoredText.trim().min(1).max(200),
 });
-export type HireManifestV1 = z.infer<typeof HireManifestV1>;
+export type AgentManifestV1 = z.infer<typeof AgentManifestV1>;
 
 const AgentProfileSummaryFields = {
   profileId: ProfileId,
@@ -1449,17 +1449,104 @@ export const AgentProfileDetailView = strictObject({
 });
 export type AgentProfileDetailView = z.infer<typeof AgentProfileDetailView>;
 
-/** Accepts only a renderer file-selection handle, never arbitrary provider input. */
-export const PreviewImportProfileRequest = strictObject({
-  fileHandle: z.string().min(1).max(256),
+// Workspace Recon (docs/superpowers/specs/2026-09-02-workspace-recon-design.md).
+// A recon session is an ordinary session; these shapes add only the bounds and
+// provenance a proposed roster needs.
+
+export const RECON_NO_AUTO_HIRE_STATEMENT =
+  'Recon proposes roles only. No agent is hired and no authority is granted until you review and confirm each one.';
+
+export const ReconOutcome = z.enum([
+  'completed',
+  'partial',
+  'no_output',
+  'unparsable_output',
+  'stopped_by_owner',
+  // Not produced today: ThreadHelm has no token accounting. Reachable once a
+  // provider reports usage labelled provider-reported or CLI-derived.
+  'token_cap_reached',
+  'provider_unauthenticated',
+]);
+export type ReconOutcome = z.infer<typeof ReconOutcome>;
+
+export const ReconRole = z.enum(['supervisor', 'specialist']);
+export type ReconRole = z.infer<typeof ReconRole>;
+
+export const ReconProposalView = strictObject({
+  proposalId: Uuid,
+  role: ReconRole,
+  sourceBasename: z.string().min(1).max(200),
+  digest: ProfileDigest,
+  manifest: AgentManifestV1,
+  compatibility: ProfileCompatibility,
+  compatibilityReasons: z.array(z.string().max(300)).max(20),
 });
+export type ReconProposalView = z.infer<typeof ReconProposalView>;
+
+export const ReconRejectionView = strictObject({
+  sourceBasename: z.string().min(1).max(200),
+  /** A stable ThreadHelmError code; never a raw parser message. */
+  errorCode: z.string().min(1).max(64),
+});
+export type ReconRejectionView = z.infer<typeof ReconRejectionView>;
+
+export const ReconRunView = strictObject({
+  runId: Uuid,
+  workspaceId: Uuid,
+  sessionId: Uuid.nullable(),
+  /** Null while the run is still in flight. */
+  outcome: ReconOutcome.nullable(),
+  /** Null when the approved folder is not a Git working tree. */
+  derivedFromCommit: z
+    .string()
+    .regex(/^[0-9a-f]{40}$/)
+    .nullable(),
+  startedAt: Timestamp,
+  completedAt: Timestamp.nullable(),
+  /** Bound mirrors MAX_RECON_FILES in @threadhelm/domain; contracts cannot import domain. */
+  proposals: z.array(ReconProposalView).max(12),
+  rejected: z.array(ReconRejectionView).max(12),
+  ignoredFileCount: z.number().int().min(0),
+  /**
+   * False when ThreadHelm could not submit the disclosed prompt to the session.
+   * A `no_output` run with this false means the agent was never asked, not that
+   * it was asked and produced nothing.
+   */
+  promptSubmitted: z.boolean(),
+});
+export type ReconRunView = z.infer<typeof ReconRunView>;
+
+export const ReconLaunchPreviewView = strictObject({
+  /** The unmodified session disclosure, boundary warning included. */
+  launch: LaunchPreviewView,
+  outputDirectory: z.string().min(1),
+  /**
+   * Asked of the agent in the prompt below, never enforced: ThreadHelm has no
+   * token accounting. Named like AgentProfileSummaryView.tokenCapRequested
+   * because it is a request carried to the agent, not a ceiling we hold.
+   */
+  tokenCapRequested: z.number().int().positive().max(MAX_TOKEN_CAP),
+  /** The exact text sent as this session's first input. */
+  reconPrompt: z.string().min(1).max(8000),
+  autoHireStatement: z.literal(RECON_NO_AUTO_HIRE_STATEMENT),
+});
+export type ReconLaunchPreviewView = z.infer<typeof ReconLaunchPreviewView>;
+
+/** Accepts a renderer file-selection handle or a recon proposal, never both. */
+export const PreviewImportProfileRequest = strictObject({
+  fileHandle: z.string().min(1).max(256).optional(),
+  proposalId: Uuid.optional(),
+}).refine(
+  (value) => (value.fileHandle === undefined) !== (value.proposalId === undefined),
+  'exactly one import source',
+);
 export type PreviewImportProfileRequest = z.infer<typeof PreviewImportProfileRequest>;
 
 export const ProfilePreviewView = strictObject({
   previewToken: OpaqueToken,
   digest: ProfileDigest,
   basename: z.string().min(1).max(255),
-  normalized: HireManifestV1,
+  normalized: AgentManifestV1,
   warnings: z.array(z.string().max(300)).max(20),
   compatibility: ProfileCompatibility,
   compatibilityReasons: z.array(z.string().max(300)).max(20),
@@ -1470,6 +1557,11 @@ export type ProfilePreviewView = z.infer<typeof ProfilePreviewView>;
 export const ConfirmImportProfileRequest = strictObject({
   previewToken: OpaqueToken,
   importConfirmation: z.literal(true),
+  /**
+   * The name the owner typed at acceptance. Absent leaves the reviewed
+   * manifest's own name in place, so the file-picker path is unchanged.
+   */
+  displayName: AgentManifestV1.shape.name.optional(),
 });
 export type ConfirmImportProfileRequest = z.infer<typeof ConfirmImportProfileRequest>;
 
@@ -1553,7 +1645,7 @@ export const AgentTemplateVariable = strictObject({
 export type AgentTemplateVariable = z.infer<typeof AgentTemplateVariable>;
 
 /** Draft storage accepts incomplete and deliberately cleared values; final
- * completion always re-parses the exact HireManifestV1 schema. */
+ * completion always re-parses the exact AgentManifestV1 schema. */
 const WizardFieldValues = strictObject({
   spec: AgentProfileManifestSpec.optional(),
   name: AuthoredText.max(200).optional(),
@@ -1616,7 +1708,7 @@ export type AgentTemplateSummaryView = z.infer<typeof AgentTemplateSummaryView>;
 
 export const AgentTemplateDetailView = strictObject({
   ...AgentTemplateSummaryFields,
-  manifest: HireManifestV1,
+  manifest: AgentManifestV1,
   manifestJson: z.string().min(2).max(65_536),
   digest: ProfileDigest,
   variables: z.array(AgentTemplateVariable).max(16),
@@ -1692,7 +1784,7 @@ export const AgentWizardCompletionPreviewView = strictObject({
   completionToken: OpaqueToken,
   draftId: Uuid,
   version: z.number().int().positive(),
-  manifest: HireManifestV1,
+  manifest: AgentManifestV1,
   manifestJson: z.string().min(2).max(65_536),
   digest: ProfileDigest,
   compatibility: ProfileCompatibility,
@@ -2431,6 +2523,25 @@ export const operations = {
   'profiles.confirmDelete': {
     request: ConfirmDeleteProfileRequest,
     response: AgentProfileSummaryView,
+  },
+  'workspaceRecon.previewLaunch': {
+    request: strictObject({
+      workspaceId: Uuid,
+      providerId: ProviderId,
+      terminal: TerminalSize,
+    }),
+    response: ReconLaunchPreviewView,
+  },
+  'workspaceRecon.confirmLaunch': {
+    request: strictObject({
+      previewToken: OpaqueToken,
+      boundaryConfirmation: z.literal(true),
+    }),
+    response: ReconRunView,
+  },
+  'workspaceRecon.getRun': {
+    request: strictObject({ workspaceId: Uuid }),
+    response: ReconRunView.nullable(),
   },
   'agentWizard.createDraft': {
     request: CreateAgentWizardDraftRequest,

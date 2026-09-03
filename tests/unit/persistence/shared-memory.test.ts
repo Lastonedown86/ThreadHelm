@@ -6,6 +6,7 @@ import {
   migrate,
   openDatabase,
   readSchemaVersion,
+  SCHEMA_VERSION,
   type Db,
   type SharedMemoryRepository,
 } from '@threadhelm/persistence';
@@ -65,7 +66,7 @@ describe('shared-memory persistence', () => {
     });
 
   it('migrates v2 to v3 transactionally with memory tables, FTS, triggers, and indexes', () => {
-    expect(readSchemaVersion(db)).toBe(3);
+    expect(readSchemaVersion(db)).toBe(SCHEMA_VERSION);
     const names = db
       .prepare(
         "SELECT type, name FROM sqlite_master WHERE name LIKE 'shared_memory_%' OR name LIKE 'memory_%'",

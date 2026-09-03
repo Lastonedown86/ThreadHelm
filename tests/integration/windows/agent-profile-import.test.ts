@@ -1,5 +1,5 @@
 /**
- * T093 — failing-first Windows integration tests for reviewed hire-manifest
+ * T093 — failing-first Windows integration tests for reviewed agent-manifest
  * import (Feature 002, US6). `profiles.chooseFile` / `profiles.previewImport`
  * / `profiles.confirmImport` and their supporting main-process hooks do not
  * exist yet (T099/T100); every scenario below is expected to fail until then.
@@ -13,12 +13,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
 import {
-  MALFORMED_HIRE_MANIFEST_TEXT_FIXTURES,
+  MALFORMED_AGENT_MANIFEST_TEXT_FIXTURES,
   MARVEL_ROSTER_FIXTURES,
-  writeHireManifestFile,
+  writeAgentManifestFile,
   CHANGED_AFTER_PREVIEW_EDITED_FIXTURE,
   CHANGED_AFTER_PREVIEW_ORIGINAL_FIXTURE,
-  type HireManifestFixture,
+  type AgentManifestFixture,
 } from '@threadhelm/test-fixtures';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanupUserData, launchApp, type LaunchedApp } from '../../e2e/helpers/app.js';
@@ -57,9 +57,9 @@ async function selectProfileFile(target: LaunchedApp, path: string): Promise<voi
 async function importFixture(
   target: LaunchedApp,
   dir: string,
-  fx: HireManifestFixture,
+  fx: AgentManifestFixture,
 ): Promise<Imported> {
-  writeHireManifestFile(dir, fx.basename, fx.text);
+  writeAgentManifestFile(dir, fx.basename, fx.text);
   await selectProfileFile(target, join(dir, fx.basename));
   const chosen = await target.call<{ fileHandle: string }>('profiles.chooseFile');
   const preview = await target.call<Preview>('profiles.previewImport', {
@@ -137,7 +137,7 @@ describe('reviewed agent-profile import', () => {
 
   it('fails closed when the file changes on disk between preview and confirm', async () => {
     const dir = tempDir('changed');
-    writeHireManifestFile(
+    writeAgentManifestFile(
       dir,
       CHANGED_AFTER_PREVIEW_ORIGINAL_FIXTURE.basename,
       CHANGED_AFTER_PREVIEW_ORIGINAL_FIXTURE.text,
@@ -148,7 +148,7 @@ describe('reviewed agent-profile import', () => {
       fileHandle: chosen.fileHandle,
     });
 
-    writeHireManifestFile(
+    writeAgentManifestFile(
       dir,
       CHANGED_AFTER_PREVIEW_EDITED_FIXTURE.basename,
       CHANGED_AFTER_PREVIEW_EDITED_FIXTURE.text,
@@ -166,9 +166,9 @@ describe('reviewed agent-profile import', () => {
 
   it('rejects every malformed manifest at preview without importing anything', async () => {
     const dir = tempDir('malformed');
-    for (const [index, malformed] of MALFORMED_HIRE_MANIFEST_TEXT_FIXTURES.entries()) {
-      const basename = `malformed-${index}.hire.json`;
-      writeHireManifestFile(dir, basename, malformed.text);
+    for (const [index, malformed] of MALFORMED_AGENT_MANIFEST_TEXT_FIXTURES.entries()) {
+      const basename = `malformed-${index}.agent.json`;
+      writeAgentManifestFile(dir, basename, malformed.text);
       await selectProfileFile(app, join(dir, basename));
       const chosen = await app.call<{ fileHandle: string }>('profiles.chooseFile');
       const rejected = await app.dispatch('profiles.previewImport', {

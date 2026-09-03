@@ -1,0 +1,707 @@
+/**
+ * Recon service: honest disclosure, bounded collection, distinct outcomes,
+ * and no reading of session output.
+ *
+ * The harness drives the real coordinator: real storage, the real session
+ * preview/launch path, the real terminal-lifecycle teardown, and a real
+ * output directory on disk. Only the OS boundary (native supervisor, host
+ * process) is faked, exactly as the neighbouring contract suites do.
+ */
+
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import type * as FsPromises from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  RECON_NO_AUTO_HIRE_STATEMENT,
+  type LaunchPreviewView,
+  type MainToHostMessage,
+  type ReconRunView,
+} from '@threadhelm/contracts';
+import { MAX_MANIFEST_BYTES, MAX_RECON_FILES } from '@threadhelm/domain';
+import { RECON_PROPOSAL_FIXTURES } from '@threadhelm/test-fixtures';
+import type { ReconService } from '../../../apps/desktop/src/main/coordination/recon.js';
+import { createWorld, identity, type FakeWorld } from '../../contract/helpers/fake-context.js';
+
+const TERMINAL = { columns: 120, rows: 30 };
+
+/**
+ * Two filesystem conditions no test can produce on Windows from inside the
+ * process: an entry `readdir` lists whose metadata the OS will not hand back,
+ * and a directory read suspended long enough for a second run to start. Both
+ * pass straight through unless a test opts in, so every other test in this
+ * file runs against the real filesystem.
+ */
+const fsHooks = vi.hoisted(() => ({
+  failStatFor: null as string | null,
+  gatedReaddir: null as { dir: string; release: Promise<void> } | null,
+}));
+
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof FsPromises>();
+  return {
+    ...actual,
+    default: actual,
+    async readdir(path: never, options: never) {
+      const gate = fsHooks.gatedReaddir;
+      if (gate && String(path) === gate.dir) await gate.release;
+      return actual.readdir(path, options);
+    },
+    async stat(path: never, options: never) {
+      if (fsHooks.failStatFor && String(path).endsWith(fsHooks.failStatFor)) {
+        throw Object.assign(new Error('EPERM: metadata unavailable'), { code: 'EPERM' });
+      }
+      return actual.stat(path, options);
+    },
+  };
+});
+
+afterEach(() => {
+  fsHooks.failStatFor = null;
+  fsHooks.gatedReaddir = null;
+});
+
+interface ReconHarness {
+  world: FakeWorld;
+  service: ReconService;
+  workspaceId: string;
+  workspacePath: string;
+  /** The exact LaunchPreviewView the session preview path returns. */
+  launchPreview(): Promise<LaunchPreviewView>;
+  outputDirOf(runId: string): string;
+  /** Drives the session to a terminal lifecycle state; returns before collection finishes. */
+  endSession(opts: { ownerStopped: boolean }): Promise<void>;
+  /** Drives the session to a terminal lifecycle state and lets collection run. */
+  completeSession(runId: string, opts: { ownerStopped: boolean }): Promise<void>;
+}
+
+const cleanups: (() => void)[] = [];
+
+afterEach(() => {
+  while (cleanups.length) cleanups.pop()!();
+});
+
+function tempDir(prefix: string): string {
+  // mkdtemp appends its random suffix to the prefix, so only the leaf is new.
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  cleanups.push(() => rmSync(dir, { recursive: true, force: true }));
+  return dir;
+}
+
+async function buildReconHarness(
+  options: { gitInit?: boolean } = {},
+): Promise<ReconHarness & { headCommit: string | null }> {
+  const workspacePath = tempDir('recon-ws-');
+  const reconRoot = tempDir('recon-root-');
+  let headCommit: string | null = null;
+  if (options.gitInit) headCommit = initGitRepository(workspacePath);
+
+  const world = createWorld({ reconRoot });
+  // The native supervisor is faked, so the canonical form is synthesised from
+  // the real path; displayPath (the git cwd) is the Win32 form of the same dir.
+  world.addDir(workspacePath, identity(7));
+  const workspace = await world.approve(workspacePath);
+  const service = world.ctx.recon!;
+
+  const runningSessionId = (): string => {
+    const ids = [...world.ctx.live.keys()];
+    if (ids.length !== 1) throw new Error(`expected one live session, saw ${ids.length}`);
+    return ids[0]!;
+  };
+
+  const endSession = async (opts: { ownerStopped: boolean }): Promise<void> => {
+    const sessionId = runningSessionId();
+    if (opts.ownerStopped) {
+      const stop = await world.ok<{ stopToken: string }>('sessions.requestStop', { sessionId });
+      await world.ok('sessions.confirmStop', { stopToken: stop.stopToken });
+    } else {
+      world.hosts.find((host) => host.sessionId === sessionId)!.providerExits(0);
+    }
+    await world.until(() => !world.ctx.live.has(sessionId));
+  };
+
+  return {
+    world,
+    service,
+    workspaceId: workspace.id,
+    workspacePath,
+    headCommit,
+    launchPreview: () =>
+      world.ok<LaunchPreviewView>('sessions.previewLaunch', {
+        workspaceId: workspace.id,
+        providerId: 'claude-code',
+        terminal: TERMINAL,
+      }),
+    outputDirOf: (runId) => join(reconRoot, workspace.id, runId),
+    endSession,
+    async completeSession(runId, opts) {
+      await endSession(opts);
+      await service.whenCollected(runId);
+    },
+  };
+}
+
+function initGitRepository(cwd: string): string {
+  const git = (...args: string[]) => execFileSync('git', args, { cwd, stdio: 'pipe' });
+  git('init', '--quiet');
+  git('config', 'user.email', 'recon@example.test');
+  git('config', 'user.name', 'Recon Fixture');
+  git('config', 'commit.gpgsign', 'false');
+  writeFileSync(join(cwd, 'README.md'), '# fixture\n', 'utf8');
+  git('add', '.');
+  git('commit', '--quiet', '-m', 'fixture');
+  return execFileSync('git', ['rev-parse', 'HEAD'], { cwd, encoding: 'utf8' }).trim();
+}
+
+/** Runs previewLaunch + confirmLaunch and returns the started run. */
+async function startRun(harness: ReconHarness): Promise<ReconRunView> {
+  const preview = await harness.service.previewLaunch({
+    workspaceId: harness.workspaceId,
+    providerId: 'claude-code',
+    terminal: TERMINAL,
+  });
+  return harness.service.confirmLaunch({
+    previewToken: preview.launch.previewToken,
+    boundaryConfirmation: true,
+  });
+}
+
+/** Makes every host reject terminal input, as a dead pipe would. */
+function rejectHostInput(world: FakeWorld): void {
+  const spawn = world.ctx.hosts.spawn.bind(world.ctx.hosts);
+  world.ctx.hosts = {
+    spawn: (sessionId) => {
+      const host = spawn(sessionId);
+      const post = host.postMessage.bind(host);
+      host.postMessage = (message, ports) => {
+        if (message.type === 'host.input') throw new Error('input pipe closed');
+        post(message, ports);
+      };
+      return host;
+    },
+  };
+}
+
+function writeFixtures(dir: string, basenames?: readonly string[]): void {
+  for (const fixture of RECON_PROPOSAL_FIXTURES) {
+    if (basenames && !basenames.includes(fixture.basename)) continue;
+    writeFileSync(join(dir, fixture.basename), fixture.text, 'utf8');
+  }
+}
+
+describe('previewLaunch', () => {
+  it('carries the session boundary warning unmodified', async () => {
+    const harness = await buildReconHarness();
+    const preview = await harness.service.previewLaunch({
+      workspaceId: harness.workspaceId,
+      providerId: 'claude-code',
+      terminal: TERMINAL,
+    });
+    const sessionPreview = await harness.launchPreview();
+
+    expect(preview.launch.boundaryWarning).toBe(sessionPreview.boundaryWarning);
+    expect(preview.autoHireStatement).toBe(RECON_NO_AUTO_HIRE_STATEMENT);
+  });
+
+  it('discloses the exact prompt it will send and never claims read-only', async () => {
+    const harness = await buildReconHarness();
+    const preview = await harness.service.previewLaunch({
+      workspaceId: harness.workspaceId,
+      providerId: 'claude-code',
+      terminal: TERMINAL,
+    });
+
+    expect(preview.reconPrompt.length).toBeGreaterThan(0);
+    expect(preview.reconPrompt.toLowerCase()).not.toContain('read-only');
+    expect(preview.reconPrompt.toLowerCase()).not.toContain('sandbox');
+    expect(preview.reconPrompt).toContain(preview.outputDirectory);
+    expect(preview.reconPrompt).toContain('supervisor.agent.json');
+    expect(preview.outputDirectory.toLowerCase()).not.toContain(
+      harness.workspacePath.toLowerCase(),
+    );
+    // Disclosed as a request, not a bound: ThreadHelm cannot enforce a token
+    // cap, so the prompt asks for it and the field is named for the ask.
+    expect(preview.tokenCapRequested).toBeGreaterThan(0);
+    expect(preview.reconPrompt).toContain(String(preview.tokenCapRequested));
+  });
+
+  it('sends the disclosed prompt as the session first input', async () => {
+    const harness = await buildReconHarness();
+    const preview = await harness.service.previewLaunch({
+      workspaceId: harness.workspaceId,
+      providerId: 'claude-code',
+      terminal: TERMINAL,
+    });
+    const run = await harness.service.confirmLaunch({
+      previewToken: preview.launch.previewToken,
+      boundaryConfirmation: true,
+    });
+
+    expect(run.sessionId).not.toBeNull();
+    expect(run.outcome).toBeNull();
+    const host = harness.world.hosts.find((h) => h.sessionId === run.sessionId)!;
+    const input = host.received.find(
+      (message): message is Extract<MainToHostMessage, { type: 'host.input' }> =>
+        message.type === 'host.input',
+    );
+    expect(input).toBeDefined();
+    const sent = new TextDecoder().decode(input!.bytes);
+    expect(sent).toContain(preview.reconPrompt.split('\n')[0]!);
+    // Input is never read back; the run only ever reads files it wrote.
+    expect(harness.world.ctx.selection.selectedSessionId).toBeNull();
+    expect(run.promptSubmitted).toBe(true);
+  });
+
+  it('records that the agent was never asked when the prompt cannot be submitted', async () => {
+    const harness = await buildReconHarness();
+    rejectHostInput(harness.world);
+
+    const run = await startRun(harness);
+    expect(run.promptSubmitted).toBe(false);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    // The outcome set stays at seven; the flag is what separates "never asked"
+    // from "asked and silent", which no_output alone cannot express.
+    const collected = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(collected.outcome).toBe('no_output');
+    expect(collected.promptSubmitted).toBe(false);
+  });
+
+  it('routes through the coordinator handler table', async () => {
+    const harness = await buildReconHarness();
+    const preview = await harness.world.ok<{ outputDirectory: string }>(
+      'workspaceRecon.previewLaunch',
+      { workspaceId: harness.workspaceId, providerId: 'claude-code', terminal: TERMINAL },
+    );
+    expect(preview.outputDirectory.length).toBeGreaterThan(0);
+    expect(
+      await harness.world.ok('workspaceRecon.getRun', { workspaceId: harness.workspaceId }),
+    ).toBeNull();
+  });
+});
+
+describe('collection', () => {
+  it('classifies a fixture run with one malformed file as partial', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId));
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    const collected = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(collected.outcome).toBe('partial');
+    expect(collected.proposals).toHaveLength(4);
+    expect(collected.rejected).toEqual([
+      { sourceBasename: 'malformed.agent.json', errorCode: 'PROFILE_SCHEMA_INVALID' },
+    ]);
+    expect(collected.proposals.filter((p) => p.role === 'supervisor')).toHaveLength(1);
+    // Supervisor first, so the review order matches the roster the owner reads.
+    expect(collected.proposals[0]!.role).toBe('supervisor');
+    // Recon never proposes a display name; the owner types it at acceptance.
+    expect(collected.proposals[0]!.manifest.name).toBe('Unnamed supervisor');
+  });
+
+  it('reports completed when every considered file parsed', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), ['supervisor.agent.json', 'renderer.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    const collected = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(collected.outcome).toBe('completed');
+    expect(collected.rejected).toEqual([]);
+    expect(collected.completedAt).not.toBeNull();
+  });
+
+  it('reports unparsable_output when files were written and none parsed', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), ['malformed.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    expect(harness.service.getRun({ workspaceId: harness.workspaceId })!.outcome).toBe(
+      'unparsable_output',
+    );
+  });
+
+  it('reports no_output when the session wrote nothing', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+    expect(harness.service.getRun({ workspaceId: harness.workspaceId })!.outcome).toBe('no_output');
+  });
+
+  it('reports stopped_by_owner even when manifests were written', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), ['supervisor.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: true });
+
+    const collected = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(collected.outcome).toBe('stopped_by_owner');
+    expect(collected.proposals).toHaveLength(1);
+  });
+
+  it('deletes the output directory once a run is collected', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    const dir = harness.outputDirOf(run.runId);
+    expect(existsSync(dir)).toBe(true);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+    expect(existsSync(dir)).toBe(false);
+  });
+
+  it('leaves the workspace tree untouched', async () => {
+    const harness = await buildReconHarness();
+    writeFileSync(join(harness.workspacePath, 'package.json'), '{"name":"fixture"}\n', 'utf8');
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId));
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    expect(readFileSync(join(harness.workspacePath, 'package.json'), 'utf8')).toBe(
+      '{"name":"fixture"}\n',
+    );
+    expect(existsSync(join(harness.workspacePath, 'supervisor.agent.json'))).toBe(false);
+  });
+
+  it('considers at most MAX_RECON_FILES files and reports the rest as ignored', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    const dir = harness.outputDirOf(run.runId);
+    // Names sort before 'supervisor.agent.json', so it is the file pushed out.
+    for (let i = 0; i < MAX_RECON_FILES; i += 1) {
+      writeFileSync(join(dir, `a${i}.agent.json`), RECON_PROPOSAL_FIXTURES[1]!.text, 'utf8');
+    }
+    writeFixtures(dir, ['supervisor.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    const collected = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(collected.proposals).toHaveLength(MAX_RECON_FILES);
+    expect(collected.ignoredFileCount).toBe(1);
+    expect(collected.proposals.some((p) => p.role === 'supervisor')).toBe(false);
+  });
+
+  it('considers a file the directory lists even when its metadata cannot be read', async () => {
+    // A run that wrote output must never report no_output because ThreadHelm
+    // could not stat one of the files. The file is read and rejected with its
+    // real reason, which is the true report; dropping it silently is not.
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), [
+      'supervisor.agent.json',
+      'malformed.agent.json',
+    ]);
+    fsHooks.failStatFor = 'malformed.agent.json';
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    const collected = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(collected.rejected).toEqual([
+      { sourceBasename: 'malformed.agent.json', errorCode: 'PROFILE_SCHEMA_INVALID' },
+    ]);
+    expect(collected.proposals).toHaveLength(1);
+    expect(collected.outcome).toBe('partial');
+  });
+
+  it('rejects an oversized file by size rather than dropping it', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    const dir = harness.outputDirOf(run.runId);
+    writeFileSync(join(dir, 'huge.agent.json'), 'x'.repeat(MAX_MANIFEST_BYTES + 1), 'utf8');
+    writeFixtures(dir, ['supervisor.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    const collected = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(collected.rejected).toEqual([
+      { sourceBasename: 'huge.agent.json', errorCode: 'PROFILE_OVERSIZED' },
+    ]);
+    expect(collected.outcome).toBe('partial');
+  });
+});
+
+describe('provenance', () => {
+  it('records the commit the run read when the workspace is a Git working tree', async () => {
+    const harness = await buildReconHarness({ gitInit: true });
+    const run = await startRun(harness);
+    expect(run.derivedFromCommit).toBe(harness.headCommit);
+    expect(run.derivedFromCommit).toMatch(/^[0-9a-f]{40}$/);
+  });
+
+  it('records absence as null when the workspace is not a Git working tree', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    expect(run.derivedFromCommit).toBeNull();
+  });
+});
+
+describe('repeat runs', () => {
+  it('keeps the previous run when the new launch is refused', async () => {
+    const harness = await buildReconHarness();
+    const first = await startRun(harness);
+    writeFixtures(harness.outputDirOf(first.runId), ['supervisor.agent.json']);
+    await harness.completeSession(first.runId, { ownerStopped: false });
+    expect(harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals).toHaveLength(1);
+
+    const preview = await harness.service.previewLaunch({
+      workspaceId: harness.workspaceId,
+      providerId: 'claude-code',
+      terminal: TERMINAL,
+    });
+    // Revocation invalidates the session preview token, so launchSession
+    // refuses — the same shape as a lease conflict or a host spawn failure.
+    await harness.world.ok('workspaces.revoke', { workspaceId: harness.workspaceId });
+    await expect(
+      harness.service.confirmLaunch({
+        previewToken: preview.launch.previewToken,
+        boundaryConfirmation: true,
+      }),
+    ).rejects.toThrowError(expect.objectContaining({ code: 'PREVIEW_EXPIRED' }));
+
+    // A refused launch started no run, so the roster the owner had not yet
+    // accepted is still there.
+    const current = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(current.runId).toBe(first.runId);
+    expect(current.proposals).toHaveLength(1);
+    expect(existsSync(preview.outputDirectory)).toBe(false);
+  });
+
+  it('discards the previous run proposals when a new run starts', async () => {
+    const harness = await buildReconHarness();
+    const first = await startRun(harness);
+    writeFixtures(harness.outputDirOf(first.runId), ['supervisor.agent.json']);
+    await harness.completeSession(first.runId, { ownerStopped: false });
+    expect(harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals).toHaveLength(1);
+
+    const second = await startRun(harness);
+    const current = harness.service.getRun({ workspaceId: harness.workspaceId })!;
+    expect(current.runId).toBe(second.runId);
+    expect(current.proposals).toEqual([]);
+  });
+
+  it('never discards a previous run directory while its collection is still reading it', async () => {
+    // The one-writer lease proves no other *session* is live. Collection is not
+    // a session: it is fired from teardown, after the lease has been released,
+    // and outlives it. Without waiting for it, a new run's discardSiblings can
+    // delete the previous run's files between its readdir and its reads, and
+    // that run then reports no_output for output ThreadHelm itself deleted.
+    const harness = await buildReconHarness();
+    const first = await startRun(harness);
+    writeFixtures(harness.outputDirOf(first.runId), [
+      'supervisor.agent.json',
+      'malformed.agent.json',
+    ]);
+
+    const outcomes: Record<string, unknown> = {};
+    const realLog = harness.world.ctx.log;
+    harness.world.ctx.log = {
+      ...realLog,
+      info(event, fields) {
+        if (event === 'recon.collected') outcomes[String(fields!.runId)] = fields!.outcome;
+        realLog.info(event, fields);
+      },
+    };
+
+    let release!: () => void;
+    fsHooks.gatedReaddir = {
+      dir: harness.outputDirOf(first.runId),
+      release: new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+    };
+
+    // The session ends, so collection starts — and stops before it reads a byte.
+    await harness.endSession({ ownerStopped: false });
+    expect(outcomes).toEqual({});
+
+    // A second run starts while that collection is still in flight. Released
+    // only once its session is live and it has had time to reach
+    // discardSiblings — the exact window the lease was wrongly held to close.
+    const second = startRun(harness);
+    await harness.world.until(() => harness.world.ctx.live.size === 1);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    release();
+    const secondRun = await second;
+    await harness.service.whenCollected(first.runId);
+
+    expect(secondRun.runId).not.toBe(first.runId);
+    // The first run read the files it wrote: one parsed, one malformed.
+    expect(outcomes[first.runId]).toBe('partial');
+  });
+
+  it('deletes a stale directory left behind by a crash mid-run', async () => {
+    const harness = await buildReconHarness();
+    // A previous process died before collection could delete its directory.
+    const staleDir = harness.outputDirOf('99999999-9999-4999-8999-999999999999');
+    mkdirSync(staleDir, { recursive: true });
+    writeFixtures(staleDir, ['supervisor.agent.json']);
+
+    const run = await startRun(harness);
+    expect(existsSync(staleDir)).toBe(false);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+    // The stale files were never read as if they belonged to this run.
+    expect(harness.service.getRun({ workspaceId: harness.workspaceId })!.outcome).toBe('no_output');
+  });
+});
+
+describe('peekProposal', () => {
+  it('reads a proposal repeatedly and reports it gone only once consumed', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), ['supervisor.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    const id = harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals[0]!
+      .proposalId;
+    expect(harness.service.peekProposal(id)).not.toBeNull();
+    // Reviewing is not taking: the role survives being looked at.
+    expect(harness.service.peekProposal(id)).not.toBeNull();
+    harness.service.consumeProposal(id);
+    expect(harness.service.peekProposal(id)).toBeNull();
+  });
+
+  it('stamps an accepted proposal with the run it came from', async () => {
+    const harness = await buildReconHarness({ gitInit: true });
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), ['supervisor.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+
+    const proposal = harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals[0]!;
+    const taken = harness.service.peekProposal(proposal.proposalId)!;
+    expect(taken.runId).toBe(run.runId);
+    expect(taken.derivedFromCommit).toBe(run.derivedFromCommit);
+  });
+});
+
+describe('acceptance through the existing profile gate', () => {
+  it('imports a proposal only after preview and confirm, stamped with its provenance', async () => {
+    const harness = await buildReconHarness({ gitInit: true });
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), ['supervisor.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+    const proposal = harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals[0]!;
+
+    const preview = await harness.world.ok<{ previewToken: string; digest: string }>(
+      'profiles.previewImport',
+      { proposalId: proposal.proposalId },
+    );
+    expect(preview.digest).toBe(proposal.digest);
+    // Nothing is hired by the preview alone.
+    expect(
+      (await harness.world.ok<{ profiles: unknown[] }>('profiles.list', {})).profiles,
+    ).toHaveLength(0);
+
+    const summary = await harness.world.ok<{ profileId: string; displayName: string }>(
+      'profiles.confirmImport',
+      {
+        previewToken: preview.previewToken,
+        importConfirmation: true,
+        displayName: 'Roster lead',
+      },
+    );
+    const row = harness.world.ctx
+      .storage!.db.prepare('SELECT recon_run_id, derived_from_commit FROM agent_profiles')
+      .get() as { recon_run_id: string; derived_from_commit: string };
+    expect(summary.profileId.length).toBeGreaterThan(0);
+    expect(row.recon_run_id).toBe(run.runId);
+    expect(row.derived_from_commit).toBe(harness.headCommit);
+    // The owner's name, never the placeholder the proposal carried.
+    expect(summary.displayName).toBe('Roster lead');
+    expect(proposal.manifest.name).toBe('Unnamed supervisor');
+  });
+
+  it('keeps the manifest name when the owner supplies none', async () => {
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), ['supervisor.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+    const proposal = harness.service.getRun({ workspaceId: harness.workspaceId })!.proposals[0]!;
+
+    const preview = await harness.world.ok<{ previewToken: string }>('profiles.previewImport', {
+      proposalId: proposal.proposalId,
+    });
+    const summary = await harness.world.ok<{ displayName: string }>('profiles.confirmImport', {
+      previewToken: preview.previewToken,
+      importConfirmation: true,
+    });
+    expect(summary.displayName).toBe('Unnamed supervisor');
+  });
+
+  it('keeps a reviewed proposal until it is accepted, and only then removes it', async () => {
+    // Reviewing must not destroy the role: a cancelled preview, or one whose
+    // token expired, has to leave the owner exactly where they started. There
+    // is no re-picking a proposal the way there is a re-picking of a file.
+    const harness = await buildReconHarness();
+    const run = await startRun(harness);
+    writeFixtures(harness.outputDirOf(run.runId), ['supervisor.agent.json']);
+    await harness.completeSession(run.runId, { ownerStopped: false });
+    const listed = () =>
+      harness.service
+        .getRun({ workspaceId: harness.workspaceId })!
+        .proposals.map((proposal) => proposal.proposalId);
+    const proposalId = listed()[0]!;
+
+    // Reviewed, then cancelled: nothing was accepted, so nothing was lost.
+    await harness.world.ok('profiles.previewImport', { proposalId });
+    expect(listed()).toContain(proposalId);
+
+    // Reviewed again and confirmed: acceptance is what consumes it.
+    const preview = await harness.world.ok<{ previewToken: string }>('profiles.previewImport', {
+      proposalId,
+    });
+    await harness.world.ok('profiles.confirmImport', {
+      previewToken: preview.previewToken,
+      importConfirmation: true,
+      displayName: 'Roster lead',
+    });
+    expect(listed()).not.toContain(proposalId);
+
+    const third = await harness.world.call('profiles.previewImport', { proposalId });
+    expect(third.ok ? 'OK' : third.error.code).toBe('PROFILE_UNREADABLE');
+  });
+
+  it('leaves the file-picker import path unstamped and honours a typed name there too', async () => {
+    const harness = await buildReconHarness();
+    const manifestPath = join(harness.workspacePath, 'picked.agent.json');
+    writeFileSync(manifestPath, RECON_PROPOSAL_FIXTURES[0]!.text, 'utf8');
+    harness.world.ctx.profilePicker = { pickFile: async () => manifestPath };
+
+    const chosen = await harness.world.ok<{ fileHandle: string }>('profiles.chooseFile');
+    const preview = await harness.world.ok<{ previewToken: string }>('profiles.previewImport', {
+      fileHandle: chosen.fileHandle,
+    });
+    const summary = await harness.world.ok<{ displayName: string }>('profiles.confirmImport', {
+      previewToken: preview.previewToken,
+      importConfirmation: true,
+      displayName: 'Picked by hand',
+    });
+
+    const row = harness.world.ctx
+      .storage!.db.prepare('SELECT recon_run_id, derived_from_commit FROM agent_profiles')
+      .get() as { recon_run_id: string | null; derived_from_commit: string | null };
+    expect(row.recon_run_id).toBeNull();
+    expect(row.derived_from_commit).toBeNull();
+    // The name is owner-supplied on every path, not a recon special case.
+    expect(summary.displayName).toBe('Picked by hand');
+  });
+});
+
+describe('provider authentication', () => {
+  it('records provider_unauthenticated rather than a blanket failure', async () => {
+    const harness = await buildReconHarness();
+    const preview = await harness.service.previewLaunch({
+      workspaceId: harness.workspaceId,
+      providerId: 'claude-code',
+      terminal: TERMINAL,
+    });
+    harness.world.adapters['claude-code'].readiness.authentication = 'unauthenticated';
+
+    const run = await harness.service.confirmLaunch({
+      previewToken: preview.launch.previewToken,
+      boundaryConfirmation: true,
+    });
+    expect(run.outcome).toBe('provider_unauthenticated');
+    expect(run.sessionId).toBeNull();
+    expect(harness.world.ctx.live.size).toBe(0);
+    expect(existsSync(harness.outputDirOf(run.runId))).toBe(false);
+  });
+});

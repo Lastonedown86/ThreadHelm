@@ -1,5 +1,5 @@
 /**
- * T091 (Feature 002, US6) — failing-first persistence tests for reviewed hire
+ * T091 (Feature 002, US6) — failing-first persistence tests for reviewed agent
  * manifests. `agent_profiles` / `agent_profile_revisions` tables and the
  * `agentProfiles` repository do not exist yet (T097/T098); every assertion
  * below is expected to fail until then.
@@ -49,7 +49,7 @@ function manifestInput(overrides: Record<string, unknown> = {}) {
     goal: 'Flag risky architecture decisions for explicit human review.',
     manifestSpec: 'munder-difflin/hire@1' as const,
     compatibility: 'compatible' as const,
-    sourceBasename: 'tony-stark.hire.json',
+    sourceBasename: 'tony-stark.agent.json',
     createdAt: AT,
     ...overrides,
   };

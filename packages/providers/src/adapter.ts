@@ -178,6 +178,13 @@ export interface LaunchContext {
   bridgeConfig?: SessionBridgeConfig | null;
   /** Exact reviewed profile and main-owned effective authority for this launch. */
   profileBinding?: ProfileLaunchBinding | null;
+  /**
+   * Set only for a Workspace Recon launch: the ThreadHelm-owned directory the
+   * session is asked (by prompt, not by this field) to write manifests into.
+   * Built-in adapters ignore it; the fixture adapter uses it to make the
+   * fake terminal agent's `recon` mode deterministic in tests.
+   */
+  reconOutputDirectory?: string | null;
 }
 
 export interface ProfileLaunchBinding {

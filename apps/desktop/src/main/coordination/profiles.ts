@@ -11,7 +11,7 @@ import {
   ProfilePreviewView,
   ThreadHelmError,
   TOKEN_TTL_MS,
-  type HireManifestV1,
+  type AgentManifestV1,
   type OperationRequest,
   type OperationResponse,
   type ProfileCompatibility,
@@ -21,7 +21,7 @@ import {
 import {
   evaluateProfileCompatibility,
   MAX_MANIFEST_BYTES,
-  parseHireManifest,
+  parseAgentManifest,
 } from '@threadhelm/domain';
 import type { ImportProfileManifestInput } from '@threadhelm/persistence';
 import type { Context } from '../context.js';
@@ -32,13 +32,50 @@ const TESTED_MODELS: Readonly<Record<ProviderId, readonly string[]>> = {
   'codex-cli': ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
 };
 
+/**
+ * One compatibility evaluation for every reviewed manifest, whichever path it
+ * arrived on: file picker, wizard completion, or a recon proposal.
+ */
+export function evaluateManifestCompatibility(
+  ctx: Context,
+  manifest: AgentManifestV1,
+): ReturnType<typeof evaluateProfileCompatibility> {
+  return evaluateProfileCompatibility({
+    requestedProvider: manifest.provider,
+    requestedModel: manifest.model,
+    availableProviderModels: Object.fromEntries(
+      ctx.adapters.map((adapter) => [adapter.id, TESTED_MODELS[adapter.id]]),
+    ),
+  });
+}
+
+/** Where an accepted profile came from, when it came from a recon run. */
+export interface ReconProvenance {
+  readonly reconRunId: string;
+  readonly derivedFromCommit: string | null;
+}
+
+/** What acceptance adds to a reviewed manifest. Both are absent for the wizard. */
+export interface ReviewedManifestOptions {
+  readonly provenance?: ReconProvenance;
+  /**
+   * The name the owner typed at acceptance. Absent keeps the manifest's own
+   * name, which is what every path that authored the name itself relies on.
+   */
+  readonly displayName?: string;
+}
+
 interface PreviewSnapshot {
-  path: string;
+  /** The file the manifest was read from; null for a proposal held in memory. */
+  path: string | null;
   basename: string;
   digest: string;
-  manifest: HireManifestV1;
+  manifest: AgentManifestV1;
   compatibility: ProfileCompatibility;
   compatibilityReasons: readonly string[];
+  provenance: ReconProvenance | null;
+  /** The recon proposal this preview reviews; consumed on acceptance, not on review. */
+  proposalId: string | null;
 }
 
 interface DeleteSnapshot {
@@ -59,13 +96,19 @@ export interface ProfileService {
   confirmDelete(request: OperationRequest<'profiles.confirmDelete'>): AgentProfileSummaryView;
   /** Reuses the exact digest-bound import path for wizard completion. */
   saveReviewedManifest(
-    manifest: HireManifestV1,
+    manifest: AgentManifestV1,
     digest: string,
     sourceBasename: string,
+    options?: ReviewedManifestOptions,
   ): AgentProfileSummaryView;
 }
 
-async function readBounded(path: string): Promise<{ raw: string; digest: string }> {
+/**
+ * The one bounded manifest read: the size check happens against the open
+ * handle, so a file that grows after it was listed cannot be read past the
+ * bound. Every untrusted manifest — picked file or recon proposal — uses it.
+ */
+export async function readBounded(path: string): Promise<{ raw: string; digest: string }> {
   let handle;
   try {
     handle = await open(path, 'r');
@@ -73,14 +116,14 @@ async function readBounded(path: string): Promise<{ raw: string; digest: string 
     if (!stats.isFile() || stats.size > MAX_MANIFEST_BYTES) {
       throw new ThreadHelmError(
         'PROFILE_OVERSIZED',
-        'Hire manifest exceeds the maximum read size.',
+        'Agent manifest exceeds the maximum read size.',
       );
     }
     const bytes = await handle.readFile();
     if (bytes.byteLength > MAX_MANIFEST_BYTES) {
       throw new ThreadHelmError(
         'PROFILE_OVERSIZED',
-        'Hire manifest exceeds the maximum read size.',
+        'Agent manifest exceeds the maximum read size.',
       );
     }
     return {
@@ -125,22 +168,18 @@ export function createProfileService(ctx: Context): ProfileService {
   };
 
   const saveReviewedManifest = (
-    manifest: HireManifestV1,
+    manifest: AgentManifestV1,
     digest: string,
     sourceBasename: string,
+    options?: ReviewedManifestOptions,
   ): AgentProfileSummaryView => {
-    const available = Object.fromEntries(
-      ctx.adapters.map((adapter) => [adapter.id, TESTED_MODELS[adapter.id]]),
-    );
-    const compatibilityResult = evaluateProfileCompatibility({
-      requestedProvider: manifest.provider,
-      requestedModel: manifest.model,
-      availableProviderModels: available,
-    });
+    const compatibilityResult = evaluateManifestCompatibility(ctx, manifest);
     const input: ImportProfileManifestInput = {
       manifestKey: sourceBasename.toLocaleLowerCase('en-US'),
       digest,
-      displayName: manifest.name,
+      // The owner's name wins over the manifest's. A recon proposal always
+      // carries a placeholder, so the roster shows what the owner typed.
+      displayName: options?.displayName ?? manifest.name,
       description: manifest.description,
       requestedProvider: manifest.provider,
       requestedModel: manifest.model,
@@ -154,11 +193,45 @@ export function createProfileService(ctx: Context): ProfileService {
       compatibilityReasons: compatibilityResult.reasons,
       sourceBasename,
       createdAt: ctx.clock().toISOString(),
+      reconRunId: options?.provenance?.reconRunId ?? null,
+      derivedFromCommit: options?.provenance?.derivedFromCommit ?? null,
     };
     const imported = repository().importManifest(input);
     const summary = AgentProfileSummaryView.parse(repository().getSummary(imported.profileId)!);
     emit(summary, 'imported');
     return summary;
+  };
+
+  /** One preview path for both sources: file picker and recon proposal. */
+  const snapshotPreview = (
+    manifest: AgentManifestV1,
+    digest: string,
+    sourceBasename: string,
+    path: string | null,
+    provenance: ReconProvenance | null,
+    proposalId: string | null,
+  ): ProfilePreviewView => {
+    const compatibilityResult = evaluateManifestCompatibility(ctx, manifest);
+    const issued = previews.issue({
+      path,
+      basename: sourceBasename,
+      digest,
+      manifest,
+      compatibility: compatibilityResult.compatibility,
+      compatibilityReasons: compatibilityResult.reasons,
+      provenance,
+      proposalId,
+    });
+    return ProfilePreviewView.parse({
+      previewToken: issued.token,
+      digest,
+      basename: sourceBasename,
+      normalized: manifest,
+      warnings: compatibilityResult.reasons,
+      compatibility: compatibilityResult.compatibility,
+      compatibilityReasons: compatibilityResult.reasons,
+      expiresAt: issued.expiresAt,
+    });
   };
 
   return {
@@ -173,8 +246,29 @@ export function createProfileService(ctx: Context): ProfileService {
     },
 
     async previewImport(request) {
-      const path = handles.get(request.fileHandle);
-      handles.delete(request.fileHandle);
+      if (request.proposalId !== undefined) {
+        // Reviewing is a peek: the proposal is consumed by confirmImport, not
+        // by being looked at, so a cancelled or expired preview costs the owner
+        // nothing. An absent recon service and an already accepted proposal are
+        // the same fact to the owner: it is not there.
+        const proposal = ctx.recon?.peekProposal(request.proposalId) ?? null;
+        if (!proposal) {
+          throw new ThreadHelmError(
+            'PROFILE_UNREADABLE',
+            'That proposed role is no longer available.',
+          );
+        }
+        return snapshotPreview(
+          proposal.manifest,
+          proposal.digest,
+          proposal.sourceBasename,
+          null,
+          { reconRunId: proposal.runId, derivedFromCommit: proposal.derivedFromCommit },
+          request.proposalId,
+        );
+      }
+      const path = request.fileHandle !== undefined ? handles.get(request.fileHandle) : undefined;
+      if (request.fileHandle !== undefined) handles.delete(request.fileHandle);
       if (!path) {
         throw new ThreadHelmError(
           'PROFILE_UNREADABLE',
@@ -182,34 +276,7 @@ export function createProfileService(ctx: Context): ProfileService {
         );
       }
       const { raw, digest } = await readBounded(path);
-      const manifest = parseHireManifest(raw);
-      const available = Object.fromEntries(
-        ctx.adapters.map((adapter) => [adapter.id, TESTED_MODELS[adapter.id]]),
-      );
-      const compatibilityResult = evaluateProfileCompatibility({
-        requestedProvider: manifest.provider,
-        requestedModel: manifest.model,
-        availableProviderModels: available,
-      });
-      const snapshot: PreviewSnapshot = {
-        path,
-        basename: basename(path),
-        digest,
-        manifest,
-        compatibility: compatibilityResult.compatibility,
-        compatibilityReasons: compatibilityResult.reasons,
-      };
-      const issued = previews.issue(snapshot);
-      return ProfilePreviewView.parse({
-        previewToken: issued.token,
-        digest,
-        basename: snapshot.basename,
-        normalized: manifest,
-        warnings: compatibilityResult.reasons,
-        compatibility: compatibilityResult.compatibility,
-        compatibilityReasons: compatibilityResult.reasons,
-        expiresAt: issued.expiresAt,
-      });
+      return snapshotPreview(parseAgentManifest(raw), digest, basename(path), path, null, null);
     },
 
     async confirmImport(request) {
@@ -220,10 +287,29 @@ export function createProfileService(ctx: Context): ProfileService {
           'The profile preview expired or was used.',
         );
       }
+      // Applied to both sources alike: acceptance is where the owner names the
+      // role, whether the manifest came from a file or from a proposal.
+      const options: ReviewedManifestOptions = {
+        ...(snapshot.provenance ? { provenance: snapshot.provenance } : {}),
+        ...(request.displayName !== undefined ? { displayName: request.displayName } : {}),
+      };
+      if (snapshot.path === null) {
+        // A proposal's directory is deleted at collection, so these reviewed
+        // bytes are the only copy and cannot drift. Acceptance — not review —
+        // is what removes the role from the proposal list.
+        const summary = saveReviewedManifest(
+          snapshot.manifest,
+          snapshot.digest,
+          snapshot.basename,
+          options,
+        );
+        if (snapshot.proposalId) ctx.recon?.consumeProposal(snapshot.proposalId);
+        return summary;
+      }
       const current = await readBounded(snapshot.path);
-      let parsed: HireManifestV1;
+      let parsed: AgentManifestV1;
       try {
-        parsed = parseHireManifest(current.raw);
+        parsed = parseAgentManifest(current.raw);
       } catch {
         throw new ThreadHelmError(
           'PROFILE_DIGEST_CHANGED',
@@ -239,7 +325,7 @@ export function createProfileService(ctx: Context): ProfileService {
           'The profile file changed after review.',
         );
       }
-      return saveReviewedManifest(snapshot.manifest, snapshot.digest, snapshot.basename);
+      return saveReviewedManifest(snapshot.manifest, snapshot.digest, snapshot.basename, options);
     },
 
     list(request) {

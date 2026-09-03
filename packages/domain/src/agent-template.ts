@@ -6,9 +6,9 @@
 
 import {
   AGENT_PROFILE_MANIFEST_SPEC,
-  HireManifestV1,
+  AgentManifestV1,
   ThreadHelmError,
-  type HireManifestV1 as HireManifest,
+  type AgentManifestV1 as AgentManifest,
 } from '@threadhelm/contracts';
 
 export interface TemplateProvenance {
@@ -18,13 +18,13 @@ export interface TemplateProvenance {
 
 export interface TemplateDraft {
   readonly provenance: TemplateProvenance | null;
-  readonly manifest: HireManifest;
+  readonly manifest: AgentManifest;
 }
 
 export interface CreateTemplateDraftInput {
   readonly templateId?: string;
   readonly templateRevisionId?: string;
-  readonly manifest: HireManifest;
+  readonly manifest: AgentManifest;
   readonly variables?: Readonly<Record<string, string>>;
 }
 
@@ -61,8 +61,8 @@ export function advanceTemplateDraftState(
 
 const VARIABLE = /{{([a-z][a-z0-9_]*)}}/g;
 
-function parseManifest(value: unknown): HireManifest {
-  const result = HireManifestV1.safeParse(value);
+function parseManifest(value: unknown): AgentManifest {
+  const result = AgentManifestV1.safeParse(value);
   if (!result.success) {
     throw new ThreadHelmError(
       'PROFILE_SCHEMA_INVALID',
@@ -88,7 +88,7 @@ export function applyTemplateVariables(
   });
 }
 
-function unresolved(manifest: HireManifest): boolean {
+function unresolved(manifest: AgentManifest): boolean {
   const values = [
     manifest.name,
     manifest.description,
@@ -100,9 +100,9 @@ function unresolved(manifest: HireManifest): boolean {
 }
 
 function substituteManifest(
-  manifest: HireManifest,
+  manifest: AgentManifest,
   variables: Readonly<Record<string, string>>,
-): HireManifest {
+): AgentManifest {
   const declared = Object.keys(variables);
   return parseManifest({
     ...manifest,
@@ -131,8 +131,8 @@ export function createTemplateDraft(input: CreateTemplateDraftInput): TemplateDr
   };
 }
 
-/** Validates the exact shared hire-manifest schema before any save/export action. */
-export function completeTemplateDraft(draft: TemplateDraft): HireManifest {
+/** Validates the exact shared agent-manifest schema before any save/export action. */
+export function completeTemplateDraft(draft: TemplateDraft): AgentManifest {
   const manifest = parseManifest(draft.manifest);
   if (unresolved(manifest)) {
     throw new ThreadHelmError(

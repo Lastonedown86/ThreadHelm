@@ -5,9 +5,13 @@
 }
 .memory-library-grid {
   display: grid;
-  grid-template-columns: minmax(15rem, 0.65fr) minmax(24rem, 1.5fr) minmax(16rem, 0.75fr);
+  grid-template-columns: minmax(13rem, 0.6fr) minmax(0, 1.6fr) minmax(13rem, 0.7fr);
   gap: 1rem;
   align-items: start;
+  min-width: 0;
+}
+.memory-library-grid > * {
+  min-width: 0;
 }
 .memory-librarian,
 .memory-reading-desk,
@@ -37,17 +41,17 @@
 .mission-reading-list {
   border-top: 0.3rem solid var(--mission-verdigris);
 }
-@media (max-width: 1050px) {
+@container workspace (max-width: 62rem) {
   .memory-library-grid {
-    grid-template-columns: 1fr 1.6fr;
+    grid-template-columns: minmax(13rem, 0.7fr) minmax(0, 1.6fr);
   }
   .mission-reading-list {
     grid-column: 1 / -1;
   }
 }
-@media (max-width: 720px) {
+@container workspace (max-width: 40rem) {
   .memory-library-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .mission-reading-list {
     grid-column: auto;

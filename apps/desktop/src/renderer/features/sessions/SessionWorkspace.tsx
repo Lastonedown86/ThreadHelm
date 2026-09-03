@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { MissionDetailView } from '@threadhelm/contracts';
 import { useStore } from '../../store.js';
 import { MissionTerminalDock } from '../session/MissionTerminalDock.js';
@@ -19,6 +20,11 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
     .map((id) => state.sessions[id]!)
     .filter((session) => !mission || boundIds.has(session.id));
   const selected = sessions.find((session) => session.id === state.selectedSessionId);
+  // A mission dock with tabs but no selection rendered nothing; pick the first bound session.
+  const firstBoundId = mission && !selected ? sessions[0]?.id : undefined;
+  useEffect(() => {
+    if (firstBoundId) actions.select(firstBoundId);
+  }, [firstBoundId, actions]);
   return (
     <main className="session-workspace" aria-labelledby="session-workspace-heading">
       <header className="workspace-page-header">

@@ -13,7 +13,7 @@ export function SetupAttentionSummary() {
   ].filter((item): item is string => item !== null);
 
   return (
-    <section className="setup-attention" aria-label="Setup attention">
+    <section className="setup-attention mission-context-section" aria-label="Setup attention">
       <span className="context-label">Local setup</span>
       <strong>
         {issues.length === 0

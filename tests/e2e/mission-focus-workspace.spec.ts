@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import type {
   MissionDetailView,
@@ -8,6 +8,49 @@ import type {
 import { launchApp, type LaunchedApp } from './helpers/app.js';
 import { prepareFixtureMission } from './helpers/mission.js';
 import { launchWithFixtures, teardown, tempWorkspace } from './helpers/ui.js';
+
+// Reason codes match /^[A-Z][A-Z0-9_]{2,63}$/ (packages/contracts/src/index.ts) — no
+// underscore required, e.g. the real 'BACKPRESSURE' shipped by
+// apps/desktop/src/main/coordination/delivery.ts. Static UI copy also renders
+// all-caps via CSS text-transform: uppercase on .mission-lifecycle, .course-state,
+// .context-label and .mission-evidence (apps/desktop/src/renderer/styles/mission-focus.css),
+// so allowlist those known labels rather than narrowing the pattern back down.
+const UPPERCASE_UI_COPY = new Set([
+  'LOCAL', // "· local" suffix on the lifecycle line
+  'CREW',
+  'AUTHORITY', // context rail section headers, always rendered
+  'RUNNING',
+  'PAUSED',
+  'COMPLETED', // lifecycleLabels
+  'WAITING',
+  'FOR',
+  'YOU', // "Waiting for you" (lifecycle override + course-state label)
+  'OUTCOME',
+  'UNCERTAIN', // "Outcome uncertain" (lifecycle override + course-state label)
+  'VERIFIED',
+  'FOCUS', // course-state labels "Verified" / "In focus"
+  'RECOVERY',
+  'REQUIRED', // "Recovery required" (lifecycle label + attention label)
+  'NEEDS',
+  'YOUR',
+  'DECISION', // "Needs your decision" attention label
+  'EVIDENCE',
+  'ARTIFACT', // "Evidence: artifact · <file>" verified-result line
+  'BROWSER',
+  'REPORT', // fixture evidence filename "browser-report.md"
+  'CLI', // "Codex CLI" provider display name in the attached-sessions list
+]);
+
+/** Fails if any on-screen token has the reason-code shape and isn't known-safe UI copy. */
+async function assertNoRawReasonCode(page: Page): Promise<void> {
+  const text = (
+    await page.locator('#mission-workspace, .mission-shell-context').allInnerTexts()
+  ).join('\n');
+  const found = [...text.matchAll(/\b[A-Z][A-Z0-9_]{2,63}\b/g)]
+    .map((match) => match[0])
+    .filter((token) => !UPPERCASE_UI_COPY.has(token));
+  expect(found, 'no raw reason code on screen').toEqual([]);
+}
 
 async function confirmMission(app: LaunchedApp, envelope: MissionEnvelopeInput, objective: string) {
   const preview = await app.call<MissionPreviewView>('missions.preview', {
@@ -75,6 +118,18 @@ test('missions are the focused default and approved destinations remain explicit
       page.getByText('Select a mission to narrow the dock to its exact workers.'),
     ).toBeVisible();
 
+    await expect(page.getByText(/^sessions workspace$/)).toHaveCount(0);
+    await expect(
+      page.getByRole('complementary', { name: 'Mission context' }).getByRole('heading', {
+        name: 'Sessions',
+      }),
+    ).toBeVisible();
+    await expect(page.getByText(/need attention|Ready for reviewed work/)).toBeVisible();
+    const padding = await page
+      .locator('.mission-shell-context .mission-context-content')
+      .evaluate((el) => parseFloat(getComputedStyle(el).paddingTop));
+    expect(padding).toBeGreaterThan(8);
+
     await page.evaluate(() => {
       document.documentElement.style.fontSize = '200%';
     });
@@ -83,6 +138,27 @@ test('missions are the focused default and approved destinations remain explicit
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
       ),
     ).toBe(false);
+
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '';
+    });
+    for (const width of [1400, 1100]) {
+      await page.setViewportSize({ width, height: 860 });
+      await page.getByRole('button', { name: 'Memory', exact: true }).click();
+      await expect(page.getByRole('heading', { name: /reading list/i })).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        ),
+        `no horizontal overflow at ${width}px`,
+      ).toBe(false);
+      const clipped = await page.evaluate(() => {
+        const main = document.querySelector('.mission-shell-workspace')!;
+        return main.scrollWidth > main.clientWidth;
+      });
+      expect(clipped, `workspace column does not scroll sideways at ${width}px`).toBe(false);
+      await page.getByRole('button', { name: 'Missions', exact: true }).click();
+    }
   } finally {
     await teardown(app);
   }
@@ -180,6 +256,13 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
       await newEnvelope('paused-focus'),
       'Paused browser evidence mission',
     );
+    const pausedWork = await addWork(app, paused);
+    await app.bridgeRequest(pausedWork.supervisorId, 'threadhelm_work_assign', {
+      ...workDecision(paused.id),
+      idempotencyKey: randomUUID(),
+      workItemId: pausedWork.workItemId,
+      bindingId: pausedWork.binding.bindingId,
+    });
     await app.call('missions.pause', { missionId: paused.id });
     const running = await confirmMission(
       app,
@@ -195,6 +278,7 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
       await option.click();
       await expect(app.page.locator('#mission-workspace h1')).toBeFocused();
       await expect(list.getByRole('option', { selected: true })).toHaveCount(1);
+      await assertNoRawReasonCode(app.page);
     };
 
     await select(running);
@@ -202,43 +286,220 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await expect(
       app.page.getByRole('button', { name: 'Pause mission', exact: true }),
     ).toBeVisible();
+    const strip = app.page.getByRole('list', { name: 'Mission status' });
+    await expect(strip).toContainText('Work continues locally');
+    await expect(strip).toContainText('0 decisions pending');
+    await expect(strip).toContainText('2 sessions attached');
+    await expect(app.page.getByRole('button', { name: 'View full history…' })).toBeVisible();
+    await expect(app.page.getByText('No verified result yet.')).toBeVisible();
+    await expect(app.page.getByRole('heading', { name: 'Latest verified result' })).toHaveCount(0);
 
     await select(paused);
     await expect(app.page.getByText('Paused', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Resume mission', exact: true }),
+      app.page.getByRole('button', { name: 'Resume mission…', exact: true }),
     ).toBeVisible();
+    const course = app.page.getByRole('list', { name: 'Mission course' });
+    const node = course.getByRole('listitem').first();
+    await expect(node).toContainText('1');
+    await expect(node).toContainText('In focus');
+    await expect(node.getByRole('button', { name: 'Open terminal' })).toBeVisible();
 
     await select(waiting);
-    await expect(app.page.getByText('decision', { exact: true })).toBeVisible();
+    // A — state-tinted: nothing new in the header; the strip and node carry the state.
+    await expect(app.page.locator('.mission-header')).not.toContainText('Needs your decision');
+    await expect(app.page.getByRole('status').filter({ hasText: /Mission changed/ })).toContainText(
+      'Mission changed: Waiting browser decision mission, Waiting for you',
+    );
+    await expect(
+      app.page
+        .getByRole('complementary', { name: 'Mission context' })
+        .getByText('Needs your decision', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      app.page
+        .locator('.mission-action-row')
+        .getByRole('button', { name: 'Review choices…', exact: true }),
+    ).toBeVisible();
+    await expect(
+      app.page.getByRole('list', { name: 'Mission course' }).getByRole('button', {
+        name: 'Review choices…',
+      }),
+    ).toBeVisible();
+    const rail = app.page.getByRole('complementary', { name: 'Mission context' });
+    await expect(rail.locator('section').first()).toContainText('Needs your decision');
+    await expect(rail.getByRole('button', { name: 'Review choices…' })).toBeVisible();
+    await expect(rail.getByRole('list', { name: 'Crew' }).getByRole('listitem')).toHaveCount(2);
+    await expect(rail.getByRole('list', { name: 'Crew' })).toContainText('Supervisor');
+    await expect(rail.getByRole('list', { name: 'Crew' })).toContainText('failed');
 
     await select(uncertain);
-    await expect(app.page.getByText('uncertain', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Inspect mission', exact: true }),
+      app.page.getByRole('article').getByText('Outcome uncertain', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      app.page
+        .locator('.mission-action-row')
+        .getByRole('button', { name: 'Inspect evidence…', exact: true }),
     ).toBeVisible();
     await expect(app.page.getByRole('button', { name: /retry/i })).toHaveCount(0);
 
     await select(completed);
-    await expect(app.page.getByText('Completed', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'View evidence', exact: true }),
+      list.getByRole('option', { name: new RegExp(completed.id.slice(0, 8), 'i') }),
+    ).toContainText('1/1');
+    await expect(
+      app.page.locator('.mission-lifecycle').getByText('Completed', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'View evidence…', exact: true }),
     ).toBeVisible();
     await expect(app.page.getByText(/artifact · browser-report\.md/)).toBeVisible();
+    await expect(
+      app.page.getByRole('list', { name: 'Mission course' }).getByText('Verified', { exact: true }),
+    ).toBeVisible();
+    await expect(app.page.getByRole('heading', { name: 'Latest verified result' })).toBeVisible();
+    await expect(app.page.getByRole('button', { name: 'Open evidence…' })).toBeVisible();
 
     const userData = app.userData;
     await app.crashCoordinator();
     app = await launchWithFixtures({ 'codex-cli': 'echo' }, userData);
     const recovered = app.page
       .getByRole('listbox', { name: 'Missions', exact: true })
-      .getByRole('option')
-      .filter({ hasText: 'recovery required' })
-      .first();
+      .getByRole('option', { name: new RegExp(running.id.slice(0, 8), 'i') });
     await recovered.click();
-    await expect(app.page.getByText('Recovery required', { exact: true })).toBeVisible();
     await expect(
-      app.page.getByRole('button', { name: 'Inspect mission', exact: true }),
+      app.page.locator('.mission-lifecycle').getByText('Recovery required', { exact: true }),
     ).toBeVisible();
+    await assertNoRawReasonCode(app.page);
+    await expect(
+      app.page
+        .locator('.mission-action-row')
+        .getByRole('button', { name: 'Inspect evidence…', exact: true }),
+    ).toBeVisible();
+    await expect(
+      app.page
+        .getByRole('complementary', { name: 'Mission context' })
+        .getByRole('button', { name: 'Open attention queue' }),
+    ).toBeVisible();
+    await expect(
+      app.page.getByRole('button', { name: 'Attention', exact: true }),
+    ).toHaveAccessibleDescription(/needing attention/);
+  } finally {
+    await teardown(app, ...directories);
+  }
+});
+
+test('narrow windows keep the mission heading in the first screen', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const directories = [tempWorkspace('narrow-leader'), tempWorkspace('narrow-worker')];
+  try {
+    const mission = await confirmMission(
+      app,
+      await prepareFixtureMission(app, directories),
+      'Narrow window mission',
+    );
+    await app.page.setViewportSize({ width: 680, height: 800 });
+    await app.page.getByLabel('Selected mission').selectOption(mission.id);
+    const heading = app.page.locator('#mission-workspace h1');
+    await expect(heading).toHaveText('Narrow window mission');
+    const top = await heading.evaluate((el) => el.getBoundingClientRect().top);
+    expect(top, 'mission heading inside the first viewport').toBeLessThan(400);
+    const scrollers = await app.page.evaluate(
+      () =>
+        [...document.querySelectorAll('*')].filter((el) => {
+          const s = getComputedStyle(el);
+          return (
+            (s.overflowY === 'auto' || s.overflowY === 'scroll') &&
+            el.scrollHeight > el.clientHeight
+          );
+        }).length,
+    );
+    expect(scrollers, 'one vertical scroller').toBeLessThanOrEqual(1);
+  } finally {
+    await teardown(app, ...directories);
+  }
+});
+
+test('medium windows keep an attention control when a decision waits', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const directories = [tempWorkspace('medium-leader'), tempWorkspace('medium-worker')];
+  try {
+    let mission = await confirmMission(
+      app,
+      await prepareFixtureMission(app, directories),
+      'Medium window mission',
+    );
+    const work = await addWork(app, mission);
+    await app.bridgeRequest(work.supervisorId, 'threadhelm_work_assign', {
+      ...workDecision(mission.id),
+      idempotencyKey: randomUUID(),
+      workItemId: work.workItemId,
+      bindingId: work.binding.bindingId,
+    });
+    mission = await app.call('missions.detail', { missionId: mission.id });
+    await app.bridgeRequest(mission.attempts[0]!.sessionId!, 'threadhelm_work_result', {
+      missionId: mission.id,
+      workItemId: work.workItemId,
+      attemptId: mission.attempts[0]!.id,
+      idempotencyKey: randomUUID(),
+      disposition: 'authority_required',
+      explanation: 'An owner decision is needed.',
+      evidenceRefs: [],
+    });
+    await app.page.setViewportSize({ width: 960, height: 800 });
+    const list = app.page.getByRole('listbox', { name: 'Missions', exact: true });
+    await list.getByRole('option', { name: new RegExp(mission.id.slice(0, 8), 'i') }).click();
+    const toggle = app.page.getByRole('button', { name: /needs your decision/i });
+    await expect(toggle).toBeVisible();
+    await toggle.click();
+    const panel = app.page.getByRole('dialog', { name: 'Mission context' });
+    await expect(panel).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Review choices…' })).toBeVisible();
+    await app.page.keyboard.press('Escape');
+    await expect(panel).toBeHidden();
+    await expect(toggle).toBeFocused();
+  } finally {
+    await teardown(app, ...directories);
+  }
+});
+
+test('medium windows do not claim a mission decision on a non-mission destination', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const directories = [tempWorkspace('medium-other-leader'), tempWorkspace('medium-other-worker')];
+  try {
+    let mission = await confirmMission(
+      app,
+      await prepareFixtureMission(app, directories),
+      'Medium window other-destination mission',
+    );
+    const work = await addWork(app, mission);
+    await app.bridgeRequest(work.supervisorId, 'threadhelm_work_assign', {
+      ...workDecision(mission.id),
+      idempotencyKey: randomUUID(),
+      workItemId: work.workItemId,
+      bindingId: work.binding.bindingId,
+    });
+    mission = await app.call('missions.detail', { missionId: mission.id });
+    await app.bridgeRequest(mission.attempts[0]!.sessionId!, 'threadhelm_work_result', {
+      missionId: mission.id,
+      workItemId: work.workItemId,
+      attemptId: mission.attempts[0]!.id,
+      idempotencyKey: randomUUID(),
+      disposition: 'authority_required',
+      explanation: 'An owner decision is needed.',
+      evidenceRefs: [],
+    });
+    await app.page.setViewportSize({ width: 960, height: 800 });
+    const list = app.page.getByRole('listbox', { name: 'Missions', exact: true });
+    await list.getByRole('option', { name: new RegExp(mission.id.slice(0, 8), 'i') }).click();
+    // Confirm the decision is really pending before checking it does not leak elsewhere.
+    await expect(app.page.getByRole('button', { name: /needs your decision/i })).toBeVisible();
+    await app.page.getByRole('button', { name: 'Sessions', exact: true }).click();
+    const toggle = app.page.getByRole('button', { name: 'Context', exact: true });
+    await expect(toggle).toBeVisible();
+    await expect(app.page.getByRole('button', { name: /needs your decision/i })).toHaveCount(0);
+    await expect(toggle.locator('.attention-dot')).toHaveCount(0);
   } finally {
     await teardown(app, ...directories);
   }

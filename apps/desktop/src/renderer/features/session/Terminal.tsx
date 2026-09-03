@@ -75,6 +75,13 @@ export function TerminalPane({
   useEffect(() => {
     if (!active) return;
     const entry = ensureTerminal(sessionId);
+    // The workspace scrolls and the dock sits below its fold on a short window.
+    // xterm's renderer pauses while its screen element leaves the viewport, so a
+    // terminal left below the fold keeps writing to the buffer and painting
+    // nothing. Selecting a session is a request to watch it: bring it into view
+    // once per selection — `nearest` is a no-op when it is already visible, so a
+    // user reading elsewhere in the workspace is never yanked around.
+    host.current?.scrollIntoView({ block: 'nearest' });
     const repaint = requestAnimationFrame(() => {
       entry.fit.fit();
       entry.term.refresh(0, Math.max(0, entry.term.rows - 1));

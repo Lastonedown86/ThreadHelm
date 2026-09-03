@@ -4,7 +4,8 @@
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
-import { mkdtempSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ProviderId } from '@threadhelm/contracts';
@@ -17,7 +18,18 @@ export const PROVIDER_NAME: Record<ProviderId, string> = {
 };
 
 export function tempWorkspace(tag = 'thm ünï 空間'): string {
-  return mkdtempSync(join(tmpdir(), `${tag}-`));
+  // mkdtempSync's random suffix draws per-character from [A-Za-z0-9], so it
+  // occasionally lands all-uppercase (e.g. "W7KARK") and, once this path is
+  // rendered in the workspace, trips assertNoRawReasonCode's raw-reason-code
+  // guard (mission-focus-workspace.spec.ts), which requires every displayed
+  // /^[A-Z][A-Z0-9_]{2,63}$/ token to be allowlisted UI copy. randomUUID() is
+  // always lowercase hex, so build the leaf ourselves instead of lowercasing
+  // mkdtempSync's output — that would also lowercase the tmpdir() prefix,
+  // which on CI can hold real mixed-case path segments (e.g. RUNNER~1) that
+  // must stay exactly as the OS reports them.
+  const created = join(tmpdir(), `${tag}-${randomUUID()}`);
+  mkdirSync(created);
+  return created;
 }
 
 /** Launches the app with fixture providers and the readiness panel refreshed. */
@@ -43,6 +55,27 @@ export async function launchWithFixtures(
 
 export function terminalRows(page: Page): Locator {
   return page.locator('.terminal-host:visible .xterm-rows');
+}
+
+/**
+ * Brings the terminal into the window's viewport and returns its rows.
+ *
+ * xterm's RenderService watches the screen element with an IntersectionObserver
+ * and pauses painting while it does not intersect the viewport: writes still
+ * reach the buffer, but the DOM rows keep their last painted content until the
+ * terminal comes back into view. The mission workspace scrolls, so a terminal
+ * docked below the fold never repaints.
+ *
+ * Selecting a session now brings its terminal into view (TerminalPane), so a
+ * spec that only selects needs nothing. This is for the specs that then scroll
+ * somewhere else — clicking a session-list option, say, which Playwright scrolls
+ * into view and which pushes the dock back below the fold — and still measure
+ * output *appearing*. It restores what a user watching the terminal would see.
+ */
+export async function showTerminal(page: Page): Promise<Locator> {
+  const rows = terminalRows(page);
+  await rows.scrollIntoViewIfNeeded();
+  return rows;
 }
 
 export function sessionOptions(page: Page): Locator {

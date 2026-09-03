@@ -32,6 +32,7 @@ import {
   launchViaUi,
   launchWithFixtures,
   sessionOption,
+  showTerminal,
   terminalRows,
 } from '../../e2e/helpers/ui.js';
 
@@ -417,6 +418,12 @@ describe('performance budgets', () => {
     const sessionId = await launchViaUi(app, 'codex-cli', displayPath);
     await sessionOption(page, sessionId).click();
     await terminalRows(page).filter({ hasText: 'FAKE_AGENT_READY' }).waitFor({ timeout: 30_000 });
+    // Selecting the session scrolls its terminal into view, but the click above
+    // scrolls the session-list option into view too, which pushes the dock back
+    // below the fold — and xterm stops painting while its screen element is out
+    // of the viewport. The budget is only meaningful on a terminal the user is
+    // actually looking at, so restore that as an explicit precondition.
+    await showTerminal(page);
 
     const samples: number[] = [];
     for (let i = 0; i < 40; i += 1) {

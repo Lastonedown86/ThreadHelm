@@ -1,9 +1,9 @@
 .mission-app-shell {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  flex: 1 1 0;
   min-width: 0;
   min-height: 0;
-  height: 100%;
   color: var(--mission-ink);
   background: var(--mission-fog);
   font-family: var(--mission-font-body);
@@ -28,6 +28,8 @@
 
 .mission-shell-workspace {
   background: var(--mission-paper);
+  container-type: inline-size;
+  container-name: workspace;
 }
 
 .mission-shell-context {
@@ -173,9 +175,11 @@
 @media (max-width: 700px) {
   .mission-shell-regions {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .mission-shell-rail {
+    overflow: visible;
     border-right: 0;
     border-bottom: 1px solid color-mix(in srgb, var(--mission-ink) 20%, transparent);
   }
@@ -191,5 +195,64 @@
 
   .mission-picker {
     width: 100%;
+  }
+
+  .app-navigation {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+.app-navigation button {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.nav-count {
+  min-width: 1.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--mission-copper);
+  color: #fff;
+  font: 650 0.72rem/1.4rem var(--mission-font-code);
+  text-align: center;
+}
+
+.context-toggle {
+  display: none;
+  position: relative;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem 0;
+}
+.context-toggle .attention-dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  background: var(--mission-copper);
+}
+.context-overlay {
+  position: absolute;
+  top: 2.5rem;
+  right: 1rem;
+  z-index: 5;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--mission-ink) 30%, transparent);
+  background: var(--mission-fog);
+  box-shadow: 0 0.5rem 1.5rem rgba(24, 36, 44, 0.18);
+}
+.context-overlay-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+@media (max-width: 980px) {
+  .context-toggle {
+    display: flex;
   }
 }

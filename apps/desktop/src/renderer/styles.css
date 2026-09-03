@@ -1,6 +1,7 @@
 @import './styles/tokens.css';
 @import './styles/shell.css';
 @import './styles/mission-focus.css';
+@import './styles/mission-composer.css';
 @import './styles/guided-setup.css';
 @import './styles/agent-library.css';
 @import './styles/memory-library.css';
@@ -136,9 +137,11 @@ button:disabled {
   z-index: 10;
 }
 
+/* Column flex, not a fixed row template: the banners above the shell are optional, and a
+   positional 1fr row handed the window's spare height to the footer whenever none showed. */
 .app {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   height: 100%;
 }
 

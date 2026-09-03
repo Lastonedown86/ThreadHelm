@@ -1,19 +1,23 @@
 import { useState } from 'react';
-import { api, call } from './api.js';
+import { api, call, errorCode } from './api.js';
 import { CloseBlockedDialog } from './features/control/CloseBlockedDialog.js';
 import { AgentLibraryWorkspace } from './features/coordination/AgentLibraryWorkspace.js';
 import { MemoryLibraryWorkspace } from './features/coordination/MemoryLibraryWorkspace.js';
 import { MissionComposer } from './features/coordination/MissionComposer.js';
 import { MissionDetail } from './features/coordination/MissionDetail.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
+import { ContextToggle } from './features/mission-focus/ContextToggle.js';
 import { MissionContext } from './features/mission-focus/MissionContext.js';
+import { MissionContextFrame } from './features/mission-focus/MissionContextFrame.js';
 import { MissionRail } from './features/mission-focus/MissionRail.js';
 import { MissionWorkspace } from './features/mission-focus/MissionWorkspace.js';
+import type { ActionKind } from './features/mission-focus/mission-presentation.js';
 import { useMissionWorkspace } from './features/mission-focus/useMissionWorkspace.js';
 import { terminalSize } from './features/session/terminal-loader.js';
 import { SessionWorkspace } from './features/sessions/SessionWorkspace.js';
 import { AppNavigation } from './features/shell/AppNavigation.js';
 import { AppShell } from './features/shell/AppShell.js';
+import type { WorkspaceDestination } from './features/shell/navigation.js';
 import { GuidedSetup } from './features/workspaces/GuidedSetup.js';
 import { SetupAttentionSummary } from './features/workspaces/SetupAttentionSummary.js';
 import { RecoveryAttentionQueue } from './features/recovery/RecoveryAttentionQueue.js';
@@ -47,12 +51,47 @@ function LegacyDestination({
   }
 }
 
+const destinationHeading: Record<WorkspaceDestination, string> = {
+  missions: 'Mission context',
+  sessions: 'Sessions',
+  agents: 'Agents',
+  templates: 'Templates',
+  memory: 'Memory',
+  attention: 'Attention',
+  settings: 'Settings',
+};
+
 function Shell() {
   const { state, actions } = useStore();
   const workspace = useMissionWorkspace(state.selectedMissionId);
   const [creatingMission, setCreatingMission] = useState(false);
   const [detailMissionId, setDetailMissionId] = useState<string | null>(null);
   const missionSelected = state.selectedDestination === 'missions';
+
+  const runMissionAction = (kind: ActionKind) => {
+    const missionId = state.selectedMissionId;
+    if (!missionId) return;
+    if (kind === 'pause') {
+      void call(api.missions.pause({ missionId })).catch((cause) =>
+        actions.setNotice(`Pausing the mission failed (${errorCode(cause)}).`),
+      );
+      return;
+    }
+    setDetailMissionId(missionId);
+  };
+
+  const contextContent = missionSelected ? (
+    <MissionContext
+      detail={workspace.detail}
+      presentation={workspace.presentation}
+      onAction={runMissionAction}
+      onOpenAttention={() => actions.selectDestination('attention')}
+    />
+  ) : (
+    <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
+      <SetupAttentionSummary />
+    </MissionContextFrame>
+  );
 
   return (
     <div className="app">
@@ -80,6 +119,7 @@ function Shell() {
           <>
             <MissionRail
               missions={workspace.missions}
+              titles={workspace.titles}
               selectedMissionId={state.selectedMissionId}
               onSelect={actions.selectMission}
               onCreate={() => setCreatingMission(true)}
@@ -87,6 +127,11 @@ function Shell() {
             <AppNavigation
               selected={state.selectedDestination}
               onSelect={actions.selectDestination}
+              counts={{
+                sessions: Object.values(state.unread).filter(Boolean).length,
+                attention: state.recoveryRecords.filter((record) => record.resolvedAt === null)
+                  .length,
+              }}
             />
           </>
         }
@@ -98,20 +143,25 @@ function Shell() {
               onOpenDetail={() => {
                 if (state.selectedMissionId) setDetailMissionId(state.selectedMissionId);
               }}
+              onAction={runMissionAction}
+              onOpenTerminal={(sessionId) => {
+                actions.select(sessionId);
+                actions.selectDestination('sessions');
+              }}
             />
           ) : (
             <LegacyDestination mission={workspace.detail} />
           )
         }
-        context={
-          missionSelected ? (
-            <MissionContext detail={workspace.detail} presentation={workspace.presentation} />
-          ) : state.selectedDestination === 'settings' ? (
-            <SetupAttentionSummary />
-          ) : (
-            <p className="mission-workspace-state">{state.selectedDestination} workspace</p>
-          )
+        contextToggle={
+          <ContextToggle
+            label={(missionSelected ? workspace.presentation?.attentionLabel : null) ?? 'Context'}
+            attention={(missionSelected ? workspace.presentation?.attention : null) ?? 'none'}
+          >
+            {contextContent}
+          </ContextToggle>
         }
+        context={contextContent}
         terminal={null}
       />
       <footer className="status-bar">

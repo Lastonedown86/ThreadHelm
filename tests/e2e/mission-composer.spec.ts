@@ -20,7 +20,9 @@ test('new mission opens the guided composer in the workspace and autosaves the o
     const next = page.getByRole('button', { name: 'Continue to crew', exact: true });
     await expect(next).toBeDisabled();
     await expect(
-      page.getByText('Add a finish line so the coordinator knows what done means.'),
+      page.getByText('Add a finish line so the coordinator knows what done means.', {
+        exact: true,
+      }),
     ).toBeVisible();
     await page.getByLabel('Finish line', { exact: true }).fill('Fix the flaky terminal test.');
     await page

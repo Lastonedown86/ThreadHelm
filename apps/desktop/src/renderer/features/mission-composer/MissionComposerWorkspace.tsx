@@ -68,9 +68,13 @@ export function MissionComposerWorkspace({
 
   useEffect(() => {
     heading.current?.focus();
-    setAnnouncement(`Step ${index + 1} of 4, ${STAGE_LABEL[stage]}`);
     setInvalid(null);
   }, [stage, index]);
+  // One live region for the whole composer: step entry and readiness changes
+  // both flow through this announcement instead of a second aria-live source.
+  useEffect(() => {
+    setAnnouncement(`Step ${index + 1} of 4, ${STAGE_LABEL[stage]}. ${readiness.message}`);
+  }, [stage, index, readiness.message]);
   useEffect(() => {
     if (draft.receipt) setAnnouncement('Draft saved');
   }, [draft.receipt]);
@@ -203,7 +207,7 @@ export function MissionComposerWorkspace({
         ) : null}
         {/* Task 7 mounts CrewStage and AccessStage; Task 9 mounts ReviewStage. */}
       </div>
-      <p className={`composer-readiness${readiness.ready ? ' ready' : ''}`} role="status">
+      <p className={`composer-readiness${readiness.ready ? ' ready' : ''}`}>
         {readiness.message}
       </p>
       <div className="mission-action-row composer-actions">

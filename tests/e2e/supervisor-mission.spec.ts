@@ -36,6 +36,8 @@ async function createMission(app: LaunchedApp, dirs: string[]) {
   await dialog
     .getByRole('combobox', { name: 'Worker 1 session', exact: true })
     .selectOption(workerId);
+  await dialog.getByLabel('Worker 1 assignment', { exact: true }).fill('Inspect the change.');
+  await dialog.getByLabel('Worker 1 return evidence', { exact: true }).fill('A cited report');
   await dialog.getByRole('button', { name: 'Review mission', exact: true }).click();
   await expect(dialog.getByRole('heading', { name: 'Review mission authority' })).toBeVisible();
   await expect(dialog.getByRole('heading', { name: 'Review mission authority' })).toBeFocused();
@@ -160,6 +162,8 @@ test('offline worker review discloses exact typed tool patterns and restores for
     await dialog
       .getByRole('combobox', { name: 'Worker 1 profile', exact: true })
       .selectOption(workerProfile.profileId);
+    await dialog.getByLabel('Worker 1 assignment', { exact: true }).fill('Inspect the change.');
+    await dialog.getByLabel('Worker 1 return evidence', { exact: true }).fill('A cited report');
     await dialog
       .getByRole('checkbox', {
         name: 'Authorize automatic startup of worker 1 within this mission',

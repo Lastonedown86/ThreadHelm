@@ -84,6 +84,11 @@ export function MissionEnvelopeDisclosure({ preview }: { preview: MissionPreview
       <h3 tabIndex={-1}>Review mission authority</h3>
       <p>{preview.envelope.objective}</p>
       <p>Completion evidence: {preview.envelope.completionEvidence}</p>
+      {
+        preview.envelope.exclusions.length ? (
+          <p>Outside this mission: {preview.envelope.exclusions.join('; ')}</p>
+        ) : null
+      }
       <p className="notice">{preview.boundaryWarning}</p>
       <dl>
         {Object.entries(preview.envelope.bounds).map(([key, value]) => (
@@ -120,6 +125,14 @@ export function MissionEnvelopeDisclosure({ preview }: { preview: MissionPreview
             Automatic startup:{' '}
             {binding.autoStart ? 'authorized for this exact binding' : 'not authorized'}
           </p>
+          {
+            binding.assignment ? <p>Assignment: {binding.assignment}</p> : null
+          }
+          {
+            binding.requiredReturnEvidence.length ? (
+              <p>Must bring back: {binding.requiredReturnEvidence.join('; ')}</p>
+            ) : null
+          }
           <p>
             {binding.providerId} {binding.readiness.version} · model{' '}
             {binding.runtimeSelection.model ?? 'CLI default'} · effort{' '}
@@ -234,7 +247,7 @@ export function MissionComposer({
     profile &&
     supervisor &&
     workers.length &&
-    workers.every((w) => w.profileId && w.workspaceId && (w.sessionId || w.autoStart)),
+    workers.every((w) => w.profileId && w.workspaceId && (w.sessionId || w.autoStart) && w.assignment.trim() && w.requiredReturnEvidence.length > 0),
   );
   const workerPatch = (index: number, patch: Partial<Worker>) =>
     setWorkers((old) => old.map((worker, i) => (i === index ? { ...worker, ...patch } : worker)));
@@ -260,6 +273,7 @@ export function MissionComposer({
         })),
         workers,
         bounds,
+        exclusions: current?.input?.exclusions ?? [],
         permittedRoutineActions: current?.input?.permittedRoutineActions ?? [
           'decompose',
           'assign',
@@ -447,6 +461,19 @@ export function MissionComposer({
                   ))}
                 </select>
               </label>
+              <label className="field">
+                Worker {index + 1} assignment
+                <textarea
+                  rows={2}
+                  value={worker.assignment}
+                  onChange={(event) => workerPatch(index, { assignment: event.target.value })}
+                />
+              </label>
+              <AllowedToolsInput
+                label={`Worker ${index + 1} return evidence`}
+                value={worker.requiredReturnEvidence}
+                onChange={(value) => workerPatch(index, { requiredReturnEvidence: value })}
+              />
               <label className="field">
                 Worker {index + 1} session
                 <select
@@ -653,6 +680,8 @@ export function MissionComposer({
                   sessionId: null,
                   role: 'worker',
                   autoStart: false,
+                  assignment: '',
+                  requiredReturnEvidence: [],
                   runtimeSelection: { model: p.requestedModel, effort: null },
                   permissionSelection: { policy: 'manual', boundedAllowlist: [] },
                   executionBounds,

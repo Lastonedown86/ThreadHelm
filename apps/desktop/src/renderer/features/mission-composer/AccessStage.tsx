@@ -65,6 +65,7 @@ export function AccessStage({
         ) : null}
         {workers.map((worker, index) => {
           const n = index + 1;
+          const hasMode = worker.workspaceId ? modes.has(worker.workspaceId) : false;
           const mode = worker.workspaceId ? (modes.get(worker.workspaceId) ?? 'write') : null;
           if (approved.length === 0) return null;
           return (
@@ -92,6 +93,8 @@ export function AccessStage({
                     <input
                       type="radio"
                       name={`mode-${index}`}
+                      data-field={!hasMode ? 'workspaces' : undefined}
+                      aria-invalid={(invalid === 'workspaces' && !hasMode) || undefined}
                       checked={mode === 'read'}
                       onChange={() => setMode(worker.workspaceId!, 'read')}
                     />

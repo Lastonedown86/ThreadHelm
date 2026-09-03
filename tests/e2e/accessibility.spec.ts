@@ -282,6 +282,41 @@ test('mission form has named visible-focus controls, stable idle content and 200
   }
 });
 
+test('composer never scrolls sideways and its sticky actions never cover the focused control', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const dir = tempWorkspace('composer-a11y');
+  try {
+    const page = app.page;
+    for (const [width, height] of [
+      [1400, 900],
+      [680, 800],
+    ] as const) {
+      await page.setViewportSize({ width, height });
+      await page.getByRole('button', { name: 'Missions', exact: true }).click();
+      await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        ),
+        `no horizontal overflow at ${width}`,
+      ).toBe(false);
+      const outside = page.getByLabel('Outside this mission', { exact: true });
+      await outside.focus();
+      const covered = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement;
+        const r = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + 4, r.bottom - 4);
+        return !(hit === el || el.contains(hit));
+      });
+      expect(covered, `sticky actions do not cover focus at ${width}`).toBe(false);
+      await page.getByRole('button', { name: 'Close', exact: true }).click();
+      await page.getByRole('button', { name: 'Close composer', exact: true }).click();
+    }
+  } finally {
+    await teardown(app, dir);
+  }
+});
+
 test('keyboard order reaches mission rail and workspace controls once a mission is selected', async () => {
   const app = await launchWithFixtures({ 'codex-cli': 'echo' });
   const directories = [tempWorkspace('kb-order-leader'), tempWorkspace('kb-order-worker')];

@@ -283,6 +283,7 @@ export function MissionComposerWorkspace({
             profiles={profiles}
             onStarted={onStarted}
             onGoTo={(target) => void draft.goTo(target)}
+            onAnnounce={setAnnouncement}
           />
         ) : null}
       </div>

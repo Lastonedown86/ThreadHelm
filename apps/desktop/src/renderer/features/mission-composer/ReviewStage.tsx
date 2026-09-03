@@ -21,6 +21,7 @@ export function ReviewStage({
   profiles,
   onStarted,
   onGoTo,
+  onAnnounce,
 }: {
   draftId: string;
   version(): number;
@@ -28,6 +29,7 @@ export function ReviewStage({
   profiles: Profile[];
   onStarted(mission: MissionDetailView): void;
   onGoTo(stage: Stage): void;
+  onAnnounce(message: string): void;
 }) {
   const { state, actions } = useStore();
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -102,6 +104,22 @@ export function ReviewStage({
     b.reasonCode?.startsWith('RUNTIME') || b.reasonCode?.startsWith('PERMISSION')
       ? 'crew'
       : 'access';
+
+  // The one shared live region announces stage entry, not this stage's own
+  // async preview outcome — mirror the visible ready/incomplete/changed text
+  // into it so a screen-reader user hears the real result, not a constant.
+  useEffect(() => {
+    if (status === 'ready') {
+      onAnnounce('Ready to start. Everything below is exactly what will be pinned.');
+    } else if (status === 'incomplete') {
+      const reasons = held
+        .map((b) => `${b.role} · ${profileName(b.profileId)}: ${reasonLabel(b.reasonCode)}`)
+        .join('. ');
+      onAnnounce(`Setup incomplete. ${reasons}`);
+    } else if (status === 'changed') {
+      onAnnounce('Mission changed. The draft moved after this review was prepared.');
+    }
+  }, [status]);
 
   return (
     <div className="composer-stage-body">

@@ -221,7 +221,10 @@ test('review shows a launch brief, requires confirmation, and starts the mission
   try {
     const page = app.page;
     await fillAccess(app, dir);
-    await expect(page.getByText('Ready to start')).toBeVisible();
+    await expect(page.locator('.composer-state.ready')).toBeVisible();
+    // The shared, single live region announces the real preview outcome, not
+    // just a constant per-stage message.
+    await expect(page.getByRole('status').filter({ hasText: 'Ready to start' })).toBeVisible();
     const brief = page.getByRole('region', { name: 'Launch brief' });
     await expect(brief).toContainText('Fix the flaky terminal test.');
     await expect(brief).toContainText('Reproduce and fix the test.');
@@ -250,7 +253,7 @@ test('editing after preview shows Mission changed, and an expired review returns
   try {
     const page = app.page;
     await fillAccess(app, dir);
-    await expect(page.getByText('Ready to start')).toBeVisible();
+    await expect(page.locator('.composer-state.ready')).toBeVisible();
     await page.getByRole('button', { name: 'Outcome', exact: true }).click();
     await page
       .getByLabel('Finish line', { exact: true })
@@ -258,7 +261,7 @@ test('editing after preview shows Mission changed, and an expired review returns
     await page.getByRole('button', { name: 'Continue to crew', exact: true }).click();
     await page.getByRole('button', { name: 'Continue to access and limits', exact: true }).click();
     await page.getByRole('button', { name: 'Continue to review', exact: true }).click();
-    await expect(page.getByText('Ready to start')).toBeVisible();
+    await expect(page.locator('.composer-state.ready')).toBeVisible();
     await page.getByRole('checkbox', { name: 'I reviewed this exact mission authority' }).check();
     await app.advanceClock(121_000);
     await page.getByRole('button', { name: 'Start mission', exact: true }).click();

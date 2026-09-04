@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CONTINUE_LABEL,
   DEFAULT_BOUNDS,
+  deriveWorkspaces,
   limitsSummary,
   newWorker,
   runtimeSummary,
@@ -9,6 +10,9 @@ import {
 } from '../../../apps/desktop/src/renderer/features/mission-composer/composer-fields.js';
 
 const uuid = '11111111-1111-4111-8111-111111111111';
+const supervisorWs = '22222222-2222-4222-8222-222222222222';
+const oldFolder = '33333333-3333-4333-8333-333333333333';
+const newFolder = '44444444-4444-4444-8444-444444444444';
 const context = { hasProfiles: true, hasEligibleSessions: true };
 
 describe('composer fields', () => {
@@ -89,6 +93,43 @@ describe('composer fields', () => {
         context,
       ),
     ).toMatchObject({ ready: true });
+  });
+
+  it('derives workspaces from the currently-bound set, dropping stale entries', () => {
+    const worker = { ...newWorker(), workspaceId: oldFolder };
+    const fields = {
+      workers: [worker],
+      workspaces: [
+        { workspaceId: supervisorWs, mode: 'write' as const },
+        { workspaceId: oldFolder, mode: 'read' as const },
+      ],
+    };
+    // Changing the worker's folder away from oldFolder drops it, since nothing
+    // else references it, while preserving the supervisor's own entry.
+    const movedWorker = { ...worker, workspaceId: newFolder };
+    expect(deriveWorkspaces({ ...fields, workers: [movedWorker] }, supervisorWs)).toEqual(
+      expect.arrayContaining([
+        { workspaceId: supervisorWs, mode: 'write' },
+        { workspaceId: newFolder, mode: 'write' },
+      ]),
+    );
+    expect(deriveWorkspaces({ ...fields, workers: [movedWorker] }, supervisorWs)).toHaveLength(2);
+  });
+
+  it('never drops the supervisor entry, and keeps a still-bound workspace mode', () => {
+    const worker = { ...newWorker(), workspaceId: oldFolder };
+    const fields = {
+      workers: [worker],
+      workspaces: [{ workspaceId: oldFolder, mode: 'read' as const }],
+    };
+    // Supervisor's own workspace has no representation yet (no session chosen
+    // before) but must appear once one is: added, not silently missing.
+    expect(deriveWorkspaces(fields, supervisorWs)).toEqual(
+      expect.arrayContaining([
+        { workspaceId: supervisorWs, mode: 'write' },
+        { workspaceId: oldFolder, mode: 'read' },
+      ]),
+    );
   });
 
   it('summarizes defaults in words', () => {

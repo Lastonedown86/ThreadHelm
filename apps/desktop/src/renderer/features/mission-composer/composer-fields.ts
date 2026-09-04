@@ -65,6 +65,32 @@ export function relativeTime(iso: string): string {
   return hours < 24 ? `${hours} h ago` : `${Math.round(hours / 24)} d ago`;
 }
 
+type WorkspaceEntry = NonNullable<MissionComposerFields['workspaces']>[number];
+
+/**
+ * Recomputes `fields.workspaces` from the currently-bound set — the
+ * supervisor's own workspace plus every current worker's workspace — instead
+ * of accumulating add-only. A stale entry (a worker's folder changed away
+ * from it, or a session change moved the supervisor elsewhere) is dropped
+ * rather than pinned verbatim into the confirmed envelope; a workspace still
+ * in the bound set keeps whichever mode the user already chose for it.
+ */
+export function deriveWorkspaces(
+  fields: MissionComposerFields,
+  supervisorWorkspaceId: string | null,
+): WorkspaceEntry[] {
+  const existing = fields.workspaces ?? [];
+  const boundIds = new Set(
+    [supervisorWorkspaceId, ...(fields.workers ?? []).map((w) => w.workspaceId)].filter(
+      (id): id is string => Boolean(id),
+    ),
+  );
+  return [...boundIds].map((workspaceId) => ({
+    workspaceId,
+    mode: existing.find((w) => w.workspaceId === workspaceId)?.mode ?? 'write',
+  }));
+}
+
 export function newWorker(): WorkerFields {
   return {
     profileId: null,

@@ -1,7 +1,12 @@
 import type { ApprovedWorkspaceView, OperationResponse } from '@threadhelm/contracts';
 import { ListEditor } from './ListEditor.js';
 import type { StageProps } from './OutcomeStage.js';
-import { newWorker, runtimeSummary, type WorkerFields } from './composer-fields.js';
+import {
+  deriveWorkspaces,
+  newWorker,
+  runtimeSummary,
+  type WorkerFields,
+} from './composer-fields.js';
 
 type Profile = OperationResponse<'profiles.list'>['profiles'][number];
 type Eligible = OperationResponse<'missions.eligibleSessions'>[number];
@@ -120,19 +125,18 @@ export function CrewStage({
             value={supervisor.sessionId ?? ''}
             onChange={(event) => {
               const chosen = eligible.find((s) => s.sessionId === event.target.value);
-              setFields({ supervisor: { ...supervisor, sessionId: event.target.value || null } });
+              const nextSupervisor = { ...supervisor, sessionId: event.target.value || null };
               // The supervisor's own workspace needs an access entry too (it is
               // resolved from the live session, not chosen on the Access stage).
-              if (
-                chosen &&
-                !(fields.workspaces ?? []).some((w) => w.workspaceId === chosen.workspaceId)
-              )
-                setFields({
-                  workspaces: [
-                    ...(fields.workspaces ?? []),
-                    { workspaceId: chosen.workspaceId, mode: 'write' },
-                  ],
-                });
+              // Recomputed, not appended, so a session change drops the old
+              // workspace instead of leaving a stale write-access entry behind.
+              setFields({
+                supervisor: nextSupervisor,
+                workspaces: deriveWorkspaces(
+                  { ...fields, supervisor: nextSupervisor },
+                  chosen?.workspaceId ?? null,
+                ),
+              });
             }}
           >
             <option value="">Choose a live session</option>
@@ -197,32 +201,36 @@ export function CrewStage({
                 value={worker.sessionId ?? ''}
                 onChange={(event) => {
                   const chosen = sessions.find((s) => s.sessionId === event.target.value);
-                  patchWorker(index, {
-                    sessionId: event.target.value || null,
-                    ...(chosen
+                  const nextWorkers = workers.map((w, i) =>
+                    i === index
                       ? {
-                          autoStart: false,
-                          workspaceId: chosen.workspaceId,
-                          // A live session's bound worker must match its recorded
-                          // launch exactly; these are read-only once a session is chosen.
-                          runtimeSelection: chosen.runtimeSelection,
-                          permissionSelection: chosen.permissionSelection,
-                          executionBounds: chosen.executionBounds,
+                          ...w,
+                          sessionId: event.target.value || null,
+                          ...(chosen
+                            ? {
+                                autoStart: false,
+                                workspaceId: chosen.workspaceId,
+                                // A live session's bound worker must match its recorded
+                                // launch exactly; these are read-only once a session is chosen.
+                                runtimeSelection: chosen.runtimeSelection,
+                                permissionSelection: chosen.permissionSelection,
+                                executionBounds: chosen.executionBounds,
+                              }
+                            : {}),
                         }
-                      : {}),
+                      : w,
+                  );
+                  const supervisorWorkspaceId =
+                    eligible.find((s) => s.sessionId === supervisor.sessionId)?.workspaceId ?? null;
+                  // Recomputed, not appended, so a worker's session change drops
+                  // its old workspace instead of leaving a stale entry behind.
+                  setFields({
+                    workers: nextWorkers,
+                    workspaces: deriveWorkspaces(
+                      { ...fields, workers: nextWorkers },
+                      supervisorWorkspaceId,
+                    ),
                   });
-                  if (chosen) {
-                    const already = (fields.workspaces ?? []).some(
-                      (w) => w.workspaceId === chosen.workspaceId,
-                    );
-                    if (!already)
-                      setFields({
-                        workspaces: [
-                          ...(fields.workspaces ?? []),
-                          { workspaceId: chosen.workspaceId, mode: 'write' },
-                        ],
-                      });
-                  }
                 }}
               >
                 <option value="">Start a new session at launch</option>

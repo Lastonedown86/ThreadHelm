@@ -269,6 +269,7 @@ export function MissionComposerWorkspace({
             invalid={invalid}
             workspaces={state.workspaces}
             readiness={state.readiness}
+            eligible={eligible}
             providersInUse={[
               ...new Set([
                 ...eligible

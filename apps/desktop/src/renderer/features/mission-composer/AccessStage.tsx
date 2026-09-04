@@ -1,6 +1,19 @@
-import type { ApprovedWorkspaceView, MissionBounds, ReadinessView } from '@threadhelm/contracts';
+import type {
+  ApprovedWorkspaceView,
+  MissionBounds,
+  OperationResponse,
+  ReadinessView,
+} from '@threadhelm/contracts';
 import type { StageProps } from './OutcomeStage.js';
-import { BOUND_LABELS, DEFAULT_BOUNDS, accessReason, limitsSummary } from './composer-fields.js';
+import {
+  BOUND_LABELS,
+  DEFAULT_BOUNDS,
+  accessReason,
+  deriveWorkspaces,
+  limitsSummary,
+} from './composer-fields.js';
+
+type Eligible = OperationResponse<'missions.eligibleSessions'>[number];
 
 // ponytail: only two providers exist (ProviderId), no shared label module needed yet.
 const PROVIDER_LABEL: Record<ReadinessView['providerId'], string> = {
@@ -23,27 +36,26 @@ export function AccessStage({
   workspaces,
   readiness,
   providersInUse,
+  eligible,
 }: StageProps & {
   workspaces: ApprovedWorkspaceView[];
   readiness: ReadinessView[];
   providersInUse: ReadinessView['providerId'][];
+  eligible: Eligible[];
 }) {
   const workers = fields.workers ?? [];
   const modes = new Map((fields.workspaces ?? []).map((w) => [w.workspaceId, w.mode] as const));
   const approved = workspaces.filter((w) => !w.revokedAt);
+  const supervisorWorkspaceId =
+    eligible.find((s) => s.sessionId === fields.supervisor?.sessionId)?.workspaceId ?? null;
   const setWorkspace = (index: number, workspaceId: string | null) => {
     const next = workers.map((w, i) => (i === index ? { ...w, workspaceId } : w));
-    // Add-only: the supervisor's own access entry (added on the Crew stage,
-    // since only that stage knows its workspaceId) has no representation here
-    // and must survive a worker's folder choice changing.
-    const existing = fields.workspaces ?? [];
-    const additions =
-      workspaceId && !existing.some((w) => w.workspaceId === workspaceId)
-        ? [{ workspaceId, mode: (modes.get(workspaceId) ?? 'write') as 'read' | 'write' }]
-        : [];
+    // Recomputed, not appended, so choosing a different folder for this
+    // worker drops its old workspace instead of leaving a stale entry behind;
+    // the supervisor's own entry is always kept.
     setFields({
       workers: next,
-      workspaces: [...existing, ...additions],
+      workspaces: deriveWorkspaces({ ...fields, workers: next }, supervisorWorkspaceId),
     });
   };
   const setMode = (workspaceId: string, mode: 'read' | 'write') =>

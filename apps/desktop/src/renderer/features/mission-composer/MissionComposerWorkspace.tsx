@@ -69,7 +69,11 @@ export function MissionComposerWorkspace({
   }, [state.profilesSequence, state.missionSequence, reload]);
 
   const stage = draft.stage;
-  const workers = draft.fields.workers ?? [];
+  // Stabilized: draft.fields.workers ?? [] would allocate a fresh array
+  // reference every render when workers is undefined (a new draft), and the
+  // effect below depends on `workers` — an ever-changing dependency refires
+  // the effect every render, which calls onState and re-renders, forever.
+  const workers = useMemo(() => draft.fields.workers ?? [], [draft.fields.workers]);
   const index = STAGES.indexOf(stage);
   const context = { hasProfiles: profiles.length > 0, hasEligibleSessions: eligible.length > 0 };
   const readiness = useMemo(

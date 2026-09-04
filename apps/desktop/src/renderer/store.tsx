@@ -53,6 +53,14 @@ export interface State {
   /** Content-free authoring signal; fields are loaded only in explicit detail views. */
   agentAuthoringSequence: number;
   missionSequence: number;
+  /**
+   * Monotonic content-free signal for `missionComposer.changed` only. Kept
+   * separate from `missionSequence` so an autosave tick (as often as every
+   * 800ms) doesn't refire every effect that depends on real mission events
+   * (profiles list, eligible sessions, ReviewStage's version check) — only
+   * the drafts-list effect needs this one.
+   */
+  composerSequence: number;
   selectedMissionId: string | null;
   selectedDestination: WorkspaceDestination;
   selectedSessionId: string | null;
@@ -82,6 +90,7 @@ const initial: State = {
   profilesSequence: 0,
   agentAuthoringSequence: 0,
   missionSequence: 0,
+  composerSequence: 0,
   selectedMissionId: null,
   selectedDestination: 'missions',
   selectedSessionId: null,
@@ -139,7 +148,8 @@ type Action =
   | { type: 'memoryEvent'; sequence: number }
   | { type: 'profilesEvent' }
   | { type: 'agentAuthoringEvent' }
-  | { type: 'missionEvent' };
+  | { type: 'missionEvent' }
+  | { type: 'composerEvent' };
 
 function upsertSession(state: State, session: SessionView): State {
   const known = session.id in state.sessions;
@@ -292,6 +302,8 @@ function reduce(state: State, action: Action): State {
       return { ...state, agentAuthoringSequence: state.agentAuthoringSequence + 1 };
     case 'missionEvent':
       return { ...state, missionSequence: state.missionSequence + 1 };
+    case 'composerEvent':
+      return { ...state, composerSequence: state.composerSequence + 1 };
   }
 }
 
@@ -443,7 +455,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       api.on('agentWizard.changed', () => dispatch({ type: 'agentAuthoringEvent' })),
       api.on('agentTemplates.changed', () => dispatch({ type: 'agentAuthoringEvent' })),
       api.on('mission.changed', () => dispatch({ type: 'missionEvent' })),
-      api.on('missionComposer.changed', () => dispatch({ type: 'missionEvent' })),
+      api.on('missionComposer.changed', () => dispatch({ type: 'composerEvent' })),
     ];
     void refresh();
     return () => {

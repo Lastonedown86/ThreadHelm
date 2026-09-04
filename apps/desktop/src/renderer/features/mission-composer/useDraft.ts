@@ -24,6 +24,11 @@ export function useDraft(draftId: string) {
   const version = useRef(0);
   const dirty = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Guards against two concurrent updateDraft calls sharing one
+  // expectedVersion (e.g. a debounced autosave still in flight when goTo/
+  // close also calls saveNow()) — the second back would otherwise see its
+  // own edit rejected as MISSION_DRAFT_STALE.
+  const inFlight = useRef<Promise<MissionComposerSaveReceipt | null> | null>(null);
   const latest = useRef<{ fields: MissionComposerFields; stage: Stage }>({
     fields: {},
     stage: 'outcome',
@@ -47,10 +52,7 @@ export function useDraft(draftId: string) {
     };
   }, [draftId]);
 
-  const saveNow = useCallback(async (): Promise<MissionComposerSaveReceipt | null> => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = null;
-    if (!dirty.current && receipt) return receipt;
+  const performSave = useCallback(async (): Promise<MissionComposerSaveReceipt | null> => {
     setSaving(true);
     try {
       const saved = await call(
@@ -76,7 +78,30 @@ export function useDraft(draftId: string) {
     } finally {
       setSaving(false);
     }
-  }, [draftId, receipt]);
+  }, [draftId]);
+
+  const saveNow = useCallback(async (): Promise<MissionComposerSaveReceipt | null> => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    if (inFlight.current) {
+      // A save is already in flight: wait for it instead of firing a second
+      // updateDraft with the same expectedVersion, which would make one of
+      // the two calls fail as a spurious "saved elsewhere" conflict.
+      const result = await inFlight.current;
+      if (!dirty.current) return result;
+      // Fields changed again while we were waiting — fall through and save
+      // once more, now with the fresh expectedVersion from that resolution.
+    } else if (!dirty.current && receipt) {
+      return receipt;
+    }
+    const promise = performSave();
+    inFlight.current = promise;
+    try {
+      return await promise;
+    } finally {
+      if (inFlight.current === promise) inFlight.current = null;
+    }
+  }, [performSave, receipt]);
 
   const schedule = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);

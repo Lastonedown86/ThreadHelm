@@ -14,7 +14,11 @@ import {
   supervisorFixtureEnvelope,
   supervisorFixtureWork,
 } from '../../../packages/test-fixtures/src/supervisor.js';
-import type { MissionBindingView, SupervisorWorkInput } from '@threadhelm/contracts';
+import {
+  MissionComposerFields,
+  type MissionBindingView,
+  type SupervisorWorkInput,
+} from '@threadhelm/contracts';
 
 const at = '2026-08-30T00:00:00.000Z';
 describe('durable supervisor transactions', () => {
@@ -311,5 +315,43 @@ describe('durable supervisor transactions', () => {
       .get(mission.id) as { fingerprint: null };
     expect(row.fingerprint).toBeNull();
     expect(repos.supervisor.events(mission.id).at(-1)!.reasonCode).toBe('MISSION_CONTENT_DELETED');
+  });
+  it('reads a pre-branch stored envelope (no assignment/requiredReturnEvidence/exclusions) via detail() and the revision createDraft path', () => {
+    const mission = create();
+    // Simulate a mission confirmed before this branch: strip the three fields
+    // this branch added to MissionWorkerInput/MissionEnvelopeInput from the
+    // already-persisted input_json, exactly as an old row would look.
+    const row = db
+      .prepare('SELECT input_json FROM supervisor_envelopes WHERE mission_id=? AND version=1')
+      .get(mission.id) as { input_json: string };
+    const stored = JSON.parse(row.input_json) as Record<string, unknown>;
+    delete stored.exclusions;
+    for (const worker of stored.workers as Record<string, unknown>[]) {
+      delete worker.assignment;
+      delete worker.requiredReturnEvidence;
+    }
+    db.prepare('UPDATE supervisor_envelopes SET input_json=? WHERE mission_id=? AND version=1').run(
+      JSON.stringify(stored),
+      mission.id,
+    );
+
+    const detail = repos.supervisor.detail(mission.id);
+    expect(detail.input).not.toBeNull();
+    expect(detail.input!.exclusions).toEqual([]);
+    for (const worker of detail.input!.workers) {
+      expect(worker.assignment).toBe('');
+      expect(worker.requiredReturnEvidence).toEqual([]);
+    }
+
+    // The composer revision path: createDraft({ sourceMissionId }) reads
+    // mission.input and parses it as MissionComposerFields — must not throw.
+    const fieldValues = MissionComposerFields.parse(detail.input);
+    const { draftId } = repos.missionComposer.createDraft({
+      sourceMissionId: mission.id,
+      fieldValues,
+      currentStage: 'review',
+      createdAt: at,
+    });
+    expect(repos.missionComposer.getDraft(draftId).fieldValues.workers?.[0]?.assignment).toBe('');
   });
 });

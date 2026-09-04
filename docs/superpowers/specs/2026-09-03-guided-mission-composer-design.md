@@ -236,7 +236,13 @@ closes, the new mission is selected and its detail opens (the current post-confi
   gains `exclusions: z.array(MissionText(500)).max(8).default([])`. Supervisor bindings carry
   `null` and `[]`.
 - Envelopes are stored as JSON in `supervisor_envelopes`, so no mission table migration is needed.
-  Missions confirmed before this change parse through the View defaults.
+  Missions confirmed before this change parse through the View defaults — but the stored *input*
+  (`input_json`, the original confirmed envelope) is read back through
+  `MissionEnvelopeStoredInput`, a read-time-only counterpart to `MissionEnvelopeInput` that relaxes
+  `assignment`/`requiredReturnEvidence` to the same defaults the View schema uses (`''`/`[]` via
+  `.catch()`) instead of throwing on a row that predates them. `detail()` and the composer revision
+  path (`createDraft({ sourceMissionId })`) both go through this schema; live `preview`/`confirm`
+  requests are unaffected and still require these fields.
 - `resolveMissionEnvelope` in `mission-bindings.ts` copies the three fields from input to the
   binding view. The supervisor's `threadhelm_mission_inspect` response includes the envelope view,
   so the supervisor sees each worker's assignment and evidence without a new operation.

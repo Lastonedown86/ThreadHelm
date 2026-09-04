@@ -1904,7 +1904,7 @@ export const MissionRoutineAction = z.enum([
 const MissionWorkspaceInput = strictObject({ workspaceId: Uuid, mode: z.enum(['read', 'write']) });
 const MissionAssignment = MissionText(2000);
 const MissionEvidenceItem = MissionText(500);
-const MissionWorkerInput = strictObject({
+const missionWorkerInputShape = {
   profileId: Uuid,
   profileRevisionId: Uuid,
   workspaceId: Uuid,
@@ -1914,13 +1914,27 @@ const MissionWorkerInput = strictObject({
   runtimeSelection: LaunchRuntimeSelection,
   permissionSelection: LaunchPermissionSelection,
   executionBounds: ProviderExecutionBounds,
+} as const;
+const missionWorkerNoBypass = (v: { permissionSelection: { policy: string | null } }) =>
+  v.permissionSelection.policy !== 'break_glass_bypass';
+const MissionWorkerInput = strictObject({
+  ...missionWorkerInputShape,
   /** One bounded contribution for this mission; mission authority, not profile data. */
   assignment: MissionAssignment,
   requiredReturnEvidence: z.array(MissionEvidenceItem).min(1).max(8),
-}).refine(
-  (v) => v.permissionSelection.policy !== 'break_glass_bypass',
-  'mission bypass is prohibited',
-);
+}).refine(missionWorkerNoBypass, 'mission bypass is prohibited');
+/**
+ * Tolerant read-time counterpart to `MissionWorkerInput`, used ONLY for parsing
+ * an already-persisted `input_json` envelope. Missions confirmed before
+ * `assignment`/`requiredReturnEvidence` became required have no such fields in
+ * their stored JSON; `.catch()` fills in the same defaults the View schema
+ * uses instead of throwing. Never use this for validating a live request.
+ */
+const MissionWorkerStoredInput = strictObject({
+  ...missionWorkerInputShape,
+  assignment: MissionAssignment.catch(''),
+  requiredReturnEvidence: z.array(MissionEvidenceItem).max(8).catch([]),
+}).refine(missionWorkerNoBypass, 'mission bypass is prohibited');
 export const MissionEnvelopeInput = strictObject({
   objective: MissionText(4000),
   completionEvidence: MissionText(2000),
@@ -1937,6 +1951,17 @@ export const MissionEnvelopeInput = strictObject({
     .max(4),
 });
 export type MissionEnvelopeInput = z.infer<typeof MissionEnvelopeInput>;
+/**
+ * Tolerant read-time counterpart to `MissionEnvelopeInput`. Use ONLY to parse
+ * an already-persisted mission's stored `input_json` (e.g. `detail()` and the
+ * composer revision path) — never to validate a live confirm/preview request.
+ * Missions confirmed before `assignment`/`requiredReturnEvidence` were added
+ * read back with the same defaults the View schema already tolerates.
+ */
+export const MissionEnvelopeStoredInput = MissionEnvelopeInput.extend({
+  workers: z.array(MissionWorkerStoredInput).min(1).max(16),
+});
+export type MissionEnvelopeStoredInput = z.infer<typeof MissionEnvelopeStoredInput>;
 export const MissionBindingView = strictObject({
   bindingId: Uuid,
   role: MissionRole,
@@ -2210,7 +2235,10 @@ export const SupervisorAttemptView = strictObject({
 export type SupervisorAttemptView = z.infer<typeof SupervisorAttemptView>;
 export const MissionDetailView = MissionSummaryView.extend({
   envelope: MissionEnvelopeView.nullable(),
-  input: MissionEnvelopeInput.nullable(),
+  // Reading back a persisted mission's original input must tolerate rows
+  // stored before assignment/requiredReturnEvidence became required — see
+  // MissionEnvelopeStoredInput.
+  input: MissionEnvelopeStoredInput.nullable(),
   workItems: z.array(SupervisorWorkView).max(64),
   decisions: z.array(SupervisorDecisionView).max(100),
   leases: z.array(WorkerLeaseView).max(192),

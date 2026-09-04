@@ -43,6 +43,36 @@ export const DEFAULT_BOUNDS: MissionBounds = {
   maxAttempts: 3,
   maxTokenBudget: 250_000,
 };
+// Mirrors MissionBounds' server-side min/max (packages/contracts/src/index.ts)
+// so an out-of-range value is caught here, next to the control, instead of
+// reaching the server as a generic INVALID_REQUEST.
+export const BOUND_MIN: Record<keyof MissionBounds, number> = {
+  maxElapsedMs: 1_000,
+  maxTurns: 1,
+  maxNoProgressMs: 1_000,
+  maxOutputBytes: 1_024,
+  maxConcurrentProcesses: 1,
+  maxWorkers: 1,
+  maxWorkItems: 1,
+  maxDepth: 1,
+  maxAttempts: 1,
+  maxTokenBudget: 1,
+};
+export const BOUND_MAX: Record<keyof MissionBounds, number> = {
+  maxElapsedMs: 24 * 60 * 60_000,
+  maxTurns: 1_024,
+  maxNoProgressMs: 60 * 60_000,
+  maxOutputBytes: 64 * 1024 * 1024,
+  maxConcurrentProcesses: 16,
+  maxWorkers: 16,
+  maxWorkItems: 64,
+  maxDepth: 8,
+  maxAttempts: 3,
+  maxTokenBudget: 2_000_000,
+};
+export function boundOutOfRange(key: keyof MissionBounds, value: number): boolean {
+  return !Number.isInteger(value) || value < BOUND_MIN[key] || value > BOUND_MAX[key];
+}
 export const BOUND_LABELS: Record<keyof MissionBounds, string> = {
   maxElapsedMs: 'Elapsed limit (ms)',
   maxTurns: 'Turn limit',
@@ -178,6 +208,15 @@ export function stageReadiness(
       for (const id of ids)
         if (!(fields.workspaces ?? []).some((w) => w.workspaceId === id))
           return blocked('Choose read or write for every folder.', 'workspaces');
+      const bounds = fields.bounds ?? DEFAULT_BOUNDS;
+      for (const key of Object.keys(BOUND_MIN) as (keyof MissionBounds)[])
+        if (boundOutOfRange(key, bounds[key]))
+          return blocked(
+            `${BOUND_LABELS[key]} must be between ${BOUND_MIN[key].toLocaleString('en-US')} and ${BOUND_MAX[
+              key
+            ].toLocaleString('en-US')}.`,
+            `bounds.${key}`,
+          );
       return ready('Workspace and runtimes are ready. Continue to review the exact mission.');
     }
     case 'review':

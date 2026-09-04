@@ -132,6 +132,41 @@ describe('composer fields', () => {
     );
   });
 
+  it('access readiness rejects an out-of-range bound before it reaches the server', () => {
+    const worker = {
+      ...newWorker(),
+      profileId: uuid,
+      profileRevisionId: uuid,
+      assignment: 'Inspect.',
+      requiredReturnEvidence: ['A report'],
+      workspaceId: uuid,
+    };
+    // An emptied number input becomes 0, which fails MissionBounds' server-side
+    // minimum (>= 1000 for maxElapsedMs) — this must be caught here, not there.
+    expect(
+      stageReadiness(
+        'access',
+        {
+          workers: [worker],
+          workspaces: [{ workspaceId: uuid, mode: 'read' }],
+          bounds: { ...DEFAULT_BOUNDS, maxElapsedMs: 0 },
+        },
+        context,
+      ),
+    ).toMatchObject({ ready: false, firstInvalid: 'bounds.maxElapsedMs' });
+    expect(
+      stageReadiness(
+        'access',
+        {
+          workers: [worker],
+          workspaces: [{ workspaceId: uuid, mode: 'read' }],
+          bounds: DEFAULT_BOUNDS,
+        },
+        context,
+      ),
+    ).toMatchObject({ ready: true });
+  });
+
   it('summarizes defaults in words', () => {
     expect(limitsSummary(DEFAULT_BOUNDS)).toBe(
       'Stops after 30 minutes, 64 turns, 5 minutes without progress or 8 MiB of output; at most 4 workers, 64 work items, depth 8, 3 attempts, 250,000 tokens.',

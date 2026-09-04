@@ -7,8 +7,11 @@ import type {
 import type { StageProps } from './OutcomeStage.js';
 import {
   BOUND_LABELS,
+  BOUND_MAX,
+  BOUND_MIN,
   DEFAULT_BOUNDS,
   accessReason,
+  boundOutOfRange,
   deriveWorkspaces,
   limitsSummary,
 } from './composer-fields.js';
@@ -157,19 +160,31 @@ export function AccessStage({
       <details className="composer-card">
         <summary>Customize limits · {limitsSummary(bounds)}</summary>
         <div className="mission-limits-grid">
-          {(Object.keys(BOUND_LABELS) as (keyof MissionBounds)[]).map((key) => (
-            <label key={key} className="field">
-              {BOUND_LABELS[key]}
-              <input
-                type="number"
-                min={1}
-                value={bounds[key]}
-                onChange={(event) =>
-                  setFields({ bounds: { ...bounds, [key]: Number(event.target.value) } })
-                }
-              />
-            </label>
-          ))}
+          {(Object.keys(BOUND_LABELS) as (keyof MissionBounds)[]).map((key) => {
+            const outOfRange = boundOutOfRange(key, bounds[key]);
+            return (
+              <label key={key} className="field">
+                {BOUND_LABELS[key]}
+                <input
+                  type="number"
+                  min={BOUND_MIN[key]}
+                  max={BOUND_MAX[key]}
+                  data-field={`bounds.${key}`}
+                  aria-invalid={outOfRange || invalid === `bounds.${key}` || undefined}
+                  value={bounds[key]}
+                  onChange={(event) =>
+                    setFields({ bounds: { ...bounds, [key]: Number(event.target.value) } })
+                  }
+                />
+                {outOfRange ? (
+                  <span className="hint">
+                    Must be a whole number between {BOUND_MIN[key].toLocaleString('en-US')} and{' '}
+                    {BOUND_MAX[key].toLocaleString('en-US')}.
+                  </span>
+                ) : null}
+              </label>
+            );
+          })}
         </div>
       </details>
 

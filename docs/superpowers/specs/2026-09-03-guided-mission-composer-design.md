@@ -1,6 +1,6 @@
 # Guided mission composer (phase 4a)
 
-**Status:** Implemented (phase 4a shipped). PR: TBD — filled in when the branch is pushed and the PR is opened.
+**Status:** Implemented (phase 4a shipped). PR: #22.
 
 **Scope:** Phase 4a of the Journey UI parity sequence: the four-stage guided mission composer with
 main-owned local drafts, mission-specific worker assignment and return evidence, and the approved

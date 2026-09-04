@@ -27,18 +27,30 @@ export function MissionComposerWorkspace({
   onClose,
   onStarted,
   onState,
+  onFlushReady,
 }: {
   draftId: string;
   onClose(): void;
   onStarted(mission: MissionDetailView): void;
   onState?(state: { stage: Stage; workers: WorkerFields[] }): void;
+  /**
+   * Hands the caller a flush function while this workspace is mounted, and
+   * `null` once it unmounts. The caller (App.tsx) awaits this before
+   * completing a rail/destination switch, so an in-flight or pending
+   * autosave is never silently dropped by the unmount that follows.
+   */
+  onFlushReady?(flush: (() => Promise<boolean>) | null): void;
 }) {
   const { state, actions } = useStore();
   const draft = useDraft(draftId);
   const heading = useRef<HTMLHeadingElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const [announcement, setAnnouncement] = useState('');
-  const [closing, setClosing] = useState<{ savedAt: string; stage: Stage } | null>(null);
+  const [closing, setClosing] = useState<{
+    savedAt: string | null;
+    stage: Stage;
+    unsaved: boolean;
+  } | null>(null);
   const [discarding, setDiscarding] = useState<{ token: string; stage: Stage } | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [eligible, setEligible] = useState<Eligible[]>([]);
@@ -99,6 +111,10 @@ export function MissionComposerWorkspace({
   useEffect(() => {
     onState?.({ stage, workers });
   }, [stage, workers]);
+  useEffect(() => {
+    onFlushReady?.(async () => (await draft.saveNow()) !== null);
+    return () => onFlushReady?.(null);
+  }, [draft.saveNow, onFlushReady]);
 
   const blocked = state.storageDegraded || draft.failure !== null;
   const isRevision = draft.draft?.sourceMissionId !== null && draft.draft !== null;
@@ -121,7 +137,11 @@ export function MissionComposerWorkspace({
   };
   const close = async () => {
     const saved = await draft.saveNow();
-    if (saved) setClosing({ savedAt: saved.savedAt, stage: saved.currentStage });
+    // Close must never be a trap: if the draft cannot be saved right now
+    // (storage degraded, or a prior save failure), closing still proceeds —
+    // it is just honest that the latest edits were not saved.
+    if (saved) setClosing({ savedAt: saved.savedAt, stage: saved.currentStage, unsaved: false });
+    else setClosing({ savedAt: null, stage, unsaved: true });
   };
   const startDiscard = async () => {
     try {
@@ -153,14 +173,20 @@ export function MissionComposerWorkspace({
   if (closing)
     return (
       <section className="composer-receipt" aria-labelledby="composer-receipt-heading">
-        <p className="eyebrow">Mission draft · saved</p>
+        <p className="eyebrow">
+          {closing.unsaved ? 'Mission draft · not saved' : 'Mission draft · saved'}
+        </p>
         <h1 id="composer-receipt-heading" tabIndex={-1} ref={heading}>
-          Your mission draft is saved locally.
+          {closing.unsaved
+            ? 'Your latest edits could not be saved.'
+            : 'Your mission draft is saved locally.'}
         </h1>
         <dl className="composer-receipt-grid">
           <div>
             <dt>Saved</dt>
-            <dd>{new Date(closing.savedAt).toLocaleTimeString()}</dd>
+            <dd>
+              {closing.savedAt ? new Date(closing.savedAt).toLocaleTimeString() : 'Not saved'}
+            </dd>
           </div>
           <div>
             <dt>Resume point</dt>
@@ -171,13 +197,20 @@ export function MissionComposerWorkspace({
             <dd>Still off: access, permissions, launch</dd>
           </div>
         </dl>
-        <p>A draft is not mission authority. Nothing was launched or granted access.</p>
+        {closing.unsaved ? (
+          <p>
+            This draft&rsquo;s most recent edits were not saved. Closing now will leave them out of
+            the saved draft.
+          </p>
+        ) : (
+          <p>A draft is not mission authority. Nothing was launched or granted access.</p>
+        )}
         <div className="mission-action-row">
           <button type="button" onClick={() => setClosing(null)}>
             Keep editing
           </button>
           <button type="button" className="primary" onClick={onClose}>
-            Close composer
+            {closing.unsaved ? 'Close without saving' : 'Close composer'}
           </button>
         </div>
       </section>
@@ -301,7 +334,10 @@ export function MissionComposerWorkspace({
       </div>
       <p className={`composer-readiness${readiness.ready ? ' ready' : ''}`}>{readiness.message}</p>
       <div className="mission-action-row composer-actions">
-        <button type="button" onClick={() => void close()} disabled={blocked || draft.saving}>
+        {/* Close is never gated on a successful save: a draft that can't be
+            saved right now (storage degraded, prior save failure) must still
+            have an escape hatch — see close()'s honest "not saved" receipt. */}
+        <button type="button" onClick={() => void close()} disabled={draft.saving}>
           Close
         </button>
         {index > 0 ? (

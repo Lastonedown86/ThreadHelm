@@ -52,9 +52,21 @@ acceptance remain open. See the [approved preview scope](specs/002-agent-mailbox
 - **Recover honestly**: unfinished sessions become _recovery required_ after a restart; nothing is
   relaunched and no input is replayed. Raw terminal bytes, prompts, environment values, and
   credentials are never persisted.
+- **Compose a mission** in a guided four-step composer (Outcome → Crew → Access & limits →
+  Review), optionally starting from AI-suggested ideas for an approved repo. Every suggestion lands
+  on an editable screen; nothing is applied or started without your confirmation.
+- **Watch a mission** in Mission Focus: one approved direction, its crew, and its sessions in a
+  single frame, with the same disclosures and controls as any other session.
+- **Propose a crew** with workspace recon—an ordinary owner-confirmed session whose only return
+  channel is a set of proposed agent roles. Each role is reviewed and accepted one at a time; there
+  is no accept-all control.
 
-Details: [docs/safety-model.md](docs/safety-model.md), [docs/install.md](docs/install.md), and
-the feature specification under [`specs/001-local-agent-workspace/`](specs/001-local-agent-workspace/).
+Details: [docs/safety-model.md](docs/safety-model.md), [docs/install.md](docs/install.md), the
+product direction in [docs/roadmaps/verified-mission-os.md](docs/roadmaps/verified-mission-os.md),
+and the feature specifications under [`specs/`](specs/):
+[001 local agent workspace](specs/001-local-agent-workspace/),
+[002 agent mailbox routing](specs/002-agent-mailbox-routing/), and the
+[003 verified mission delegation](specs/003-verified-mission-delegation/) draft.
 
 ## Repository layout
 

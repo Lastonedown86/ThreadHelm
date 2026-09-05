@@ -1,0 +1,779 @@
+[
+  {
+    "id": "environment",
+    "baseline": "ca2c62015008fc29e71761a9a8e17b5dd5387f86",
+    "os": "Windows 11 Home",
+    "release": "10.0.26200",
+    "footer": "ThreadHelm v44.0.0 · Electron 44.0.0 · x64",
+    "viewport": null,
+    "fixtures": "isolated local echo/recon adapters"
+  },
+  {
+    "id": "S01-cancel",
+    "saved": [],
+    "focusReturned": true,
+    "live": []
+  },
+  {
+    "id": "S02-duplicate-approval",
+    "saved": [
+      {
+        "id": "48a518ee-9bfc-43f6-bfbb-94a299592649",
+        "selectedPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "volumeSerial": "420844a508449a35",
+        "fileId": "2aa9230000001c000000000000000000",
+        "driveType": "fixed_local",
+        "approvedAt": "2026-09-05T23:37:31.450Z",
+        "lastValidatedAt": "2026-09-05T23:37:31.816Z",
+        "revokedAt": null
+      }
+    ],
+    "expectedId": "48a518ee-9bfc-43f6-bfbb-94a299592649"
+  },
+  {
+    "id": "S03-reflow",
+    "width": 960,
+    "font": "200%",
+    "geometry": [
+      {
+        "name": "guided-setup",
+        "client": 657,
+        "scroll": 698,
+        "right": 945
+      },
+      {
+        "name": "setup-check",
+        "client": 656,
+        "scroll": 656,
+        "right": 985.84375
+      },
+      {
+        "name": "panel roster",
+        "client": 592,
+        "scroll": 592,
+        "right": 952.84375
+      },
+      {
+        "name": "setup-check",
+        "client": 656,
+        "scroll": 656,
+        "right": 985.84375
+      },
+      {
+        "name": "setup-check",
+        "client": 656,
+        "scroll": 656,
+        "right": 985.84375
+      },
+      {
+        "name": "setup-evidence",
+        "client": 592,
+        "scroll": 592,
+        "right": 952.84375
+      }
+    ]
+  },
+  {
+    "id": "S04-live-revoke-denied",
+    "saved": [
+      {
+        "id": "48a518ee-9bfc-43f6-bfbb-94a299592649",
+        "selectedPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "volumeSerial": "420844a508449a35",
+        "fileId": "2aa9230000001c000000000000000000",
+        "driveType": "fixed_local",
+        "approvedAt": "2026-09-05T23:37:31.450Z",
+        "lastValidatedAt": "2026-09-05T23:37:32.115Z",
+        "revokedAt": null
+      }
+    ],
+    "liveBefore": [
+      {
+        "id": "cc650a60-0ede-44b1-83cc-f649c8e6e5c0",
+        "state": "running",
+        "hostPid": 6236,
+        "rootPid": 27028
+      }
+    ],
+    "liveAfter": [
+      {
+        "id": "cc650a60-0ede-44b1-83cc-f649c8e6e5c0",
+        "state": "running",
+        "hostPid": 6236,
+        "rootPid": 27028
+      }
+    ],
+    "notice": [
+      "A session is still active in this folder. Stop it before revoking the approval. Dismiss",
+      "Local storage is available for approved workspaces, profiles, memory, and missions."
+    ]
+  },
+  {
+    "id": "S05-revoked",
+    "saved": [
+      {
+        "id": "48a518ee-9bfc-43f6-bfbb-94a299592649",
+        "selectedPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "volumeSerial": "420844a508449a35",
+        "fileId": "2aa9230000001c000000000000000000",
+        "driveType": "fixed_local",
+        "approvedAt": "2026-09-05T23:37:31.450Z",
+        "lastValidatedAt": "2026-09-05T23:37:32.115Z",
+        "revokedAt": "2026-09-05T23:37:34.852Z"
+      }
+    ],
+    "live": []
+  },
+  {
+    "id": "S06-pending-cancel",
+    "pending": {
+      "approveEnabled": true,
+      "cancelEnabled": true
+    },
+    "dialogClosed": true,
+    "savedAfterCancel": [
+      {
+        "id": "48a518ee-9bfc-43f6-bfbb-94a299592649",
+        "selectedPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "volumeSerial": "420844a508449a35",
+        "fileId": "2aa9230000001c000000000000000000",
+        "driveType": "fixed_local",
+        "approvedAt": "2026-09-05T23:37:31.450Z",
+        "lastValidatedAt": "2026-09-05T23:37:32.115Z",
+        "revokedAt": "2026-09-05T23:37:34.852Z"
+      },
+      {
+        "id": "16148700-c5b6-4355-a429-5a9a345450f5",
+        "selectedPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-pending-79359064-6924-4e55-a808-07069ccc0e84",
+        "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-pending-79359064-6924-4e55-a808-07069ccc0e84",
+        "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-pending-79359064-6924-4e55-a808-07069ccc0e84",
+        "volumeSerial": "420844a508449a35",
+        "fileId": "2ba92300000014000000000000000000",
+        "driveType": "fixed_local",
+        "approvedAt": "2026-09-05T23:37:35.072Z",
+        "lastValidatedAt": "2026-09-05T23:37:35.072Z",
+        "revokedAt": null
+      }
+    ]
+  },
+  {
+    "id": "S07-restart",
+    "saved": [
+      {
+        "id": "48a518ee-9bfc-43f6-bfbb-94a299592649",
+        "selectedPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-audit-long-workspace-identity-0cdc6df1-ca30-406c-9503-c183e927029a",
+        "volumeSerial": "420844a508449a35",
+        "fileId": "2aa9230000001c000000000000000000",
+        "driveType": "fixed_local",
+        "approvedAt": "2026-09-05T23:37:31.450Z",
+        "lastValidatedAt": "2026-09-05T23:37:32.115Z",
+        "revokedAt": "2026-09-05T23:37:34.852Z"
+      },
+      {
+        "id": "16148700-c5b6-4355-a429-5a9a345450f5",
+        "selectedPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-pending-79359064-6924-4e55-a808-07069ccc0e84",
+        "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-pending-79359064-6924-4e55-a808-07069ccc0e84",
+        "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-pending-79359064-6924-4e55-a808-07069ccc0e84",
+        "volumeSerial": "420844a508449a35",
+        "fileId": "2ba92300000014000000000000000000",
+        "driveType": "fixed_local",
+        "approvedAt": "2026-09-05T23:37:35.072Z",
+        "lastValidatedAt": "2026-09-05T23:37:35.072Z",
+        "revokedAt": null
+      }
+    ],
+    "live": []
+  },
+  {
+    "id": "S08-recon-disclosure",
+    "text": "Run recon\nAgent\nCodex CLI\nClaude Code\nAgent\nCodex CLI 1.0.0\nExecutable\n…ppData\\Local\\fnm_multishells\\24856_1788651441064\\node.exe\nAuthentication\nauthenticated\nModel\nCLI default\nModel source\nOne-run choice\nEffort\nCLI default\nEffort source\nOne-run choice\nRuntime permission\nmanual\nPermission source\nprovider default\nProvider mapping\ncodex manual\nExecution bounds\n30 min · 64 turns · 5 min without progress · 8388608 output bytes · 1 contained processes\nEffective folder\nC:\\Users\\Bill\\AppData\\Local\\Temp\\settings-recon-3d5c9e05-75ba-416f-bf5a-4ea217ba5526\nTerminal\n120×30\nLocal coordination\nlist pending, acknowledge, reply, report outcome\nOutput directory\nC:\\Users\\Bill\\AppData\\Local\\Temp\\threadhelm-e2e-Tx9qta\\recon\\54a441c6-1ebc-4e8f-a9e6-0b7c831b5a9e\\3223ddb0-5236-42c7-84c6-6729b78a6d7f\nToken cap requested of the agent\n200,000\n\nThis session receives a local coordination tool. Messages and replies are stored durably only when deliberately created. If the bridge is unavailable, the session stays running and coordination falls back to manual presentation.\n\nRecon proposes roles only. No agent is hired and no authority is granted until you review and confirm each one.\n\nThreadHelm reads the roles when this session ends. Most agent tools stay at their prompt once they have written them, so you stop the session yourself to finish the run.\n\nRecon prompt\nAssess this repository so ThreadHelm can propose a roster of agent roles for it.\n\nFirst, understand the shape of the work. Look at package and project manifests,\nlockfiles, workspace configuration, CI definitions, test configuration, README,\nCONTRIBUTING, and the directory layout.\n\nThen write one JSON file per proposed role into exactly this directory:\n  C:\\Users\\Bill\\AppData\\Local\\Temp\\threadhelm-e2e-Tx9qta\\recon\\54a441c6-1ebc-4e8f-a9e6-0b7c831b5a9e\\3223ddb0-5236-42c7-84c6-6729b78a6d7f\n\nEach file is a threadhelm/agent-profile@1 manifest with these fields and no others:\n  spec, name, description, provider, model, capabilities, isolate, tokenCap, author, goal\n\nRules:\n- Name the supervisor file exactly supervisor.agent.json. Give every other file a\n  short kebab-case basename ending in .agent.json.\n- Propose one supervisor and between three and eight specialists.\n- Leave every name field a placeholder such as \"Unnamed specialist\". The owner\n  types the real name when accepting the role.\n- Write nothing inside the workspace. Create, change and delete no file there.\n  Every file you write goes in the directory above.\n- Stay within about 200000 tokens for this assessment.\n- Write the files, then stop. Do not run builds, tests, installs or migrations.\n\nThreadHelm starts this agent with the approved folder as its working directory, but it cannot technically confine the agent to that folder. The agent may read or change files elsewhere and may make its own network requests. Confirm this session only if that is acceptable.\n\nI understand ThreadHelm cannot confine this agent to the folder.\nCancel\nStart recon",
+    "liveBefore": []
+  },
+  {
+    "id": "S09-recon-results",
+    "run": {
+      "runId": "3223ddb0-5236-42c7-84c6-6729b78a6d7f",
+      "workspaceId": "54a441c6-1ebc-4e8f-a9e6-0b7c831b5a9e",
+      "sessionId": "1014e605-cc71-44c2-bcf7-c5beb9af11a7",
+      "outcome": "partial",
+      "derivedFromCommit": null,
+      "startedAt": "2026-09-05T23:37:40.826Z",
+      "completedAt": "2026-09-05T23:37:43.100Z",
+      "proposals": [
+        {
+          "proposalId": "84b13aae-43b4-4205-94fa-3c74684ac91a",
+          "role": "supervisor",
+          "sourceBasename": "supervisor.agent.json",
+          "digest": "8a06146cbfcd1e7027b791c70d1c173f3a1287952cae1f1aef00988bb263803e",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed supervisor",
+            "description": "Owns the outcome and delegates bounded work.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Decompose one outcome into bounded assignments and verify each result before reporting done.",
+            "capabilities": ["delegation", "verification"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        },
+        {
+          "proposalId": "1ad9cfbb-4e12-452b-b5cc-ccae0b4b5f1a",
+          "role": "specialist",
+          "sourceBasename": "native-addon.agent.json",
+          "digest": "adaa8500f18327d0a348bf580ca2d36bdb3d1148bd84df26213b61dc3291909b",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "Rust Node-API addon work.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Change the Rust supervisor addon and keep cargo fmt, check and test green.",
+            "capabilities": ["rust", "node-api"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        },
+        {
+          "proposalId": "8240b0ac-aa54-4307-b999-37aad357287a",
+          "role": "specialist",
+          "sourceBasename": "renderer.agent.json",
+          "digest": "b757a9ea19520b1268e9ee5ae4e34ef17a939d7291b53f6b6884ee2511e26798",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "React renderer and accessibility.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Change renderer features and keep keyboard access and visible focus intact.",
+            "capabilities": ["react", "accessibility"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        },
+        {
+          "proposalId": "6db24a1a-f19e-48a4-8df7-afaac3d0c6b6",
+          "role": "specialist",
+          "sourceBasename": "testing.agent.json",
+          "digest": "0de4fa479b56bd75b1b21878645570b26379fdb9407d59de8d16ec5a90c2c4c2",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "Vitest and Playwright Electron suites.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Write failing tests first and keep the unit, contract and e2e projects green.",
+            "capabilities": ["vitest", "playwright"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        }
+      ],
+      "rejected": [
+        {
+          "sourceBasename": "malformed.agent.json",
+          "errorCode": "PROFILE_SCHEMA_INVALID"
+        }
+      ],
+      "ignoredFileCount": 0,
+      "promptSubmitted": true
+    },
+    "sessions": {
+      "sessions": [
+        {
+          "id": "1014e605-cc71-44c2-bcf7-c5beb9af11a7",
+          "workspaceId": "54a441c6-1ebc-4e8f-a9e6-0b7c831b5a9e",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-recon-3d5c9e05-75ba-416f-bf5a-4ea217ba5526",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "stopped",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 120,
+          "rows": 30,
+          "startedAt": "2026-09-05T23:37:41.215Z",
+          "endedAt": "2026-09-05T23:37:43.055Z",
+          "exitCode": 0,
+          "stopKind": "clean",
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T23:37:40.830Z",
+          "updatedAt": "2026-09-05T23:37:43.055Z"
+        }
+      ],
+      "recoveryRecords": [],
+      "storageDegraded": false
+    },
+    "live": []
+  },
+  {
+    "id": "S09b-review-cancel",
+    "profiles": {
+      "profiles": [],
+      "nextCursor": null
+    },
+    "run": {
+      "runId": "3223ddb0-5236-42c7-84c6-6729b78a6d7f",
+      "workspaceId": "54a441c6-1ebc-4e8f-a9e6-0b7c831b5a9e",
+      "sessionId": "1014e605-cc71-44c2-bcf7-c5beb9af11a7",
+      "outcome": "partial",
+      "derivedFromCommit": null,
+      "startedAt": "2026-09-05T23:37:40.826Z",
+      "completedAt": "2026-09-05T23:37:43.100Z",
+      "proposals": [
+        {
+          "proposalId": "84b13aae-43b4-4205-94fa-3c74684ac91a",
+          "role": "supervisor",
+          "sourceBasename": "supervisor.agent.json",
+          "digest": "8a06146cbfcd1e7027b791c70d1c173f3a1287952cae1f1aef00988bb263803e",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed supervisor",
+            "description": "Owns the outcome and delegates bounded work.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Decompose one outcome into bounded assignments and verify each result before reporting done.",
+            "capabilities": ["delegation", "verification"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        },
+        {
+          "proposalId": "1ad9cfbb-4e12-452b-b5cc-ccae0b4b5f1a",
+          "role": "specialist",
+          "sourceBasename": "native-addon.agent.json",
+          "digest": "adaa8500f18327d0a348bf580ca2d36bdb3d1148bd84df26213b61dc3291909b",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "Rust Node-API addon work.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Change the Rust supervisor addon and keep cargo fmt, check and test green.",
+            "capabilities": ["rust", "node-api"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        },
+        {
+          "proposalId": "8240b0ac-aa54-4307-b999-37aad357287a",
+          "role": "specialist",
+          "sourceBasename": "renderer.agent.json",
+          "digest": "b757a9ea19520b1268e9ee5ae4e34ef17a939d7291b53f6b6884ee2511e26798",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "React renderer and accessibility.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Change renderer features and keep keyboard access and visible focus intact.",
+            "capabilities": ["react", "accessibility"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        },
+        {
+          "proposalId": "6db24a1a-f19e-48a4-8df7-afaac3d0c6b6",
+          "role": "specialist",
+          "sourceBasename": "testing.agent.json",
+          "digest": "0de4fa479b56bd75b1b21878645570b26379fdb9407d59de8d16ec5a90c2c4c2",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "Vitest and Playwright Electron suites.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Write failing tests first and keep the unit, contract and e2e projects green.",
+            "capabilities": ["vitest", "playwright"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        }
+      ],
+      "rejected": [
+        {
+          "sourceBasename": "malformed.agent.json",
+          "errorCode": "PROFILE_SCHEMA_INVALID"
+        }
+      ],
+      "ignoredFileCount": 0,
+      "promptSubmitted": true
+    }
+  },
+  {
+    "id": "S09c-reviewed-import",
+    "profiles": {
+      "profiles": [
+        {
+          "profileId": "b38b042a-9dbf-48f2-ac93-5137b5af7398",
+          "currentRevisionId": "4a71fd0d-a94f-439e-b134-0a07dd5be46a",
+          "displayName": "Audit reviewed supervisor",
+          "description": "Owns the outcome and delegates bounded work.",
+          "requestedProvider": "claude-code",
+          "requestedModel": "claude-sonnet-5",
+          "compatibility": "compatible",
+          "state": "active",
+          "capabilities": ["delegation", "verification"],
+          "isolateRequested": false,
+          "tokenCapRequested": 200000,
+          "author": "ThreadHelm recon fixture",
+          "digestPrefix": "8a06146cbfcd",
+          "createdAt": "2026-09-05T23:37:43.801Z",
+          "updatedAt": "2026-09-05T23:37:43.801Z"
+        }
+      ],
+      "nextCursor": null
+    },
+    "run": {
+      "runId": "3223ddb0-5236-42c7-84c6-6729b78a6d7f",
+      "workspaceId": "54a441c6-1ebc-4e8f-a9e6-0b7c831b5a9e",
+      "sessionId": "1014e605-cc71-44c2-bcf7-c5beb9af11a7",
+      "outcome": "partial",
+      "derivedFromCommit": null,
+      "startedAt": "2026-09-05T23:37:40.826Z",
+      "completedAt": "2026-09-05T23:37:43.100Z",
+      "proposals": [
+        {
+          "proposalId": "1ad9cfbb-4e12-452b-b5cc-ccae0b4b5f1a",
+          "role": "specialist",
+          "sourceBasename": "native-addon.agent.json",
+          "digest": "adaa8500f18327d0a348bf580ca2d36bdb3d1148bd84df26213b61dc3291909b",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "Rust Node-API addon work.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Change the Rust supervisor addon and keep cargo fmt, check and test green.",
+            "capabilities": ["rust", "node-api"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        },
+        {
+          "proposalId": "8240b0ac-aa54-4307-b999-37aad357287a",
+          "role": "specialist",
+          "sourceBasename": "renderer.agent.json",
+          "digest": "b757a9ea19520b1268e9ee5ae4e34ef17a939d7291b53f6b6884ee2511e26798",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "React renderer and accessibility.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Change renderer features and keep keyboard access and visible focus intact.",
+            "capabilities": ["react", "accessibility"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        },
+        {
+          "proposalId": "6db24a1a-f19e-48a4-8df7-afaac3d0c6b6",
+          "role": "specialist",
+          "sourceBasename": "testing.agent.json",
+          "digest": "0de4fa479b56bd75b1b21878645570b26379fdb9407d59de8d16ec5a90c2c4c2",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "Vitest and Playwright Electron suites.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Write failing tests first and keep the unit, contract and e2e projects green.",
+            "capabilities": ["vitest", "playwright"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        }
+      ],
+      "rejected": [
+        {
+          "sourceBasename": "malformed.agent.json",
+          "errorCode": "PROFILE_SCHEMA_INVALID"
+        }
+      ],
+      "ignoredFileCount": 0,
+      "promptSubmitted": true
+    },
+    "live": []
+  },
+  {
+    "id": "S10-roster-read-failure",
+    "text": "Roster\n\nNo roster yet. Recon can read this workspace and propose one.\n\nSTORAGE_DEGRADED — Local storage is in a degraded state; new launches and durable changes are blocked until it recovers.\n\nRun recon",
+    "retryButtons": 0,
+    "authoritativeRun": {
+      "runId": "3223ddb0-5236-42c7-84c6-6729b78a6d7f",
+      "workspaceId": "54a441c6-1ebc-4e8f-a9e6-0b7c831b5a9e",
+      "sessionId": "1014e605-cc71-44c2-bcf7-c5beb9af11a7",
+      "outcome": "partial",
+      "derivedFromCommit": null,
+      "startedAt": "2026-09-05T23:37:40.826Z",
+      "completedAt": "2026-09-05T23:37:43.100Z",
+      "proposals": [
+        {
+          "proposalId": "1ad9cfbb-4e12-452b-b5cc-ccae0b4b5f1a",
+          "role": "specialist",
+          "sourceBasename": "native-addon.agent.json",
+          "digest": "adaa8500f18327d0a348bf580ca2d36bdb3d1148bd84df26213b61dc3291909b",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "Rust Node-API addon work.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Change the Rust supervisor addon and keep cargo fmt, check and test green.",
+            "capabilities": ["rust", "node-api"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        },
+        {
+          "proposalId": "8240b0ac-aa54-4307-b999-37aad357287a",
+          "role": "specialist",
+          "sourceBasename": "renderer.agent.json",
+          "digest": "b757a9ea19520b1268e9ee5ae4e34ef17a939d7291b53f6b6884ee2511e26798",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "React renderer and accessibility.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Change renderer features and keep keyboard access and visible focus intact.",
+            "capabilities": ["react", "accessibility"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        },
+        {
+          "proposalId": "6db24a1a-f19e-48a4-8df7-afaac3d0c6b6",
+          "role": "specialist",
+          "sourceBasename": "testing.agent.json",
+          "digest": "0de4fa479b56bd75b1b21878645570b26379fdb9407d59de8d16ec5a90c2c4c2",
+          "manifest": {
+            "spec": "threadhelm/agent-profile@1",
+            "name": "Unnamed specialist",
+            "description": "Vitest and Playwright Electron suites.",
+            "provider": "claude-code",
+            "model": "claude-sonnet-5",
+            "goal": "Write failing tests first and keep the unit, contract and e2e projects green.",
+            "capabilities": ["vitest", "playwright"],
+            "isolate": false,
+            "tokenCap": 200000,
+            "author": "ThreadHelm recon fixture"
+          },
+          "compatibility": "compatible",
+          "compatibilityReasons": []
+        }
+      ],
+      "rejected": [
+        {
+          "sourceBasename": "malformed.agent.json",
+          "errorCode": "PROFILE_SCHEMA_INVALID"
+        }
+      ],
+      "ignoredFileCount": 0,
+      "promptSubmitted": true
+    }
+  },
+  {
+    "id": "S11-recon-restart",
+    "profiles": {
+      "profiles": [
+        {
+          "profileId": "b38b042a-9dbf-48f2-ac93-5137b5af7398",
+          "currentRevisionId": "4a71fd0d-a94f-439e-b134-0a07dd5be46a",
+          "displayName": "Audit reviewed supervisor",
+          "description": "Owns the outcome and delegates bounded work.",
+          "requestedProvider": "claude-code",
+          "requestedModel": "claude-sonnet-5",
+          "compatibility": "compatible",
+          "state": "active",
+          "capabilities": ["delegation", "verification"],
+          "isolateRequested": false,
+          "tokenCapRequested": 200000,
+          "author": "ThreadHelm recon fixture",
+          "digestPrefix": "8a06146cbfcd",
+          "createdAt": "2026-09-05T23:37:43.801Z",
+          "updatedAt": "2026-09-05T23:37:43.801Z"
+        }
+      ],
+      "nextCursor": null
+    },
+    "run": null,
+    "text": "Roster\n\nNo roster yet. Recon can read this workspace and propose one.\n\nRun recon",
+    "sessions": {
+      "sessions": [
+        {
+          "id": "1014e605-cc71-44c2-bcf7-c5beb9af11a7",
+          "workspaceId": "54a441c6-1ebc-4e8f-a9e6-0b7c831b5a9e",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-recon-3d5c9e05-75ba-416f-bf5a-4ea217ba5526",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "stopped",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 120,
+          "rows": 30,
+          "startedAt": "2026-09-05T23:37:41.215Z",
+          "endedAt": "2026-09-05T23:37:43.055Z",
+          "exitCode": 0,
+          "stopKind": "clean",
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T23:37:40.830Z",
+          "updatedAt": "2026-09-05T23:37:43.055Z"
+        }
+      ],
+      "recoveryRecords": [],
+      "storageDegraded": false
+    },
+    "live": []
+  },
+  {
+    "id": "S12-prerequisite-return",
+    "text": "Pick a repo to get mission ideas, or write your own.\n\nThreadHelm sends only the folder’s file names, README, manifest and recent commit subjects to the provider. Nothing is confirmed until you review it on the Outcome step.\n\nRepo\nChoose an approved folder\nC:\\Users\\Bill\\AppData\\Local\\Temp\\settings-return-15f7b5a2-88ea-44a9-97ef-55eefd95ef4d\nProvider and model\nProvider default model · provider default effort\nCodex CLI · provider default model\nClaude Code · provider default model\nSkip — I’ll write my own\nGenerate ideas\n\nChoose a repo to enable Generate ideas.",
+    "workspaceId": "a4332210-912f-4448-9476-285a727f327c",
+    "live": []
+  },
+  {
+    "id": "S13-cached-readiness",
+    "actualFixtureReadiness": [
+      {
+        "providerId": "codex-cli",
+        "displayName": "Codex CLI",
+        "resolvedExecutable": "C:\\Users\\Bill\\AppData\\Local\\fnm_multishells\\24856_1788651441064\\node.exe",
+        "version": "1.0.0",
+        "availability": "available",
+        "authentication": "authenticated",
+        "reasonCode": null,
+        "safeSummary": "Codex CLI fixture is available",
+        "probedAt": "2026-09-05T23:37:50.162Z"
+      },
+      {
+        "providerId": "claude-code",
+        "displayName": "Claude Code",
+        "resolvedExecutable": "C:\\Users\\Bill\\.local\\bin\\claude.exe",
+        "version": "2.1.260",
+        "availability": "available",
+        "authentication": "authenticated",
+        "reasonCode": null,
+        "safeSummary": "Ready (version 2.1.260, authenticated).",
+        "probedAt": "2026-09-05T23:37:50.163Z"
+      }
+    ],
+    "renderer": "Agents\nLaunch in\nC:\\Users\\Bill\\AppData\\Local\\Temp\\settings-return-15f7b5a2-88ea-44a9-97ef-55eefd95ef4d\nCodex CLI Not installed\nversion 1.0.0 · auth authenticated\nAudit cached missing provider\nClaude Code Not installed\nversion 2.1.260 · auth authenticated\nAudit cached missing provider",
+    "readinessReads": 1,
+    "refreshControls": 0
+  },
+  {
+    "id": "S14-owner-stop",
+    "before": {
+      "runId": "baaebeb0-5224-4c64-ae35-e95faaaec84d",
+      "workspaceId": "a4332210-912f-4448-9476-285a727f327c",
+      "sessionId": "eb0b04b2-071b-44b6-b527-516cc1a22441",
+      "outcome": null,
+      "derivedFromCommit": null,
+      "startedAt": "2026-09-05T23:37:51.910Z",
+      "completedAt": null,
+      "proposals": [],
+      "rejected": [],
+      "ignoredFileCount": 0,
+      "promptSubmitted": true
+    },
+    "after": {
+      "runId": "baaebeb0-5224-4c64-ae35-e95faaaec84d",
+      "workspaceId": "a4332210-912f-4448-9476-285a727f327c",
+      "sessionId": "eb0b04b2-071b-44b6-b527-516cc1a22441",
+      "outcome": "stopped_by_owner",
+      "derivedFromCommit": null,
+      "startedAt": "2026-09-05T23:37:51.910Z",
+      "completedAt": "2026-09-05T23:37:54.175Z",
+      "proposals": [],
+      "rejected": [],
+      "ignoredFileCount": 0,
+      "promptSubmitted": true
+    },
+    "sessions": {
+      "sessions": [
+        {
+          "id": "eb0b04b2-071b-44b6-b527-516cc1a22441",
+          "workspaceId": "a4332210-912f-4448-9476-285a727f327c",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\settings-return-15f7b5a2-88ea-44a9-97ef-55eefd95ef4d",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "stopped",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 68,
+          "rows": 24,
+          "startedAt": "2026-09-05T23:37:52.231Z",
+          "endedAt": "2026-09-05T23:37:54.088Z",
+          "exitCode": 0,
+          "stopKind": "clean",
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T23:37:51.914Z",
+          "updatedAt": "2026-09-05T23:37:54.088Z"
+        }
+      ],
+      "recoveryRecords": [],
+      "storageDegraded": false
+    },
+    "live": [],
+    "text": "Roster\n\nYou stopped this recon run.\n\nRun recon"
+  }
+]

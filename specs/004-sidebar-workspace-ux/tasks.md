@@ -132,3 +132,7 @@ Dependencies: T049 -> T050 -> T051 -> T052 -> T053. ATT-004 and A08/A09 remain o
 - [x] T058 Complete static checks, update evidence/register and open PR.
 
 Dependencies: T054 -> T055 -> T056 -> T057 -> T058. A08/A09 remain pending.
+
+## A08 audit checkpoint
+
+After PR #41 merged at ca2c620, A08 Settings was audited using the shared template. [Findings and evidence](audits/a08-settings-functionality.md) propose SET-001 through SET-005. No implementation tasks are accepted yet; SET-001 is the recommended next bounded slice. A09 and explicit prior coverage gaps remain open.

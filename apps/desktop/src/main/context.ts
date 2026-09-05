@@ -34,6 +34,7 @@ import type { AgentWizardService } from './coordination/profile-wizard.js';
 import type { ReconService } from './coordination/recon.js';
 import type { SupervisorService } from './coordination/supervisor.js';
 import type { MissionComposerService } from './coordination/mission-composer.js';
+import type { StructuredDraftRunner } from './providers/structured-draft.js';
 
 // --- native boundary (contracts/windows-supervisor.md) ----------------------
 
@@ -213,6 +214,8 @@ export interface Context {
   selection: Selection;
   adapters: readonly ProviderAdapter[];
   probes: ProbeRunner;
+  /** Bounded, non-interactive structured-draft calls; contract tests override this directly. */
+  structuredDraft: StructuredDraftRunner;
   /** Main-owned coordination seam; absent until coordination startup is composed. */
   coordination?: CoordinationService;
   /** Main-owned shared-memory authority; absent until handler composition. */

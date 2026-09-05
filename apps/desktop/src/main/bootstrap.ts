@@ -34,6 +34,7 @@ import { cancelClose, requestClose } from './lifecycle/close.js';
 import { createLogger, multiSink, stderrSink, type LogSink } from './logging.js';
 import { JobRegistry } from './native/job-registry.js';
 import { createProbeRunner } from './providers/readiness.js';
+import { createStructuredDraftRunner } from './providers/structured-draft.js';
 import { attachPowerEvents } from './recovery/power-events.js';
 import { reconcileAtStartup } from './recovery/reconcile.js';
 import { StorageHealth } from './storage-health.js';
@@ -155,6 +156,7 @@ export function bootstrap(paths: BootstrapPaths): void {
       selection: { selectedSessionId: null },
       adapters: builtInAdapters,
       probes: createProbeRunner(),
+      structuredDraft: createStructuredDraftRunner(),
       // Recon output lives under userData, never inside an approved workspace.
       reconRoot: () => join(userData, 'recon'),
       appInfo: {

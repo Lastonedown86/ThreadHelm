@@ -44,3 +44,7 @@ Direct and guided searches use one selected approved workspace. Repeated guided 
 ## MEM-004 Memory pagination selection
 
 Appending a page preserves the selected detail and all earlier rows. A failed page request preserves rows, selection and cursor; Load more memories remains available to retry after the request finishes. A replacement search reconciles the current selection against replacement results. Query/scope/filter changes clear obsolete detail and invalidate pending responses as in MEM-003.
+
+## MEM-002 temporary reading list
+
+Membership is an exact workspace/entry/revision reference and survives section navigation in the current app session. Restart clears it. The list has no saved mission association or execution authority. Metadata is loaded through revision-specific scoped reads and refreshed after memory events/return; bodies are not stored in list state. Deleted content cannot remain displayed under an active badge. Pending/error/unavailable reads hide obsolete metadata and offer retry/remove. Duplicate editions are ignored; Remove targets one edition.

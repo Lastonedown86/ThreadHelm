@@ -19,6 +19,7 @@ import type {
   CoordinationEventEnvelope,
   HandoffSummaryView,
   InterruptOutcome,
+  MemoryScope,
   ProviderId,
   ReadinessView,
   RecoveryRecordView,
@@ -37,7 +38,14 @@ export interface LaunchRequest {
   recoveryRecordId?: string;
 }
 
+export interface ReadingListReference {
+  entryId: string;
+  revisionId: string;
+  scope: MemoryScope;
+}
+
 export interface State {
+  readingList: ReadingListReference[];
   workspaces: ApprovedWorkspaceView[];
   readiness: ReadinessView[];
   sessions: Record<string, SessionView>;
@@ -79,6 +87,7 @@ export interface State {
 }
 
 const initial: State = {
+  readingList: [],
   workspaces: [],
   readiness: [],
   sessions: {},
@@ -110,6 +119,8 @@ const initial: State = {
 };
 
 type Action =
+  | { type: 'addReading'; item: ReadingListReference }
+  | { type: 'removeReading'; revisionId: string }
   | {
       type: 'loaded';
       workspaces: ApprovedWorkspaceView[];
@@ -259,6 +270,15 @@ function reduce(state: State, action: Action): State {
         selectedDestination: action.destination,
         sessionScope: action.destination === 'sessions' ? 'all' : state.sessionScope,
       };
+    case 'addReading':
+      return state.readingList.some((item) => item.revisionId === action.item.revisionId)
+        ? state
+        : { ...state, readingList: [...state.readingList, action.item] };
+    case 'removeReading':
+      return {
+        ...state,
+        readingList: state.readingList.filter((item) => item.revisionId !== action.revisionId),
+      };
     case 'sessionScope':
       return { ...state, sessionScope: action.scope };
     case 'unread':
@@ -317,6 +337,8 @@ function reduce(state: State, action: Action): State {
 }
 
 export interface Actions {
+  addReading(item: ReadingListReference): void;
+  removeReading(revisionId: string): void;
   refresh(): Promise<void>;
   select(sessionId: string | null): void;
   selectMission(missionId: string): void;
@@ -484,6 +506,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       selectMission: (missionId) => dispatch({ type: 'selectMission', missionId }),
       selectDestination: (destination) => dispatch({ type: 'selectDestination', destination }),
+      addReading: (item) => dispatch({ type: 'addReading', item }),
+      removeReading: (revisionId) => dispatch({ type: 'removeReading', revisionId }),
       setSessionScope: (scope) => dispatch({ type: 'sessionScope', scope }),
       openLaunch: (request) => dispatch({ type: 'launchRequest', request }),
       setNotice: (notice) => dispatch({ type: 'notice', notice }),

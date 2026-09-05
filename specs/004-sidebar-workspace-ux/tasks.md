@@ -82,3 +82,13 @@ Dependencies: T024 -> T025 -> T026 -> T027 -> T028. MEM-002/004 remain proposed.
 - [x] T033 Complete static checks, update verification/register and open a PR.
 
 Dependencies: T029 -> T030 -> T031 -> T032 -> T033. MEM-002 and A07-A09 remain open.
+
+## Slice 7: MEM-002 temporary reading list
+
+- [x] T034 Record accepted temporary-list architecture and contract.
+- [x] T035 [US7] Add and run failing lifecycle/navigation regression in tests/e2e/memory-reading-list.spec.ts.
+- [x] T036 [US2] Store content-free edition references in store.tsx and render refreshed lifecycle in MissionReadingList.tsx; wire MemoryLibraryWorkspace.tsx.
+- [x] T037 [US7] Verify exact edition, lifecycle/deletion, dedup/removal, navigation and restart; run Memory regressions.
+- [x] T038 Complete static checks and evidence, update register, open PR.
+
+Dependencies: T034 -> T035 -> T036 -> T037 -> T038. Durable mission association and A07-A09 remain outside scope.

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { MemoryDetailView } from '@threadhelm/contracts';
+import { useStore } from '../../store.js';
 import { MemoryLibrarian } from './MemoryLibrarian.js';
 import { MemoryList } from './MemoryList.js';
 import { MissionReadingList } from './MissionReadingList.js';
@@ -7,17 +7,11 @@ import { MissionReadingList } from './MissionReadingList.js';
 export function MemoryLibraryWorkspace() {
   const [query, setQuery] = useState('');
   const [searchVersion, setSearchVersion] = useState(0);
-  const [readingList, setReadingList] = useState<MemoryDetailView[]>([]);
+  const { state, actions } = useStore();
   const search = (next: string) => {
     setQuery(next);
     setSearchVersion((value) => value + 1);
   };
-  const add = (detail: MemoryDetailView) =>
-    setReadingList((items) =>
-      items.some((item) => item.summary.revisionId === detail.summary.revisionId)
-        ? items
-        : [...items, detail],
-    );
   return (
     <main className="memory-library-workspace" aria-labelledby="memory-library-heading">
       <header className="workspace-page-header">
@@ -34,17 +28,16 @@ export function MemoryLibraryWorkspace() {
             searchVersion={searchVersion}
             initialQuery={query}
             expanded
-            onAddToReadingList={add}
+            onAddToReadingList={(detail) =>
+              actions.addReading({
+                entryId: detail.summary.entryId,
+                revisionId: detail.summary.revisionId,
+                scope: detail.summary.scope,
+              })
+            }
           />
         </section>
-        <MissionReadingList
-          items={readingList}
-          onRemove={(revisionId) =>
-            setReadingList((items) =>
-              items.filter((item) => item.summary.revisionId !== revisionId),
-            )
-          }
-        />
+        <MissionReadingList items={state.readingList} onRemove={actions.removeReading} />
       </div>
     </main>
   );

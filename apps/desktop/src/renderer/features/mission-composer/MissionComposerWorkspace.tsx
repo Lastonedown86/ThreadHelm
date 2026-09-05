@@ -96,7 +96,7 @@ export function MissionComposerWorkspace({
   useEffect(() => {
     heading.current?.focus();
     setInvalid(null);
-  }, [stage, index]);
+  }, [stage, index, draft.draft]);
   useEffect(() => {
     if (stage === 'review' || draft.draft?.state === 'ready_for_review') setEverReviewed(true);
   }, [stage, draft.draft]);
@@ -112,9 +112,9 @@ export function MissionComposerWorkspace({
     onState?.({ stage, workers });
   }, [stage, workers]);
   useEffect(() => {
-    onFlushReady?.(async () => (await draft.saveNow()) !== null);
+    onFlushReady?.(async () => !draft.draft || (await draft.saveNow()) !== null);
     return () => onFlushReady?.(null);
-  }, [draft.saveNow, onFlushReady]);
+  }, [draft.draft, draft.saveNow, onFlushReady]);
 
   const blocked = state.storageDegraded || draft.failure !== null;
   const isRevision = draft.draft?.sourceMissionId !== null && draft.draft !== null;
@@ -169,6 +169,22 @@ export function MissionComposerWorkspace({
       actions.setNotice(reasonLabel(errorCode(cause)) ?? 'The draft was not discarded.');
     }
   };
+
+  if (!draft.draft)
+    return (
+      <section className="composer" aria-label="Mission draft">
+        {draft.failure ? (
+          <p role="alert">
+            The mission draft could not be loaded. Close this view and resume the draft to retry.
+          </p>
+        ) : (
+          <p role="status">Loading mission draft…</p>
+        )}
+        <button type="button" onClick={onClose}>
+          Close
+        </button>
+      </section>
+    );
 
   if (closing)
     return (

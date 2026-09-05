@@ -7,7 +7,7 @@ export interface MissionRailProps {
   missions: MissionSummaryView[];
   titles: Record<string, string>;
   selectedMissionId: string | null;
-  onSelect(missionId: string): void;
+  onSelect(missionId: string): void | Promise<boolean>;
   onCreate(): void;
   drafts: MissionComposerDraftSummaryView[];
   onResumeDraft(draftId: string): void;
@@ -32,8 +32,9 @@ export function MissionRail({
   const ids = missions.map((mission) => mission.id);
 
   const activate = (missionId: string) => {
-    onSelect(missionId);
-    focusMissionHeading();
+    void Promise.resolve(onSelect(missionId)).then((accepted) => {
+      if (accepted !== false) focusMissionHeading();
+    });
   };
 
   const move = (event: KeyboardEvent<HTMLUListElement>) => {
@@ -62,7 +63,7 @@ export function MissionRail({
         return;
     }
     event.preventDefault();
-    onSelect(ids[next]!);
+    void onSelect(ids[next]!);
   };
 
   return (

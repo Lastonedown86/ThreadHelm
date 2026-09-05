@@ -1,0 +1,140 @@
+[
+  {
+    "id": "environment",
+    "os": "Windows 11 Home",
+    "release": "10.0.26200",
+    "mode": "drafts"
+  },
+  {
+    "id": "D01-close-readback",
+    "fields": {
+      "objective": "Saved audit objective",
+      "completionEvidence": "Saved evidence",
+      "exclusions": [],
+      "bounds": {
+        "maxElapsedMs": 1800000,
+        "maxTurns": 64,
+        "maxNoProgressMs": 300000,
+        "maxOutputBytes": 8388608,
+        "maxConcurrentProcesses": 16,
+        "maxWorkers": 4,
+        "maxWorkItems": 64,
+        "maxDepth": 8,
+        "maxAttempts": 3,
+        "maxTokenBudget": 250000
+      },
+      "permittedRoutineActions": ["decompose", "assign", "retry", "reassign", "pause", "complete"],
+      "knownSafeRetryClasses": ["failed_before_effect"],
+      "escalationRules": ["consequential", "unknown", "bounds", "supervisor_loss"]
+    },
+    "liveSessions": 0
+  },
+  {
+    "id": "D02-restart-readback",
+    "fields": {
+      "objective": "Saved audit objective",
+      "completionEvidence": "Saved evidence",
+      "exclusions": [],
+      "bounds": {
+        "maxElapsedMs": 1800000,
+        "maxTurns": 64,
+        "maxNoProgressMs": 300000,
+        "maxOutputBytes": 8388608,
+        "maxConcurrentProcesses": 16,
+        "maxWorkers": 4,
+        "maxWorkItems": 64,
+        "maxDepth": 8,
+        "maxAttempts": 3,
+        "maxTokenBudget": 250000
+      },
+      "permittedRoutineActions": ["decompose", "assign", "retry", "reassign", "pause", "complete"],
+      "knownSafeRetryClasses": ["failed_before_effect"],
+      "escalationRules": ["consequential", "unknown", "bounds", "supervisor_loss"]
+    },
+    "liveSessions": 0
+  },
+  {
+    "id": "N01-global-entry",
+    "destination": "Missions",
+    "newMission": true,
+    "resumeDraft": true,
+    "selected": "Missions"
+  },
+  {
+    "id": "N01-global-entry",
+    "destination": "Sessions",
+    "newMission": false,
+    "resumeDraft": false,
+    "selected": "Sessions"
+  },
+  {
+    "id": "N01-global-entry",
+    "destination": "Agents",
+    "newMission": false,
+    "resumeDraft": false,
+    "selected": "Agents"
+  },
+  {
+    "id": "N01-global-entry",
+    "destination": "Memory",
+    "newMission": false,
+    "resumeDraft": false,
+    "selected": "Memory"
+  },
+  {
+    "id": "N01-global-entry",
+    "destination": "Attention",
+    "newMission": false,
+    "resumeDraft": false,
+    "selected": "Attention"
+  },
+  {
+    "id": "N01-global-entry",
+    "destination": "Settings",
+    "newMission": false,
+    "resumeDraft": false,
+    "selected": "Settings"
+  },
+  {
+    "id": "D03-new-entry-save-loss",
+    "actualObjective": "Saved audit objective",
+    "expectedObjective": "Unsaved edit before new mission",
+    "entryVisible": true
+  },
+  {
+    "id": "D04-destination-flush",
+    "actualObjective": "Ordinary destination switch saved"
+  },
+  {
+    "id": "D05-failed-save-navigation",
+    "destinationChanged": true,
+    "composerVisible": false,
+    "dialogs": 0,
+    "notice": ["Your mission draft changes could not be saved. Dismiss"]
+  },
+  {
+    "id": "D06-failure-restart",
+    "actualObjective": "Ordinary destination switch saved",
+    "expectedLatestEdit": "Edit after storage failure"
+  },
+  {
+    "id": "N02-draft-inventory",
+    "limitError": "missionComposer.createDraft: MISSION_DRAFT_LIMIT",
+    "listed": 20,
+    "originalStillReadable": "Ordinary destination switch saved",
+    "railSummary": "Drafts (20)"
+  },
+  {
+    "id": "N02-cap-ui",
+    "notice": "Too many drafts are open; complete or delete one first. Dismiss",
+    "discardButtons": 0
+  },
+  {
+    "id": "N03-narrow-inventory",
+    "viewport": 860,
+    "railHeight": 1192.953125,
+    "mainTop": 1237.953125,
+    "documentWidth": 665,
+    "viewportWidth": 680
+  }
+]

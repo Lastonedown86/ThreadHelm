@@ -4,6 +4,7 @@ import { api, call, errorCode } from './api.js';
 import { CloseBlockedDialog } from './features/control/CloseBlockedDialog.js';
 import { AgentLibraryWorkspace } from './features/coordination/AgentLibraryWorkspace.js';
 import { MemoryLibraryWorkspace } from './features/coordination/MemoryLibraryWorkspace.js';
+import { ModalDialog } from './features/coordination/ModalDialog.js';
 import { MissionDetail } from './features/coordination/MissionDetail.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
 import { ComposerContext } from './features/mission-composer/ComposerContext.js';
@@ -66,43 +67,92 @@ const destinationHeading: Record<WorkspaceDestination, string> = {
 function Shell() {
   const { state, actions } = useStore();
   const workspace = useMissionWorkspace(state.selectedMissionId);
-  const [composerDraftId, setComposerDraftId] = useState<string | null>(null);
+  const [missionView, setMissionView] = useState<
+    { kind: 'mission' } | { kind: 'entry' } | { kind: 'draft'; draftId: string }
+  >({ kind: 'mission' });
+  const composerDraftId = missionView.kind === 'draft' ? missionView.draftId : null;
+  const pickingRepo = missionView.kind === 'entry';
   const [composerState, setComposerState] = useState<{
     stage: Stage;
     workers: WorkerFields[];
   } | null>(null);
   const [detailMissionId, setDetailMissionId] = useState<string | null>(null);
-  // The screen before step 1: pick a repo for ideas, or skip to a blank Outcome.
-  const [pickingRepo, setPickingRepo] = useState(false);
   const [drafts, setDrafts] = useState<MissionComposerDraftSummaryView[]>([]);
   const missionSelected = state.selectedDestination === 'missions';
-  // Spec §1.2 close-flow / gate 6: a mission-rail or destination switch while
-  // the composer is open must flush its pending save first, so up to 800ms of
-  // autosave (or, after a prior save failure, everything unsaved) is never
-  // silently dropped by the unmount that follows.
   const composerFlush = useRef<(() => Promise<boolean>) | null>(null);
   const setComposerFlush = useCallback((flush: (() => Promise<boolean>) | null) => {
     composerFlush.current = flush;
   }, []);
-  const flushComposer = useCallback(async () => {
-    const flush = composerFlush.current;
-    if (!flush) return;
-    const ok = await flush();
-    if (!ok) actions.setNotice('Your mission draft changes could not be saved.');
-  }, [actions]);
-  const selectMission = useCallback(
-    (id: string) => {
-      setPickingRepo(false);
-      void flushComposer().then(() => actions.selectMission(id));
+  type NavigationAction = () => void | Promise<void>;
+  const pendingNavigation = useRef<NavigationAction | null>(null);
+  const navigationBusy = useRef(false);
+  const [leaving, setLeaving] = useState(false);
+  const [saveBlocked, setSaveBlocked] = useState(false);
+
+  const attemptNavigation = useCallback(
+    async (target: NavigationAction, leaveUnsaved = false) => {
+      if (navigationBusy.current) return false;
+      navigationBusy.current = true;
+      pendingNavigation.current = target;
+      setLeaving(true);
+      try {
+        if (!leaveUnsaved && composerFlush.current) {
+          const saved = await composerFlush.current().catch(() => false);
+          if (!saved) {
+            setSaveBlocked(true);
+            return false;
+          }
+        }
+        await target();
+        pendingNavigation.current = null;
+        setSaveBlocked(false);
+        return true;
+      } catch (cause) {
+        pendingNavigation.current = null;
+        setSaveBlocked(false);
+        actions.setNotice(
+          reasonLabel(errorCode(cause)) ?? 'The requested view could not be opened.',
+        );
+        return false;
+      } finally {
+        navigationBusy.current = false;
+        setLeaving(false);
+      }
     },
-    [flushComposer, actions],
+    [actions],
   );
-  const selectDestination = useCallback(
-    (destination: WorkspaceDestination) => {
-      void flushComposer().then(() => actions.selectDestination(destination));
+  const navigate = useCallback(
+    (target: NavigationAction) => {
+      // One pending action owns its target, even if another rail control is pressed.
+      if (pendingNavigation.current) return Promise.resolve(false);
+      return attemptNavigation(target);
     },
-    [flushComposer, actions],
+    [attemptNavigation],
   );
+  const keepEditing = () => {
+    if (navigationBusy.current) return;
+    pendingNavigation.current = null;
+    setSaveBlocked(false);
+  };
+  const showMission = () => {
+    setMissionView({ kind: 'mission' });
+    setComposerState(null);
+  };
+  const selectMission = (id: string) =>
+    navigate(() => {
+      showMission();
+      actions.selectMission(id);
+    });
+  const selectDestination = (destination: WorkspaceDestination) => {
+    if (destination === state.selectedDestination) return;
+    void navigate(() => actions.selectDestination(destination));
+  };
+  const newMission = () =>
+    void navigate(() => {
+      setMissionView({ kind: 'entry' });
+      setComposerState(null);
+      actions.selectDestination('missions');
+    });
 
   useEffect(() => {
     if (state.storageDegraded) {
@@ -119,38 +169,34 @@ function Shell() {
   }, [state.missionSequence, state.composerSequence, state.storageDegraded]);
 
   const openComposer = (sourceMissionId?: string, initialFields?: RepoIdeaFields) => {
-    // A composer may already be open (editing a different draft) — flush its
-    // pending save before replacing it, same as any other composer switch.
-    // A picked repo idea is written through the ordinary updateDraft path, so
-    // it lands on Outcome as if the user had typed it: editable, autosaved.
-    setPickingRepo(false);
-    void flushComposer().then(() =>
-      call(api.missionComposer.createDraft(sourceMissionId ? { sourceMissionId } : undefined))
-        .then((draft) =>
-          initialFields
-            ? call(
-                api.missionComposer.updateDraft({
-                  draftId: draft.draftId,
-                  expectedVersion: draft.version,
-                  fieldValues: initialFields,
-                  currentStage: 'outcome',
-                }),
-              ).then(() => draft.draftId)
-            : draft.draftId,
-        )
-        .then((draftId) => setComposerDraftId(draftId))
-        .catch((cause) =>
-          actions.setNotice(reasonLabel(errorCode(cause)) ?? 'The draft could not be created.'),
-        ),
-    );
+    void navigate(async () => {
+      const draft = await call(
+        api.missionComposer.createDraft(sourceMissionId ? { sourceMissionId } : undefined),
+      );
+      if (initialFields) {
+        await call(
+          api.missionComposer.updateDraft({
+            draftId: draft.draftId,
+            expectedVersion: draft.version,
+            fieldValues: initialFields,
+            currentStage: 'outcome',
+          }),
+        );
+      }
+      setMissionView({ kind: 'draft', draftId: draft.draftId });
+      setComposerState(null);
+      setDetailMissionId(null);
+      actions.selectDestination('missions');
+    });
   };
-  const resumeDraft = useCallback(
-    (draftId: string) => {
-      setPickingRepo(false);
-      void flushComposer().then(() => setComposerDraftId(draftId));
-    },
-    [flushComposer],
-  );
+  const resumeDraft = (draftId: string) => {
+    if (missionSelected && composerDraftId === draftId) return;
+    void navigate(() => {
+      setMissionView({ kind: 'draft', draftId });
+      setComposerState(null);
+      actions.selectDestination('missions');
+    });
+  };
 
   const runMissionAction = (kind: ActionKind) => {
     const missionId = state.selectedMissionId;
@@ -167,12 +213,20 @@ function Shell() {
   const contextContent =
     missionSelected && composerDraftId && composerState ? (
       <ComposerContext stage={composerState.stage} workers={composerState.workers} />
+    ) : missionSelected && missionView.kind !== 'mission' ? (
+      <MissionContextFrame heading={pickingRepo ? 'New mission' : 'Mission draft'}>
+        <p>
+          {pickingRepo
+            ? 'Choose a repository for ideas, or write your own mission.'
+            : 'Loading draft context…'}
+        </p>
+      </MissionContextFrame>
     ) : missionSelected ? (
       <MissionContext
         detail={workspace.detail}
         presentation={workspace.presentation}
         onAction={runMissionAction}
-        onOpenAttention={() => actions.selectDestination('attention')}
+        onOpenAttention={() => selectDestination('attention')}
       />
     ) : (
       <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
@@ -207,9 +261,11 @@ function Shell() {
             <MissionRail
               missions={workspace.missions}
               titles={workspace.titles}
-              selectedMissionId={state.selectedMissionId}
+              selectedMissionId={
+                missionSelected && missionView.kind === 'mission' ? state.selectedMissionId : null
+              }
               onSelect={selectMission}
-              onCreate={() => setPickingRepo(true)}
+              onCreate={newMission}
               drafts={drafts}
               onResumeDraft={resumeDraft}
             />
@@ -233,21 +289,15 @@ function Shell() {
               readiness={state.readiness}
               onSkip={() => openComposer()}
               onPick={(fields) => openComposer(undefined, fields)}
-              onGoToSettings={() => {
-                setPickingRepo(false);
-                actions.selectDestination('settings');
-              }}
+              onGoToSettings={() => selectDestination('settings')}
             />
           ) : composerDraftId ? (
             <MissionComposerWorkspace
+              key={composerDraftId}
               draftId={composerDraftId}
-              onClose={() => {
-                setComposerDraftId(null);
-                setComposerState(null);
-              }}
+              onClose={showMission}
               onStarted={(mission) => {
-                setComposerDraftId(null);
-                setComposerState(null);
+                showMission();
                 actions.selectMission(mission.id);
                 setDetailMissionId(mission.id);
               }}
@@ -272,8 +322,16 @@ function Shell() {
         }
         contextToggle={
           <ContextToggle
-            label={(missionSelected ? workspace.presentation?.attentionLabel : null) ?? 'Context'}
-            attention={(missionSelected ? workspace.presentation?.attention : null) ?? 'none'}
+            label={
+              (missionSelected && missionView.kind === 'mission'
+                ? workspace.presentation?.attentionLabel
+                : null) ?? 'Context'
+            }
+            attention={
+              (missionSelected && missionView.kind === 'mission'
+                ? workspace.presentation?.attention
+                : null) ?? 'none'
+            }
           >
             {contextContent}
           </ContextToggle>
@@ -303,7 +361,7 @@ function Shell() {
             actions.openLaunch(null);
             actions.sessionAdded(session);
             actions.select(session.id);
-            actions.selectDestination('sessions');
+            void navigate(() => actions.selectDestination('sessions'));
             if (recordId) {
               void call(api.recovery.resolve({ recordId, resolution: 'superseded_by_new_session' }))
                 .then((record) => actions.recoveryChanged(record))
@@ -311,6 +369,41 @@ function Shell() {
             }
           }}
         />
+      ) : null}
+      {saveBlocked ? (
+        <ModalDialog label="Unsaved mission changes" onDismiss={keepEditing}>
+          <h2>Your latest mission edits could not be saved.</h2>
+          <p>
+            Keep editing or retry saving before continuing. Leaving without saving keeps only the
+            last saved version of this draft.
+          </p>
+          <div className="mission-action-row">
+            <button type="button" onClick={keepEditing} disabled={leaving}>
+              Keep editing
+            </button>
+            <button
+              type="button"
+              disabled={leaving}
+              onClick={() => {
+                const target = pendingNavigation.current;
+                if (target) void attemptNavigation(target);
+              }}
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              className="danger"
+              disabled={leaving}
+              onClick={() => {
+                const target = pendingNavigation.current;
+                if (target) void attemptNavigation(target, true);
+              }}
+            >
+              Leave without saving
+            </button>
+          </div>
+        </ModalDialog>
       ) : null}
       {state.closeBlocked ? (
         <CloseBlockedDialog sessions={state.closeBlocked} onDismiss={actions.dismissCloseBlocked} />

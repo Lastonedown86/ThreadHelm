@@ -1,0 +1,153 @@
+[
+  {
+    "id": "environment",
+    "os": "Windows 11 Home",
+    "release": "10.0.26200",
+    "mode": "missions"
+  },
+  {
+    "id": "M00-write-lease",
+    "rejection": "sessions.previewLaunch: WRITE_LEASE_HELD"
+  },
+  {
+    "id": "M00-shared-access",
+    "modes": [
+      {
+        "workspaceId": "081a1056-ecfa-46b4-b0e5-69e2ee58f67e",
+        "mode": "read"
+      }
+    ],
+    "workerUsesSupervisorFolder": true
+  },
+  {
+    "id": "M01-impossible-edit",
+    "review": "Review could not be prepared.\nThe mission envelope changed and needs a fresh review.\nTry again",
+    "savedModel": "invalid-audit-model",
+    "missionCount": 0,
+    "sharedModes": [
+      {
+        "workspaceId": "081a1056-ecfa-46b4-b0e5-69e2ee58f67e",
+        "mode": "read"
+      },
+      {
+        "workspaceId": "aff6ecd8-dc02-4978-8df3-78af1803f8cd",
+        "mode": "write"
+      }
+    ]
+  },
+  {
+    "id": "M01-repair-diagnostic",
+    "review": "Setup incomplete.\nNo substitution or partial start is offered.\nsupervisor · Audit coordinator: Read only runtime unproved. Go to access and limits",
+    "workers": [
+      {
+        "model": {
+          "model": "gpt-5.6-terra",
+          "effort": null
+        },
+        "permission": {
+          "policy": null,
+          "boundedAllowlist": []
+        },
+        "bounds": {
+          "maxElapsedMs": 1800000,
+          "maxTurns": 64,
+          "maxNoProgressMs": 300000,
+          "maxOutputBytes": 8388608,
+          "maxConcurrentProcesses": 8
+        }
+      }
+    ],
+    "live": [
+      {
+        "model": {
+          "model": "gpt-5.6-terra",
+          "effort": null
+        },
+        "permission": {
+          "policy": null,
+          "boundedAllowlist": []
+        },
+        "bounds": {
+          "maxElapsedMs": 1800000,
+          "maxTurns": 64,
+          "maxNoProgressMs": 300000,
+          "maxOutputBytes": 8388608,
+          "maxConcurrentProcesses": 8
+        }
+      },
+      {
+        "model": {
+          "model": "gpt-5.6-terra",
+          "effort": null
+        },
+        "permission": {
+          "policy": null,
+          "boundedAllowlist": []
+        },
+        "bounds": {
+          "maxElapsedMs": 1800000,
+          "maxTurns": 64,
+          "maxNoProgressMs": 300000,
+          "maxOutputBytes": 8388608,
+          "maxConcurrentProcesses": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "M02-before-confirm",
+    "startDisabled": true,
+    "missionCount": 0,
+    "liveSessions": 2
+  },
+  {
+    "id": "M03-confirm-readback",
+    "state": "running",
+    "objective": "Audit mission lifecycle",
+    "bindings": 2,
+    "drafts": 0,
+    "liveSessions": 2
+  },
+  {
+    "id": "M04-pause-readback",
+    "state": "paused",
+    "liveSessions": 2
+  },
+  {
+    "id": "M05-resume-readback",
+    "state": "running",
+    "supervisorMatches": true
+  },
+  {
+    "id": "M06-revision-readback",
+    "objective": "Revised audit mission",
+    "state": "paused",
+    "missionCount": 1
+  },
+  {
+    "id": "N04-mission-selection",
+    "composerVisible": true,
+    "selectedRow": "Revised audit mission\nPaused · 275e04b8",
+    "heading": "Define one finish line."
+  },
+  {
+    "id": "M07-cancel-abort",
+    "before": "paused",
+    "after": "paused"
+  },
+  {
+    "id": "M08-cancel-readback",
+    "state": "cancelled"
+  },
+  {
+    "id": "M09-delete-readback",
+    "state": "deleted",
+    "envelope": null
+  },
+  {
+    "id": "M10-restart-readback",
+    "state": "deleted",
+    "envelope": null,
+    "liveSessions": 0
+  }
+]

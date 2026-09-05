@@ -1,0 +1,20 @@
+[
+  {
+    "id": "environment",
+    "os": "Windows 11 Home",
+    "release": "10.0.26200",
+    "mode": "ideas"
+  },
+  {
+    "id": "I01-stale-ideas",
+    "repoSelectionChanged": true,
+    "titles": ["Repo A idea 1", "Repo A idea 2", "Repo A idea 3"]
+  },
+  {
+    "id": "I02-picked-readback",
+    "objective": "Repo A objective 1",
+    "proof": "Fixture proof",
+    "retainedWorkspaces": null,
+    "liveSessions": 0
+  }
+]

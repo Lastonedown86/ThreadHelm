@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   MissionComposerDraftDetailView,
   MissionComposerFields,
@@ -6,6 +6,7 @@ import type {
 } from '@threadhelm/contracts';
 import { api, call, errorCode } from '../../api.js';
 import { fieldsForSave, type Stage } from './composer-fields.js';
+import { createDraftSaveQueue } from './draft-save-queue.js';
 
 const SAVE_DELAY_MS = 800;
 
@@ -24,11 +25,7 @@ export function useDraft(draftId: string) {
   const version = useRef(0);
   const dirty = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Guards against two concurrent updateDraft calls sharing one
-  // expectedVersion (e.g. a debounced autosave still in flight when goTo/
-  // close also calls saveNow()) — the second back would otherwise see its
-  // own edit rejected as MISSION_DRAFT_STALE.
-  const inFlight = useRef<Promise<MissionComposerSaveReceipt | null> | null>(null);
+  const savedReceipt = useRef<MissionComposerSaveReceipt | null>(null);
   const latest = useRef<{ fields: MissionComposerFields; stage: Stage }>({
     fields: {},
     stage: 'outcome',
@@ -43,9 +40,17 @@ export function useDraft(draftId: string) {
         setFieldsState(loaded.fieldValues);
         setStage(loaded.currentStage);
         version.current = loaded.version;
+        savedReceipt.current = {
+          draftId,
+          version: loaded.version,
+          savedAt: loaded.updatedAt,
+          currentStage: loaded.currentStage,
+        };
         latest.current = { fields: loaded.fieldValues, stage: loaded.currentStage };
       })
-      .catch((cause) => setFailure({ code: errorCode(cause) }));
+      .catch((cause) => {
+        if (!cancelled) setFailure({ code: errorCode(cause) });
+      });
     return () => {
       cancelled = true;
       if (timer.current) clearTimeout(timer.current);
@@ -53,22 +58,28 @@ export function useDraft(draftId: string) {
   }, [draftId]);
 
   const performSave = useCallback(async (): Promise<MissionComposerSaveReceipt | null> => {
+    const snapshot = latest.current;
     setSaving(true);
     try {
       const saved = await call(
         api.missionComposer.updateDraft({
           draftId,
           expectedVersion: version.current,
-          fieldValues: fieldsForSave(latest.current.fields),
-          currentStage: latest.current.stage,
+          fieldValues: fieldsForSave(snapshot.fields),
+          currentStage: snapshot.stage,
         }),
       );
       version.current = saved.version;
-      dirty.current = false;
+      dirty.current = latest.current !== snapshot;
+      savedReceipt.current = saved;
       setReceipt(saved);
       setFailure(null);
       return saved;
     } catch (cause) {
+      // An edit during the failed request may have scheduled another debounce.
+      // Stop it so a failure waits for a deliberate retry or a new edit.
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = null;
       const code = errorCode(cause);
       if (code === 'MISSION_DRAFT_STALE') {
         const elsewhere = await call(api.missionComposer.getDraft({ draftId })).catch(() => null);
@@ -80,28 +91,19 @@ export function useDraft(draftId: string) {
     }
   }, [draftId]);
 
+  const flush = useMemo(
+    () => createDraftSaveQueue(performSave, () => dirty.current),
+    [performSave],
+  );
   const saveNow = useCallback(async (): Promise<MissionComposerSaveReceipt | null> => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
-    if (inFlight.current) {
-      // A save is already in flight: wait for it instead of firing a second
-      // updateDraft with the same expectedVersion, which would make one of
-      // the two calls fail as a spurious "saved elsewhere" conflict.
-      const result = await inFlight.current;
-      if (!dirty.current) return result;
-      // Fields changed again while we were waiting — fall through and save
-      // once more, now with the fresh expectedVersion from that resolution.
-    } else if (!dirty.current && receipt) {
-      return receipt;
-    }
-    const promise = performSave();
-    inFlight.current = promise;
-    try {
-      return await promise;
-    } finally {
-      if (inFlight.current === promise) inFlight.current = null;
-    }
-  }, [performSave, receipt]);
+    // No editor is exposed before hydration. Never write defaults over a draft
+    // whose initial read has not completed (or failed).
+    if (!savedReceipt.current) return null;
+    if (!dirty.current) return savedReceipt.current;
+    return flush();
+  }, [flush]);
 
   const schedule = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -110,11 +112,9 @@ export function useDraft(draftId: string) {
 
   const setFields = useCallback(
     (patch: Partial<MissionComposerFields>) => {
-      setFieldsState((old) => {
-        const next = { ...old, ...patch };
-        latest.current = { ...latest.current, fields: next };
-        return next;
-      });
+      const next = { ...latest.current.fields, ...patch };
+      latest.current = { ...latest.current, fields: next };
+      setFieldsState(next);
       dirty.current = true;
       schedule();
     },
@@ -138,10 +138,18 @@ export function useDraft(draftId: string) {
     setFieldsState(elsewhere.fieldValues);
     setStage(elsewhere.currentStage);
     version.current = elsewhere.version;
+    savedReceipt.current = {
+      draftId,
+      version: elsewhere.version,
+      savedAt: elsewhere.updatedAt,
+      currentStage: elsewhere.currentStage,
+    };
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
     latest.current = { fields: elsewhere.fieldValues, stage: elsewhere.currentStage };
     dirty.current = false;
     setFailure(null);
-  }, [failure]);
+  }, [failure, draftId]);
 
   const keepMyEdits = useCallback(() => {
     const elsewhere = failure?.savedElsewhere;

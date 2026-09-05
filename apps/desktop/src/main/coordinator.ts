@@ -27,6 +27,7 @@ import { createReconService, type ReconService } from './coordination/recon.js';
 import { deliverHandoff } from './coordination/delivery.js';
 import { createSupervisorService } from './coordination/supervisor.js';
 import { createMissionComposerService } from './coordination/mission-composer.js';
+import { createRepoIdeasService } from './coordination/repo-ideas.js';
 import { requestClose, stopAllAndClose } from './lifecycle/close.js';
 import { listReadiness } from './providers/readiness.js';
 import { resolveRecovery } from './recovery/reconcile.js';
@@ -51,6 +52,8 @@ export function createHandlers(ctx: Context): Handlers {
   ctx.coordinationBridge?.setSupervisorAuthority(supervisor);
   const missionComposer = ctx.missionComposer ?? createMissionComposerService(ctx, supervisor);
   ctx.missionComposer = missionComposer;
+  const repoIdeas = ctx.repoIdeas ?? createRepoIdeasService(ctx);
+  ctx.repoIdeas = repoIdeas;
   const agentWizard = ctx.storage && !ctx.health.degraded ? startAgentWizard(ctx, profiles) : null;
   const requireAgentWizard = () => {
     if (!agentWizard || !ctx.storage || ctx.health.degraded) {
@@ -82,6 +85,8 @@ export function createHandlers(ctx: Context): Handlers {
     'missionComposer.confirm': (request) => missionComposer.confirm(request),
     'missionComposer.previewDiscard': (request) => missionComposer.previewDiscard(request),
     'missionComposer.confirmDiscard': (request) => missionComposer.confirmDiscard(request),
+    // Resolved per call so a test hook can swap ctx.repoIdeas after composition.
+    'missionComposer.proposeRepoIdeas': (request) => (ctx.repoIdeas ?? repoIdeas).propose(request),
     'workspaces.choose': () => chooseWorkspace(ctx),
     'workspaces.approve': ({ candidateToken }) => approveWorkspace(ctx, candidateToken),
     'workspaces.list': () => listWorkspaces(ctx),

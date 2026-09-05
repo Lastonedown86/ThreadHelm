@@ -34,6 +34,7 @@ import type { AgentWizardService } from './coordination/profile-wizard.js';
 import type { ReconService } from './coordination/recon.js';
 import type { SupervisorService } from './coordination/supervisor.js';
 import type { MissionComposerService } from './coordination/mission-composer.js';
+import type { RepoIdeasService } from './coordination/repo-ideas.js';
 import type { StructuredDraftRunner } from './providers/structured-draft.js';
 
 // --- native boundary (contracts/windows-supervisor.md) ----------------------
@@ -232,6 +233,8 @@ export interface Context {
   supervisor?: SupervisorService;
   /** Main-owned mission draft authority; drafts grant nothing. */
   missionComposer?: MissionComposerService;
+  /** Main-owned repo-idea generation; never touches a composer draft. */
+  repoIdeas?: RepoIdeasService;
   /** Session-scoped provider bridge authority; absent in degraded/test compositions. */
   coordinationBridge?: BridgeSessionManager;
   appInfo: AppInfo;

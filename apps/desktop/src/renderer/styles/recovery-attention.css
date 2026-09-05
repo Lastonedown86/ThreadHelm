@@ -2,6 +2,8 @@
   display: grid;
   gap: 1rem;
   padding: 1.25rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .recovery-attention-grid {
   display: grid;
@@ -44,6 +46,23 @@
 }
 @container workspace (max-width: 46rem) {
   .recovery-attention-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.recovery-attention-workspace > *,
+.recovery-attention-grid > *,
+.recovery-queue li {
+  min-width: 0;
+}
+.recovery-attention-workspace .actions {
+  flex-wrap: wrap;
+}
+@container workspace (max-width: 46rem) {
+  .recovery-detail .setup-evidence {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .recovery-detail .setup-evidence dd + dt {
+    margin-top: 0.5rem;
   }
 }

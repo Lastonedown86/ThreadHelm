@@ -56,3 +56,7 @@ Dismissing another record preserves a still-open selected detail. Removing the s
 ## ATT-002 recovery-only scope
 
 Attention's badge and queue count unresolved session recovery records. Copy explicitly separates mission decisions, which remain in Missions. Open selected mission uses the existing guarded exact-ID selection; without selection, Open Missions uses guarded destination navigation. These routes never resolve a decision, dismiss recovery or launch a session. No global mission-decision aggregation is implied.
+
+## ATT-003 recovery reflow
+
+At narrow widths and 200% text, exact recovery identifiers and paths remain readable by wrapping; queue/detail and sidebar do not require horizontal scrolling. Vertical scrolling and the existing narrow navigation strip remain available. Dismiss and reviewed replacement retain the exact record target and existing authority. This slice does not change selection semantics or landmarks.

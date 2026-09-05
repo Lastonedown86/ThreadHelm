@@ -1,0 +1,1351 @@
+[
+  {
+    "id": "environment",
+    "baseline": "c32f2554ae43dd43d789f16e16b910b35893f327",
+    "os": "Windows 11 Home",
+    "release": "10.0.26200",
+    "footer": "ThreadHelm v44.0.0 · Electron 44.0.0 · x64",
+    "viewport": {
+      "width": 1264,
+      "height": 761,
+      "fontSize": "16px"
+    },
+    "fixtures": "isolated local echo processes; no external provider"
+  },
+  {
+    "id": "A01-crash-recovery",
+    "before": [
+      {
+        "id": "b9ac2bf8-7c2c-4ad9-aa4b-39f8b389f988",
+        "state": "running",
+        "hostPid": 30460,
+        "rootPid": 12892
+      },
+      {
+        "id": "e7df4765-6af9-493f-995e-00a14be7b986",
+        "state": "running",
+        "hostPid": 29380,
+        "rootPid": 15324
+      },
+      {
+        "id": "201c9dd0-f320-452f-bb58-726a9b9355ea",
+        "state": "running",
+        "hostPid": 28412,
+        "rootPid": 25252
+      }
+    ],
+    "after": [],
+    "saved": {
+      "sessions": [
+        {
+          "id": "201c9dd0-f320-452f-bb58-726a9b9355ea",
+          "workspaceId": "2e95d014-edee-4f42-9cac-a082ee70e4fc",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-c-ce596206-4482-4edd-8411-bd216d5916e6",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "recovery_required",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:25.214Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.964Z",
+          "updatedAt": "2026-09-05T20:55:25.714Z"
+        },
+        {
+          "id": "e7df4765-6af9-493f-995e-00a14be7b986",
+          "workspaceId": "dc9487f6-df43-4340-883b-88f7d643caad",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-b-9e5fa12b-74f6-4fab-89a6-bc0672d8bd6d",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "recovery_required",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:24.900Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.636Z",
+          "updatedAt": "2026-09-05T20:55:25.714Z"
+        },
+        {
+          "id": "b9ac2bf8-7c2c-4ad9-aa4b-39f8b389f988",
+          "workspaceId": "fd39911d-a7ad-448c-b43d-4d93bd2f765d",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-a-5e93adf2-df54-4b21-9757-c46e973c9fce",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "recovery_required",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:24.574Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.290Z",
+          "updatedAt": "2026-09-05T20:55:25.714Z"
+        }
+      ],
+      "recoveryRecords": [
+        {
+          "id": "cf0edccd-5e00-4297-99e5-6330f0d5c2eb",
+          "sessionId": "201c9dd0-f320-452f-bb58-726a9b9355ea",
+          "lastKnownState": "running",
+          "classification": "unexpected_shutdown",
+          "reasonCode": "STARTUP_RECONCILIATION",
+          "safeSummary": "Reconciled from running to recovery_required at startup",
+          "createdAt": "2026-09-05T20:55:25.714Z",
+          "resolvedAt": null,
+          "resolution": null
+        },
+        {
+          "id": "395a8fe2-276b-4fb0-b783-6e3113cf9380",
+          "sessionId": "b9ac2bf8-7c2c-4ad9-aa4b-39f8b389f988",
+          "lastKnownState": "running",
+          "classification": "unexpected_shutdown",
+          "reasonCode": "STARTUP_RECONCILIATION",
+          "safeSummary": "Reconciled from running to recovery_required at startup",
+          "createdAt": "2026-09-05T20:55:25.714Z",
+          "resolvedAt": null,
+          "resolution": null
+        },
+        {
+          "id": "dd561b46-caf9-468d-85a4-129a44dde96e",
+          "sessionId": "e7df4765-6af9-493f-995e-00a14be7b986",
+          "lastKnownState": "running",
+          "classification": "unexpected_shutdown",
+          "reasonCode": "STARTUP_RECONCILIATION",
+          "safeSummary": "Reconciled from running to recovery_required at startup",
+          "createdAt": "2026-09-05T20:55:25.714Z",
+          "resolvedAt": null,
+          "resolution": null
+        }
+      ],
+      "storageDegraded": false
+    }
+  },
+  {
+    "id": "A02-dismiss-other-selection",
+    "selectedBefore": "EXACT RECOVERY RECORD\n\nThreadHelm ended unexpectedly\nRecord\ndd561b46-caf9-468d-85a4-129a44dde96e\nSession\ne7df4765-6af9-493f-995e-00a14be7b986\nProvider\nCodex CLI\nWorkspace\nC:\\Users\\Bill\\AppData\\Local\\Temp\\attention-b-9e5fa12b-74f6-4fab-89a6-bc0672d8bd6d\nLast known state\nRunning\nObserved\n9/5/2026, 4:55:25 PM\n\nReconciled from running to recovery_required at startup\n\nReason STARTUP_RECONCILIATION\n\nRECOVERY COACH\n\nSafest next step\n\nReview the exact stopped session before deciding whether replacement work is needed.\n\nThreadHelm never replays, resumes, or resends unknown work automatically.\n\nDismiss\nStart new session",
+    "dismissedText": "ThreadHelm Ended Unexpectedly\nC:\\Users\\Bill\\AppData\\Local\\Temp\\Attention-A-5e93adf2-Df54-4b21-9757-C46e973c9fce\n9/5/2026, 4:55:25 PM\nDismiss\nStart New Session",
+    "selectedAfter": "EXACT RECOVERY RECORD\n\nThreadHelm ended unexpectedly\nRecord\ncf0edccd-5e00-4297-99e5-6330f0d5c2eb\nSession\n201c9dd0-f320-452f-bb58-726a9b9355ea\nProvider\nCodex CLI\nWorkspace\nC:\\Users\\Bill\\AppData\\Local\\Temp\\attention-c-ce596206-4482-4edd-8411-bd216d5916e6\nLast known state\nRunning\nObserved\n9/5/2026, 4:55:25 PM\n\nReconciled from running to recovery_required at startup\n\nReason STARTUP_RECONCILIATION\n\nRECOVERY COACH\n\nSafest next step\n\nReview the exact stopped session before deciding whether replacement work is needed.\n\nThreadHelm never replays, resumes, or resends unknown work automatically.\n\nDismiss\nStart new session",
+    "saved": {
+      "sessions": [
+        {
+          "id": "201c9dd0-f320-452f-bb58-726a9b9355ea",
+          "workspaceId": "2e95d014-edee-4f42-9cac-a082ee70e4fc",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-c-ce596206-4482-4edd-8411-bd216d5916e6",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "recovery_required",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:25.214Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.964Z",
+          "updatedAt": "2026-09-05T20:55:25.714Z"
+        },
+        {
+          "id": "e7df4765-6af9-493f-995e-00a14be7b986",
+          "workspaceId": "dc9487f6-df43-4340-883b-88f7d643caad",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-b-9e5fa12b-74f6-4fab-89a6-bc0672d8bd6d",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "recovery_required",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:24.900Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.636Z",
+          "updatedAt": "2026-09-05T20:55:25.714Z"
+        },
+        {
+          "id": "b9ac2bf8-7c2c-4ad9-aa4b-39f8b389f988",
+          "workspaceId": "fd39911d-a7ad-448c-b43d-4d93bd2f765d",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-a-5e93adf2-df54-4b21-9757-c46e973c9fce",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "stopped",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:24.574Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.290Z",
+          "updatedAt": "2026-09-05T20:55:27.418Z"
+        }
+      ],
+      "recoveryRecords": [
+        {
+          "id": "cf0edccd-5e00-4297-99e5-6330f0d5c2eb",
+          "sessionId": "201c9dd0-f320-452f-bb58-726a9b9355ea",
+          "lastKnownState": "running",
+          "classification": "unexpected_shutdown",
+          "reasonCode": "STARTUP_RECONCILIATION",
+          "safeSummary": "Reconciled from running to recovery_required at startup",
+          "createdAt": "2026-09-05T20:55:25.714Z",
+          "resolvedAt": null,
+          "resolution": null
+        },
+        {
+          "id": "dd561b46-caf9-468d-85a4-129a44dde96e",
+          "sessionId": "e7df4765-6af9-493f-995e-00a14be7b986",
+          "lastKnownState": "running",
+          "classification": "unexpected_shutdown",
+          "reasonCode": "STARTUP_RECONCILIATION",
+          "safeSummary": "Reconciled from running to recovery_required at startup",
+          "createdAt": "2026-09-05T20:55:25.714Z",
+          "resolvedAt": null,
+          "resolution": null
+        }
+      ],
+      "storageDegraded": false
+    },
+    "live": []
+  },
+  {
+    "id": "A03-failed-dismiss",
+    "visibleError": "Audit recovery write failed Dismiss",
+    "rowCount": 2,
+    "saved": {
+      "sessions": [
+        {
+          "id": "201c9dd0-f320-452f-bb58-726a9b9355ea",
+          "workspaceId": "2e95d014-edee-4f42-9cac-a082ee70e4fc",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-c-ce596206-4482-4edd-8411-bd216d5916e6",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "recovery_required",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:25.214Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.964Z",
+          "updatedAt": "2026-09-05T20:55:25.714Z"
+        },
+        {
+          "id": "e7df4765-6af9-493f-995e-00a14be7b986",
+          "workspaceId": "dc9487f6-df43-4340-883b-88f7d643caad",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-b-9e5fa12b-74f6-4fab-89a6-bc0672d8bd6d",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "recovery_required",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:24.900Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.636Z",
+          "updatedAt": "2026-09-05T20:55:25.714Z"
+        },
+        {
+          "id": "b9ac2bf8-7c2c-4ad9-aa4b-39f8b389f988",
+          "workspaceId": "fd39911d-a7ad-448c-b43d-4d93bd2f765d",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-a-5e93adf2-df54-4b21-9757-c46e973c9fce",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "stopped",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:24.574Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.290Z",
+          "updatedAt": "2026-09-05T20:55:27.418Z"
+        }
+      ],
+      "recoveryRecords": [
+        {
+          "id": "cf0edccd-5e00-4297-99e5-6330f0d5c2eb",
+          "sessionId": "201c9dd0-f320-452f-bb58-726a9b9355ea",
+          "lastKnownState": "running",
+          "classification": "unexpected_shutdown",
+          "reasonCode": "STARTUP_RECONCILIATION",
+          "safeSummary": "Reconciled from running to recovery_required at startup",
+          "createdAt": "2026-09-05T20:55:25.714Z",
+          "resolvedAt": null,
+          "resolution": null
+        },
+        {
+          "id": "dd561b46-caf9-468d-85a4-129a44dde96e",
+          "sessionId": "e7df4765-6af9-493f-995e-00a14be7b986",
+          "lastKnownState": "running",
+          "classification": "unexpected_shutdown",
+          "reasonCode": "STARTUP_RECONCILIATION",
+          "safeSummary": "Reconciled from running to recovery_required at startup",
+          "createdAt": "2026-09-05T20:55:25.714Z",
+          "resolvedAt": null,
+          "resolution": null
+        }
+      ],
+      "storageDegraded": false
+    },
+    "live": []
+  },
+  {
+    "id": "A04-narrow-scale",
+    "geometry": {
+      "width": 960,
+      "documentWidth": 960,
+      "panels": [
+        {
+          "class": "recovery-attention-workspace",
+          "client": 369,
+          "scroll": 482,
+          "left": 576,
+          "right": 945
+        },
+        {
+          "class": "recovery-attention-grid",
+          "client": 396,
+          "scroll": 442,
+          "left": 616,
+          "right": 1011.9375
+        },
+        {
+          "class": "recovery-detail",
+          "client": 394,
+          "scroll": 441,
+          "left": 616,
+          "right": 1011.9375
+        }
+      ],
+      "mainCount": 3
+    },
+    "queueSelectionSemantics": null
+  },
+  {
+    "id": "A05-dismiss-restart",
+    "saved": {
+      "sessions": [
+        {
+          "id": "201c9dd0-f320-452f-bb58-726a9b9355ea",
+          "workspaceId": "2e95d014-edee-4f42-9cac-a082ee70e4fc",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-c-ce596206-4482-4edd-8411-bd216d5916e6",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "recovery_required",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:25.214Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.964Z",
+          "updatedAt": "2026-09-05T20:55:25.714Z"
+        },
+        {
+          "id": "e7df4765-6af9-493f-995e-00a14be7b986",
+          "workspaceId": "dc9487f6-df43-4340-883b-88f7d643caad",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-b-9e5fa12b-74f6-4fab-89a6-bc0672d8bd6d",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "recovery_required",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:24.900Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.636Z",
+          "updatedAt": "2026-09-05T20:55:25.714Z"
+        },
+        {
+          "id": "b9ac2bf8-7c2c-4ad9-aa4b-39f8b389f988",
+          "workspaceId": "fd39911d-a7ad-448c-b43d-4d93bd2f765d",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-a-5e93adf2-df54-4b21-9757-c46e973c9fce",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "stopped",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:24.574Z",
+          "endedAt": "2026-09-05T20:55:25.714Z",
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:24.290Z",
+          "updatedAt": "2026-09-05T20:55:27.418Z"
+        }
+      ],
+      "recoveryRecords": [
+        {
+          "id": "cf0edccd-5e00-4297-99e5-6330f0d5c2eb",
+          "sessionId": "201c9dd0-f320-452f-bb58-726a9b9355ea",
+          "lastKnownState": "running",
+          "classification": "unexpected_shutdown",
+          "reasonCode": "STARTUP_RECONCILIATION",
+          "safeSummary": "Reconciled from running to recovery_required at startup",
+          "createdAt": "2026-09-05T20:55:25.714Z",
+          "resolvedAt": null,
+          "resolution": null
+        },
+        {
+          "id": "dd561b46-caf9-468d-85a4-129a44dde96e",
+          "sessionId": "e7df4765-6af9-493f-995e-00a14be7b986",
+          "lastKnownState": "running",
+          "classification": "unexpected_shutdown",
+          "reasonCode": "STARTUP_RECONCILIATION",
+          "safeSummary": "Reconciled from running to recovery_required at startup",
+          "createdAt": "2026-09-05T20:55:25.714Z",
+          "resolvedAt": null,
+          "resolution": null
+        }
+      ],
+      "storageDegraded": false
+    },
+    "live": []
+  },
+  {
+    "id": "A06-mission-decision-before",
+    "detail": {
+      "id": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+      "version": 1,
+      "state": "paused",
+      "supervisorSessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+      "workItemCount": 1,
+      "completedWorkItemCount": 0,
+      "activeWorkerCount": 0,
+      "sequence": 10,
+      "reasonCode": "MISSION_AUTHORITY_REQUIRED",
+      "createdAt": "2026-09-05T20:55:32.798Z",
+      "updatedAt": "2026-09-05T20:55:33.126Z",
+      "envelope": {
+        "objective": "Review a bounded fixture mission",
+        "completionEvidence": "A cited fixture report",
+        "exclusions": [],
+        "workspaces": [
+          {
+            "workspaceId": "64599db9-7d01-4ee7-bd1b-4da6fc76816f",
+            "mode": "write"
+          },
+          {
+            "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+            "mode": "write"
+          }
+        ],
+        "bindings": [
+          {
+            "bindingId": "23d84e90-2ba1-46e3-856a-edb0cfd8b14a",
+            "role": "supervisor",
+            "profileId": "c5a19cf6-1f81-4488-931c-2ce59e9af57d",
+            "profileRevisionId": "3b766635-6d7e-442e-bf28-ecfd014fc561",
+            "profileDigest": "82e440cf53b0592748977b893ac8162c0edc38113da57e5fcabed412582131ac",
+            "workspaceId": "64599db9-7d01-4ee7-bd1b-4da6fc76816f",
+            "sessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+            "autoStart": false,
+            "mode": "write",
+            "providerId": "codex-cli",
+            "identity": {
+              "volumeSerial": "420844a508449a35",
+              "fileId": "76e73500000010000000000000000000"
+            },
+            "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-leader-b33184cc-da69-48b6-b2e0-e4312c1d3084",
+            "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-leader-b33184cc-da69-48b6-b2e0-e4312c1d3084",
+            "readiness": {
+              "providerId": "codex-cli",
+              "displayName": "Codex CLI",
+              "resolvedExecutable": "C:\\Users\\Bill\\AppData\\Local\\fnm_multishells\\24192_1788641718363\\node.exe",
+              "version": "1.0.0",
+              "availability": "available",
+              "authentication": "authenticated",
+              "reasonCode": null,
+              "safeSummary": "Codex CLI fixture is available",
+              "probedAt": "2026-09-05T20:55:32.036Z"
+            },
+            "terminal": {
+              "columns": 100,
+              "rows": 30
+            },
+            "runtimeSelection": {
+              "model": "gpt-5.6-terra",
+              "effort": null
+            },
+            "runtimeResolution": {
+              "runtimeSelection": {
+                "model": "gpt-5.6-terra",
+                "effort": null
+              },
+              "modelSource": {
+                "kind": "one_run",
+                "reference": null
+              },
+              "effortSource": {
+                "kind": "one_run",
+                "reference": null
+              },
+              "workType": "general",
+              "recommendation": null,
+              "requiresEscalationReason": false,
+              "escalationReason": null,
+              "disposition": "ready",
+              "reasonCode": null
+            },
+            "permissionSelection": {
+              "policy": null,
+              "boundedAllowlist": []
+            },
+            "permissionResolution": {
+              "policy": "manual",
+              "source": "provider_default",
+              "disposition": "ready",
+              "providerMapping": "codex_manual",
+              "reasonCode": null,
+              "fallbackActions": [],
+              "capabilityEvidence": null,
+              "boundedAllowlist": []
+            },
+            "executionBounds": {
+              "maxElapsedMs": 1800000,
+              "maxTurns": 64,
+              "maxNoProgressMs": 300000,
+              "maxOutputBytes": 8388608,
+              "maxConcurrentProcesses": 8
+            },
+            "requestedIsolation": false,
+            "effectiveIsolation": false,
+            "effectiveTokenBudget": 250000,
+            "launchDisposition": "ready",
+            "reasonCode": null,
+            "assignment": null,
+            "requiredReturnEvidence": []
+          },
+          {
+            "bindingId": "b97408af-5b9c-4b3e-a28b-bf630db4232d",
+            "role": "worker",
+            "profileId": "14d964f5-0562-44df-b367-9fb32d7ac05b",
+            "profileRevisionId": "6341df71-20cd-48cf-8e25-2b9b926bdd46",
+            "profileDigest": "7682321f9488bbd0e48f8d597a020e67c307325a464f14fff3b16600b4bee98e",
+            "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+            "sessionId": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+            "autoStart": false,
+            "mode": "write",
+            "providerId": "codex-cli",
+            "identity": {
+              "volumeSerial": "420844a508449a35",
+              "fileId": "7de7350000000d000000000000000000"
+            },
+            "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-worker-d574fee7-1a19-4a75-a05a-f789bfe4ea81",
+            "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-worker-d574fee7-1a19-4a75-a05a-f789bfe4ea81",
+            "readiness": {
+              "providerId": "codex-cli",
+              "displayName": "Codex CLI",
+              "resolvedExecutable": "C:\\Users\\Bill\\AppData\\Local\\fnm_multishells\\24192_1788641718363\\node.exe",
+              "version": "1.0.0",
+              "availability": "available",
+              "authentication": "authenticated",
+              "reasonCode": null,
+              "safeSummary": "Codex CLI fixture is available",
+              "probedAt": "2026-09-05T20:55:32.444Z"
+            },
+            "terminal": {
+              "columns": 100,
+              "rows": 30
+            },
+            "runtimeSelection": {
+              "model": "gpt-5.6-terra",
+              "effort": null
+            },
+            "runtimeResolution": {
+              "runtimeSelection": {
+                "model": "gpt-5.6-terra",
+                "effort": null
+              },
+              "modelSource": {
+                "kind": "one_run",
+                "reference": null
+              },
+              "effortSource": {
+                "kind": "one_run",
+                "reference": null
+              },
+              "workType": "general",
+              "recommendation": null,
+              "requiresEscalationReason": false,
+              "escalationReason": null,
+              "disposition": "ready",
+              "reasonCode": null
+            },
+            "permissionSelection": {
+              "policy": null,
+              "boundedAllowlist": []
+            },
+            "permissionResolution": {
+              "policy": "manual",
+              "source": "provider_default",
+              "disposition": "ready",
+              "providerMapping": "codex_manual",
+              "reasonCode": null,
+              "fallbackActions": [],
+              "capabilityEvidence": null,
+              "boundedAllowlist": []
+            },
+            "executionBounds": {
+              "maxElapsedMs": 1800000,
+              "maxTurns": 64,
+              "maxNoProgressMs": 300000,
+              "maxOutputBytes": 8388608,
+              "maxConcurrentProcesses": 8
+            },
+            "requestedIsolation": false,
+            "effectiveIsolation": false,
+            "effectiveTokenBudget": 250000,
+            "launchDisposition": "ready",
+            "reasonCode": null,
+            "assignment": "Inspect the fixture and report.",
+            "requiredReturnEvidence": [
+              "A cited fixture report"
+            ]
+          }
+        ],
+        "bounds": {
+          "maxElapsedMs": 1800000,
+          "maxTurns": 64,
+          "maxNoProgressMs": 300000,
+          "maxOutputBytes": 8388608,
+          "maxConcurrentProcesses": 16,
+          "maxWorkers": 4,
+          "maxWorkItems": 64,
+          "maxDepth": 8,
+          "maxAttempts": 3,
+          "maxTokenBudget": 250000
+        },
+        "permittedRoutineActions": [
+          "decompose",
+          "assign",
+          "retry",
+          "reassign",
+          "pause",
+          "complete"
+        ],
+        "knownSafeRetryClasses": [
+          "failed_before_effect"
+        ],
+        "escalationRules": [
+          "consequential",
+          "unknown",
+          "bounds",
+          "supervisor_loss"
+        ]
+      },
+      "input": {
+        "objective": "Review a bounded fixture mission",
+        "completionEvidence": "A cited fixture report",
+        "exclusions": [],
+        "workspaces": [
+          {
+            "workspaceId": "64599db9-7d01-4ee7-bd1b-4da6fc76816f",
+            "mode": "write"
+          },
+          {
+            "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+            "mode": "write"
+          }
+        ],
+        "supervisor": {
+          "profileId": "c5a19cf6-1f81-4488-931c-2ce59e9af57d",
+          "profileRevisionId": "3b766635-6d7e-442e-bf28-ecfd014fc561",
+          "sessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997"
+        },
+        "workers": [
+          {
+            "profileId": "14d964f5-0562-44df-b367-9fb32d7ac05b",
+            "profileRevisionId": "6341df71-20cd-48cf-8e25-2b9b926bdd46",
+            "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+            "sessionId": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+            "role": "worker",
+            "autoStart": false,
+            "runtimeSelection": {
+              "model": "gpt-5.6-terra",
+              "effort": null
+            },
+            "permissionSelection": {
+              "policy": null,
+              "boundedAllowlist": []
+            },
+            "executionBounds": {
+              "maxElapsedMs": 1800000,
+              "maxTurns": 64,
+              "maxNoProgressMs": 300000,
+              "maxOutputBytes": 8388608,
+              "maxConcurrentProcesses": 8
+            },
+            "assignment": "Inspect the fixture and report.",
+            "requiredReturnEvidence": [
+              "A cited fixture report"
+            ]
+          }
+        ],
+        "bounds": {
+          "maxElapsedMs": 1800000,
+          "maxTurns": 64,
+          "maxNoProgressMs": 300000,
+          "maxOutputBytes": 8388608,
+          "maxConcurrentProcesses": 16,
+          "maxWorkers": 4,
+          "maxWorkItems": 64,
+          "maxDepth": 8,
+          "maxAttempts": 3,
+          "maxTokenBudget": 250000
+        },
+        "permittedRoutineActions": [
+          "decompose",
+          "assign",
+          "retry",
+          "reassign",
+          "pause",
+          "complete"
+        ],
+        "knownSafeRetryClasses": [
+          "failed_before_effect"
+        ],
+        "escalationRules": [
+          "consequential",
+          "unknown",
+          "bounds",
+          "supervisor_loss"
+        ]
+      },
+      "workItems": [
+        {
+          "id": "ce615000-193c-48af-b7bb-069e03ad09d5",
+          "missionId": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+          "parentWorkItemId": null,
+          "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+          "title": "Audit pending decision",
+          "specification": "A bounded check",
+          "acceptanceCriteria": "Cited evidence",
+          "dependencies": [],
+          "authorityClass": "routine",
+          "state": "escalated",
+          "assignedSessionId": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+          "attemptCount": 1,
+          "reasonCode": "WORKER_AUTHORITY_REQUIRED",
+          "createdAt": "2026-09-05T20:55:32.868Z",
+          "updatedAt": "2026-09-05T20:55:33.107Z"
+        }
+      ],
+      "decisions": [
+        {
+          "id": "2dd885d1-f110-464d-ae9a-62f1980bdcb9",
+          "missionId": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+          "workItemId": null,
+          "supervisorSessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+          "envelopeVersion": 1,
+          "kind": "decompose",
+          "policyResult": "accepted",
+          "reasonCode": null,
+          "rationale": "Attention audit",
+          "inputRefs": [],
+          "expectedEvidence": "A bounded report",
+          "createdAt": "2026-09-05T20:55:32.868Z"
+        },
+        {
+          "id": "0a13e842-0f9c-4393-8298-4c6376661ca2",
+          "missionId": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+          "workItemId": "ce615000-193c-48af-b7bb-069e03ad09d5",
+          "supervisorSessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+          "envelopeVersion": 1,
+          "kind": "assign",
+          "policyResult": "accepted",
+          "reasonCode": null,
+          "rationale": "Attention audit",
+          "inputRefs": [],
+          "expectedEvidence": "A bounded report",
+          "createdAt": "2026-09-05T20:55:32.928Z"
+        }
+      ],
+      "leases": [
+        {
+          "id": "5dce229a-220b-4868-b4a5-19e153feecdc",
+          "missionId": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+          "workItemId": "ce615000-193c-48af-b7bb-069e03ad09d5",
+          "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+          "profileRevisionId": "6341df71-20cd-48cf-8e25-2b9b926bdd46",
+          "sessionId": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+          "mode": "write",
+          "state": "released",
+          "acquiredAt": "2026-09-05T20:55:32.928Z",
+          "expiresAt": "2026-09-05T21:25:32.798Z",
+          "releasedAt": "2026-09-05T20:55:33.107Z"
+        }
+      ],
+      "attempts": [
+        {
+          "id": "3ef7365e-3526-4b64-8516-ac291af43d7b",
+          "missionId": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+          "workItemId": "ce615000-193c-48af-b7bb-069e03ad09d5",
+          "decisionId": "0a13e842-0f9c-4393-8298-4c6376661ca2",
+          "leaseId": "5dce229a-220b-4868-b4a5-19e153feecdc",
+          "profileRevisionId": "6341df71-20cd-48cf-8e25-2b9b926bdd46",
+          "sessionId": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+          "envelopeVersion": 1,
+          "reservedTokenBudget": 250000,
+          "attemptNumber": 1,
+          "state": "failed",
+          "workerStartDisposition": "not_needed",
+          "handoffId": "5d82be38-f500-490b-b307-4f7e1d821655",
+          "resultHandoffId": "258d40e6-db2b-421e-9feb-2c93bd41f6ac",
+          "supervisorSessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+          "disposition": "authority_required",
+          "explanation": "Owner decision required for audit fixture",
+          "evidenceRefs": [],
+          "reasonCode": "WORKER_AUTHORITY_REQUIRED",
+          "createdAt": "2026-09-05T20:55:32.928Z",
+          "completedAt": "2026-09-05T20:55:33.107Z"
+        }
+      ]
+    },
+    "missionUi": "NEEDS YOUR DECISION\nAudit pending decision\nReview choices…",
+    "attentionDescription": null,
+    "live": [
+      {
+        "id": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+        "state": "running",
+        "hostPid": 8864,
+        "rootPid": 11004
+      }
+    ]
+  },
+  {
+    "id": "A07-mission-decision-queue",
+    "jumpAvailable": 0,
+    "queue": "CROSS-MISSION ATTENTION\n\nRecovery attention queue\n\nInspect unresolved local evidence. Recovery resolution never changes the truth of an unknown outcome.\n\nNo recovery records need attention\n\nInterrupted or uncertain session endings will appear here.\n\nSessions\nCodex CLInew output\nC:\\Users\\Bill\\AppData\\Local\\Temp\\attention-leader-b33184cc-da69-48b6-b2e0-e4312c1d3084\nRunning · activity Unknown\nstarted 4:55:32 PM\nShow 1 ended session",
+    "saved": {
+      "id": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+      "version": 1,
+      "state": "paused",
+      "supervisorSessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+      "workItemCount": 1,
+      "completedWorkItemCount": 0,
+      "activeWorkerCount": 0,
+      "sequence": 10,
+      "reasonCode": "MISSION_AUTHORITY_REQUIRED",
+      "createdAt": "2026-09-05T20:55:32.798Z",
+      "updatedAt": "2026-09-05T20:55:33.126Z",
+      "envelope": {
+        "objective": "Review a bounded fixture mission",
+        "completionEvidence": "A cited fixture report",
+        "exclusions": [],
+        "workspaces": [
+          {
+            "workspaceId": "64599db9-7d01-4ee7-bd1b-4da6fc76816f",
+            "mode": "write"
+          },
+          {
+            "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+            "mode": "write"
+          }
+        ],
+        "bindings": [
+          {
+            "bindingId": "23d84e90-2ba1-46e3-856a-edb0cfd8b14a",
+            "role": "supervisor",
+            "profileId": "c5a19cf6-1f81-4488-931c-2ce59e9af57d",
+            "profileRevisionId": "3b766635-6d7e-442e-bf28-ecfd014fc561",
+            "profileDigest": "82e440cf53b0592748977b893ac8162c0edc38113da57e5fcabed412582131ac",
+            "workspaceId": "64599db9-7d01-4ee7-bd1b-4da6fc76816f",
+            "sessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+            "autoStart": false,
+            "mode": "write",
+            "providerId": "codex-cli",
+            "identity": {
+              "volumeSerial": "420844a508449a35",
+              "fileId": "76e73500000010000000000000000000"
+            },
+            "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-leader-b33184cc-da69-48b6-b2e0-e4312c1d3084",
+            "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-leader-b33184cc-da69-48b6-b2e0-e4312c1d3084",
+            "readiness": {
+              "providerId": "codex-cli",
+              "displayName": "Codex CLI",
+              "resolvedExecutable": "C:\\Users\\Bill\\AppData\\Local\\fnm_multishells\\24192_1788641718363\\node.exe",
+              "version": "1.0.0",
+              "availability": "available",
+              "authentication": "authenticated",
+              "reasonCode": null,
+              "safeSummary": "Codex CLI fixture is available",
+              "probedAt": "2026-09-05T20:55:32.036Z"
+            },
+            "terminal": {
+              "columns": 100,
+              "rows": 30
+            },
+            "runtimeSelection": {
+              "model": "gpt-5.6-terra",
+              "effort": null
+            },
+            "runtimeResolution": {
+              "runtimeSelection": {
+                "model": "gpt-5.6-terra",
+                "effort": null
+              },
+              "modelSource": {
+                "kind": "one_run",
+                "reference": null
+              },
+              "effortSource": {
+                "kind": "one_run",
+                "reference": null
+              },
+              "workType": "general",
+              "recommendation": null,
+              "requiresEscalationReason": false,
+              "escalationReason": null,
+              "disposition": "ready",
+              "reasonCode": null
+            },
+            "permissionSelection": {
+              "policy": null,
+              "boundedAllowlist": []
+            },
+            "permissionResolution": {
+              "policy": "manual",
+              "source": "provider_default",
+              "disposition": "ready",
+              "providerMapping": "codex_manual",
+              "reasonCode": null,
+              "fallbackActions": [],
+              "capabilityEvidence": null,
+              "boundedAllowlist": []
+            },
+            "executionBounds": {
+              "maxElapsedMs": 1800000,
+              "maxTurns": 64,
+              "maxNoProgressMs": 300000,
+              "maxOutputBytes": 8388608,
+              "maxConcurrentProcesses": 8
+            },
+            "requestedIsolation": false,
+            "effectiveIsolation": false,
+            "effectiveTokenBudget": 250000,
+            "launchDisposition": "ready",
+            "reasonCode": null,
+            "assignment": null,
+            "requiredReturnEvidence": []
+          },
+          {
+            "bindingId": "b97408af-5b9c-4b3e-a28b-bf630db4232d",
+            "role": "worker",
+            "profileId": "14d964f5-0562-44df-b367-9fb32d7ac05b",
+            "profileRevisionId": "6341df71-20cd-48cf-8e25-2b9b926bdd46",
+            "profileDigest": "7682321f9488bbd0e48f8d597a020e67c307325a464f14fff3b16600b4bee98e",
+            "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+            "sessionId": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+            "autoStart": false,
+            "mode": "write",
+            "providerId": "codex-cli",
+            "identity": {
+              "volumeSerial": "420844a508449a35",
+              "fileId": "7de7350000000d000000000000000000"
+            },
+            "canonicalPath": "\\\\?\\C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-worker-d574fee7-1a19-4a75-a05a-f789bfe4ea81",
+            "displayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-worker-d574fee7-1a19-4a75-a05a-f789bfe4ea81",
+            "readiness": {
+              "providerId": "codex-cli",
+              "displayName": "Codex CLI",
+              "resolvedExecutable": "C:\\Users\\Bill\\AppData\\Local\\fnm_multishells\\24192_1788641718363\\node.exe",
+              "version": "1.0.0",
+              "availability": "available",
+              "authentication": "authenticated",
+              "reasonCode": null,
+              "safeSummary": "Codex CLI fixture is available",
+              "probedAt": "2026-09-05T20:55:32.444Z"
+            },
+            "terminal": {
+              "columns": 100,
+              "rows": 30
+            },
+            "runtimeSelection": {
+              "model": "gpt-5.6-terra",
+              "effort": null
+            },
+            "runtimeResolution": {
+              "runtimeSelection": {
+                "model": "gpt-5.6-terra",
+                "effort": null
+              },
+              "modelSource": {
+                "kind": "one_run",
+                "reference": null
+              },
+              "effortSource": {
+                "kind": "one_run",
+                "reference": null
+              },
+              "workType": "general",
+              "recommendation": null,
+              "requiresEscalationReason": false,
+              "escalationReason": null,
+              "disposition": "ready",
+              "reasonCode": null
+            },
+            "permissionSelection": {
+              "policy": null,
+              "boundedAllowlist": []
+            },
+            "permissionResolution": {
+              "policy": "manual",
+              "source": "provider_default",
+              "disposition": "ready",
+              "providerMapping": "codex_manual",
+              "reasonCode": null,
+              "fallbackActions": [],
+              "capabilityEvidence": null,
+              "boundedAllowlist": []
+            },
+            "executionBounds": {
+              "maxElapsedMs": 1800000,
+              "maxTurns": 64,
+              "maxNoProgressMs": 300000,
+              "maxOutputBytes": 8388608,
+              "maxConcurrentProcesses": 8
+            },
+            "requestedIsolation": false,
+            "effectiveIsolation": false,
+            "effectiveTokenBudget": 250000,
+            "launchDisposition": "ready",
+            "reasonCode": null,
+            "assignment": "Inspect the fixture and report.",
+            "requiredReturnEvidence": [
+              "A cited fixture report"
+            ]
+          }
+        ],
+        "bounds": {
+          "maxElapsedMs": 1800000,
+          "maxTurns": 64,
+          "maxNoProgressMs": 300000,
+          "maxOutputBytes": 8388608,
+          "maxConcurrentProcesses": 16,
+          "maxWorkers": 4,
+          "maxWorkItems": 64,
+          "maxDepth": 8,
+          "maxAttempts": 3,
+          "maxTokenBudget": 250000
+        },
+        "permittedRoutineActions": [
+          "decompose",
+          "assign",
+          "retry",
+          "reassign",
+          "pause",
+          "complete"
+        ],
+        "knownSafeRetryClasses": [
+          "failed_before_effect"
+        ],
+        "escalationRules": [
+          "consequential",
+          "unknown",
+          "bounds",
+          "supervisor_loss"
+        ]
+      },
+      "input": {
+        "objective": "Review a bounded fixture mission",
+        "completionEvidence": "A cited fixture report",
+        "exclusions": [],
+        "workspaces": [
+          {
+            "workspaceId": "64599db9-7d01-4ee7-bd1b-4da6fc76816f",
+            "mode": "write"
+          },
+          {
+            "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+            "mode": "write"
+          }
+        ],
+        "supervisor": {
+          "profileId": "c5a19cf6-1f81-4488-931c-2ce59e9af57d",
+          "profileRevisionId": "3b766635-6d7e-442e-bf28-ecfd014fc561",
+          "sessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997"
+        },
+        "workers": [
+          {
+            "profileId": "14d964f5-0562-44df-b367-9fb32d7ac05b",
+            "profileRevisionId": "6341df71-20cd-48cf-8e25-2b9b926bdd46",
+            "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+            "sessionId": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+            "role": "worker",
+            "autoStart": false,
+            "runtimeSelection": {
+              "model": "gpt-5.6-terra",
+              "effort": null
+            },
+            "permissionSelection": {
+              "policy": null,
+              "boundedAllowlist": []
+            },
+            "executionBounds": {
+              "maxElapsedMs": 1800000,
+              "maxTurns": 64,
+              "maxNoProgressMs": 300000,
+              "maxOutputBytes": 8388608,
+              "maxConcurrentProcesses": 8
+            },
+            "assignment": "Inspect the fixture and report.",
+            "requiredReturnEvidence": [
+              "A cited fixture report"
+            ]
+          }
+        ],
+        "bounds": {
+          "maxElapsedMs": 1800000,
+          "maxTurns": 64,
+          "maxNoProgressMs": 300000,
+          "maxOutputBytes": 8388608,
+          "maxConcurrentProcesses": 16,
+          "maxWorkers": 4,
+          "maxWorkItems": 64,
+          "maxDepth": 8,
+          "maxAttempts": 3,
+          "maxTokenBudget": 250000
+        },
+        "permittedRoutineActions": [
+          "decompose",
+          "assign",
+          "retry",
+          "reassign",
+          "pause",
+          "complete"
+        ],
+        "knownSafeRetryClasses": [
+          "failed_before_effect"
+        ],
+        "escalationRules": [
+          "consequential",
+          "unknown",
+          "bounds",
+          "supervisor_loss"
+        ]
+      },
+      "workItems": [
+        {
+          "id": "ce615000-193c-48af-b7bb-069e03ad09d5",
+          "missionId": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+          "parentWorkItemId": null,
+          "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+          "title": "Audit pending decision",
+          "specification": "A bounded check",
+          "acceptanceCriteria": "Cited evidence",
+          "dependencies": [],
+          "authorityClass": "routine",
+          "state": "escalated",
+          "assignedSessionId": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+          "attemptCount": 1,
+          "reasonCode": "WORKER_AUTHORITY_REQUIRED",
+          "createdAt": "2026-09-05T20:55:32.868Z",
+          "updatedAt": "2026-09-05T20:55:33.107Z"
+        }
+      ],
+      "decisions": [
+        {
+          "id": "2dd885d1-f110-464d-ae9a-62f1980bdcb9",
+          "missionId": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+          "workItemId": null,
+          "supervisorSessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+          "envelopeVersion": 1,
+          "kind": "decompose",
+          "policyResult": "accepted",
+          "reasonCode": null,
+          "rationale": "Attention audit",
+          "inputRefs": [],
+          "expectedEvidence": "A bounded report",
+          "createdAt": "2026-09-05T20:55:32.868Z"
+        },
+        {
+          "id": "0a13e842-0f9c-4393-8298-4c6376661ca2",
+          "missionId": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+          "workItemId": "ce615000-193c-48af-b7bb-069e03ad09d5",
+          "supervisorSessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+          "envelopeVersion": 1,
+          "kind": "assign",
+          "policyResult": "accepted",
+          "reasonCode": null,
+          "rationale": "Attention audit",
+          "inputRefs": [],
+          "expectedEvidence": "A bounded report",
+          "createdAt": "2026-09-05T20:55:32.928Z"
+        }
+      ],
+      "leases": [
+        {
+          "id": "5dce229a-220b-4868-b4a5-19e153feecdc",
+          "missionId": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+          "workItemId": "ce615000-193c-48af-b7bb-069e03ad09d5",
+          "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+          "profileRevisionId": "6341df71-20cd-48cf-8e25-2b9b926bdd46",
+          "sessionId": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+          "mode": "write",
+          "state": "released",
+          "acquiredAt": "2026-09-05T20:55:32.928Z",
+          "expiresAt": "2026-09-05T21:25:32.798Z",
+          "releasedAt": "2026-09-05T20:55:33.107Z"
+        }
+      ],
+      "attempts": [
+        {
+          "id": "3ef7365e-3526-4b64-8516-ac291af43d7b",
+          "missionId": "edd2ee6b-952b-4792-aa68-0d4de9a08d79",
+          "workItemId": "ce615000-193c-48af-b7bb-069e03ad09d5",
+          "decisionId": "0a13e842-0f9c-4393-8298-4c6376661ca2",
+          "leaseId": "5dce229a-220b-4868-b4a5-19e153feecdc",
+          "profileRevisionId": "6341df71-20cd-48cf-8e25-2b9b926bdd46",
+          "sessionId": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+          "envelopeVersion": 1,
+          "reservedTokenBudget": 250000,
+          "attemptNumber": 1,
+          "state": "failed",
+          "workerStartDisposition": "not_needed",
+          "handoffId": "5d82be38-f500-490b-b307-4f7e1d821655",
+          "resultHandoffId": "258d40e6-db2b-421e-9feb-2c93bd41f6ac",
+          "supervisorSessionId": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+          "disposition": "authority_required",
+          "explanation": "Owner decision required for audit fixture",
+          "evidenceRefs": [],
+          "reasonCode": "WORKER_AUTHORITY_REQUIRED",
+          "createdAt": "2026-09-05T20:55:32.928Z",
+          "completedAt": "2026-09-05T20:55:33.107Z"
+        }
+      ]
+    },
+    "sessions": {
+      "sessions": [
+        {
+          "id": "4fd68b57-4cdc-4cb2-8a8b-45f5af4ff828",
+          "workspaceId": "d5742683-dbfd-4181-bd04-68f8ceb221ca",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-worker-d574fee7-1a19-4a75-a05a-f789bfe4ea81",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "failed",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:32.719Z",
+          "endedAt": "2026-09-05T20:55:33.088Z",
+          "exitCode": null,
+          "stopKind": "crash_cleanup",
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:32.458Z",
+          "updatedAt": "2026-09-05T20:55:33.088Z"
+        },
+        {
+          "id": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+          "workspaceId": "64599db9-7d01-4ee7-bd1b-4da6fc76816f",
+          "workspaceDisplayPath": "C:\\Users\\Bill\\AppData\\Local\\Temp\\attention-leader-b33184cc-da69-48b6-b2e0-e4312c1d3084",
+          "providerId": "codex-cli",
+          "providerDisplayName": "Codex CLI",
+          "accessMode": "write_capable",
+          "lifecycleState": "running",
+          "activityState": "unknown",
+          "activityEvidenceKind": "none",
+          "activityObservedAt": null,
+          "columns": 100,
+          "rows": 30,
+          "startedAt": "2026-09-05T20:55:32.319Z",
+          "endedAt": null,
+          "exitCode": null,
+          "stopKind": null,
+          "truncationCount": 0,
+          "forceStopAvailable": false,
+          "createdAt": "2026-09-05T20:55:32.052Z",
+          "updatedAt": "2026-09-05T20:55:32.320Z"
+        }
+      ],
+      "recoveryRecords": [],
+      "storageDegraded": false
+    },
+    "live": [
+      {
+        "id": "c9c46a6d-30e1-4c9b-8cd9-887f8bea6997",
+        "state": "running",
+        "hostPid": 8864,
+        "rootPid": 11004
+      }
+    ]
+  }
+]

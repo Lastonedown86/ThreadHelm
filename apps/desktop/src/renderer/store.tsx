@@ -63,6 +63,7 @@ export interface State {
   composerSequence: number;
   selectedMissionId: string | null;
   selectedDestination: WorkspaceDestination;
+  sessionScope: 'all' | 'mission';
   selectedSessionId: string | null;
   unread: Record<string, boolean>;
   truncation: TruncationState;
@@ -93,6 +94,7 @@ const initial: State = {
   composerSequence: 0,
   selectedMissionId: null,
   selectedDestination: 'missions',
+  sessionScope: 'all',
   selectedSessionId: null,
   unread: {},
   truncation: {},
@@ -137,6 +139,7 @@ type Action =
   | { type: 'select'; sessionId: string | null }
   | { type: 'selectMission'; missionId: string }
   | { type: 'selectDestination'; destination: WorkspaceDestination }
+  | { type: 'sessionScope'; scope: 'all' | 'mission' }
   | { type: 'unread'; sessionId: string }
   | { type: 'streamFailed'; sessionId: string; reason: string }
   | { type: 'inputNotice'; sessionId: string; notice: string | null }
@@ -251,7 +254,13 @@ function reduce(state: State, action: Action): State {
         selectedDestination: 'missions',
       };
     case 'selectDestination':
-      return { ...state, selectedDestination: action.destination };
+      return {
+        ...state,
+        selectedDestination: action.destination,
+        sessionScope: action.destination === 'sessions' ? 'all' : state.sessionScope,
+      };
+    case 'sessionScope':
+      return { ...state, sessionScope: action.scope };
     case 'unread':
       if (action.sessionId === state.selectedSessionId) return state;
       return { ...state, unread: { ...state.unread, [action.sessionId]: true } };
@@ -312,6 +321,7 @@ export interface Actions {
   select(sessionId: string | null): void;
   selectMission(missionId: string): void;
   selectDestination(destination: WorkspaceDestination): void;
+  setSessionScope(scope: 'all' | 'mission'): void;
   openLaunch(request: LaunchRequest | null): void;
   setNotice(notice: string | null): void;
   dismissCloseBlocked(): void;
@@ -474,6 +484,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       selectMission: (missionId) => dispatch({ type: 'selectMission', missionId }),
       selectDestination: (destination) => dispatch({ type: 'selectDestination', destination }),
+      setSessionScope: (scope) => dispatch({ type: 'sessionScope', scope }),
       openLaunch: (request) => dispatch({ type: 'launchRequest', request }),
       setNotice: (notice) => dispatch({ type: 'notice', notice }),
       dismissCloseBlocked: () => dispatch({ type: 'closeBlocked', sessions: null }),

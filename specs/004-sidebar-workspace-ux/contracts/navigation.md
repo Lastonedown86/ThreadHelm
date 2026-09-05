@@ -10,3 +10,13 @@ Requirements: FR-004/005/016–019; US2 and US7. Findings: MIS-001, MIS-002 / NA
 6. Normal navigation never changes process lifecycle. Tests independently inspect saved fields, mission identity and live-session counts.
 
 No IPC contract changes. Existing success Close receipt and process confirmation gates remain in force.
+
+## SES-001: Sessions navigation
+
+- Global Sessions entry, including a repeated click: All sessions.
+- Explicit Selected mission: only bindings of identity-matching selected mission detail; unavailable when no mission is selected. Pending detail shows a loading state with no previous mission candidates.
+- Successful launch: All sessions and the returned session ID selected.
+- Mission Open terminal: Selected mission and the requested bound session selected.
+- Attention row then Sessions: All sessions retains that exact ID.
+- Scope narrowing: retain selection if visible, otherwise select the first visible ID. Empty scope renders no terminal. Scope widening retains a visible selection.
+- Navigation retains the existing draft-save guard. Filtering does not launch, stop, restart, bind or reassign a process.

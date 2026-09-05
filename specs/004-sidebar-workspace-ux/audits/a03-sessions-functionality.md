@@ -71,7 +71,7 @@ O = observed, S = source-only, P = pending, N/A = not applicable. O can be a def
 
 ## Findings and proposed improvements
 
-All findings below are proposed on 2026-09-05; none implemented by this audit.
+All findings below describe the pre-fix audit on 2026-09-05. The owner subsequently accepted SES-001 only via "Recommended". See the [implementation verification](../verification.md) for its later disposition; SES-002 through SES-005 remain proposed.
 
 | ID      | Priority/category                | Trigger and impact                                                                                                                                                                               | Evidence                                                          | Proposal and tradeoff                                                                                                                                                                                                                | Traceability                                          |
 | ------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |

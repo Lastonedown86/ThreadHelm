@@ -8,3 +8,7 @@
 - Decision: retain the existing successful Close receipt in this slice. MIS-009 close simplification is a separate proposal; its explicit failure exit remains available.
 
 All decisions use current repository source and audit evidence; no dependency changes or unresolved external questions.
+
+## SES-001 decision
+
+Current-source diagnosis: SessionWorkspace treated any selected mission as an implicit filter; its fallback selection then replaced an unrelated successful launch selection. Reuse the renderer store for explicit scope, because both global navigation and mission terminal links must choose it. Local component state would be lost on destination changes and cannot express these entry intentions. Keep session selection independent: widening scope must not discard an exact selected ID. No external API research is required for this renderer-only change.

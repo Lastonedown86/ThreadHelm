@@ -36,3 +36,23 @@ The [failed-save dialog capture](audits/evidence/slice-1-save-failure.png) was c
 No IPC contract, database schema, provider behavior or process-control rule changed. No new dependencies, idle polling or recurring rendering. Keep the original 800ms debounce and one active flush queue. Draft loading hides editable fields until hydration; draft IDs key separate component lifetimes. Failed exits retain the target until retry, cancellation or explicit unsaved leave.
 
 Unsubmitted list-item input buffers, delayed mission-detail identity (MIS-013), all prerequisite round trips, large inventories, badges, draft management and other proposed findings remain open. Successful Close still uses its existing receipt (MIS-009 is separate). Real-provider/autostart capability gates and Feature 002/003 completion are unchanged. The shared selector still points to Feature 002; plan/task setup and prerequisite resolution used an isolated planning worktree.
+
+## Slice 2: SES-001 explicit scope
+
+Accepted by owner instruction "Recommended" on 2026-09-05. Baseline main `83883d0`; pre-fix A03 audit commit `35a5bed`. Local Windows Electron verification uses isolated fixture processes, not external provider runs.
+
+### Evidence and outcomes
+
+- Red: new `session-scope.spec.ts` failed on the original build because the named Session scope selector did not exist (20.2s). The A03 S09/S10 observations separately retain the original hidden-live-session/overridden-selection defect.
+- Scope and exact-target functionality: UI launch from Settings while a mission filter was selected creates one additional live session. The returned authoritative ID is the selected inventory row, its folder is the displayed terminal target, and all three tabs become available. Narrowing displays two bound sessions; a repeated global Sessions click restores three. Attention selection survives returning to Sessions. Authoritative live IDs and host/root PIDs are identical before and after these navigation operations.
+- Mission link: the mission's Open terminal action enters Selected mission, displays two bound sessions, and opens the worker folder resolved from `sessions.list` using the assigned session ID. All live process IDs/PIDs remain unchanged.
+- Empty state: Selected mission is disabled without a selected mission; All sessions and folder approval remain available. No process is created. Initial test incorrectly used Playwright `toBeDisabled` for an option (the trace showed `<option disabled>`); corrected to the native disabled property plus keyboard selection behavior.
+- Initial selected run: 13 tests passed (1.0m), including six mission-navigation save/selection regressions. Expanded process/accessibility run: 18 passed and the above empty-state assertion failed (2.6m). Successful samples include launch disclosure, input/output isolation, exact interrupt/stop/force-stop targets, close blocking, recovery and six accessibility scenarios.
+
+- Final fresh build and focused rerun after copy and assertion corrections: 8 tests PASS (49.1s). After applying the existing field style to the scope selector, a fresh build and both scope tests passed again (12.2s), with captures regenerated. Across selected runs, 25 distinct E2E scenarios have passing evidence.
+- `pnpm desktop:build`, `pnpm typecheck`, and `pnpm lint`: PASS. Changed-file formatting, 34 local documentation links, diff whitespace and scoped secret scans: PASS.
+- Visual: [scope selector](audits/evidence/slice-2-scope-control.png) and [exact launch landing](audits/evidence/slice-2-session-scope.png) captured in the final isolated run and inspected. Native selector and result count are readable at the standard viewport; existing sampled reflow/keyboard tests passed. This does not close the full accessibility matrix.
+
+### Boundaries
+
+Ephemeral renderer state only. No database/IPC schema, process authority, folder approval, confirmation or recovery policy changes. Identity-mismatched mission detail supplies no scope candidates; the broader delayed-detail problem MIS-013 remains open. SES-002 through SES-005 remain proposed, including duplicate terminal IDs/tab semantics and ended-session disclosure. Full suite, full accessibility/inventory matrix, real-provider runs and hosted CI remain unverified for this slice. Feature 004 and owning release gates remain open. The shared selector still points to Feature 002.

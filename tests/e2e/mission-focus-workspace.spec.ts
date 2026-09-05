@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import type {
   MissionDetailView,
+  SessionView,
   MissionEnvelopeInput,
   MissionPreviewView,
 } from '@threadhelm/contracts';
@@ -122,7 +123,9 @@ test('missions are the focused default and approved destinations remain explicit
     await page.getByRole('button', { name: 'Sessions', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Local sessions', exact: true })).toBeVisible();
     await expect(
-      page.getByText('Select a mission to narrow the dock to its exact workers.'),
+      page.getByText(
+        'All local sessions are shown. Use Session scope to narrow the dock to the selected mission.',
+      ),
     ).toBeVisible();
 
     await expect(page.getByText(/^sessions workspace$/)).toHaveCount(0);
@@ -311,6 +314,20 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
     await expect(node).toContainText('1');
     await expect(node).toContainText('In focus');
     await expect(node.getByRole('button', { name: 'Open terminal' })).toBeVisible();
+    const liveBeforeTerminal = await app.liveSessions();
+    const inventory = await app.call<{ sessions: SessionView[] }>('sessions.list');
+    const exactWorker = inventory.sessions.find(
+      (session) => session.id === pausedWork.binding.sessionId,
+    )!;
+    await node.getByRole('button', { name: 'Open terminal' }).click();
+    await expect(
+      app.page.getByRole('combobox', { name: 'Session scope', exact: true }),
+    ).toHaveValue('mission');
+    await expect(app.page.getByRole('tab')).toHaveCount(2);
+    await expect(app.page.locator('#terminal-dock-heading')).toContainText(
+      exactWorker.workspaceDisplayPath,
+    );
+    expect(await app.liveSessions()).toEqual(liveBeforeTerminal);
 
     await select(waiting);
     // A — state-tinted: nothing new in the header; the strip and node carry the state.

@@ -1,0 +1,669 @@
+[
+  {
+    "id": "environment",
+    "base": "a8b94838850175ff6467e044366a9cbbe733402f",
+    "os": "Windows 11 Home",
+    "release": "10.0.26200",
+    "viewport": {
+      "width": 1264,
+      "height": 761,
+      "fontSize": "16px"
+    },
+    "appBuild": "ThreadHelm v44.0.0 · Electron 44.0.0 · x64",
+    "fixtures": "isolated local authoring; no provider launch"
+  },
+  {
+    "id": "A04-01-empty",
+    "headings": [
+      "ThreadHelm",
+      "Choose or create the right worker",
+      "Generic starters and saved drafts",
+      "Agent templates",
+      "Local profiles and Profile Studio",
+      "Agent roster",
+      "Agents"
+    ],
+    "roster": {
+      "profiles": [],
+      "nextCursor": null
+    },
+    "live": []
+  },
+  {
+    "id": "A04-02-create-readback",
+    "reviewed": {
+      "spec": "threadhelm/agent-profile@1",
+      "name": "Audit quality guide",
+      "description": "Checks deterministic quality gates.",
+      "provider": "codex",
+      "model": "gpt-5.6-terra",
+      "goal": "Run and report focused checks.",
+      "capabilities": [
+        "quality_review"
+      ],
+      "isolate": true,
+      "tokenCap": 250000,
+      "author": "ThreadHelm"
+    },
+    "saved": {
+      "profileId": "f03d65e4-9752-41b1-9693-520517f56b36",
+      "currentRevisionId": "15f700ea-998e-460f-8ced-1a4aa1db134c",
+      "displayName": "Audit quality guide",
+      "description": "Checks deterministic quality gates.",
+      "requestedProvider": "codex",
+      "requestedModel": "gpt-5.6-terra",
+      "compatibility": "compatible",
+      "state": "active",
+      "capabilities": [
+        "quality_review"
+      ],
+      "isolateRequested": true,
+      "tokenCapRequested": 250000,
+      "author": "ThreadHelm",
+      "digestPrefix": "f6c3fe91270a",
+      "createdAt": "2026-09-05T18:36:52.135Z",
+      "updatedAt": "2026-09-05T18:36:52.135Z",
+      "goal": "Run and report focused checks.",
+      "digest": "f6c3fe91270a235e3b0450001eb33f1ae9b586506d9c2765b90d54fa508f388c",
+      "manifestSpec": "threadhelm/agent-profile@1",
+      "compatibilityReasons": [],
+      "revisionHistory": [
+        {
+          "revisionId": "15f700ea-998e-460f-8ced-1a4aa1db134c",
+          "digest": "f6c3fe91270a235e3b0450001eb33f1ae9b586506d9c2765b90d54fa508f388c",
+          "createdAt": "2026-09-05T18:36:52.135Z"
+        }
+      ]
+    },
+    "live": []
+  },
+  {
+    "id": "A04-03-filtered-detail",
+    "rows": 0,
+    "emptyCopy": 1,
+    "detail": "Audit quality guide\nCompatible\n\nActive · codex · gpt-5.6-terra · author ThreadHelm\n\nChecks deterministic quality gates.\n\nGoal\n\nRun and report focused checks.\n\nCapabilities: quality_review · Isolate: Yes · Token cap: 250,000\n\nDigest f6c3fe91270a235e3b0450001eb33f1ae9b586506d9c2765b90d54fa508f388c\n\nDisable\nRevision history",
+    "disableEnabled": true,
+    "savedState": "active"
+  },
+  {
+    "id": "A04-04-toggle-readback",
+    "saved": {
+      "profileId": "f03d65e4-9752-41b1-9693-520517f56b36",
+      "currentRevisionId": "15f700ea-998e-460f-8ced-1a4aa1db134c",
+      "displayName": "Audit quality guide",
+      "description": "Checks deterministic quality gates.",
+      "requestedProvider": "codex",
+      "requestedModel": "gpt-5.6-terra",
+      "compatibility": "compatible",
+      "state": "disabled",
+      "capabilities": [
+        "quality_review"
+      ],
+      "isolateRequested": true,
+      "tokenCapRequested": 250000,
+      "author": "ThreadHelm",
+      "digestPrefix": "f6c3fe91270a",
+      "createdAt": "2026-09-05T18:36:52.135Z",
+      "updatedAt": "2026-09-05T18:36:52.355Z",
+      "goal": "Run and report focused checks.",
+      "digest": "f6c3fe91270a235e3b0450001eb33f1ae9b586506d9c2765b90d54fa508f388c",
+      "manifestSpec": "threadhelm/agent-profile@1",
+      "compatibilityReasons": [],
+      "revisionHistory": [
+        {
+          "revisionId": "15f700ea-998e-460f-8ced-1a4aa1db134c",
+          "digest": "f6c3fe91270a235e3b0450001eb33f1ae9b586506d9c2765b90d54fa508f388c",
+          "createdAt": "2026-09-05T18:36:52.135Z"
+        }
+      ]
+    },
+    "live": []
+  },
+  {
+    "id": "A05-01-duplicate",
+    "source": {
+      "templateId": "243d817b-b113-4ded-acf5-d79964387c88",
+      "key": "implementer",
+      "currentRevisionId": "e21e9fd9-4ac5-42e0-b554-b6e8f2cc7394",
+      "revision": 1,
+      "name": "implementer specialist",
+      "origin": "bundled",
+      "state": "active",
+      "updatedAt": "2026-09-05T18:36:49.733Z",
+      "manifest": {
+        "spec": "threadhelm/agent-profile@1",
+        "name": "implementer specialist",
+        "description": "Implements a bounded approved change.",
+        "provider": "codex",
+        "model": "gpt-5.6-terra",
+        "goal": "Produce a focused change.",
+        "capabilities": [
+          "implementation"
+        ],
+        "isolate": true,
+        "tokenCap": 250000,
+        "author": "ThreadHelm"
+      },
+      "manifestJson": "{\n  \"spec\": \"threadhelm/agent-profile@1\",\n  \"name\": \"implementer specialist\",\n  \"description\": \"Implements a bounded approved change.\",\n  \"provider\": \"codex\",\n  \"model\": \"gpt-5.6-terra\",\n  \"goal\": \"Produce a focused change.\",\n  \"capabilities\": [\n    \"implementation\"\n  ],\n  \"isolate\": true,\n  \"tokenCap\": 250000,\n  \"author\": \"ThreadHelm\"\n}\n",
+      "digest": "679cb496601805170314de804b772f017c5191328d07a797b73cf50c422563e1",
+      "variables": [],
+      "provenance": {
+        "sourceProfileRevisionId": null
+      },
+      "createdAt": "2026-09-05T18:36:49.733Z"
+    },
+    "copy": {
+      "templateId": "20ed0d2b-3ebc-4f18-9cc7-739a9dc8481e",
+      "key": "audit-local-starter",
+      "currentRevisionId": "d34284d3-0013-419f-8b41-016108e1007c",
+      "revision": 1,
+      "name": "Audit local starter",
+      "origin": "user",
+      "state": "active",
+      "updatedAt": "2026-09-05T18:36:52.466Z",
+      "manifest": {
+        "spec": "threadhelm/agent-profile@1",
+        "name": "implementer specialist",
+        "description": "Implements a bounded approved change.",
+        "provider": "codex",
+        "model": "gpt-5.6-terra",
+        "goal": "Produce a focused change.",
+        "capabilities": [
+          "implementation"
+        ],
+        "isolate": true,
+        "tokenCap": 250000,
+        "author": "ThreadHelm"
+      },
+      "manifestJson": "{\n  \"spec\": \"threadhelm/agent-profile@1\",\n  \"name\": \"implementer specialist\",\n  \"description\": \"Implements a bounded approved change.\",\n  \"provider\": \"codex\",\n  \"model\": \"gpt-5.6-terra\",\n  \"goal\": \"Produce a focused change.\",\n  \"capabilities\": [\n    \"implementation\"\n  ],\n  \"isolate\": true,\n  \"tokenCap\": 250000,\n  \"author\": \"ThreadHelm\"\n}\n",
+      "digest": "679cb496601805170314de804b772f017c5191328d07a797b73cf50c422563e1",
+      "variables": [],
+      "provenance": {
+        "sourceProfileRevisionId": null
+      },
+      "createdAt": "2026-09-05T18:36:52.466Z"
+    },
+    "live": []
+  },
+  {
+    "id": "A05-02-escape-save",
+    "drafts": {
+      "drafts": [
+        {
+          "draftId": "e38675d8-a14f-49f5-bfb0-c2207aeb8fe5",
+          "version": 2,
+          "state": "editing",
+          "currentStep": "identity",
+          "validationIssues": [],
+          "updatedAt": "2026-09-05T18:36:52.659Z"
+        }
+      ],
+      "nextCursor": null
+    },
+    "saved": {
+      "draftId": "e38675d8-a14f-49f5-bfb0-c2207aeb8fe5",
+      "version": 2,
+      "state": "editing",
+      "currentStep": "identity",
+      "validationIssues": [],
+      "updatedAt": "2026-09-05T18:36:52.659Z",
+      "fieldValues": {
+        "spec": "threadhelm/agent-profile@1",
+        "name": "Audit dependent draft",
+        "description": "Implements a bounded approved change.",
+        "provider": "codex",
+        "model": "gpt-5.6-terra",
+        "goal": "Produce a focused change.",
+        "capabilities": [
+          "implementation"
+        ],
+        "isolate": true,
+        "tokenCap": 250000,
+        "author": "ThreadHelm"
+      },
+      "variableValues": {},
+      "sourceTemplateRevisionId": "d34284d3-0013-419f-8b41-016108e1007c",
+      "sourceProfileRevisionId": null,
+      "provenance": {
+        "templateRevisionId": "d34284d3-0013-419f-8b41-016108e1007c",
+        "profileRevisionId": null
+      },
+      "fieldErrors": {},
+      "createdAt": "2026-09-05T18:36:52.610Z",
+      "completedAt": null
+    },
+    "focus": "Use template"
+  },
+  {
+    "id": "A05-03-dependent-delete",
+    "error": [
+      "This draft or template cannot be changed now. Close and reload it; delete any dependent drafts before deleting their template.",
+      "This draft or template cannot be changed now. Close and reload it; delete any dependent drafts before deleting their template."
+    ],
+    "template": {
+      "templateId": "20ed0d2b-3ebc-4f18-9cc7-739a9dc8481e",
+      "key": "audit-local-starter",
+      "currentRevisionId": "d34284d3-0013-419f-8b41-016108e1007c",
+      "revision": 1,
+      "name": "Audit local starter",
+      "origin": "user",
+      "state": "active",
+      "updatedAt": "2026-09-05T18:36:52.466Z",
+      "manifest": {
+        "spec": "threadhelm/agent-profile@1",
+        "name": "implementer specialist",
+        "description": "Implements a bounded approved change.",
+        "provider": "codex",
+        "model": "gpt-5.6-terra",
+        "goal": "Produce a focused change.",
+        "capabilities": [
+          "implementation"
+        ],
+        "isolate": true,
+        "tokenCap": 250000,
+        "author": "ThreadHelm"
+      },
+      "manifestJson": "{\n  \"spec\": \"threadhelm/agent-profile@1\",\n  \"name\": \"implementer specialist\",\n  \"description\": \"Implements a bounded approved change.\",\n  \"provider\": \"codex\",\n  \"model\": \"gpt-5.6-terra\",\n  \"goal\": \"Produce a focused change.\",\n  \"capabilities\": [\n    \"implementation\"\n  ],\n  \"isolate\": true,\n  \"tokenCap\": 250000,\n  \"author\": \"ThreadHelm\"\n}\n",
+      "digest": "679cb496601805170314de804b772f017c5191328d07a797b73cf50c422563e1",
+      "variables": [],
+      "provenance": {
+        "sourceProfileRevisionId": null
+      },
+      "createdAt": "2026-09-05T18:36:52.466Z"
+    },
+    "drafts": {
+      "drafts": [
+        {
+          "draftId": "e38675d8-a14f-49f5-bfb0-c2207aeb8fe5",
+          "version": 2,
+          "state": "editing",
+          "currentStep": "identity",
+          "validationIssues": [],
+          "updatedAt": "2026-09-05T18:36:52.659Z"
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  {
+    "id": "A05-03b-delete-retry",
+    "error": "This review expired or was used. Refresh the manifest review and confirm again.",
+    "buttons": [
+      "Confirm delete template",
+      "Keep template"
+    ],
+    "saved": {
+      "templateId": "20ed0d2b-3ebc-4f18-9cc7-739a9dc8481e",
+      "key": "audit-local-starter",
+      "currentRevisionId": "d34284d3-0013-419f-8b41-016108e1007c",
+      "revision": 1,
+      "name": "Audit local starter",
+      "origin": "user",
+      "state": "active",
+      "updatedAt": "2026-09-05T18:36:52.466Z",
+      "manifest": {
+        "spec": "threadhelm/agent-profile@1",
+        "name": "implementer specialist",
+        "description": "Implements a bounded approved change.",
+        "provider": "codex",
+        "model": "gpt-5.6-terra",
+        "goal": "Produce a focused change.",
+        "capabilities": [
+          "implementation"
+        ],
+        "isolate": true,
+        "tokenCap": 250000,
+        "author": "ThreadHelm"
+      },
+      "manifestJson": "{\n  \"spec\": \"threadhelm/agent-profile@1\",\n  \"name\": \"implementer specialist\",\n  \"description\": \"Implements a bounded approved change.\",\n  \"provider\": \"codex\",\n  \"model\": \"gpt-5.6-terra\",\n  \"goal\": \"Produce a focused change.\",\n  \"capabilities\": [\n    \"implementation\"\n  ],\n  \"isolate\": true,\n  \"tokenCap\": 250000,\n  \"author\": \"ThreadHelm\"\n}\n",
+      "digest": "679cb496601805170314de804b772f017c5191328d07a797b73cf50c422563e1",
+      "variables": [],
+      "provenance": {
+        "sourceProfileRevisionId": null
+      },
+      "createdAt": "2026-09-05T18:36:52.466Z"
+    }
+  },
+  {
+    "id": "A05-04-restart",
+    "profile": {
+      "profileId": "f03d65e4-9752-41b1-9693-520517f56b36",
+      "currentRevisionId": "15f700ea-998e-460f-8ced-1a4aa1db134c",
+      "displayName": "Audit quality guide",
+      "description": "Checks deterministic quality gates.",
+      "requestedProvider": "codex",
+      "requestedModel": "gpt-5.6-terra",
+      "compatibility": "compatible",
+      "state": "disabled",
+      "capabilities": [
+        "quality_review"
+      ],
+      "isolateRequested": true,
+      "tokenCapRequested": 250000,
+      "author": "ThreadHelm",
+      "digestPrefix": "f6c3fe91270a",
+      "createdAt": "2026-09-05T18:36:52.135Z",
+      "updatedAt": "2026-09-05T18:36:52.355Z",
+      "goal": "Run and report focused checks.",
+      "digest": "f6c3fe91270a235e3b0450001eb33f1ae9b586506d9c2765b90d54fa508f388c",
+      "manifestSpec": "threadhelm/agent-profile@1",
+      "compatibilityReasons": [],
+      "revisionHistory": [
+        {
+          "revisionId": "15f700ea-998e-460f-8ced-1a4aa1db134c",
+          "digest": "f6c3fe91270a235e3b0450001eb33f1ae9b586506d9c2765b90d54fa508f388c",
+          "createdAt": "2026-09-05T18:36:52.135Z"
+        }
+      ]
+    },
+    "template": {
+      "templateId": "20ed0d2b-3ebc-4f18-9cc7-739a9dc8481e",
+      "key": "audit-local-starter",
+      "currentRevisionId": "d34284d3-0013-419f-8b41-016108e1007c",
+      "revision": 1,
+      "name": "Audit local starter",
+      "origin": "user",
+      "state": "active",
+      "updatedAt": "2026-09-05T18:36:52.466Z",
+      "manifest": {
+        "spec": "threadhelm/agent-profile@1",
+        "name": "implementer specialist",
+        "description": "Implements a bounded approved change.",
+        "provider": "codex",
+        "model": "gpt-5.6-terra",
+        "goal": "Produce a focused change.",
+        "capabilities": [
+          "implementation"
+        ],
+        "isolate": true,
+        "tokenCap": 250000,
+        "author": "ThreadHelm"
+      },
+      "manifestJson": "{\n  \"spec\": \"threadhelm/agent-profile@1\",\n  \"name\": \"implementer specialist\",\n  \"description\": \"Implements a bounded approved change.\",\n  \"provider\": \"codex\",\n  \"model\": \"gpt-5.6-terra\",\n  \"goal\": \"Produce a focused change.\",\n  \"capabilities\": [\n    \"implementation\"\n  ],\n  \"isolate\": true,\n  \"tokenCap\": 250000,\n  \"author\": \"ThreadHelm\"\n}\n",
+      "digest": "679cb496601805170314de804b772f017c5191328d07a797b73cf50c422563e1",
+      "variables": [],
+      "provenance": {
+        "sourceProfileRevisionId": null
+      },
+      "createdAt": "2026-09-05T18:36:52.466Z"
+    },
+    "draft": {
+      "draftId": "e38675d8-a14f-49f5-bfb0-c2207aeb8fe5",
+      "version": 2,
+      "state": "editing",
+      "currentStep": "identity",
+      "validationIssues": [],
+      "updatedAt": "2026-09-05T18:36:52.659Z",
+      "fieldValues": {
+        "spec": "threadhelm/agent-profile@1",
+        "name": "Audit dependent draft",
+        "description": "Implements a bounded approved change.",
+        "provider": "codex",
+        "model": "gpt-5.6-terra",
+        "goal": "Produce a focused change.",
+        "capabilities": [
+          "implementation"
+        ],
+        "isolate": true,
+        "tokenCap": 250000,
+        "author": "ThreadHelm"
+      },
+      "variableValues": {},
+      "sourceTemplateRevisionId": "d34284d3-0013-419f-8b41-016108e1007c",
+      "sourceProfileRevisionId": null,
+      "provenance": {
+        "templateRevisionId": "d34284d3-0013-419f-8b41-016108e1007c",
+        "profileRevisionId": null
+      },
+      "fieldErrors": {},
+      "createdAt": "2026-09-05T18:36:52.610Z",
+      "completedAt": null
+    },
+    "live": []
+  },
+  {
+    "id": "A04-05-roster-pagination",
+    "authoritativeCount": 51,
+    "visibleCount": 50,
+    "nextCursor": "WyIyMDI2LTA5LTA1VDE4OjM2OjU3LjA0NFoiLCIzZjU2ODdjOC0zMzNiLTRhM2MtYTEwOC0xYmI5ZDljNjhhOGYiXQ",
+    "loadMoreControls": 0
+  },
+  {
+    "id": "A05-05-draft-labels",
+    "drafts": {
+      "drafts": [
+        {
+          "draftId": "01502d7c-0689-4fdd-a709-df15432d0b42",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.558Z"
+        },
+        {
+          "draftId": "09ae39fa-be7c-46b7-8e14-a4d4a760aac2",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.664Z"
+        },
+        {
+          "draftId": "1452f13c-992a-4864-a4d6-514e32f6fd33",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.647Z"
+        },
+        {
+          "draftId": "27d6afa7-4a39-4d85-aeb9-9e4c1f35ad3a",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.575Z"
+        },
+        {
+          "draftId": "28ac3dd2-6463-4d94-bac5-1c26cce238d4",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.594Z"
+        },
+        {
+          "draftId": "3040a63b-19f8-476e-b031-49c2b05ec22a",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.612Z"
+        },
+        {
+          "draftId": "3ee24cd2-5fdd-4085-9026-af6b3c79ae4f",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.442Z"
+        },
+        {
+          "draftId": "48c0c2b0-24e0-4144-be34-1fea0f6bda5c",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.409Z"
+        },
+        {
+          "draftId": "48f775c6-29b0-4e56-9f1f-6f0bb6110f63",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.507Z"
+        },
+        {
+          "draftId": "49b01de2-7bb0-4f5f-b1f0-d1c7b08611f5",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.680Z"
+        },
+        {
+          "draftId": "6304ef13-6eb4-4810-9906-e0e44afbdd1f",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.373Z"
+        },
+        {
+          "draftId": "7ce7f065-0120-4d0b-b9c8-54d837f58e21",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.539Z"
+        },
+        {
+          "draftId": "8ba03c1f-2f9c-4baf-a5f2-aa836af164f9",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.489Z"
+        },
+        {
+          "draftId": "95d0433e-ab41-46ef-bc99-fe88c6dc21e6",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.426Z"
+        },
+        {
+          "draftId": "a20a0769-b87d-4a95-9c5a-1ee033f08bb7",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.356Z"
+        },
+        {
+          "draftId": "bb0fe883-f63e-4dd9-98ad-c8fd333a43be",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.457Z"
+        },
+        {
+          "draftId": "cc6f9d34-53c3-4bd4-b453-9791ab7ad6bc",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.472Z"
+        },
+        {
+          "draftId": "d16168ea-eab8-42b4-a9f6-e27707625cb4",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.522Z"
+        },
+        {
+          "draftId": "ee6e4740-e5e9-4080-9d8d-5a7a44dcffa1",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.392Z"
+        },
+        {
+          "draftId": "fa66b86d-8774-4d2e-86e2-1725b83bbd9f",
+          "version": 2,
+          "state": "invalid",
+          "currentStep": "identity",
+          "validationIssues": [
+            "TEMPLATE_DRAFT_INCOMPLETE"
+          ],
+          "updatedAt": "2026-09-05T18:37:00.628Z"
+        }
+      ],
+      "nextCursor": null
+    },
+    "visibleNames": 0,
+    "rows": "identity · invalid Resume draft 01502d7c\nidentity · invalid Resume draft 09ae39fa\nidentity · invalid Resume draft 1452f13c\nidentity · invalid Resume draft 27d6afa7\nidentity · invalid Resume draft 28ac3dd2\nidentity · invalid Resume draft 3040a63b\nidentity · invalid Resume draft 3ee24cd2\nidentity · invalid Resume draft 48c0c2b0\nidentity · invalid Resume draft 48f775c6\nidentity · invalid Resume draft 49b01de2\nidentity · invalid Resume draft 6304ef13\nidentity · invalid Resume draft 7ce7f065\nidentity · invalid Resume draft 8ba03c1f\nidentity · invalid Resume draft 95d0433e\nidentity · invalid Resume draft a20a0769\nidentity · invalid Resume draft bb0fe883\nidentity · invalid Resume draft cc6f9d34\nidentity · invalid Resume draft d16168ea\nidentity · invalid Resume draft ee6e4740\nidentity · invalid Resume draft fa66b86d"
+  },
+  {
+    "id": "A05-06-draft-limit",
+    "error": "A local profile, template, revision, or draft limit was reached. Remove unused items before creating more.",
+    "count": 20
+  },
+  {
+    "id": "A04-A05-scaled",
+    "overflow": false,
+    "mainScroll": {
+      "width": 369,
+      "scrollWidth": 403
+    },
+    "headings": [
+      "ThreadHelm",
+      "Choose or create the right worker",
+      "Generic starters and saved drafts",
+      "Agent templates",
+      "Saved drafts",
+      "Local profiles and Profile Studio",
+      "Agent roster"
+    ]
+  },
+  {
+    "id": "A04-A05-inventory-restart",
+    "visible": 20,
+    "authoritative": 20,
+    "live": []
+  }
+]

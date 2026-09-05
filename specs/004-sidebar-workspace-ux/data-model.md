@@ -16,3 +16,7 @@ Add `sessionScope: 'all' | 'mission'` to ephemeral renderer State, initially `al
 ## Slice 3 renderer inventory state
 
 Track requested page count, filter, profile event sequence and retry generation. Retain the completed request identity separately from the accumulated rows and nextCursor. Only rows for the current filter/event sequence are actionable; paging may retain those rows while loading. Selection is an exact profile ID reconciled against completed visible inventory. Detail has an exact ID key and loaded sequence. No durable model changes.
+
+## Slice 4 review state
+
+Supersession fields and main disclosure remain ephemeral renderer state. An operation generation invalidates responses on detail replacement or cancellation; pending review/append blocks duplicate requests. Editing clears disclosure. No durable model changes.

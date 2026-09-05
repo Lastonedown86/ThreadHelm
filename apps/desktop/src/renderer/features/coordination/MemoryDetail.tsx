@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   MemoryDeletionDisclosureView,
   MemoryDetailView,
@@ -30,13 +30,40 @@ export function MemoryDetail({
   const [supersedeBody, setSupersedeBody] = useState(detail.body ?? '');
   const [supersedeDisclosure, setSupersedeDisclosure] =
     useState<MemorySupersedeDisclosureView | null>(null);
+  const supersedeGeneration = useRef(0);
+  const supersedeOperation = useRef<'review' | 'append' | null>(null);
+  const [supersedeBusy, setSupersedeBusy] = useState(false);
+  const [supersedeError, setSupersedeError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    supersedeGeneration.current += 1;
+    supersedeOperation.current = null;
+    setSupersedeBusy(false);
+    setSupersedeError(null);
     setSupersedeTitle(detail.summary.title ?? '');
     setSupersedeBody(detail.body ?? '');
     setSupersedeDisclosure(null);
+    return () => {
+      supersedeGeneration.current += 1;
+    };
   }, [detail.summary.revisionId, detail.summary.title, detail.body]);
+
+  const dismissSupersede = () => {
+    if (supersedeOperation.current === 'append') return;
+    supersedeGeneration.current += 1;
+    supersedeOperation.current = null;
+    setSupersedeBusy(false);
+    setSupersedeDisclosure(null);
+    setSupersedeError(null);
+    setSupersedeOpen(false);
+  };
+
+  const editSupersede = () => {
+    supersedeGeneration.current += 1;
+    setSupersedeDisclosure(null);
+    setSupersedeError(null);
+  };
 
   const retract = async () => {
     try {
@@ -83,6 +110,11 @@ export function MemoryDetail({
   };
 
   const previewSupersede = async () => {
+    if (supersedeOperation.current) return;
+    const generation = ++supersedeGeneration.current;
+    supersedeOperation.current = 'review';
+    setSupersedeBusy(true);
+    setSupersedeError(null);
     try {
       const citedMemoryIds = new Set<string>([detail.summary.entryId]);
       for (const conflict of detail.conflicts) {
@@ -106,23 +138,44 @@ export function MemoryDetail({
           confidence: detail.summary.confidence,
         }),
       );
-      setSupersedeDisclosure(preview);
+      if (generation === supersedeGeneration.current) setSupersedeDisclosure(preview);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Supersede preview failed.');
+      if (generation === supersedeGeneration.current)
+        setSupersedeError(cause instanceof Error ? cause.message : 'Supersede preview failed.');
+    } finally {
+      if (generation === supersedeGeneration.current) {
+        supersedeOperation.current = null;
+        setSupersedeBusy(false);
+      }
     }
   };
 
   const confirmSupersede = async () => {
-    if (!supersedeDisclosure) return;
+    if (!supersedeDisclosure || supersedeOperation.current) return;
+    const generation = ++supersedeGeneration.current;
+    supersedeOperation.current = 'append';
+    setSupersedeBusy(true);
+    setSupersedeError(null);
     try {
       const next = await call(
         api.memory.confirmSupersede({ supersedeToken: supersedeDisclosure.supersedeToken }),
       );
+      if (generation !== supersedeGeneration.current) return;
       setSupersedeOpen(false);
       setSupersedeDisclosure(null);
       onChanged(next);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Supersede failed.');
+      if (generation === supersedeGeneration.current) {
+        setSupersedeDisclosure(null);
+        setSupersedeError(
+          `${cause instanceof Error ? cause.message : 'Supersede failed.'} Review the current content again before appending.`,
+        );
+      }
+    } finally {
+      if (generation === supersedeGeneration.current) {
+        supersedeOperation.current = null;
+        setSupersedeBusy(false);
+      }
     }
   };
 
@@ -285,13 +338,17 @@ export function MemoryDetail({
       ) : null}
 
       {supersedeOpen ? (
-        <ModalDialog label="Supersede shared memory" onDismiss={() => setSupersedeOpen(false)}>
+        <ModalDialog label="Supersede shared memory" onDismiss={dismissSupersede}>
           <h3>Supersede with a new revision</h3>
           <label className="field">
             Title
             <input
               value={supersedeTitle}
-              onChange={(event) => setSupersedeTitle(event.target.value)}
+              disabled={supersedeBusy}
+              onChange={(event) => {
+                editSupersede();
+                setSupersedeTitle(event.target.value);
+              }}
             />
           </label>
           <label className="field">
@@ -299,13 +356,38 @@ export function MemoryDetail({
             <textarea
               rows={6}
               value={supersedeBody}
-              onChange={(event) => setSupersedeBody(event.target.value)}
+              disabled={supersedeBusy}
+              onChange={(event) => {
+                editSupersede();
+                setSupersedeBody(event.target.value);
+              }}
             />
           </label>
+          {supersedeError ? (
+            <p className="notice error" role="alert">
+              {supersedeError}
+            </p>
+          ) : null}
+          {supersedeBusy ? (
+            <p role="status">
+              {supersedeOperation.current === 'append'
+                ? 'Appending revision…'
+                : 'Preparing review…'}
+            </p>
+          ) : null}
           {supersedeDisclosure ? (
             <div className="notice">
+              <section aria-label="Reviewed content">
+                <h4>{supersedeDisclosure.title ?? 'Untitled memory'}</h4>
+                <pre className="memory-body">{supersedeDisclosure.body}</pre>
+              </section>
               <p>{supersedeDisclosure.safeSummary}</p>
-              <button type="button" className="primary" onClick={() => void confirmSupersede()}>
+              <button
+                type="button"
+                className="primary"
+                disabled={supersedeBusy}
+                onClick={() => void confirmSupersede()}
+              >
                 Append revision
               </button>
             </div>
@@ -313,13 +395,17 @@ export function MemoryDetail({
             <button
               type="button"
               className="primary"
-              disabled={!supersedeBody.trim()}
+              disabled={supersedeBusy || !supersedeBody.trim()}
               onClick={() => void previewSupersede()}
             >
               Review supersession
             </button>
           )}
-          <button type="button" onClick={() => setSupersedeOpen(false)}>
+          <button
+            type="button"
+            disabled={supersedeBusy && supersedeOperation.current === 'append'}
+            onClick={dismissSupersede}
+          >
             Cancel
           </button>
         </ModalDialog>

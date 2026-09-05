@@ -51,3 +51,10 @@ Document quality review: 16/16 items pass. This is not a UX implementation pass 
 - Read-only Spec Kit path resolution confirmed Feature 004 and left the shared selector on Feature 002.
 - Fresh runtime verification is recorded in the merge reconciliation: build passed; 7 selected tests passed; direct probes reproduce the open navigation issue.
 - Remaining section audits and design approval are pending, not represented as completed by this documentation PR.
+
+## Logic and functionality scope update
+
+- US7, FR-016–019 and SC-009–011 require logic traces, actual UI execution, independent effect verification, negative/boundary scenarios and persistence/recovery checks.
+- The shared template separates visual, logic and runtime verdicts and requires exact targets, preconditions, authoritative outcomes and blockers.
+- All nine passes have section-specific functional scope. Historical Mission coverage remains partial; prior tests are not promoted to end-to-end functional evidence.
+- Specification quality checklist remains 16/16; functional audits themselves have not been completed by this document update.

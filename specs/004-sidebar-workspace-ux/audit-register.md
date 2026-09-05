@@ -75,3 +75,21 @@ try {
 ```
 
 Run in a dedicated shell with no pre-existing feature override. Before later planning, create an isolated worktree, select Feature 004 there, and verify the generated paths. Planning and task generation remain pending the section audit and design gates; this documentation PR is ready for review independently of that implementation readiness.
+
+## Required logic and functional observation by section
+
+Owner scope clarification: every pass includes presentation, decision logic, and actual functionality. FR-016–019, US7 and SC-009–011 make this mandatory. The following is a minimum guide; each pass inventories all reachable controls rather than limiting itself to these examples.
+
+| Pass | Required functional observations |
+| --- | --- |
+| A01 | Navigation and selection transitions, pending edits, stale content, badge counts and exact targets |
+| A02 | Draft save/readback/reopen, validation, crew eligibility, shared access, preview/confirmation, start/pause/revise and recovery rules |
+| A03 | Launch and terminal attachment, input/interrupt/stop target, actual lifecycle result, ended-session disclosure, recovery and restart behavior |
+| A04 | Profile creation/edit/revision, persistence, eligibility and binding effects, confirmation and cancellation |
+| A05 | Template preview/import/duplicate, validation, draft creation, saved profile provenance and absence of unintended launch effects |
+| A06 | Search/filter correctness, item read/edit/revision, saved state, mission associations, permission boundaries and deletion where supported |
+| A07 | Queue inclusion/counting, underlying unresolved state, exact resolution target, actual resolution, retry and return navigation |
+| A08 | Folder approval/revocation, provider availability, effective configuration, recon stop/collection behavior and prerequisite return |
+| A09 | Consistency between originating control, destination, authoritative result and restored state across sections |
+
+Functional coverage of the historical Mission audit remains partial. Navigation, draft identity and the close interaction were observed, but successful close was not independently proved by saved-value readback after restart. Existing-session mismatches, shared-access semantics, save interruption, final mission effects and detailed recovery still require the new action matrix. The refreshed screenshot/accessibility tests do not fill those gaps. No finding is retroactively upgraded to a functional pass.

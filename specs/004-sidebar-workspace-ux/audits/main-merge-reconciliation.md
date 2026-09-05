@@ -85,3 +85,7 @@ These are review targets, not fully audited or approved fixes:
 - Source delta reviewed for all MIS findings. Fresh screenshots visually inspected for entry, Review and decision-state mission.
 - These tests use fixtures. No paid/external agent run, real user mission mutation, application code change or release promotion was performed.
 - Full unit/contract/integration/E2E suites were not rerun for this documentation PR. Remaining section audits, design approval and Feature 002/003 gates stay open.
+
+## Functional coverage clarification
+
+The owner subsequently required explicit logic and functionality observation in every audit. This reconciliation proves only the scoped observations listed above. It does not establish end-to-end saved-value persistence, live-session reconfiguration rejection, shared-access effects, interrupted-save safety, or final mission start/recovery effects. Those remain pending under the new US7 / FR-016–019 action matrix.

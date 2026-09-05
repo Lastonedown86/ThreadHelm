@@ -10,11 +10,13 @@
 
 ## Scope and relationship to existing work
 
+This feature audits visual presentation, interaction design, underlying decision logic, and actual end-to-end functionality together. Each user action must be traced from its visible control through validation and state changes to its observable result and any durable or process effect.
+
 This feature establishes a consistent, evidence-led audit and improvement program for the current ThreadHelm sidebar and its destination workspaces. It contains a common UX contract and independently reviewable section audits. An audit recommendation is a proposal until its disposition and interaction design are recorded.
 
 In scope: shared sidebar/navigation, Missions including New mission and drafts, Sessions, Agents (including starter/template flows), Memory, Attention, Settings, their dialogs and prerequisite/return flows, and cross-section consistency. Each audit covers reachable items and secondary pages, not only the destination landing page.
 
-Out of scope: new agent providers, new delegation capabilities, new external integrations, changes to authority or process-control policy, automatic external provider execution, merge/deployment, wholesale visual rebranding, and removal of existing release gates.
+Out of scope: new agent providers, new delegation capabilities, new external integrations, implementation changes to authority or process-control policy (observing and auditing their existing behavior is in scope), automatic external provider execution, merge/deployment, wholesale visual rebranding, and removal of existing release gates.
 
 Feature 002 owns existing coordination and release boundaries. Feature 003 owns future verified delegation, contracts, progress accountability, and receipts. This feature owns how existing capabilities are presented and navigated. A finding requiring a new capability is referred to its owning feature rather than silently extending this scope. Neither existing feature is marked complete by this specification.
 
@@ -115,6 +117,22 @@ As a user, I can complete primary workflows with the keyboard, identify validati
 3. **Given** a loading failure or missing prerequisite, **When** the message appears, **Then** an applicable retry or direct fix action is available and retains context.
 4. **Given** a long page at increased text scale, **When** I reach an action, **Then** the layout does not obscure focused controls or essential approval facts.
 
+### User Story 7 - Verify that visible actions deliver their promised result (Priority: P1)
+
+As the owner, I can distinguish a screen that looks correct from a workflow whose logic, saved state, and actual behavior are correct.
+
+**Why this priority**: A button, success message, or status badge cannot establish that the correct record was saved, the intended process was controlled, or a failure was handled honestly.
+
+**Independent Test**: Select a primary workflow in each section; record the initial state, activate its actual UI controls, observe the resulting state and effects, then verify an applicable invalid or failure case and persistence/recovery behavior.
+
+**Acceptance Scenarios**:
+
+1. **Given** an audited control, **When** it is exercised, **Then** the audit records its target, preconditions, validation/eligibility rules, requested transition, actual result, and whether the UI accurately reflects that result.
+2. **Given** an action claims to save, launch, stop, resolve, or apply a change, **When** it reports success, **Then** evidence confirms the relevant saved record, process state, resolution state, or effective configuration independently of the success message.
+3. **Given** a rejected request, stale input, repeated activation, or interrupted operation, **When** the action is attempted in an isolated scenario, **Then** the audit checks that no unintended duplicate or partial effect occurs and that the recovery choice matches the actual state.
+4. **Given** a workflow changes durable data, **When** it is reopened or the isolated app is restarted, **Then** the audit compares restored data with the promised saved state; session/process recovery is distinguished from restarting execution.
+5. **Given** a functional path cannot be safely exercised or requires unavailable provider capability, **When** evidence is reported, **Then** it remains unverified or blocked with a concrete reason and next verification step, rather than receiving a screenshot- or source-only pass.
+
 ### Edge Cases
 
 - A selected ended session forces its group visible; a hide action must communicate any resulting selection constraint.
@@ -147,6 +165,11 @@ As a user, I can complete primary workflows with the keyboard, identify validati
 - **FR-014**: The audit and implementation evidence MUST separate fixtures, current-source inspection, live local verification, owner approval, and release readiness. Existing unmet release/capability gates MUST remain unmet until their owning feature supplies evidence. Applies to US1.
 - **FR-015**: The interface MUST avoid continuous decorative motion or idle rendering work. Planning MUST define and measure rendering/responsiveness budgets on representative Windows hardware without claiming old performance deferrals resolved. Applies to US4 and US6.
 
+- **FR-016**: Each audit MUST inventory and trace the existing logic for every reachable user action: target identity, prerequisites, validation, eligibility, state transitions, side effects, and visible result. Disabled controls and no-op actions require explanation and verification of the governing rule. Applies to US7.
+- **FR-017**: Primary workflows MUST be exercised through actual UI controls in isolated runtime scenarios, with relevant outcomes independently verified through saved state, readback, lifecycle evidence, or process state. Setup fixtures and direct operation calls MUST be identified and MUST NOT substitute for observing the audited UI action. Applies to US7.
+- **FR-018**: Each section MUST cover applicable negative and boundary behavior: invalid or missing inputs, stale state, repeated activation, interrupted saves/loads, failure and retry, cancellation, and reopen/restart persistence. Non-applicable cases require reasons; unexercised cases remain pending or blocked. Applies to US2, US3, and US7.
+- **FR-019**: Visual/interaction quality, logic correctness, and runtime functionality MUST have separate verdicts. A visual pass, successful capture, source trace, or generic test-suite pass MUST NOT imply end-to-end functional correctness. Confirmed logic defects outside this feature's implementation scope MUST be recorded and referred to the owning feature. Applies to US1 and US7.
+
 ### Key Entities
 
 - **Audit section**: A destination or shared surface, its inventory, baseline, coverage, findings, and completion limitations.
@@ -167,6 +190,10 @@ As a user, I can complete primary workflows with the keyboard, identify validati
 - **SC-006**: The sidebar remains usable with 50 missions and 20 drafts, including duplicate prefixes and long names; the current item and global destinations remain discoverable.
 - **SC-007**: Every accepted high-priority finding has passing targeted verification and every remaining limitation has an owner-visible disposition before feature completion; no release readiness is inferred from this alone.
 - **SC-008**: Each completed improvement slice includes before/after evidence for its primary journey, one applicable failure/recovery path, and its cross-section navigation impact.
+
+- **SC-009**: Every inventoried action has a completed logic trace or an explicit blocked/pending disposition, and every primary workflow has an observed runtime result or a documented blocker; zero source-only paths are labeled functionally passed.
+- **SC-010**: Every section records at least one applicable successful primary flow, one negative/boundary flow, and one reopen/recovery check, or a reason the category is not applicable. Cross-section reconciliation checks the agreement of the originating view, destination view, and authoritative result.
+- **SC-011**: Every success claim involving persistence, resolution, configuration, or process control is backed by outcome evidence beyond the UI message; fixture evidence and live-provider capability evidence are separately labeled.
 
 ## Assumptions
 

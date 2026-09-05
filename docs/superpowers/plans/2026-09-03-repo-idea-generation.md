@@ -43,19 +43,19 @@ Task 4 ends with this checklist. A task is not done until every line holds.
 
 ## File structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/contracts/src/index.ts` | `RepoIdeaCandidate` schema, `missionComposer.proposeRepoIdeas` operation, `REPO_IDEAS_UNAVAILABLE`/`REPO_IDEAS_OUTPUT_INVALID` error codes. |
-| `apps/desktop/src/main/coordination/repo-ideas.ts` | New. `createRepoIdeasService(ctx)`: assembles the prompt from Plan A's readers, calls `runStructuredDraft`, validates the response. |
-| `apps/desktop/src/main/coordinator.ts` | Route `missionComposer.proposeRepoIdeas`. |
-| `apps/desktop/src/main/context.ts` | `repoIdeas?: RepoIdeasService` on `Context`. |
-| `apps/desktop/src/renderer/features/mission-composer/RepoIdeaEntry.tsx` | New. Repo picker, provider/model picker, generate/regenerate, 3 idea cards, skip link, own live region. |
-| `apps/desktop/src/renderer/App.tsx` | `pickingRepo` state; `openComposer` gains an optional `initialFields` param; rail's "New mission…" opens `RepoIdeaEntry` first. |
-| `apps/desktop/src/renderer/features/mission-focus/reason-labels.ts` | Labels for the two new codes. |
-| `apps/desktop/src/renderer/styles/mission-composer.css` | `.repo-idea-*` rules. |
-| `tests/unit/renderer/reason-labels.test.ts` | New-code label test. |
-| `tests/contract/repo-ideas.test.ts` | `proposeRepoIdeas` operation tests (success, held-unavailable, held-invalid-output). |
-| `tests/e2e/repo-idea-generation.spec.ts` | New. Guided journey: skip path, generate-and-pick path, failure path. |
+| File                                                                    | Responsibility                                                                                                                              |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/contracts/src/index.ts`                                       | `RepoIdeaCandidate` schema, `missionComposer.proposeRepoIdeas` operation, `REPO_IDEAS_UNAVAILABLE`/`REPO_IDEAS_OUTPUT_INVALID` error codes. |
+| `apps/desktop/src/main/coordination/repo-ideas.ts`                      | New. `createRepoIdeasService(ctx)`: assembles the prompt from Plan A's readers, calls `runStructuredDraft`, validates the response.         |
+| `apps/desktop/src/main/coordinator.ts`                                  | Route `missionComposer.proposeRepoIdeas`.                                                                                                   |
+| `apps/desktop/src/main/context.ts`                                      | `repoIdeas?: RepoIdeasService` on `Context`.                                                                                                |
+| `apps/desktop/src/renderer/features/mission-composer/RepoIdeaEntry.tsx` | New. Repo picker, provider/model picker, generate/regenerate, 3 idea cards, skip link, own live region.                                     |
+| `apps/desktop/src/renderer/App.tsx`                                     | `pickingRepo` state; `openComposer` gains an optional `initialFields` param; rail's "New mission…" opens `RepoIdeaEntry` first.             |
+| `apps/desktop/src/renderer/features/mission-focus/reason-labels.ts`     | Labels for the two new codes.                                                                                                               |
+| `apps/desktop/src/renderer/styles/mission-composer.css`                 | `.repo-idea-*` rules.                                                                                                                       |
+| `tests/unit/renderer/reason-labels.test.ts`                             | New-code label test.                                                                                                                        |
+| `tests/contract/repo-ideas.test.ts`                                     | `proposeRepoIdeas` operation tests (success, held-unavailable, held-invalid-output).                                                        |
+| `tests/e2e/repo-idea-generation.spec.ts`                                | New. Guided journey: skip path, generate-and-pick path, failure path.                                                                       |
 
 ---
 
@@ -304,7 +304,9 @@ function buildPrompt(input: {
   commitSubjects: string[];
 }): string {
   const sections = [PROMPT_INSTRUCTIONS];
-  sections.push(`File tree (${input.fileTree.length} files):\n${input.fileTree.slice(0, 200).join('\n')}`);
+  sections.push(
+    `File tree (${input.fileTree.length} files):\n${input.fileTree.slice(0, 200).join('\n')}`,
+  );
   if (input.readme) sections.push(`README:\n${input.readme}`);
   if (input.manifest) sections.push(`${input.manifest.filename}:\n${input.manifest.contents}`);
   if (input.commitSubjects.length > 0) {
@@ -351,10 +353,7 @@ export function createRepoIdeasService(ctx: Context): RepoIdeasService {
       const providerId = request.providerId ?? 'codex-cli';
       const outcome = await runStructuredDraft(ctx, providerId, prompt);
       if ('held' in outcome) {
-        throw new ThreadHelmError(
-          'REPO_IDEAS_UNAVAILABLE',
-          "Couldn't generate ideas right now.",
-        );
+        throw new ThreadHelmError('REPO_IDEAS_UNAVAILABLE', "Couldn't generate ideas right now.");
       }
       return { ideas: parseIdeas(outcome.text) };
     },
@@ -525,7 +524,12 @@ Create `apps/desktop/src/renderer/features/mission-composer/RepoIdeaEntry.tsx`:
 
 ```tsx
 import { useId, useState } from 'react';
-import type { ApprovedWorkspaceView, OperationResponse, ProviderId, ReadinessView } from '@threadhelm/contracts';
+import type {
+  ApprovedWorkspaceView,
+  OperationResponse,
+  ProviderId,
+  ReadinessView,
+} from '@threadhelm/contracts';
 import { api, call, errorCode } from '../../api.js';
 import { reasonLabel } from '../mission-focus/reason-labels.js';
 
@@ -579,7 +583,10 @@ export function RepoIdeaEntry({
       <section className="repo-idea-entry" aria-labelledby={headingId}>
         <h1 id={headingId}>Pick a repo to get mission ideas, or write your own.</h1>
         <div className="composer-notice">
-          <p>No approved folder yet. Go to Settings and approve a folder, then come back to choose it here.</p>
+          <p>
+            No approved folder yet. Go to Settings and approve a folder, then come back to choose it
+            here.
+          </p>
           <button type="button" className="primary" onClick={onGoToSettings}>
             Go to Settings
           </button>
@@ -609,7 +616,10 @@ export function RepoIdeaEntry({
       </label>
       <label className="field">
         Provider and model
-        <select value={providerId} onChange={(event) => setProviderId(event.target.value as ProviderId | '')}>
+        <select
+          value={providerId}
+          onChange={(event) => setProviderId(event.target.value as ProviderId | '')}
+        >
           <option value="">Provider default model</option>
           {availableProviders.map((provider) => (
             <option key={provider.providerId} value={provider.providerId}>
@@ -619,7 +629,12 @@ export function RepoIdeaEntry({
         </select>
       </label>
       <div className="mission-action-row">
-        <button type="button" className="primary" disabled={!workspaceId || busy} onClick={() => void generate()}>
+        <button
+          type="button"
+          className="primary"
+          disabled={!workspaceId || busy}
+          onClick={() => void generate()}
+        >
           {ideas ? 'Try different ideas' : 'Generate ideas'}
         </button>
         <button type="button" className="link" onClick={onSkip}>

@@ -27,20 +27,20 @@
 
 ## File structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/providers/src/adapter.ts` | `StructuredDraftContext`/`StructuredDraftDescriptor` types, `buildStructuredDraft?`/`parseStructuredDraftOutput?` on `ProviderAdapter`, `capabilities.structuredDraft` flag. |
-| `packages/providers/src/codex.ts` | Codex's `buildStructuredDraft`/`parseStructuredDraftOutput`. |
-| `packages/providers/src/claude-code.ts` | Claude Code's `buildStructuredDraft`/`parseStructuredDraftOutput`. |
-| `packages/contracts/src/index.ts` | New `ErrorCode` members: `STRUCTURED_DRAFT_UNAVAILABLE`, `STRUCTURED_DRAFT_TIMEOUT`, `STRUCTURED_DRAFT_OUTPUT_INVALID`. |
-| `apps/desktop/src/main/providers/structured-draft.ts` | New. `StructuredDraftRunner` interface, `createStructuredDraftRunner()` (real `execFile`-based implementation), `runStructuredDraft(ctx, providerId, prompt)` helper mirroring `probeProvider`. |
-| `apps/desktop/src/main/context.ts` | `structuredDraft: StructuredDraftRunner` field on `Context`. |
-| `apps/desktop/src/main/bootstrap.ts` | Wires `structuredDraft: createStructuredDraftRunner()`. |
-| `apps/desktop/src/main/coordination/repo-metadata.ts` | New. `readFileTree`, `readReadme`, `readManifest`, `readRecentCommitSubjects` — all bounded, all fail-soft. |
-| `tests/contract/helpers/fake-context.ts` | Default `structuredDraft` field on the fake `Context` (held/unsupported by default; individual tests override `world.ctx.structuredDraft` directly, the same pattern already used for `world.ctx.probes`). |
-| `tests/unit/providers/structured-draft.test.ts` | Adapter descriptor/parser unit tests. |
-| `tests/unit/main/repo-metadata.test.ts` | Repo-metadata reader unit tests against a real temp directory. |
-| `tests/contract/structured-draft-runner.test.ts` | Runner-level test proving the bounded-exec → parse round trip, overriding `world.ctx.structuredDraft` instead of shelling out to a real CLI. |
+| File                                                  | Responsibility                                                                                                                                                                                             |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/providers/src/adapter.ts`                   | `StructuredDraftContext`/`StructuredDraftDescriptor` types, `buildStructuredDraft?`/`parseStructuredDraftOutput?` on `ProviderAdapter`, `capabilities.structuredDraft` flag.                               |
+| `packages/providers/src/codex.ts`                     | Codex's `buildStructuredDraft`/`parseStructuredDraftOutput`.                                                                                                                                               |
+| `packages/providers/src/claude-code.ts`               | Claude Code's `buildStructuredDraft`/`parseStructuredDraftOutput`.                                                                                                                                         |
+| `packages/contracts/src/index.ts`                     | New `ErrorCode` members: `STRUCTURED_DRAFT_UNAVAILABLE`, `STRUCTURED_DRAFT_TIMEOUT`, `STRUCTURED_DRAFT_OUTPUT_INVALID`.                                                                                    |
+| `apps/desktop/src/main/providers/structured-draft.ts` | New. `StructuredDraftRunner` interface, `createStructuredDraftRunner()` (real `execFile`-based implementation), `runStructuredDraft(ctx, providerId, prompt)` helper mirroring `probeProvider`.            |
+| `apps/desktop/src/main/context.ts`                    | `structuredDraft: StructuredDraftRunner` field on `Context`.                                                                                                                                               |
+| `apps/desktop/src/main/bootstrap.ts`                  | Wires `structuredDraft: createStructuredDraftRunner()`.                                                                                                                                                    |
+| `apps/desktop/src/main/coordination/repo-metadata.ts` | New. `readFileTree`, `readReadme`, `readManifest`, `readRecentCommitSubjects` — all bounded, all fail-soft.                                                                                                |
+| `tests/contract/helpers/fake-context.ts`              | Default `structuredDraft` field on the fake `Context` (held/unsupported by default; individual tests override `world.ctx.structuredDraft` directly, the same pattern already used for `world.ctx.probes`). |
+| `tests/unit/providers/structured-draft.test.ts`       | Adapter descriptor/parser unit tests.                                                                                                                                                                      |
+| `tests/unit/main/repo-metadata.test.ts`               | Repo-metadata reader unit tests against a real temp directory.                                                                                                                                             |
+| `tests/contract/structured-draft-runner.test.ts`      | Runner-level test proving the bounded-exec → parse round trip, overriding `world.ctx.structuredDraft` instead of shelling out to a real CLI.                                                               |
 
 ---
 
@@ -83,12 +83,7 @@ describe('structured-draft capability surface', () => {
       executableKind: 'native',
     });
     expect(descriptor.executable).toBe('C:\\claude\\claude.exe');
-    expect(descriptor.args).toEqual([
-      '-p',
-      '--output-format',
-      'json',
-      'List three ideas.',
-    ]);
+    expect(descriptor.args).toEqual(['-p', '--output-format', 'json', 'List three ideas.']);
   });
 });
 ```
@@ -231,7 +226,10 @@ In `packages/providers/src/codex.ts`, add after the `launchArgs` function:
 
 ```ts
 function parseCodexAgentMessage(stdout: string): string | null {
-  const lines = stdout.split('\n').map((line) => line.trim()).filter(Boolean);
+  const lines = stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
   for (const line of lines) {
     let event: unknown;
     try {
@@ -614,8 +612,8 @@ export async function runStructuredDraft(
 In `apps/desktop/src/main/context.ts`, add after `probes: ProbeRunner;` (line 214):
 
 ```ts
-  /** Bounded, non-interactive structured-draft calls; contract tests override this directly. */
-  structuredDraft: StructuredDraftRunner;
+/** Bounded, non-interactive structured-draft calls; contract tests override this directly. */
+structuredDraft: StructuredDraftRunner;
 ```
 
 with `import type { StructuredDraftRunner } from './providers/structured-draft.js';` added to the imports.
@@ -813,7 +811,10 @@ export async function readFileTree(
   return paths;
 }
 
-export async function readReadme(root: string, maxBytes = DEFAULT_README_BYTES): Promise<string | null> {
+export async function readReadme(
+  root: string,
+  maxBytes = DEFAULT_README_BYTES,
+): Promise<string | null> {
   for (const filename of ['README.md', 'README', 'readme.md']) {
     try {
       const contents = await readFile(join(root, filename), 'utf8');
@@ -849,11 +850,11 @@ export async function readRecentCommitSubjects(
   limit = DEFAULT_COMMIT_LIMIT,
 ): Promise<string[]> {
   try {
-    const { stdout } = await execFileAsync(
-      'git',
-      ['log', `-n`, String(limit), '--format=%s'],
-      { cwd: root, timeout: GIT_TIMEOUT_MS, windowsHide: true },
-    );
+    const { stdout } = await execFileAsync('git', ['log', `-n`, String(limit), '--format=%s'], {
+      cwd: root,
+      timeout: GIT_TIMEOUT_MS,
+      windowsHide: true,
+    });
     return stdout
       .split('\n')
       .map((line) => line.trim())
@@ -889,5 +890,5 @@ Claude-Session: https://claude.ai/code/session_01LFtCatUbxGukemftYkTJGT"
 ## What this plan does not build
 
 - No `missionComposer.proposeRepoIdeas` operation, no composer UI step, no prompt-assembly logic that combines the repo-metadata readers' output into an actual prompt string. That is the next plan (repo-idea-generation feature), which consumes `runStructuredDraft` and the four readers from this plan as building blocks.
-- No JSON-schema validation of the *content* of a structured draft's output (e.g. "exactly 3 ideas, each under 200 characters") — that is caller-specific and belongs to whichever feature parses the returned text (this plan's `StructuredDraftOutcome.text` is an unvalidated string; Zod validation of its parsed JSON is the caller's job, matching how `MissionEnvelopeInput.safeParse` works in mission-composer.ts).
+- No JSON-schema validation of the _content_ of a structured draft's output (e.g. "exactly 3 ideas, each under 200 characters") — that is caller-specific and belongs to whichever feature parses the returned text (this plan's `StructuredDraftOutcome.text` is an unvalidated string; Zod validation of its parsed JSON is the caller's job, matching how `MissionEnvelopeInput.safeParse` works in mission-composer.ts).
 - No token/cost accounting, no UI for provider/model selection — those belong to the feature plan that has an actual UI surface to put them in.

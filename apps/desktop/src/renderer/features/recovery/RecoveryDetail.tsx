@@ -23,7 +23,12 @@ export function RecoveryDetail({
     observation_lost: 'Observation lost',
   } as const;
   return (
-    <section className="recovery-detail" aria-labelledby="recovery-detail-heading">
+    <section
+      id="recovery-detail"
+      data-recovery-id={record.id}
+      className="recovery-detail"
+      aria-labelledby="recovery-detail-heading"
+    >
       <header>
         <p className="eyebrow">Exact recovery record</p>
         <h2 id="recovery-detail-heading">{labels[record.classification]}</h2>

@@ -28,7 +28,7 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
     if (firstVisibleId) actions.select(firstVisibleId);
   }, [firstVisibleId, actions]);
   return (
-    <main className="session-workspace" aria-labelledby="session-workspace-heading">
+    <section className="session-workspace" aria-labelledby="session-workspace-heading">
       <header className="workspace-page-header">
         <p className="eyebrow">Sessions</p>
         <h1 id="session-workspace-heading">
@@ -112,6 +112,6 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
           {selected ? <MissionTerminalDock session={selected} sessions={sessions} /> : null}
         </>
       )}
-    </main>
+    </section>
   );
 }

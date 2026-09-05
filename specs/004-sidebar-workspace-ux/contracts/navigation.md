@@ -60,3 +60,7 @@ Attention's badge and queue count unresolved session recovery records. Copy expl
 ## ATT-003 recovery reflow
 
 At narrow widths and 200% text, exact recovery identifiers and paths remain readable by wrapping; queue/detail and sidebar do not require horizontal scrolling. Vertical scrolling and the existing narrow navigation strip remain available. Dismiss and reviewed replacement retain the exact record target and existing authority. This slice does not change selection semantics or landmarks.
+
+## ATT-004 landmarks and recovery focus
+
+AppShell owns the single main landmark across all six destinations. Destination roots are named sections; the React mount is not a landmark. The current recovery button exposes aria-current and controls the identified detail. Native Tab, Enter and Space remain the keyboard model. Removal of a focused recovery record moves focus to the reconciled current button or empty heading, including dismissal from a persistent detail button. An inventory update must not steal focus from another control. Resolution failures do not remove the target.

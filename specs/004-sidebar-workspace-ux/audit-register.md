@@ -220,3 +220,7 @@ PR #38 merged at 51d0cc8. The next slice adopts recovery-only labeling plus miss
 ### ATT-003 disposition after slice 10
 
 PR #39 merged at efb90d6. ATT-003 is locally verified for the sampled Attention reflow matrix and shared sidebar sizing, with exact keyboard dismissal readback. See [slice 10 verification](verification.md#slice-10-att-003-attention-reflow). This does not close the remaining A01/A09 inventory or AGT-003 cross-section matrix. ATT-004 remains the next bounded recommendation; A08/A09 remain pending.
+
+### ATT-004 disposition after slice 11
+
+PR #40 merged at 63fd09b; ATT-003 is merged. ATT-004 now exposes current recovery selection, restores focus after focused-record removal without overriding newer focus, and makes AppShell the single main across six destinations. See [slice 11 verification](verification.md#slice-11-att-004-recovery-accessibility). This is bounded keyboard/DOM evidence, not a full assistive-technology audit. A08 Settings is the next unaudited destination; A09 and previously recorded coverage gaps remain open.

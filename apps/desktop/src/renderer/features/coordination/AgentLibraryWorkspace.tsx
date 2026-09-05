@@ -3,7 +3,7 @@ import { AgentStarterLibrary } from './AgentStarterLibrary.js';
 
 export function AgentLibraryWorkspace() {
   return (
-    <main className="agent-library-workspace" aria-labelledby="agent-library-heading">
+    <section className="agent-library-workspace" aria-labelledby="agent-library-heading">
       <header className="workspace-page-header">
         <p className="eyebrow">Agent library</p>
         <h1 id="agent-library-heading">Choose or create the right worker</h1>
@@ -27,6 +27,6 @@ export function AgentLibraryWorkspace() {
         </header>
         <AgentProfileList />
       </section>
-    </main>
+    </section>
   );
 }

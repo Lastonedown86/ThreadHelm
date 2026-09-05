@@ -13,7 +13,7 @@ export function MemoryLibraryWorkspace() {
     setSearchVersion((value) => value + 1);
   };
   return (
-    <main className="memory-library-workspace" aria-labelledby="memory-library-heading">
+    <section className="memory-library-workspace" aria-labelledby="memory-library-heading">
       <header className="workspace-page-header">
         <p className="eyebrow">Evidence library</p>
         <h1 id="memory-library-heading">Find, read, and cite local knowledge</h1>
@@ -39,6 +39,6 @@ export function MemoryLibraryWorkspace() {
         </section>
         <MissionReadingList items={state.readingList} onRemove={actions.removeReading} />
       </div>
-    </main>
+    </section>
   );
 }

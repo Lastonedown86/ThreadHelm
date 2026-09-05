@@ -14,6 +14,8 @@ export function RecoveryAttentionQueue({
   const { state, actions } = useStore();
   const open = state.recoveryRecords.filter((record) => record.resolvedAt === null);
   const [selectedId, setSelectedId] = useState(open[0]?.id ?? null);
+  const workspaceRef = useRef<HTMLElement>(null);
+  const focusedRecord = useRef<{ id: string; element: HTMLElement } | null>(null);
   const previousOrder = useRef(open.map((record) => record.id));
   const selectedIndex = previousOrder.current.indexOf(selectedId ?? '');
   const remaining = new Set(open.map((record) => record.id));
@@ -29,6 +31,24 @@ export function RecoveryAttentionQueue({
     open[0];
   const effectiveId = selected?.id ?? null;
   useEffect(() => {
+    const focused = focusedRecord.current;
+    if (
+      focused &&
+      !state.recoveryRecords.some((r) => r.id === focused.id && r.resolvedAt === null)
+    ) {
+      focusedRecord.current = null;
+      const active = document.activeElement;
+      if (
+        active === focused.element ||
+        (!focused.element.isConnected && active === document.body)
+      ) {
+        workspaceRef.current
+          ?.querySelector<HTMLElement>(
+            effectiveId ? '.recovery-queue [aria-current="true"]' : '#recovery-empty-heading',
+          )
+          ?.focus();
+      }
+    }
     setSelectedId(effectiveId);
     previousOrder.current = state.recoveryRecords
       .filter((record) => record.resolvedAt === null)
@@ -57,7 +77,16 @@ export function RecoveryAttentionQueue({
       });
   };
   return (
-    <main className="recovery-attention-workspace" aria-labelledby="attention-heading">
+    <section
+      ref={workspaceRef}
+      className="recovery-attention-workspace"
+      aria-labelledby="attention-heading"
+      onFocusCapture={(event) => {
+        const element = event.target;
+        const id = element.closest<HTMLElement>('[data-recovery-id]')?.dataset.recoveryId;
+        focusedRecord.current = id ? { id, element } : null;
+      }}
+    >
       <header className="workspace-page-header">
         <p className="eyebrow">Session recovery</p>
         <h1 id="attention-heading">Recovery attention queue</h1>
@@ -75,17 +104,21 @@ export function RecoveryAttentionQueue({
       </header>
       {open.length === 0 ? (
         <section className="mission-workspace-state">
-          <h2>No recovery records need attention</h2>
+          <h2 id="recovery-empty-heading" tabIndex={-1}>
+            No recovery records need attention
+          </h2>
           <p>Interrupted or uncertain session endings will appear here.</p>
         </section>
       ) : (
         <section className="recovery-attention-grid" aria-label="Needs attention">
           <ol className="recovery-queue" aria-label="Unresolved recovery records">
             {open.map((record) => (
-              <li key={record.id}>
+              <li key={record.id} data-recovery-id={record.id}>
                 <button
                   type="button"
                   className={record.id === selected?.id ? 'selected' : undefined}
+                  aria-current={record.id === selected?.id ? 'true' : undefined}
+                  aria-controls="recovery-detail"
                   onClick={() => setSelectedId(record.id)}
                 >
                   <strong>{labels[record.classification]}</strong>
@@ -143,6 +176,6 @@ export function RecoveryAttentionQueue({
         </section>
       )}
       <SessionList />
-    </main>
+    </section>
   );
 }

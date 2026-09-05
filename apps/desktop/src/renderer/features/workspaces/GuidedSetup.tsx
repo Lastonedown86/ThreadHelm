@@ -6,7 +6,7 @@ import { WorkspacePanel } from './WorkspacePanel.js';
 export function GuidedSetup() {
   const { state } = useStore();
   return (
-    <main className="guided-setup" aria-labelledby="guided-setup-heading">
+    <section className="guided-setup" aria-labelledby="guided-setup-heading">
       <header className="workspace-page-header">
         <p className="eyebrow">Local setup</p>
         <h1 id="guided-setup-heading">Prepare ThreadHelm for a mission</h1>
@@ -34,6 +34,6 @@ export function GuidedSetup() {
         </div>
       </section>
       <ApplicationEvidence info={state.appInfo} storageDegraded={state.storageDegraded} />
-    </main>
+    </section>
   );
 }

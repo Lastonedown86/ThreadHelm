@@ -122,3 +122,13 @@ Dependencies: T044 -> T045 -> T046 -> T047 -> T048. ATT-003/004 and A08/A09 rema
 - [x] T053 Complete static checks, update evidence/register and open PR.
 
 Dependencies: T049 -> T050 -> T051 -> T052 -> T053. ATT-004 and A08/A09 remain open.
+
+## Slice 11: ATT-004 accessibility
+
+- [x] T054 Record accepted semantics and focus contract.
+- [x] T055 [US7] Add and run failing landmark and recovery keyboard regressions.
+- [x] T056 [US2] Implement landmark ownership, current selection and conditional focus recovery.
+- [x] T057 [US7] Verify independent resolution, delayed focus and existing regressions.
+- [x] T058 Complete static checks, update evidence/register and open PR.
+
+Dependencies: T054 -> T055 -> T056 -> T057 -> T058. A08/A09 remain pending.

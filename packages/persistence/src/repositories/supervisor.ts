@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   MissionDetailView,
   MissionEnvelopeInput,
+  MissionEnvelopeStoredInput,
   MissionEnvelopeView,
   MissionBindingView,
   SupervisorAttemptView,
@@ -87,11 +88,15 @@ export class SupervisorRepository {
       .get(id, version) as { envelope_json: string | null } | undefined;
     return row?.envelope_json ? MissionEnvelopeView.parse(JSON.parse(row.envelope_json)) : null;
   }
+  // Reads a persisted envelope's original input with the tolerant read-time
+  // schema: a mission confirmed before `assignment`/`requiredReturnEvidence`
+  // were required has no such fields in its stored JSON, and must still be
+  // readable. Never use MissionEnvelopeStoredInput to validate a live request.
   #input(id: string): MissionEnvelopeInput | null {
     const row = this.db
       .prepare('SELECT input_json FROM supervisor_envelopes WHERE mission_id=? AND version=?')
       .get(id, this.mission(id).version) as { input_json: string | null } | undefined;
-    return row?.input_json ? MissionEnvelopeInput.parse(JSON.parse(row.input_json)) : null;
+    return row?.input_json ? MissionEnvelopeStoredInput.parse(JSON.parse(row.input_json)) : null;
   }
   #count(sql: string, id: string): number {
     return (this.db.prepare(sql).get(id) as { n: number }).n;

@@ -118,6 +118,8 @@ export async function resolveMissionEnvelope(
       runtimeSelection: supervisor.launchSnapshot.runtimeSelection,
       permissionSelection: supervisor.launchSnapshot.permissionSelection,
       executionBounds: supervisor.launchSnapshot.executionBounds,
+      assignment: null,
+      requiredReturnEvidence: [],
     },
     ...input.workers,
   ];
@@ -173,6 +175,14 @@ export async function resolveMissionEnvelope(
         request.runtimeSelection,
         request.permissionSelection,
         request.executionBounds,
+        'general',
+        null,
+        { profileRevisionRequest: null, taskTypePolicy: null, projectPolicy: null },
+        null,
+        // Only a worker that auto-starts within this mission needs its folder
+        // free right now; a fully manual worker is only ever launched later,
+        // through the ordinary session launch path, which checks then.
+        request.autoStart,
       );
       const payload = ctx.tokens.previews.take(preview.previewToken);
       if (!payload) throw new ThreadHelmError('MISSION_ENVELOPE_STALE');
@@ -213,6 +223,8 @@ export async function resolveMissionEnvelope(
       effectiveTokenBudget: Math.min(profile.tokenCapRequested, input.bounds.maxTokenBudget),
       launchDisposition: reason ? 'held' : 'ready',
       reasonCode: reason,
+      assignment: request.assignment,
+      requiredReturnEvidence: request.requiredReturnEvidence,
     });
     bindings.push(binding);
   }
@@ -224,6 +236,7 @@ export async function resolveMissionEnvelope(
   return MissionEnvelopeView.parse({
     objective: input.objective,
     completionEvidence: input.completionEvidence,
+    exclusions: input.exclusions,
     workspaces: input.workspaces,
     bindings,
     bounds: input.bounds,

@@ -6,18 +6,24 @@ import type {
   MissionPreviewView,
 } from '@threadhelm/contracts';
 import { launchApp, type LaunchedApp } from './helpers/app.js';
-import { prepareFixtureMission } from './helpers/mission.js';
+import { missionProfile, missionSession, prepareFixtureMission } from './helpers/mission.js';
 import { launchWithFixtures, teardown, tempWorkspace } from './helpers/ui.js';
 
 // Reason codes match /^[A-Z][A-Z0-9_]{2,63}$/ (packages/contracts/src/index.ts) — no
 // underscore required, e.g. the real 'BACKPRESSURE' shipped by
 // apps/desktop/src/main/coordination/delivery.ts. Static UI copy also renders
 // all-caps via CSS text-transform: uppercase on .mission-lifecycle, .course-state,
-// .context-label and .mission-evidence (apps/desktop/src/renderer/styles/mission-focus.css),
-// so allowlist those known labels rather than narrowing the pattern back down.
+// .context-label, .mission-evidence (apps/desktop/src/renderer/styles/mission-focus.css)
+// and .eyebrow (apps/desktop/src/renderer/styles/guided-setup.css, used by the
+// composer's "Step N of 4" line), so allowlist those known labels rather than
+// narrowing the pattern back down.
 const UPPERCASE_UI_COPY = new Set([
   'LOCAL', // "· local" suffix on the lifecycle line
   'CREW',
+  'STEP', // composer ".eyebrow" "Step N of 4 · <stage>"
+  'ACCESS',
+  'LIMITS', // composer stage label "Access & limits" through the same ".eyebrow" uppercasing
+  'REVIEW', // composer stage label "Review" through the same ".eyebrow" uppercasing
   'AUTHORITY', // context rail section headers, always rendered
   'RUNNING',
   'PAUSED',
@@ -42,10 +48,11 @@ const UPPERCASE_UI_COPY = new Set([
 ]);
 
 /** Fails if any on-screen token has the reason-code shape and isn't known-safe UI copy. */
-async function assertNoRawReasonCode(page: Page): Promise<void> {
-  const text = (
-    await page.locator('#mission-workspace, .mission-shell-context').allInnerTexts()
-  ).join('\n');
+async function assertNoRawReasonCode(
+  page: Page,
+  selector = '#mission-workspace, .mission-shell-context',
+): Promise<void> {
+  const text = (await page.locator(selector).allInnerTexts()).join('\n');
   const found = [...text.matchAll(/\b[A-Z][A-Z0-9_]{2,63}\b/g)]
     .map((match) => match[0])
     .filter((token) => !UPPERCASE_UI_COPY.has(token));
@@ -502,5 +509,64 @@ test('medium windows do not claim a mission decision on a non-mission destinatio
     await expect(toggle.locator('.attention-dot')).toHaveCount(0);
   } finally {
     await teardown(app, ...directories);
+  }
+});
+
+test('composer never surfaces a raw reason code at any of its four stages', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const dir = tempWorkspace('composer-code-guard');
+  const workerDir = tempWorkspace('composer-code-guard-worker');
+  try {
+    const page = app.page;
+    const leader = await missionProfile(app, 'Code guard coordinator');
+    const worker = await missionProfile(app, 'Code guard worker');
+    const session = await missionSession(app, dir);
+    const workerSession = await missionSession(app, workerDir);
+    await page.reload();
+    await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+    await page.getByLabel('Finish line', { exact: true }).fill('Fix the flaky terminal test.');
+    await page
+      .getByLabel('Proof of completion', { exact: true })
+      .fill('Three green runs in a row.');
+    await assertNoRawReasonCode(page, '.composer');
+
+    await page.getByRole('button', { name: 'Continue to crew', exact: true }).click();
+    await page
+      .getByRole('combobox', { name: 'Supervisor profile', exact: true })
+      .selectOption(leader.profileId);
+    await page
+      .getByRole('combobox', { name: 'Supervisor session', exact: true })
+      .selectOption(session.id);
+    await page.getByRole('button', { name: 'Add worker', exact: true }).click();
+    await page
+      .getByRole('combobox', { name: 'Worker 1 profile', exact: true })
+      .selectOption(worker.profileId);
+    await page
+      .getByRole('combobox', { name: 'Worker 1 session', exact: true })
+      .selectOption(workerSession.id);
+    await page
+      .getByLabel('What worker 1 contributes', { exact: true })
+      .fill('Reproduce and fix the test.');
+    await page
+      .getByLabel('What worker 1 must bring back', { exact: true })
+      .fill('A passing run log');
+    await page
+      .getByRole('button', { name: 'Add to what worker 1 must bring back', exact: true })
+      .click();
+    await assertNoRawReasonCode(page, '.composer');
+
+    await page.getByRole('button', { name: 'Continue to access and limits', exact: true }).click();
+    // Worker 1 is bound to a live session, so CrewStage already copied its
+    // workspaceId; Access doesn't need another folder pick to become ready.
+    await expect(page.getByRole('combobox', { name: 'Worker 1 folder', exact: true })).toHaveValue(
+      workerSession.workspaceId,
+    );
+    await assertNoRawReasonCode(page, '.composer');
+
+    await page.getByRole('button', { name: 'Continue to review', exact: true }).click();
+    await expect(page.locator('.composer-state.ready')).toBeVisible();
+    await assertNoRawReasonCode(page, '.composer');
+  } finally {
+    await teardown(app, dir, workerDir);
   }
 });

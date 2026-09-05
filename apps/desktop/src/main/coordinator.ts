@@ -26,6 +26,7 @@ import {
 import { createReconService, type ReconService } from './coordination/recon.js';
 import { deliverHandoff } from './coordination/delivery.js';
 import { createSupervisorService } from './coordination/supervisor.js';
+import { createMissionComposerService } from './coordination/mission-composer.js';
 import { requestClose, stopAllAndClose } from './lifecycle/close.js';
 import { listReadiness } from './providers/readiness.js';
 import { resolveRecovery } from './recovery/reconcile.js';
@@ -48,6 +49,8 @@ export function createHandlers(ctx: Context): Handlers {
   const supervisor = ctx.supervisor ?? createSupervisorService(ctx);
   ctx.supervisor = supervisor;
   ctx.coordinationBridge?.setSupervisorAuthority(supervisor);
+  const missionComposer = ctx.missionComposer ?? createMissionComposerService(ctx, supervisor);
+  ctx.missionComposer = missionComposer;
   const agentWizard = ctx.storage && !ctx.health.degraded ? startAgentWizard(ctx, profiles) : null;
   const requireAgentWizard = () => {
     if (!agentWizard || !ctx.storage || ctx.health.degraded) {
@@ -71,6 +74,14 @@ export function createHandlers(ctx: Context): Handlers {
     'missions.resolveEscalation': (request) => supervisor.resolveEscalation(request),
     'missions.previewDelete': ({ missionId }) => supervisor.previewDelete(missionId),
     'missions.confirmDelete': ({ previewToken }) => supervisor.confirmDelete(previewToken),
+    'missionComposer.createDraft': (request) => missionComposer.createDraft(request),
+    'missionComposer.listDrafts': (request) => missionComposer.listDrafts(request),
+    'missionComposer.getDraft': (request) => missionComposer.getDraft(request),
+    'missionComposer.updateDraft': (request) => missionComposer.updateDraft(request),
+    'missionComposer.preview': (request) => missionComposer.preview(request),
+    'missionComposer.confirm': (request) => missionComposer.confirm(request),
+    'missionComposer.previewDiscard': (request) => missionComposer.previewDiscard(request),
+    'missionComposer.confirmDiscard': (request) => missionComposer.confirmDiscard(request),
     'workspaces.choose': () => chooseWorkspace(ctx),
     'workspaces.approve': ({ candidateToken }) => approveWorkspace(ctx, candidateToken),
     'workspaces.list': () => listWorkspaces(ctx),

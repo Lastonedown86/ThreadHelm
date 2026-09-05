@@ -60,6 +60,12 @@ export async function previewLaunch(
   } = { profileRevisionRequest: null, taskTypePolicy: null, projectPolicy: null },
   /** Set only by Workspace Recon; every ordinary session leaves this null. */
   reconOutputDirectory: string | null = null,
+  /**
+   * A binding that will not start immediately (an offline, non-autostart
+   * mission worker) needs no lease free right now — only an imminent launch
+   * (an interactive session, or an auto-starting worker) does.
+   */
+  requireFreeLease = true,
 ): Promise<LaunchPreviewView> {
   const workspace = findWorkspace(ctx, workspaceId);
   if (workspace.revokedAt) {
@@ -69,7 +75,7 @@ export async function previewLaunch(
     });
   }
   const resolved = revalidateWorkspace(ctx, workspace);
-  assertLeaseFree(ctx, resolved.identity);
+  if (requireFreeLease) assertLeaseFree(ctx, resolved.identity);
   const { view: readiness } = await probeProvider(ctx, providerId, [resolved.canonicalPath]);
   assertReady(readiness);
   ctx.health.bestEffort(() =>

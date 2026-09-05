@@ -46,4 +46,18 @@ describe('reason labels', () => {
     expect(reasonLabel(null)).toBeNull();
     expect(reasonLabel(undefined)).toBeNull();
   });
+
+  it('labels every mission draft code as a sentence', () => {
+    for (const code of [
+      'MISSION_DRAFT_NOT_FOUND',
+      'MISSION_DRAFT_STALE',
+      'MISSION_DRAFT_LIMIT',
+      'MISSION_DRAFT_SAVE_FAILED',
+      'MISSION_DRAFT_DISCARD_STALE',
+      'MISSION_CONFIRMATION_EXPIRED',
+    ]) {
+      expect(REASON_LABELS[code]).toMatch(/^[A-Z].*\.$/);
+      expect(REASON_LABELS[code]).not.toMatch(/[A-Z]{3,}_/);
+    }
+  });
 });

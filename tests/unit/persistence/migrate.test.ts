@@ -67,6 +67,7 @@ describe('migrate', () => {
       'coordination_events',
       'coordination_handoffs',
       'memory_conflicts',
+      'mission_composer_drafts',
       'mission_profile_pins',
       'recovery_records',
       'schema_meta',

@@ -253,8 +253,8 @@ test('mission form has named visible-focus controls, stable idle content and 200
   try {
     await page.getByRole('button', { name: 'New mission…', exact: true }).focus();
     await page.keyboard.press('Enter');
-    const dialog = page.getByRole('dialog', { name: 'Create mission', exact: true });
-    await expect(dialog.getByLabel('Objective', { exact: true })).toBeFocused();
+    const composer = page.locator('.composer');
+    await expect(page.getByRole('heading', { name: 'Define one finish line.' })).toBeFocused();
     // Traverse the real form, checking each enabled focus target rather than
     // asserting accessibility from the source markup alone.
     for (let index = 0; index < 18; index++) {
@@ -263,22 +263,57 @@ test('mission form has named visible-focus controls, stable idle content and 200
       expect(control.outlineStyle !== 'none' && control.outlineWidth !== '0px').toBe(true);
       await page.keyboard.press('Tab');
     }
-    await expect(dialog.locator('canvas,svg,img,video')).toHaveCount(0);
-    const before = await dialog.innerHTML();
+    await expect(composer.locator('canvas,svg,img,video')).toHaveCount(0);
+    const before = await composer.innerHTML();
     await page.waitForTimeout(2000);
-    expect(await dialog.innerHTML()).toBe(before);
+    expect(await composer.innerHTML()).toBe(before);
     await page.evaluate(() => {
       document.documentElement.style.fontSize = '200%';
     });
-    const overflow = await dialog.evaluate(
+    const overflow = await composer.evaluate(
       (element) => element.scrollWidth > element.clientWidth + 1,
     );
     expect(overflow).toBe(false);
-    await expect(dialog.getByLabel('Objective', { exact: true })).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(dialog).toBeHidden();
+    await expect(page.getByLabel('Finish line', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Close', exact: true }).click();
+    await page.getByRole('button', { name: 'Close composer', exact: true }).click();
   } finally {
     await teardown(app);
+  }
+});
+
+test('composer never scrolls sideways and its sticky actions never cover the focused control', async () => {
+  const app = await launchWithFixtures({ 'codex-cli': 'echo' });
+  const dir = tempWorkspace('composer-a11y');
+  try {
+    const page = app.page;
+    for (const [width, height] of [
+      [1400, 900],
+      [680, 800],
+    ] as const) {
+      await page.setViewportSize({ width, height });
+      await page.getByRole('button', { name: 'Missions', exact: true }).click();
+      await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        ),
+        `no horizontal overflow at ${width}`,
+      ).toBe(false);
+      const outside = page.getByLabel('Outside this mission', { exact: true });
+      await outside.focus();
+      const covered = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement;
+        const r = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + 4, r.bottom - 4);
+        return !(hit === el || el.contains(hit));
+      });
+      expect(covered, `sticky actions do not cover focus at ${width}`).toBe(false);
+      await page.getByRole('button', { name: 'Close', exact: true }).click();
+      await page.getByRole('button', { name: 'Close composer', exact: true }).click();
+    }
+  } finally {
+    await teardown(app, dir);
   }
 });
 

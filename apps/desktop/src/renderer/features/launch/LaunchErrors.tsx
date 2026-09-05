@@ -109,6 +109,13 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
     'Repeated equivalent decisions paused this mission. Review the work before resuming.',
   MISSION_AUTHORITY_REQUIRED:
     'This action exceeds the confirmed mission authority. Use the separate control for that exact action; supervisor text cannot approve it.',
+  MISSION_CONFIRMATION_EXPIRED:
+    'The review expired. Return to access and limits for a fresh approval.',
+  MISSION_DRAFT_DISCARD_STALE: 'The draft changed since the discard preview. Preview it again.',
+  MISSION_DRAFT_LIMIT: 'Twenty drafts are already open. Finish or discard one first.',
+  MISSION_DRAFT_NOT_FOUND: 'That mission draft no longer exists.',
+  MISSION_DRAFT_SAVE_FAILED: 'Your draft could not be saved. Nothing has been discarded.',
+  MISSION_DRAFT_STALE: 'This draft was saved elsewhere. Reload it before continuing.',
   TEMPLATE_VARIABLE_UNRESOLVED:
     'Resolve every declared template variable before reviewing the generated agent.',
   TEMPLATE_DRAFT_INCOMPLETE:

@@ -9,13 +9,11 @@ import type { MissionWorkspaceState } from './useMissionWorkspace.js';
 
 export function MissionWorkspace({
   workspace,
-  onCreate,
   onOpenDetail,
   onAction,
   onOpenTerminal,
 }: {
   workspace: MissionWorkspaceState;
-  onCreate(): void;
   onOpenDetail(): void;
   onAction(kind: ActionKind): void;
   onOpenTerminal(sessionId: string): void;
@@ -57,11 +55,9 @@ export function MissionWorkspace({
       <div className="mission-workspace-state">
         <h1 tabIndex={-1}>Start a mission</h1>
         <p>
-          Create one bounded outcome, review its exact authority, then decide whether to start it.
+          Use <strong>New mission…</strong> in the rail. You will describe one outcome, choose the
+          crew, set access and limits, then review the exact mission before anything starts.
         </p>
-        <button type="button" className="primary" onClick={onCreate}>
-          Create mission
-        </button>
       </div>
     );
 

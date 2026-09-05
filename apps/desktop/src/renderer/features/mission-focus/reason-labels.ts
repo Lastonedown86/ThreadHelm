@@ -6,6 +6,13 @@ export const REASON_LABELS: Readonly<Record<string, string>> = {
   MISSION_COMPLETED: 'The mission completed with retained evidence.',
   MISSION_CONFIRMED: 'The mission was confirmed.',
   MISSION_CONTENT_DELETED: 'Mission content was deleted; receipts remain.',
+  MISSION_DRAFT_LIMIT: 'Too many drafts are open; complete or delete one first.',
+  MISSION_DRAFT_NOT_FOUND: 'This mission draft could not be found.',
+  MISSION_DRAFT_STALE: 'The draft changed after it was displayed.',
+  MISSION_DRAFT_SAVE_FAILED: 'Your draft could not be saved. Nothing has been discarded.',
+  MISSION_DRAFT_DISCARD_STALE: 'The draft changed since the discard preview. Preview it again.',
+  MISSION_CONFIRMATION_EXPIRED:
+    'The review expired. Return to access and limits for a fresh approval.',
   MISSION_ENVELOPE_STALE: 'The mission envelope changed and needs a fresh review.',
   MISSION_NOT_FOUND: 'This mission could not be found.',
   MISSION_PINNED: 'The mission was pinned.',

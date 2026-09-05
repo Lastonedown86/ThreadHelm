@@ -1,5 +1,6 @@
 import { useRef, type KeyboardEvent } from 'react';
-import type { MissionSummaryView } from '@threadhelm/contracts';
+import type { MissionComposerDraftSummaryView, MissionSummaryView } from '@threadhelm/contracts';
+import { relativeTime, STAGE_LABEL } from '../mission-composer/composer-fields.js';
 import { missionTitle } from './mission-presentation.js';
 
 export interface MissionRailProps {
@@ -8,6 +9,8 @@ export interface MissionRailProps {
   selectedMissionId: string | null;
   onSelect(missionId: string): void;
   onCreate(): void;
+  drafts: MissionComposerDraftSummaryView[];
+  onResumeDraft(draftId: string): void;
 }
 
 function focusMissionHeading() {
@@ -22,6 +25,8 @@ export function MissionRail({
   selectedMissionId,
   onSelect,
   onCreate,
+  drafts,
+  onResumeDraft,
 }: MissionRailProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const ids = missions.map((mission) => mission.id);
@@ -127,6 +132,24 @@ export function MissionRail({
           );
         })}
       </ul>
+      {drafts.length ? (
+        <details className="mission-rail-drafts" open>
+          <summary>Drafts ({drafts.length})</summary>
+          <ul className="list">
+            {drafts.map((draft) => (
+              <li key={draft.draftId}>
+                <button
+                  type="button"
+                  className="small"
+                  onClick={() => onResumeDraft(draft.draftId)}
+                >
+                  Resume draft · {STAGE_LABEL[draft.currentStage]} · {relativeTime(draft.updatedAt)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </section>
   );
 }

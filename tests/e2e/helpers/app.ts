@@ -82,6 +82,8 @@ export interface LaunchedApp {
   reconWhenCollected(runId: string): Promise<void>;
   /** Hard-kills the coordinator with no cleanup; resolves once the process is gone. */
   crashCoordinator(): Promise<void>;
+  advanceClock(ms: number): Promise<void>;
+  breakStorage(): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -190,6 +192,8 @@ export async function launchApp(options: LaunchOptions = {}): Promise<LaunchedAp
         params,
       }),
     reconWhenCollected: (runId) => hooks('hooks.reconWhenCollected(arg)', runId),
+    advanceClock: (ms) => hooks('hooks.advanceClock(arg)', ms),
+    breakStorage: () => hooks('hooks.breakStorage()'),
     async crashCoordinator() {
       // app.process() is Playwright's cli wrapper; the coordinator is the browser process.
       const pid = await app.evaluate(() => process.pid);

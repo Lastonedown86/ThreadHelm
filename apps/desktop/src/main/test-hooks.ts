@@ -84,6 +84,7 @@ export interface TestHooks {
   reconWhenCollected(runId: string): Promise<void>;
   storagePath(): string;
   breakStorage(): void;
+  advanceClock(ms: number): void;
   version(): string;
 }
 
@@ -355,6 +356,10 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
     storagePath: () => ctx.storage?.db.name ?? '',
     breakStorage: () => {
       ctx.storage?.db.close();
+    },
+    advanceClock: (ms) => {
+      const base = ctx.clock;
+      ctx.clock = () => new Date(base().getTime() + ms);
     },
     version: () => app.getVersion(),
   };

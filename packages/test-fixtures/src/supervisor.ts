@@ -87,6 +87,8 @@ export function supervisorFixtureBinding(
     effectiveTokenBudget: 1000,
     launchDisposition: 'ready',
     reasonCode: null,
+    assignment: null,
+    requiredReturnEvidence: [],
     ...overrides,
   };
 }
@@ -98,6 +100,7 @@ export function supervisorFixtureEnvelope(bindings: MissionBindingView[]): {
   const common = {
     objective: 'Check the fixture report',
     completionEvidence: 'A deliberate report reference',
+    exclusions: [],
     workspaces: [
       ...new Map(
         bindings.map((b) => [b.workspaceId, { workspaceId: b.workspaceId, mode: b.mode }]),
@@ -141,6 +144,8 @@ export function supervisorFixtureEnvelope(bindings: MissionBindingView[]): {
           runtimeSelection: b.runtimeSelection,
           permissionSelection: b.permissionSelection,
           executionBounds: b.executionBounds,
+          assignment: 'Inspect the fixture and report.',
+          requiredReturnEvidence: ['A cited fixture report'],
         })),
     },
   };

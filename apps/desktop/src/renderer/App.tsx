@@ -1,17 +1,21 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { MissionComposerDraftSummaryView } from '@threadhelm/contracts';
 import { api, call, errorCode } from './api.js';
 import { CloseBlockedDialog } from './features/control/CloseBlockedDialog.js';
 import { AgentLibraryWorkspace } from './features/coordination/AgentLibraryWorkspace.js';
 import { MemoryLibraryWorkspace } from './features/coordination/MemoryLibraryWorkspace.js';
-import { MissionComposer } from './features/coordination/MissionComposer.js';
 import { MissionDetail } from './features/coordination/MissionDetail.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
+import { ComposerContext } from './features/mission-composer/ComposerContext.js';
+import type { Stage, WorkerFields } from './features/mission-composer/composer-fields.js';
+import { MissionComposerWorkspace } from './features/mission-composer/MissionComposerWorkspace.js';
 import { ContextToggle } from './features/mission-focus/ContextToggle.js';
 import { MissionContext } from './features/mission-focus/MissionContext.js';
 import { MissionContextFrame } from './features/mission-focus/MissionContextFrame.js';
 import { MissionRail } from './features/mission-focus/MissionRail.js';
 import { MissionWorkspace } from './features/mission-focus/MissionWorkspace.js';
 import type { ActionKind } from './features/mission-focus/mission-presentation.js';
+import { reasonLabel } from './features/mission-focus/reason-labels.js';
 import { useMissionWorkspace } from './features/mission-focus/useMissionWorkspace.js';
 import { terminalSize } from './features/session/terminal-loader.js';
 import { SessionWorkspace } from './features/sessions/SessionWorkspace.js';
@@ -64,9 +68,72 @@ const destinationHeading: Record<WorkspaceDestination, string> = {
 function Shell() {
   const { state, actions } = useStore();
   const workspace = useMissionWorkspace(state.selectedMissionId);
-  const [creatingMission, setCreatingMission] = useState(false);
+  const [composerDraftId, setComposerDraftId] = useState<string | null>(null);
+  const [composerState, setComposerState] = useState<{
+    stage: Stage;
+    workers: WorkerFields[];
+  } | null>(null);
   const [detailMissionId, setDetailMissionId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<MissionComposerDraftSummaryView[]>([]);
   const missionSelected = state.selectedDestination === 'missions';
+  // Spec §1.2 close-flow / gate 6: a mission-rail or destination switch while
+  // the composer is open must flush its pending save first, so up to 800ms of
+  // autosave (or, after a prior save failure, everything unsaved) is never
+  // silently dropped by the unmount that follows.
+  const composerFlush = useRef<(() => Promise<boolean>) | null>(null);
+  const setComposerFlush = useCallback((flush: (() => Promise<boolean>) | null) => {
+    composerFlush.current = flush;
+  }, []);
+  const flushComposer = useCallback(async () => {
+    const flush = composerFlush.current;
+    if (!flush) return;
+    const ok = await flush();
+    if (!ok) actions.setNotice('Your mission draft changes could not be saved.');
+  }, [actions]);
+  const selectMission = useCallback(
+    (id: string) => {
+      void flushComposer().then(() => actions.selectMission(id));
+    },
+    [flushComposer, actions],
+  );
+  const selectDestination = useCallback(
+    (destination: WorkspaceDestination) => {
+      void flushComposer().then(() => actions.selectDestination(destination));
+    },
+    [flushComposer, actions],
+  );
+
+  useEffect(() => {
+    if (state.storageDegraded) {
+      setDrafts([]);
+      return;
+    }
+    let cancelled = false;
+    void call(api.missionComposer.listDrafts(undefined))
+      .then((page) => !cancelled && setDrafts(page.drafts))
+      .catch(() => !cancelled && setDrafts([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [state.missionSequence, state.composerSequence, state.storageDegraded]);
+
+  const openComposer = (sourceMissionId?: string) => {
+    // A composer may already be open (editing a different draft) — flush its
+    // pending save before replacing it, same as any other composer switch.
+    void flushComposer().then(() =>
+      call(api.missionComposer.createDraft(sourceMissionId ? { sourceMissionId } : undefined))
+        .then((draft) => setComposerDraftId(draft.draftId))
+        .catch((cause) =>
+          actions.setNotice(reasonLabel(errorCode(cause)) ?? 'The draft could not be created.'),
+        ),
+    );
+  };
+  const resumeDraft = useCallback(
+    (draftId: string) => {
+      void flushComposer().then(() => setComposerDraftId(draftId));
+    },
+    [flushComposer],
+  );
 
   const runMissionAction = (kind: ActionKind) => {
     const missionId = state.selectedMissionId;
@@ -80,18 +147,21 @@ function Shell() {
     setDetailMissionId(missionId);
   };
 
-  const contextContent = missionSelected ? (
-    <MissionContext
-      detail={workspace.detail}
-      presentation={workspace.presentation}
-      onAction={runMissionAction}
-      onOpenAttention={() => actions.selectDestination('attention')}
-    />
-  ) : (
-    <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
-      <SetupAttentionSummary />
-    </MissionContextFrame>
-  );
+  const contextContent =
+    missionSelected && composerDraftId && composerState ? (
+      <ComposerContext stage={composerState.stage} workers={composerState.workers} />
+    ) : missionSelected ? (
+      <MissionContext
+        detail={workspace.detail}
+        presentation={workspace.presentation}
+        onAction={runMissionAction}
+        onOpenAttention={() => actions.selectDestination('attention')}
+      />
+    ) : (
+      <MissionContextFrame heading={destinationHeading[state.selectedDestination]}>
+        <SetupAttentionSummary />
+      </MissionContextFrame>
+    );
 
   return (
     <div className="app">
@@ -121,12 +191,14 @@ function Shell() {
               missions={workspace.missions}
               titles={workspace.titles}
               selectedMissionId={state.selectedMissionId}
-              onSelect={actions.selectMission}
-              onCreate={() => setCreatingMission(true)}
+              onSelect={selectMission}
+              onCreate={() => openComposer()}
+              drafts={drafts}
+              onResumeDraft={resumeDraft}
             />
             <AppNavigation
               selected={state.selectedDestination}
-              onSelect={actions.selectDestination}
+              onSelect={selectDestination}
               counts={{
                 sessions: Object.values(state.unread).filter(Boolean).length,
                 attention: state.recoveryRecords.filter((record) => record.resolvedAt === null)
@@ -136,10 +208,27 @@ function Shell() {
           </>
         }
         workspace={
-          missionSelected ? (
+          state.selectedDestination !== 'missions' ? (
+            <LegacyDestination mission={workspace.detail} />
+          ) : composerDraftId ? (
+            <MissionComposerWorkspace
+              draftId={composerDraftId}
+              onClose={() => {
+                setComposerDraftId(null);
+                setComposerState(null);
+              }}
+              onStarted={(mission) => {
+                setComposerDraftId(null);
+                setComposerState(null);
+                actions.selectMission(mission.id);
+                setDetailMissionId(mission.id);
+              }}
+              onState={setComposerState}
+              onFlushReady={setComposerFlush}
+            />
+          ) : missionSelected ? (
             <MissionWorkspace
               workspace={workspace}
-              onCreate={() => setCreatingMission(true)}
               onOpenDetail={() => {
                 if (state.selectedMissionId) setDetailMissionId(state.selectedMissionId);
               }}
@@ -169,18 +258,12 @@ function Shell() {
           ? `ThreadHelm v${state.appInfo.version} · Electron ${state.appInfo.electronVersion} · ${state.appInfo.arch}`
           : 'ThreadHelm'}
       </footer>
-      {creatingMission ? (
-        <MissionComposer
-          onClose={() => setCreatingMission(false)}
-          onSaved={(mission) => {
-            actions.selectMission(mission.id);
-            setCreatingMission(false);
-            setDetailMissionId(mission.id);
-          }}
-        />
-      ) : null}
       {detailMissionId ? (
-        <MissionDetail missionId={detailMissionId} onClose={() => setDetailMissionId(null)} />
+        <MissionDetail
+          missionId={detailMissionId}
+          onClose={() => setDetailMissionId(null)}
+          onRevise={(id) => openComposer(id)}
+        />
       ) : null}
       {state.launchRequest ? (
         <LaunchDialog

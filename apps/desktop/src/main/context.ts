@@ -33,6 +33,7 @@ import type { ProfileService } from './coordination/profiles.js';
 import type { AgentWizardService } from './coordination/profile-wizard.js';
 import type { ReconService } from './coordination/recon.js';
 import type { SupervisorService } from './coordination/supervisor.js';
+import type { MissionComposerService } from './coordination/mission-composer.js';
 
 // --- native boundary (contracts/windows-supervisor.md) ----------------------
 
@@ -226,6 +227,8 @@ export interface Context {
   recon?: ReconService;
   /** Main-owned mission authority. No renderer/provider receives this object. */
   supervisor?: SupervisorService;
+  /** Main-owned mission draft authority; drafts grant nothing. */
+  missionComposer?: MissionComposerService;
   /** Session-scoped provider bridge authority; absent in degraded/test compositions. */
   coordinationBridge?: BridgeSessionManager;
   appInfo: AppInfo;

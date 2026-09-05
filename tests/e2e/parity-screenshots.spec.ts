@@ -10,7 +10,7 @@ import type {
   MissionPreviewView,
 } from '@threadhelm/contracts';
 import { launchApp, type LaunchedApp } from './helpers/app.js';
-import { prepareFixtureMission } from './helpers/mission.js';
+import { missionProfile, missionSession, prepareFixtureMission } from './helpers/mission.js';
 import { launchWithFixtures, teardown, tempWorkspace } from './helpers/ui.js';
 
 const OUT = 'artifacts/parity';
@@ -173,5 +173,50 @@ test('capture parity screenshots', async () => {
     await shot(app, '25-attention-populated');
   } finally {
     await teardown(app, ...directories);
+  }
+
+  const composerApp = await launchWithFixtures({ 'codex-cli': 'echo' });
+  await composerApp.page.setViewportSize({ width: 1400, height: 860 });
+  const composerDirs = [tempWorkspace('composer-leader'), tempWorkspace('composer-worker')];
+  try {
+    const page = composerApp.page;
+    const leader = await missionProfile(composerApp, 'Parity coordinator');
+    const worker = await missionProfile(composerApp, 'Parity worker');
+    const supervisorSession = await missionSession(composerApp, composerDirs[0]!);
+    const workerSession = await missionSession(composerApp, composerDirs[1]!);
+    await page.reload();
+    await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+    await shot(composerApp, '10-composer-outcome');
+    await page.getByLabel('Finish line', { exact: true }).fill('Review a bounded local change.');
+    await page
+      .getByLabel('Proof of completion', { exact: true })
+      .fill('A cited report and focused tests.');
+    await page.getByRole('button', { name: 'Continue to crew', exact: true }).click();
+    await page
+      .getByRole('combobox', { name: 'Supervisor profile', exact: true })
+      .selectOption(leader.profileId);
+    await page
+      .getByRole('combobox', { name: 'Supervisor session', exact: true })
+      .selectOption(supervisorSession.id);
+    await page.getByRole('button', { name: 'Add worker', exact: true }).click();
+    await page
+      .getByRole('combobox', { name: 'Worker 1 profile', exact: true })
+      .selectOption(worker.profileId);
+    await page
+      .getByRole('combobox', { name: 'Worker 1 session', exact: true })
+      .selectOption(workerSession.id);
+    await page.getByLabel('What worker 1 contributes', { exact: true }).fill('Inspect the change.');
+    await page.getByLabel('What worker 1 must bring back', { exact: true }).fill('A cited report');
+    await page
+      .getByRole('button', { name: 'Add to what worker 1 must bring back', exact: true })
+      .click();
+    await shot(composerApp, '11-composer-crew');
+    await page.getByRole('button', { name: 'Continue to access and limits', exact: true }).click();
+    await shot(composerApp, '12-composer-access');
+    await page.getByRole('button', { name: 'Continue to review', exact: true }).click();
+    await expect(page.locator('.composer-state.ready')).toBeVisible();
+    await shot(composerApp, '13-composer-review-ready');
+  } finally {
+    await teardown(composerApp, ...composerDirs);
   }
 });

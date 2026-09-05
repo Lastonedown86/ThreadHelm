@@ -2277,3 +2277,24 @@ PR 17 must now receive required repository review and integrate the accepted bas
 before the feature selector advances. Production UI/UX changes are outside this frozen candidate;
 isolated discovery/prototyping may run while review is pending, but implementation must start from
 the accepted merged baseline so it does not invalidate P04/P05 artifact identity.
+
+### 2026-09-04 — US8 live-proof runbook and fixture slice results (T148/T149 preparation)
+
+[us8-live-proof-plan.md](us8-live-proof-plan.md) records the owner runbook for the D03 live proof on
+`the-otaku-hangout`, the per-step authorization checklist, and the pass/fail criteria. No provider
+session, mission, or credentialed command was started; `claude --version` reported `2.1.260` and
+`codex --version` reported `codex-cli 0.150.1`.
+
+Fixture slices on branch `docs/us8-live-proof-plan` at `d044ca9`, Node `v22.19.0`, pnpm `11.0.8`:
+`pnpm test:unit supervisor` passed 24/24 (2 files); `pnpm test:unit -- supervisor` forwarded the
+`--` and ran the whole unit project, 441/441 (48 files); `pnpm test:contract supervisor` passed
+39/39 (2 files); after `pnpm native:build` and `pnpm desktop:build`,
+`pnpm test:integration:windows supervisor-mission` passed 19/19, exit 0, 81.77 s.
+
+Blocking findings: the Claude capability evidence in `packages/providers/src/claude-code.ts` is
+pinned to `2.1.251` while the installed CLI is `2.1.260`, and `organizationPolicy` remains
+hard-coded `unknown`, so every Claude `auto`/`bounded_allowlist` binding resolves `held` in any
+build. The Codex adapter returns no capability evidence, so only `manual` workers can start. The
+live proof is therefore reachable today only for the Codex manual path; the pre-authorized Claude
+auto worker start in T148 stays deferred under D03 until exact-version evidence and an attestation
+source are reviewed. T148/T149 remain open.

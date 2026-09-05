@@ -102,3 +102,13 @@ Dependencies: T034 -> T035 -> T036 -> T037 -> T038. Durable mission association 
 - [x] T043 Complete static checks, update verification/register and update PR #38.
 
 Dependencies: T039 -> T040 -> T041 -> T042 -> T043. ATT-002/003/004 remain proposed.
+
+## Slice 9: ATT-002 bounded scope clarification
+
+- [x] T044 Record recovery-only scope and guarded mission-return design.
+- [x] T045 [US7] Add and run failing attention-scope navigation regression.
+- [x] T046 [US2] Add explicit recovery copy, badge description and guarded mission-return controls in App.tsx, RecoveryAttentionQueue.tsx and AppNavigation.tsx.
+- [x] T047 [US7] Verify exact mission return and unchanged decision/process state plus existing recovery regressions.
+- [x] T048 Finish static checks, verification/register and open PR.
+
+Dependencies: T044 -> T045 -> T046 -> T047 -> T048. ATT-003/004 and A08/A09 remain open.

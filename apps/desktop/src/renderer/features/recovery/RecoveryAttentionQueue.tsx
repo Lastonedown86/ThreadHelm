@@ -4,7 +4,13 @@ import { useStore } from '../../store.js';
 import { RecoveryDetail } from './RecoveryDetail.js';
 import { SessionList } from '../sessions/SessionList.js';
 
-export function RecoveryAttentionQueue() {
+export function RecoveryAttentionQueue({
+  onOpenMissions,
+  onOpenSelectedMission,
+}: {
+  onOpenMissions(): void;
+  onOpenSelectedMission?(): void;
+}) {
   const { state, actions } = useStore();
   const open = state.recoveryRecords.filter((record) => record.resolvedAt === null);
   const [selectedId, setSelectedId] = useState(open[0]?.id ?? null);
@@ -53,12 +59,19 @@ export function RecoveryAttentionQueue() {
   return (
     <main className="recovery-attention-workspace" aria-labelledby="attention-heading">
       <header className="workspace-page-header">
-        <p className="eyebrow">Cross-mission attention</p>
+        <p className="eyebrow">Session recovery</p>
         <h1 id="attention-heading">Recovery attention queue</h1>
         <p>
           Inspect unresolved local evidence. Recovery resolution never changes the truth of an
           unknown outcome.
         </p>
+        <p className="hint">
+          Mission decisions are reviewed in Missions. This queue and its badge count unresolved
+          session recovery records.
+        </p>
+        <button type="button" className="small" onClick={onOpenSelectedMission ?? onOpenMissions}>
+          {onOpenSelectedMission ? 'Open selected mission' : 'Open Missions'}
+        </button>
       </header>
       {open.length === 0 ? (
         <section className="mission-workspace-state">

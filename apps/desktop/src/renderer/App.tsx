@@ -35,8 +35,12 @@ function currentTerminalSize(sessionId: string | null): { columns: number; rows:
 
 function LegacyDestination({
   mission,
+  onSelectMission,
+  onOpenMissions,
 }: {
   mission: ReturnType<typeof useMissionWorkspace>['detail'];
+  onSelectMission(id: string): void;
+  onOpenMissions(): void;
 }) {
   const { state } = useStore();
   switch (state.selectedDestination) {
@@ -47,7 +51,14 @@ function LegacyDestination({
     case 'memory':
       return <MemoryLibraryWorkspace />;
     case 'attention':
-      return <RecoveryAttentionQueue />;
+      return (
+        <RecoveryAttentionQueue
+          onOpenMissions={onOpenMissions}
+          {...(state.selectedMissionId
+            ? { onOpenSelectedMission: () => onSelectMission(state.selectedMissionId!) }
+            : {})}
+        />
+      );
     case 'settings':
       return <GuidedSetup />;
     case 'missions':
@@ -282,7 +293,11 @@ function Shell() {
         }
         workspace={
           state.selectedDestination !== 'missions' ? (
-            <LegacyDestination mission={workspace.detail} />
+            <LegacyDestination
+              mission={workspace.detail}
+              onSelectMission={(id) => void selectMission(id)}
+              onOpenMissions={() => selectDestination('missions')}
+            />
           ) : pickingRepo ? (
             <RepoIdeaEntry
               workspaces={state.workspaces}
@@ -318,7 +333,11 @@ function Shell() {
               }}
             />
           ) : (
-            <LegacyDestination mission={workspace.detail} />
+            <LegacyDestination
+              mission={workspace.detail}
+              onSelectMission={(id) => void selectMission(id)}
+              onOpenMissions={() => selectDestination('missions')}
+            />
           )
         }
         contextToggle={

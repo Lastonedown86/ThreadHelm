@@ -19,6 +19,7 @@ import type {
   ProviderId,
   ProviderLifecycleEvidence,
   ProviderMemoryProposeRevisionInput,
+  RepoIdeaCandidate,
 } from '@threadhelm/contracts';
 import type { FakeAgentMode } from '@threadhelm/test-fixtures';
 import type { TestHooks } from '../../../apps/desktop/src/main/test-hooks.js';
@@ -80,6 +81,8 @@ export interface LaunchedApp {
   ): Promise<T>;
   /** Deterministic wait for a Workspace Recon run's collection to finish. */
   reconWhenCollected(runId: string): Promise<void>;
+  /** Test-only: repo-idea generation answers with these ideas instead of running a CLI. */
+  fakeRepoIdeas(ideas: RepoIdeaCandidate[] | null): Promise<void>;
   /** Hard-kills the coordinator with no cleanup; resolves once the process is gone. */
   crashCoordinator(): Promise<void>;
   advanceClock(ms: number): Promise<void>;
@@ -192,6 +195,7 @@ export async function launchApp(options: LaunchOptions = {}): Promise<LaunchedAp
         params,
       }),
     reconWhenCollected: (runId) => hooks('hooks.reconWhenCollected(arg)', runId),
+    fakeRepoIdeas: (ideas) => hooks('hooks.fakeRepoIdeas(arg)', ideas),
     advanceClock: (ms) => hooks('hooks.advanceClock(arg)', ms),
     breakStorage: () => hooks('hooks.breakStorage()'),
     async crashCoordinator() {

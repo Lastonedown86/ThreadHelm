@@ -8,7 +8,13 @@ import type {
 } from '@threadhelm/contracts';
 import type { LaunchedApp } from './helpers/app.js';
 import { prepareFixtureMission } from './helpers/mission.js';
-import { launchWithFixtures, sessionOption, teardown, tempWorkspace } from './helpers/ui.js';
+import {
+  launchWithFixtures,
+  newMissionViaUi,
+  sessionOption,
+  teardown,
+  tempWorkspace,
+} from './helpers/ui.js';
 
 async function confirmMission(app: LaunchedApp, envelope: MissionEnvelopeInput, objective: string) {
   const preview = await app.call<MissionPreviewView>('missions.preview', {
@@ -251,8 +257,7 @@ test('mission form has named visible-focus controls, stable idle content and 200
   const app = await launchWithFixtures({ 'codex-cli': 'echo' });
   const page = app.page;
   try {
-    await page.getByRole('button', { name: 'New mission…', exact: true }).focus();
-    await page.keyboard.press('Enter');
+    await newMissionViaUi(page, true);
     const composer = page.locator('.composer');
     await expect(page.getByRole('heading', { name: 'Define one finish line.' })).toBeFocused();
     // Traverse the real form, checking each enabled focus target rather than
@@ -293,7 +298,7 @@ test('composer never scrolls sideways and its sticky actions never cover the foc
     ] as const) {
       await page.setViewportSize({ width, height });
       await page.getByRole('button', { name: 'Missions', exact: true }).click();
-      await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+      await newMissionViaUi(page);
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

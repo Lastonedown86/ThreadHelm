@@ -335,6 +335,13 @@ export const ErrorCode = z.enum([
   'MISSION_DRAFT_SAVE_FAILED',
   'MISSION_DRAFT_DISCARD_STALE',
   'MISSION_CONFIRMATION_EXPIRED',
+  // structured-draft primitive
+  'STRUCTURED_DRAFT_UNAVAILABLE',
+  'STRUCTURED_DRAFT_TIMEOUT',
+  'STRUCTURED_DRAFT_OUTPUT_INVALID',
+  // repo idea generation
+  'REPO_IDEAS_UNAVAILABLE',
+  'REPO_IDEAS_OUTPUT_INVALID',
   // agent templates and wizard drafts
   'TEMPLATE_VARIABLE_UNRESOLVED',
   'TEMPLATE_DRAFT_INCOMPLETE',
@@ -2063,6 +2070,18 @@ export const MissionComposerFields = strictObject({
     .optional(),
 });
 export type MissionComposerFields = z.infer<typeof MissionComposerFields>;
+/**
+ * One AI-suggested mission idea for an approved repo (spec 2026-09-03 §4).
+ * Untrusted model output: strict keys, authored-text safety, and byte bounds
+ * matching the Outcome fields the user may later copy it into.
+ */
+export const RepoIdeaCandidate = strictObject({
+  title: AuthoredText.min(1).max(120),
+  rationale: AuthoredText.min(1).max(400),
+  proposedObjective: AuthoredText.min(1).max(4000),
+  proposedCompletionEvidence: AuthoredText.min(1).max(2000),
+});
+export type RepoIdeaCandidate = z.infer<typeof RepoIdeaCandidate>;
 const MissionComposerIssueCode = z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/);
 export const MissionComposerDraftSummaryView = strictObject({
   draftId: Uuid,
@@ -2455,6 +2474,16 @@ export const operations = {
       version: z.number().int().positive(),
       deletedAt: Timestamp,
     }),
+  },
+  /** Pure read-and-propose over repo metadata; touches no draft, grants nothing. */
+  'missionComposer.proposeRepoIdeas': {
+    request: strictObject({
+      workspaceId: Uuid,
+      providerId: ProviderId.optional(),
+      model: LaunchRuntimeSelection.shape.model.unwrap().optional(),
+      effort: LaunchEffort.optional(),
+    }),
+    response: strictObject({ ideas: z.array(RepoIdeaCandidate).length(3) }),
   },
   'workspaces.choose': { request: none, response: WorkspaceCandidateView },
   'workspaces.approve': {

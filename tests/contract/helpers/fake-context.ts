@@ -509,6 +509,10 @@ export function createWorld(
           exec: async () => ({ stdout: '', stderr: '', exitCode: 1, timedOut: false }),
         }),
       },
+      // Held by default; a test that needs a reply reassigns world.ctx.structuredDraft.
+      structuredDraft: {
+        run: async () => ({ held: true, reasonCode: 'STRUCTURED_DRAFT_UNSUPPORTED' }),
+      },
       // Per-world and lazy: nothing is created until a recon run asks, and two
       // parallel workers never share a root that confirmLaunch removes.
       reconRoot: () =>

@@ -6,15 +6,13 @@ import type {
   MissionPreviewView,
   MissionSummaryView,
 } from '@threadhelm/contracts';
-import { launchWithFixtures, teardown, tempWorkspace } from './helpers/ui.js';
+import { launchWithFixtures, newMissionViaUi, teardown, tempWorkspace } from './helpers/ui.js';
 import { composeMissionViaUi, missionProfile, missionSession } from './helpers/mission.js';
 
 test('mission creation is keyboard accessible and explains an empty roster', async () => {
   const app = await launchApp();
   try {
-    const button = app.page.getByRole('button', { name: 'New mission…', exact: true });
-    await button.focus();
-    await app.page.keyboard.press('Enter');
+    await newMissionViaUi(app.page, true);
     await expect(app.page.getByRole('heading', { name: 'Define one finish line.' })).toBeFocused();
     await app.page.getByLabel('Finish line', { exact: true }).fill('x');
     await app.page.getByLabel('Proof of completion', { exact: true }).fill('y');
@@ -27,7 +25,7 @@ test('mission creation is keyboard accessible and explains an empty roster', asy
     ).toBeDisabled();
     await app.page.getByRole('button', { name: 'Close', exact: true }).click();
     await app.page.getByRole('button', { name: 'Close composer', exact: true }).click();
-    await expect(button).toBeVisible();
+    await expect(app.page.getByRole('button', { name: 'New mission…', exact: true })).toBeVisible();
   } finally {
     await teardown(app);
   }
@@ -98,7 +96,7 @@ test('offline worker review discloses exact typed tool patterns and restores for
     const session = await missionSession(app, dirs[0]!);
     const workspace = await approveFolder(app, dirs[1]!);
     await page.reload();
-    await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+    await newMissionViaUi(page);
     await page.getByLabel('Finish line', { exact: true }).fill('Inspect fixture files');
     await page.getByLabel('Proof of completion', { exact: true }).fill('Cited observations');
     await page.getByRole('button', { name: 'Continue to crew', exact: true }).click();

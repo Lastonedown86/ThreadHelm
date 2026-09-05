@@ -82,6 +82,24 @@ export function sessionOptions(page: Page): Locator {
   return page.getByRole('listbox', { name: 'Sessions' }).getByRole('option');
 }
 
+/**
+ * New mission… → Skip the repo-idea screen, landing on a blank Outcome stage.
+ * `keyboard` drives both steps with focus + Enter for keyboard-only journeys.
+ */
+export async function newMissionViaUi(page: Page, keyboard = false): Promise<void> {
+  const create = page.getByRole('button', { name: 'New mission…', exact: true });
+  const skip = page.getByRole('button', { name: /^Skip/ });
+  if (keyboard) {
+    await create.focus();
+    await page.keyboard.press('Enter');
+    await skip.focus();
+    await page.keyboard.press('Enter');
+  } else {
+    await create.click();
+    await skip.click();
+  }
+}
+
 /** Choose folder… → Approve folder, returning the workspace's display path. */
 export async function approveViaUi(app: LaunchedApp, dir: string): Promise<string> {
   const choose = app.page.getByRole('button', { name: 'Choose folder…' });

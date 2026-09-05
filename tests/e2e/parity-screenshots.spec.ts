@@ -186,6 +186,8 @@ test('capture parity screenshots', async () => {
     const workerSession = await missionSession(composerApp, composerDirs[1]!);
     await page.reload();
     await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+    await shot(composerApp, '09b-repo-idea-entry');
+    await page.getByRole('button', { name: /^Skip/ }).click();
     await shot(composerApp, '10-composer-outcome');
     await page.getByLabel('Finish line', { exact: true }).fill('Review a bounded local change.');
     await page

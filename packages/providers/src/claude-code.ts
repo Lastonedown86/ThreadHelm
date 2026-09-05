@@ -6,10 +6,25 @@ import {
   interactiveLaunch,
   profileLaunchDisclosure,
   runProbe,
+  structuredDraftInvocation,
   type LaunchContext,
   type ProbeContext,
   type ProviderAdapter,
 } from './adapter.js';
+
+/** `claude -p --output-format json` prints one envelope; `result` is the reply (verified on 2.1.260). */
+function parseClaudePrintEnvelope(stdout: string): string | null {
+  let envelope: unknown;
+  try {
+    envelope = JSON.parse(stdout.trim());
+  } catch {
+    return null;
+  }
+  if (typeof envelope !== 'object' || envelope === null) return null;
+  const { result, is_error: isError } = envelope as { result?: unknown; is_error?: unknown };
+  if (isError === true || typeof result !== 'string') return null;
+  return result;
+}
 
 function launchArgs(ctx: LaunchContext): string[] {
   const args: string[] = [];
@@ -52,6 +67,7 @@ export const claudeCodeAdapter: ProviderAdapter = {
   capabilities: {
     interactivePty: true,
     structuredActivity: false,
+    structuredDraft: true,
     cleanStopStrategy: 'slash_exit',
     bridgeConfiguration: 'session_scoped_stdio_mcp',
     safePointEvidence: {
@@ -91,6 +107,20 @@ export const claudeCodeAdapter: ProviderAdapter = {
   },
   buildCleanStop(): CleanStopAction {
     return { writes: ['/exit\r'], graceMs: 10_000 };
+  },
+  buildStructuredDraft(ctx) {
+    // --tools "" disables every built-in tool and --strict-mcp-config keeps
+    // the user's MCP servers out: a drafting call, not a session. --tools is
+    // variadic, so it stays last; the prompt arrives on stdin, not argv.
+    const args = ['-p', '--output-format', 'json'];
+    if (ctx.model) args.push('--model', ctx.model);
+    if (ctx.effort) args.push('--effort', ctx.effort);
+    args.push('--tools', '', '--strict-mcp-config');
+    return structuredDraftInvocation(ctx, args);
+  },
+  parseStructuredDraftOutput(raw) {
+    if (raw.exitCode !== 0) return null;
+    return parseClaudePrintEnvelope(raw.stdout);
   },
   parseLifecycleEvidence() {
     // Exact Claude Code 2.1.251 proof observed a structured Stop hook, but its

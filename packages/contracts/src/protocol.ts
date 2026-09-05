@@ -22,6 +22,7 @@ export const operationNames = Object.freeze([
   'missionComposer.confirm',
   'missionComposer.previewDiscard',
   'missionComposer.confirmDiscard',
+  'missionComposer.proposeRepoIdeas',
   'workspaces.choose',
   'workspaces.approve',
   'workspaces.list',

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { launchApp } from './helpers/app.js';
 import { missionProfile, missionSession } from './helpers/mission.js';
-import { launchWithFixtures, teardown, tempWorkspace } from './helpers/ui.js';
+import { launchWithFixtures, newMissionViaUi, teardown, tempWorkspace } from './helpers/ui.js';
 
 test.setTimeout(90_000);
 
@@ -10,8 +10,7 @@ test('new mission opens the guided composer in the workspace and autosaves the o
   try {
     const page = app.page;
     await expect(page.getByRole('button', { name: 'Create mission', exact: true })).toHaveCount(0);
-    await page.getByRole('button', { name: 'New mission…', exact: true }).focus();
-    await page.keyboard.press('Enter');
+    await newMissionViaUi(page, true);
     await expect(page.getByRole('dialog')).toHaveCount(0);
     const heading = page.getByRole('heading', { name: 'Define one finish line.' });
     await expect(heading).toBeVisible();
@@ -50,7 +49,7 @@ test('new mission opens the guided composer in the workspace and autosaves the o
 
 async function fillOutcome(app: Awaited<ReturnType<typeof launchApp>>) {
   const page = app.page;
-  await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+  await newMissionViaUi(page);
   await page.getByLabel('Finish line', { exact: true }).fill('Fix the flaky terminal test.');
   await page.getByLabel('Proof of completion', { exact: true }).fill('Three green runs.');
   await page.getByRole('button', { name: 'Continue to crew', exact: true }).click();
@@ -322,7 +321,7 @@ test('drafts appear in the rail and the context rail explains the draft', async 
   const app = await launchApp();
   try {
     const page = app.page;
-    await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+    await newMissionViaUi(page);
     await page.getByLabel('Finish line', { exact: true }).fill('Draft one.');
     const context = page.getByRole('complementary', { name: 'Mission context' });
     await expect(context.getByText('Mission draft')).toBeVisible();
@@ -344,7 +343,7 @@ test('a save failure keeps the composer open and offers retry, keep editing, dis
   const app = await launchApp();
   try {
     const page = app.page;
-    await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+    await newMissionViaUi(page);
     await page.getByLabel('Finish line', { exact: true }).fill('Before the failure.');
     await expect(page.getByRole('status').filter({ hasText: 'Draft saved' })).toBeVisible();
     await app.breakStorage();

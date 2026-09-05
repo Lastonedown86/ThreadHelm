@@ -26,6 +26,11 @@ function parseClaudePrintEnvelope(stdout: string): string | null {
   return result;
 }
 
+// ponytail: exact-version allowlist, extend per verified release. No `>=` open
+// range: capability is proved per exact version, and an unlisted version must
+// stay fail-closed (no evidence, launch held).
+const VERIFIED_CLAUDE_AUTO_VERSIONS: readonly string[] = ['2.1.251', '2.1.260'];
+
 function launchArgs(ctx: LaunchContext): string[] {
   const args: string[] = [];
   if (ctx.runtimeSelection.model) args.push('--model', ctx.runtimeSelection.model);
@@ -130,10 +135,10 @@ export const claudeCodeAdapter: ProviderAdapter = {
     return null;
   },
   permissionCapabilityEvidence({ providerVersion, model, observedAt }) {
-    // The installed 2.1.251 surface proves bounded --allowedTools support, but
+    // The verified surfaces prove bounded --allowedTools support, but
     // organization/account classifier availability is not inferable from
     // authentication or --help. T166 supplies that separate auto proof.
-    if (providerVersion !== '2.1.251') return null;
+    if (!VERIFIED_CLAUDE_AUTO_VERSIONS.includes(providerVersion)) return null;
     return {
       providerId: 'claude-code',
       providerVersion,

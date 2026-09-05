@@ -2298,3 +2298,16 @@ build. The Codex adapter returns no capability evidence, so only `manual` worker
 live proof is therefore reachable today only for the Codex manual path; the pre-authorized Claude
 auto worker start in T148 stays deferred under D03 until exact-version evidence and an attestation
 source are reviewed. T148/T149 remain open.
+
+### 2026-09-04 — Claude capability-evidence version allowlist
+
+`claudeCodeAdapter.permissionCapabilityEvidence` previously returned evidence only for the literal
+Claude Code `2.1.251`. The installed CLI is now `2.1.260`, so every Claude `auto` /
+`bounded_allowlist` worker binding resolved `held` (`PERMISSION_AUTO_UNAVAILABLE` /
+`PERMISSION_ALLOWLIST_UNAVAILABLE`). The literal equality is replaced by an explicit exact-version
+allowlist `VERIFIED_CLAUDE_AUTO_VERSIONS = ['2.1.251', '2.1.260']`; there is no `>=` open range
+because capability is verified per exact version, and any unlisted version still yields no evidence
+and stays held. `2.1.260` is allowlisted on the owner's decision of 2026-09-04 pending live proof;
+the T166-style isolated auto proof for `2.1.260` has not been run. `organizationPolicy` remains
+`'unknown'`, so installed Claude `auto` starts remain held (D03 unchanged); only `manual` and
+`bounded_allowlist` become ready on `2.1.260`.

@@ -143,4 +143,23 @@ describe('per-session supervisor role and runtime configuration', () => {
     expect(held.disposition).toBe('held');
     expect(held.providerMapping).toBeNull();
   });
+  it('emits capability evidence only for allowlisted verified Claude versions', () => {
+    const at = now.toISOString();
+    const model = 'claude-sonnet-5';
+    for (const providerVersion of ['2.1.251', '2.1.260']) {
+      const capability = claudeCodeAdapter.permissionCapabilityEvidence!({
+        providerVersion,
+        model,
+        observedAt: at,
+      });
+      expect(capability?.providerVersion).toBe(providerVersion);
+      expect(capability?.organizationPolicy).toBe('unknown');
+      expect(capability?.supportedPolicies).toEqual(['manual', 'bounded_allowlist']);
+    }
+    for (const providerVersion of ['2.1.261', '2.0.0', 'garbage']) {
+      expect(
+        claudeCodeAdapter.permissionCapabilityEvidence!({ providerVersion, model, observedAt: at }),
+      ).toBeNull();
+    }
+  });
 });

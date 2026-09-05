@@ -144,7 +144,7 @@ function Shell() {
       actions.selectMission(id);
     });
   const selectDestination = (destination: WorkspaceDestination) => {
-    if (destination === state.selectedDestination) return;
+    if (destination === state.selectedDestination && destination !== 'sessions') return;
     void navigate(() => actions.selectDestination(destination));
   };
   const newMission = () =>
@@ -314,6 +314,7 @@ function Shell() {
               onOpenTerminal={(sessionId) => {
                 actions.select(sessionId);
                 actions.selectDestination('sessions');
+                actions.setSessionScope('mission');
               }}
             />
           ) : (

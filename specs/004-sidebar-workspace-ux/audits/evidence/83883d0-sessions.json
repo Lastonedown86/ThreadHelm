@@ -1,0 +1,89 @@
+[
+  {
+    "id": "environment",
+    "base": "83883d04940b32410075949bfefb7e87a85888a3",
+    "os": "Windows 11 Home",
+    "release": "10.0.26200",
+    "providers": "isolated echo fixtures"
+  },
+  {
+    "id": "S01-empty",
+    "heading": "Local sessions",
+    "emptyCopy": "No attached sessions\n\nStart an approved session or bind a reviewed profile through a mission.",
+    "live": []
+  },
+  {
+    "id": "S02-tab-navigation",
+    "names": ["Codex CLI\nRunning", "Codex CLI\nRunning"],
+    "selectedBefore": "Codex CLI\nRunning",
+    "selectedAfter": "Codex CLI\nRunning",
+    "focusStayedOnFirst": true,
+    "tabStops": [null, null],
+    "tabPanels": 0
+  },
+  {
+    "id": "S03-hide-selected-ended",
+    "expanded": "true",
+    "endedListed": 1,
+    "tabNames": ["Codex CLI\nRunning", "Codex CLI\nStopped"],
+    "liveIds": ["29136f4d-a3e7-43de-b9c8-95f452698b0e"]
+  },
+  {
+    "id": "S04-collapsed-inventory",
+    "endedListed": 0,
+    "expanded": "false",
+    "tabNames": ["Codex CLI\nRunning", "Codex CLI\nStopped"],
+    "nestedMains": 2,
+    "duplicateTerminalIds": 2
+  },
+  {
+    "id": "S05-stop-readback",
+    "stoppedA": "stopped",
+    "runningB": "running",
+    "liveIds": ["29136f4d-a3e7-43de-b9c8-95f452698b0e"],
+    "stoppedJob": null
+  },
+  {
+    "id": "S06-expired-preview",
+    "error": "PREVIEW_EXPIRED — The launch preview expired. Open the disclosure again.",
+    "launchStillEnabled": true,
+    "buttons": ["Cancel", "Launch session"],
+    "liveIds": ["29136f4d-a3e7-43de-b9c8-95f452698b0e"]
+  },
+  {
+    "id": "S07-repeated-expiry",
+    "error": "PREVIEW_EXPIRED — The launch preview expired. Open the disclosure again.",
+    "liveIds": ["29136f4d-a3e7-43de-b9c8-95f452698b0e"]
+  },
+  {
+    "id": "S08-mission-scope",
+    "missionId": "a7eaeb46-474f-42cc-9a5e-db03a3ddb9c2",
+    "tabCount": 2,
+    "allSessionsControls": 0,
+    "launchButtons": 0,
+    "copy": "MISSION TERMINAL DOCK\n\nReview a bounded fixture mission\n\nOnly sessions bound to this selected mission appear here."
+  },
+  {
+    "id": "S09-unbound-launch",
+    "outsideId": "17cc8869-1523-426a-aaa1-b467015c6668",
+    "liveIds": [
+      "e7f771af-9391-42ac-98f9-96129672474d",
+      "f6a9f0cd-ba7c-4940-8882-060888cd45f2",
+      "17cc8869-1523-426a-aaa1-b467015c6668"
+    ],
+    "missionHeading": "Review a bounded fixture mission",
+    "outsideListRows": 0,
+    "tabCount": 2,
+    "selectedDockShowsOutside": false,
+    "allSessionsControls": 0
+  },
+  {
+    "id": "S10-attention-return",
+    "outsideSelected": false,
+    "liveIds": [
+      "e7f771af-9391-42ac-98f9-96129672474d",
+      "f6a9f0cd-ba7c-4940-8882-060888cd45f2",
+      "17cc8869-1523-426a-aaa1-b467015c6668"
+    ]
+  }
+]

@@ -8,3 +8,7 @@ No persisted schema changes.
 - Mission view: entry, draft(ID), or selected mission. Opening entry/draft changes destination to Missions. Selecting a mission clears obsolete composer state. Draft ID changes remount local state.
 
 Existing draft ID, optimistic version and saved receipt contracts remain authoritative. No navigation path grants access or launches a provider.
+
+## Slice 2 renderer scope
+
+Add `sessionScope: 'all' | 'mission'` to ephemeral renderer State, initially `all`. `selectDestination('sessions')` resets it to `all`; `setSessionScope` changes only the filter. Mission terminal navigation sets `mission` after selecting the destination. The effective mission filter requires a selected mission ID, and uses bindings only from detail with that same ID. Selection fallback uses visible session IDs only. No persisted model or contract schema changes.

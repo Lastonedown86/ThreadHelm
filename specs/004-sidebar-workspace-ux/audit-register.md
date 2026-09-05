@@ -2,21 +2,21 @@
 
 Created 2026-09-05. Feature: [Sidebar and Workspace UX Consistency](spec.md).
 
-Current audit baseline: `efcd523f898f8353ad1975614f1953b94a5656d4`, latest fetched main, merged PR #30. A01/A02 refresh the historical Mission findings with UI execution and independent state readback. Read the [merge reconciliation](audits/main-merge-reconciliation.md) before using the older PR #29 evidence.
+Current main baseline: `83883d04940b32410075949bfefb7e87a85888a3` (merged PR #31). A03 uses this baseline. A01/A02 retain their pre-fix `efcd523` evidence, with MIS-001/002 subsequently implemented and merged in PR #31. Read the [merge reconciliation](audits/main-merge-reconciliation.md) before using older PR #29 evidence.
 
 ## Coverage
 
-| Pass | Surface                                                                          | Status                                                                                                                      | Record                                            |
-| ---- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| A01  | Shared sidebar and navigation                                                    | Audit pass recorded; confirmed navigation, save-loss and narrow-inventory defects; remaining matrix gaps explicit           | [A01 report](audits/a01-sidebar-navigation.md)    |
-| A02  | Missions, New mission, drafts, workspace, detail                                 | Audit pass recorded; lifecycle and persistence independently observed; confirmed defects and remaining matrix gaps explicit | [A02 report](audits/a02-mission-functionality.md) |
-| A03  | Sessions, launch, terminals, controls, recovery                                  | Pending full audit; include newly collapsed ended sessions                                                                  | Use audit template                                |
-| A04  | Agents, library, creation, editing, review                                       | Pending                                                                                                                     | Use audit template                                |
-| A05  | Starter/template flows inside Agents: preview, import, create-agent relationship | Pending nested-flow audit; separate sidebar destination removed by PR #29                                                   | Use audit template                                |
-| A06  | Memory, search, reading, editing, revisions, associations                        | Pending                                                                                                                     | Use audit template                                |
-| A07  | Attention, prioritization, resolution, return to item                            | Pending                                                                                                                     | Use audit template                                |
-| A08  | Settings, folders, providers, configuration, prerequisite return                 | Pending                                                                                                                     | Use audit template                                |
-| A09  | Cross-section reconciliation                                                     | Pending A01–A08                                                                                                             | Shared conventions and conflicts                  |
+| Pass | Surface                                                                          | Status                                                                                                                                   | Record                                             |
+| ---- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| A01  | Shared sidebar and navigation                                                    | Audit pass recorded; confirmed navigation, save-loss and narrow-inventory defects; remaining matrix gaps explicit                        | [A01 report](audits/a01-sidebar-navigation.md)     |
+| A02  | Missions, New mission, drafts, workspace, detail                                 | Audit pass recorded; lifecycle and persistence independently observed; confirmed defects and remaining matrix gaps explicit              | [A02 report](audits/a02-mission-functionality.md)  |
+| A03  | Sessions, launch, terminals, controls, recovery                                  | Audit pass recorded; SES-001 locally verified; four proposed findings; process/recovery safeguards observed; explicit matrix gaps remain | [A03 report](audits/a03-sessions-functionality.md) |
+| A04  | Agents, library, creation, editing, review                                       | Pending                                                                                                                                  | Use audit template                                 |
+| A05  | Starter/template flows inside Agents: preview, import, create-agent relationship | Pending nested-flow audit; separate sidebar destination removed by PR #29                                                                | Use audit template                                 |
+| A06  | Memory, search, reading, editing, revisions, associations                        | Pending                                                                                                                                  | Use audit template                                 |
+| A07  | Attention, prioritization, resolution, return to item                            | Pending                                                                                                                                  | Use audit template                                 |
+| A08  | Settings, folders, providers, configuration, prerequisite return                 | Pending                                                                                                                                  | Use audit template                                 |
+| A09  | Cross-section reconciliation                                                     | Pending A01–A08                                                                                                                          | Shared conventions and conflicts                   |
 
 The Mission baseline was generated in this task from current source, a successful desktop build, a passing isolated parity screenshot workflow (1 test, 49 seconds), and direct UI probes. The workflow passing establishes capture success, not UX acceptance. It is not a full accessibility, coverage, release, or provider-autonomy proof. The Windows version was not captured by those probes and must be recorded in subsequent acceptance evidence.
 
@@ -53,7 +53,7 @@ Capture baseline: `pnpm desktop:build`, then `PARITY_SHOTS=1 pnpm exec playwrigh
 
 ## Next stages
 
-1. Continue A03–A08 using [the shared template](audits/template.md); close the explicit A01/A02 matrix gaps without treating source-only checks as runtime passes.
+1. Continue A04–A08 using [the shared template](audits/template.md); close the explicit A01–A03 matrix gaps without treating source-only checks as runtime passes.
 2. Reconcile A09, update requirements if new evidence warrants, and record findings as accepted, amended, deferred, or rejected with reasons.
 3. Present the shared interaction design and section-specific deviations for owner review. The present spec is a draft, not that approval.
 4. Run Spec Kit clarification if material questions remain, then planning in an isolated worktree targeting Feature 004. The normal `SPECIFY_FEATURE_DIRECTORY` override persists `.specify/feature.json`; do not run it in the shared checkout as though it were read-only. Use the read-only resolution below for inspection and exclude any selector change from this audit PR.
@@ -124,3 +124,23 @@ Accepted scope: edit preservation and navigation consistency (MIS-001/002, NAV-0
 | MIS-002 / NAV-003 | Implemented and locally verified                   | Mission selection replaces composer, preserves outgoing fields, selects exact mission and leaves live fixture sessions unchanged               | Delayed mission-detail identity (MIS-013) remains a separate open finding                                                                     |
 
 The save queue acknowledges only the submitted snapshot and drains newer edits before navigation; a failed request cancels pending debounce retry. A native unsaved-changes dialog offers Keep editing, Retry and Leave without saving. Draft loading gates editing and draft ID changes remount local state. [Verification](verification.md) records exact test scope and [the dialog capture](audits/evidence/slice-1-save-failure.png). Other findings remain proposed. No merge, release, real-provider capability or whole-feature completion is asserted.
+
+## A03 Sessions disposition — 2026-09-05
+
+A03 audit pass recorded at main `83883d0`. Its [report](audits/a03-sessions-functionality.md) inventories UI controls, logic and independent functional observations. At audit capture all five findings were proposed and no app code changed. The owner subsequently accepted SES-001 via "Recommended"; its bounded implementation and verification are tracked below. SES-002 through SES-005 remain proposed.
+
+| Finding | Priority | Observation                                                                                     | Requirements       | Next decision/verification                                                                                  |
+| ------- | -------- | ----------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| SES-001 | High     | Mission-only Sessions hides a newly launched unrelated live session and overrides its selection | FR-004/006/013/017 | Implemented and locally verified in slice 2; see verification.md; A01/A02/A08 broader coverage remains open |
+| SES-002 | Medium   | Hide ended cannot hide selected-ended inventory; collapsed list still exposes ended tabs        | FR-007/008/009     | Agree one inventory/selection policy, including selected ended item                                         |
+| SES-003 | Medium   | Same-provider tabs have identical names and incomplete keyboard/tab semantics                   | FR-008/012         | Review named session selection and consistent keyboard model                                                |
+| SES-004 | Medium   | Expired preview leaves Launch enabled with the invalid token; repeated click fails again        | FR-010/011/018     | Review in-place Refresh review preserving settings and confirmation rules                                   |
+| SES-005 | Medium   | Nested main landmarks and duplicate terminal IDs                                                | FR-009/012         | Reconcile shared shell landmarks and unique terminal naming with A01                                        |
+
+Evidence: [11 recorded observations](audits/evidence/83883d0-sessions.json), three inspected captures, and two completed audit scenarios (2.3m). Fresh build plus 21 existing E2E tests passed: launch, input isolation, stop/force-stop, recovery/restart, directed coordination, terminal visibility and sampled accessibility. Passing safeguards do not negate the observed UI defects. Full suite and external providers were not run.
+
+SES-001 is accepted for slice 2; T008-T012 extend the ledger without reopening completed MIS-001/002 tasks. Remaining A03 matrix gaps and A04–A09 work stay open; queue/setup internals remain owned by A07/A08.
+
+### SES-001 implementation disposition
+
+Owner accepted SES-001 via "Recommended". Implemented explicit All sessions / Selected mission, global reset, exact launch landing and mission terminal entry. [Slice 2 verification](verification.md#slice-2-ses-001-explicit-scope) records UI, logic and independent functional evidence, including unchanged live IDs/PIDs through navigation. T008-T012 complete this bounded slice locally; no PR or hosted CI claim. Original A03 evidence remains pre-fix. SES-002 through SES-005 and outstanding A03 matrix gaps remain open.

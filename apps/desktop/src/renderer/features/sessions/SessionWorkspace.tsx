@@ -11,32 +11,53 @@ import { ConversationView } from '../coordination/ConversationView.js';
 
 export function SessionWorkspace({ mission }: { mission: MissionDetailView | null }) {
   const { state, actions } = useStore();
+  const missionScoped = state.sessionScope === 'mission' && !!state.selectedMissionId;
+  const currentMission = mission?.id === state.selectedMissionId ? mission : null;
   const boundIds = new Set(
-    mission?.envelope?.bindings.flatMap((binding) =>
+    currentMission?.envelope?.bindings.flatMap((binding) =>
       binding.sessionId ? [binding.sessionId] : [],
     ) ?? [],
   );
   const sessions = state.sessionOrder
     .map((id) => state.sessions[id]!)
-    .filter((session) => !mission || boundIds.has(session.id));
+    .filter((session) => !missionScoped || boundIds.has(session.id));
   const selected = sessions.find((session) => session.id === state.selectedSessionId);
-  // A mission dock with tabs but no selection rendered nothing; pick the first bound session.
-  const firstBoundId = mission && !selected ? sessions[0]?.id : undefined;
+  // Resolve selection only from the visible scope; stale mission details supply no candidates.
+  const firstVisibleId = !selected ? sessions[0]?.id : undefined;
   useEffect(() => {
-    if (firstBoundId) actions.select(firstBoundId);
-  }, [firstBoundId, actions]);
+    if (firstVisibleId) actions.select(firstVisibleId);
+  }, [firstVisibleId, actions]);
   return (
     <main className="session-workspace" aria-labelledby="session-workspace-heading">
       <header className="workspace-page-header">
-        <p className="eyebrow">Mission terminal dock</p>
-        <h1 id="session-workspace-heading">{mission?.envelope?.objective ?? 'Local sessions'}</h1>
+        <p className="eyebrow">Sessions</p>
+        <h1 id="session-workspace-heading">
+          {missionScoped
+            ? (currentMission?.envelope?.objective ?? 'Selected mission')
+            : 'Local sessions'}
+        </h1>
         <p>
-          {mission
+          {missionScoped
             ? 'Only sessions bound to this selected mission appear here.'
-            : 'Select a mission to narrow the dock to its exact workers.'}
+            : 'All local sessions are shown. Use Session scope to narrow the dock to the selected mission.'}
         </p>
+        <label className="field">
+          Session scope
+          <select
+            value={missionScoped ? 'mission' : 'all'}
+            onChange={(event) =>
+              actions.setSessionScope(event.target.value === 'mission' ? 'mission' : 'all')
+            }
+          >
+            <option value="all">All sessions</option>
+            <option value="mission" disabled={!state.selectedMissionId}>
+              Selected mission
+            </option>
+          </select>
+        </label>
+        <p className="small-text">{sessions.length} sessions in this scope</p>
       </header>
-      {!mission ? (
+      {!missionScoped ? (
         <details className="session-start-controls" open>
           <summary>Start a local session</summary>
           <div className="session-start-grid">
@@ -47,13 +68,17 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
       ) : null}
       {sessions.length === 0 ? (
         <section className="mission-workspace-state">
-          <h2>No attached sessions</h2>
+          <h2>
+            {missionScoped && !currentMission
+              ? 'Loading selected mission...'
+              : 'No attached sessions'}
+          </h2>
           <p>Start an approved session or bind a reviewed profile through a mission.</p>
         </section>
       ) : (
         <>
-          {!mission ? <SessionList showHeading={false} /> : null}
-          {!mission ? (
+          {!missionScoped ? <SessionList showHeading={false} /> : null}
+          {!missionScoped ? (
             <details className="session-start-controls" open>
               <summary>Directed handoffs and conversations</summary>
               <div className="session-coordination-grid">
@@ -62,7 +87,11 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
               </div>
             </details>
           ) : null}
-          <div className="session-tabs" role="tablist" aria-label="Mission sessions">
+          <div
+            className="session-tabs"
+            role="tablist"
+            aria-label={missionScoped ? 'Mission sessions' : 'All sessions'}
+          >
             {sessions.map((session) => (
               <button
                 key={session.id}

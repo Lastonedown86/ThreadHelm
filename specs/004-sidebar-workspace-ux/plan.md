@@ -35,3 +35,13 @@ Write failing regression tests, serialize saves until the latest snapshot is ack
 ## Complexity Tracking
 
 No constitutional violations. Reuse the existing native ModalDialog; no new routing framework or persistence service.
+
+## Slice 2: explicit session scope (SES-001)
+
+Owner instruction "Recommended" on 2026-09-05 accepts SES-001 only, following the A03 report. Branch: `codex/audit-sessions-functionality`; baseline main `83883d0`, audit commit `35a5bed`. US2/US3.3 own predictable navigation and exact-session landing; US7 owns independent process readback. Other A03 findings remain proposed.
+
+Interaction: a native Session scope selector offers All sessions (default) and Selected mission (disabled without a selected mission), with a visible result count. The global Sessions button always returns to All sessions, even from the same destination. Mission Open terminal chooses Selected mission and its exact session. A successful local or recovery launch opens All sessions and selects the returned ID. Attention selection survives returning to Sessions. Changing filters selects the first visible session only if the current selection is excluded; returning to All sessions preserves any still-visible selection.
+
+Implementation: renderer store holds ephemeral scope; destination navigation resets it to all, and mission terminal entry overrides it in the same event. SessionWorkspace filters only on explicit mission scope and identity-matching mission detail. Stale detail supplies no filter candidates. Reuse existing save-aware App navigation and process contracts. No migration, new dependency, timer, IPC authority or persistence change. Constitution check before/after design: PASS. Revert renderer changes to roll back; no data repair required.
+
+Verification: add red-first Electron regressions for launches, filter reset and Attention navigation with authoritative live session/PID snapshots; extend mission terminal coverage and no-mission coverage. Build, typecheck, lint and run selected process-control/accessibility regressions. Preserve A03 baseline evidence separately. The Feature 002 selector remains unchanged.

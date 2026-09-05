@@ -285,9 +285,9 @@ disclosure still shows no network authority and a push attempt is blocked identi
    (same limit as `goal`), digest-bound into the revision, and shown in full at revision
    confirmation and in the launch preview.
 2. **Given** a Claude launch, **When** main builds the command, **Then** instructions are passed
-   via the provider's append-system-prompt mechanism; for Codex, via the equivalent mechanism
-   [NEEDS CLARIFICATION 1]; for a provider with no supported mechanism, the launch preview says
-   instructions will not be applied and the user can proceed or cancel.
+   via the provider's append-system-prompt mechanism; for Codex, via a launch-time config
+   override that writes no file into the workspace; if the adapter cannot verify support, the
+   launch preview says "instructions not applied" and the worker still starts.
 3. **Given** instructions text attempts to grant tools, workspaces, permissions, or supervisor
    status, **When** launched, **Then** main's authority checks ignore it exactly as they ignore
    `goal`; the manifest parser treats it as untrusted data (FR-047 of Feature 002).
@@ -304,8 +304,8 @@ disclosure still shows no network authority and a push attempt is blocked identi
   `out-of-packet`, not counted toward verification without supervisor assignment.
 - Two attempts produce conflicting evidence for one criterion: both retained; state `contested`
   until a verifier or the user resolves.
-- The independent reviewer and producer are the same profile revision in different sessions: see
-  [NEEDS CLARIFICATION 2].
+- The independent reviewer and producer are the same profile revision in different sessions: the
+  review is recorded as `self-attested`, not independent.
 - A deterministic check passes locally but the referenced commit is unreachable (workspace
   rewound): evidence `stale`, mission cannot complete.
 - The learnings block exceeds bounds: whole result rejected as invalid structured output, not
@@ -390,16 +390,18 @@ and must not introduce a second implementation.
 - **FR-014**: Evidence referencing a commit or artifact MUST become `stale` when main observes
   the referenced commit is no longer reachable from the workspace head or the artifact digest
   changes. If affected scope cannot be re-proved, old evidence MUST NOT be assumed to apply.
-- **FR-015**: Deterministic checks MUST be declared in the contract's verification plan, run only
-  inside approved workspaces under existing execution bounds and containment, and their raw
-  output MUST NOT be sent to main or stored beyond a bounded content-free summary and exit
-  result.
-- **FR-016**: Independent review MUST satisfy separation of duties: reviewer session/profile
-  revision differs from the producer [NEEDS CLARIFICATION 2]. Review MUST NOT silently launch a
-  paid external provider (D04).
-- **FR-017**: `hosted_result` evidence MAY be attached only as a user-supplied, manually entered
-  reference in this feature [NEEDS CLARIFICATION 3]; it never upgrades readiness beyond
-  `locally verified`.
+- **FR-015**: Deterministic checks MUST be listed literally in the confirmed contract's
+  verification plan; adding, removing, or changing a check goes through the amendment flow
+  (FR-004), never a runtime proposal. Checks run only inside approved workspaces under existing
+  execution bounds and containment, and their raw output MUST NOT be sent to main or stored
+  beyond a bounded content-free summary and exit result.
+- **FR-016**: Independent review MUST satisfy separation of duties: the reviewer's profile
+  revision MUST differ from the producer's. A different session of the same profile revision is
+  `self-attested`, not independent. Human manual acceptance remains a separate evidence kind.
+  Review MUST NOT silently launch a paid external provider (D04).
+- **FR-017**: `hosted_result` is defined in the evidence-kind enum for Stage 2 only. This feature
+  MUST NOT accept it through any path, manual entry included; attempts are rejected with a
+  disclosure that hosted evidence is a GitHub Mission Intake capability.
 
 ### Mission Receipt and readiness
 
@@ -466,7 +468,8 @@ and must not introduce a second implementation.
 - **FR-034**: Passport data MUST NOT be an input to `assertExactWorkerBinding`, launch
   permission, eligibility, or any authority check. A name, persona, or passport never becomes
   permission (D03).
-- **FR-035**: Passport history is per workspace [NEEDS CLARIFICATION 4].
+- **FR-035**: Passport history is scoped per approved workspace, matching the no-cross-workspace
+  memory rule; no global or cross-workspace aggregation is derived or displayed.
 
 ### Agent instructions (owner decision 4)
 
@@ -474,9 +477,11 @@ and must not introduce a second implementation.
   by `MAX_GOAL_LENGTH`, validated with the same authored-text rules as `goal`, digest-bound into
   the revision, and displayed in full at revision confirmation and launch preview.
 - **FR-037**: At launch, main MUST pass `instructions` to the provider through a provider
-  adapter capability: Claude via append-system-prompt; Codex via its equivalent
-  [NEEDS CLARIFICATION 1]. If the adapter declares no such capability, the launch preview MUST
-  disclose that instructions are not applied.
+  adapter capability: Claude via append-system-prompt; Codex via a launch-time config override
+  that writes no file into the workspace. The implementation plan MUST verify that Codex CLI
+  0.150.x actually supports that override; if support cannot be verified, the Codex launch
+  disclosure MUST say "instructions not applied" and the worker still starts. Any adapter that
+  declares no capability is disclosed the same way.
 - **FR-038**: `instructions` MUST be inert for authority: parsed as untrusted data, never
   consulted by eligibility, permission, lease, tool, or workspace checks, exactly as `goal`.
   Content validation MUST reject secrets and control sequences.
@@ -582,6 +587,11 @@ and must not introduce a second implementation.
   profile text sent to a provider, which is why it gets its own launch disclosure.
 - Provider adapters expose a declared capability for behavioral instructions; absence is a
   disclosed limitation, not an error.
+- **Dependency (D03)**: `packages/providers/src/claude-code.ts` currently pins capability
+  evidence to literal Claude 2.1.251 and hard-codes `organizationPolicy: 'unknown'`, so
+  `assertExactWorkerBinding` holds every Claude auto binding today. Stage 1 auto-start acceptance
+  depends on that being fixed and proved under Feature 002 D03 (T148/T157); this spec does not
+  change the provider adapter or the preflight rule.
 
 ## Out of scope
 
@@ -598,19 +608,23 @@ and must not introduce a second implementation.
 - Restoring any deferred Feature 002 task (T148, T149, T154, T157, T174); those stay on the 002
   ledger.
 
-## Open questions
+## Owner decisions 2026-09-04
 
-- **[NEEDS CLARIFICATION 1]**: Codex CLI has no confirmed append-system-prompt equivalent that
-  avoids writing instruction files into the workspace. Acceptable mechanisms: a CLI config
-  override, a temp instructions file outside the workspace, or "not applied" for Codex in v1?
-- **[NEEDS CLARIFICATION 2]**: What satisfies "independent reviewer" locally: a different session
-  of the same profile revision, a different profile revision, or only a human? Affects FR-016 and
-  whether single-profile missions can ever reach `verified_local` without manual acceptance.
-- **[NEEDS CLARIFICATION 3]**: Should `hosted_result` evidence be enterable at all in this
-  feature (user pastes a CI run URL/commit as a manual reference), or reserved entirely for
-  Stage 2 to avoid implying external confirmation?
-- **[NEEDS CLARIFICATION 4]**: Capability Passport scope: per workspace (consistent with
-  no-cross-workspace memory) or global per profile revision with content-free counts only?
-- **[NEEDS CLARIFICATION 5]**: Deterministic check declaration: must each check be a command
-  literally listed in the confirmed contract, or may the supervisor propose a check at runtime
-  that main runs after a user confirmation?
+Recorded answers to the draft's clarification questions; the requirements above encode them.
+
+1. **Codex `instructions`**: launch-time config override, no file written into the workspace.
+   The plan must verify Codex CLI 0.150.x supports it; otherwise the Codex launch disclosure says
+   "instructions not applied" and the worker still starts (FR-037, US7 scenario 2).
+2. **Independent reviewer**: a different profile revision than the author. Same profile,
+   different session does not count. Human acceptance stays a separate evidence kind (FR-016).
+3. **`hosted_result` evidence**: reserved for Stage 2; not enterable in Stage 1 by any path
+   (FR-017).
+4. **Capability Passports**: scoped per workspace, matching the no-cross-workspace memory rule
+   (FR-035).
+5. **Deterministic checks**: listed in the confirmed Mission Contract; changes go through the
+   amendment flow, never runtime proposal (FR-015).
+
+Earlier decisions of the same date, folded into the draft: PR-review boundary (FR-046);
+required worker `learnings` block persisted as attributed shared memory (FR-022..026);
+launch-time deterministic memory injection (FR-027..031); per-agent `instructions` field
+(FR-036..039).

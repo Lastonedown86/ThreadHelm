@@ -43,8 +43,6 @@ function LegacyDestination({
       return <SessionWorkspace mission={mission} />;
     case 'agents':
       return <AgentLibraryWorkspace />;
-    case 'templates':
-      return <AgentLibraryWorkspace />;
     case 'memory':
       return <MemoryLibraryWorkspace />;
     case 'attention':
@@ -60,7 +58,6 @@ const destinationHeading: Record<WorkspaceDestination, string> = {
   missions: 'Mission context',
   sessions: 'Sessions',
   agents: 'Agents',
-  templates: 'Templates',
   memory: 'Memory',
   attention: 'Attention',
   settings: 'Settings',

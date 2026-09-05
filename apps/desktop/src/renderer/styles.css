@@ -11,17 +11,25 @@
 /* Restrained, static, high-contrast. No transitions anywhere: nothing moves
    unless the user or an event changes state. */
 
+/* One palette. The semantic names below are the only colors components name;
+   every value resolves to the mission palette in styles/tokens.css, so the
+   application reads as one surface instead of two. Ratios are measured against
+   --bg (paper); the second figure is against --panel (fog), the darker of the
+   two grounds these colors ever sit on. */
 :root {
-  --bg: #ffffff;
-  --panel: #f6f7f9;
-  --text: #1f2328;
-  --muted: #57606a; /* 5.7:1 on white */
-  --border: #767676; /* 4.5:1 on white */
-  --accent: #0b57d0; /* 6.5:1 on white */
-  --accent-text: #ffffff;
-  --danger: #a4262c; /* 6.9:1 on white */
+  --bg: var(--mission-paper);
+  --panel: var(--mission-fog);
+  --text: var(--mission-ink); /* 15.1:1 / 13.9:1 */
+  --muted: #5b646a; /* 5.8:1 / 5.3:1 */
+  --border: #727a7f; /* 4.2:1 / 3.8:1 */
+  --hairline: #ccd4d8; /* grouping rule, not a boundary */
+  --accent: var(--mission-steel); /* 6.1:1 / 5.6:1 */
+  --accent-text: #ffffff; /* 6.3:1 on --accent */
+  --ready: var(--mission-verdigris); /* 5.5:1 / 5.0:1 */
+  --mark: var(--mission-copper); /* 4.6:1 / 4.3:1 */
+  --danger: #a4262c; /* 6.9:1 / 6.4:1 */
   --warning-bg: #fff4e5;
-  --warning-text: #7a3e00;
+  --warning-text: #7a3e00; /* 7.7:1 on --warning-bg */
   --error-bg: #fde7e9;
   --terminal-bg: #000000;
   font-size: 100%;
@@ -39,7 +47,7 @@ body,
 }
 
 body {
-  font-family: system-ui, 'Segoe UI', sans-serif;
+  font-family: var(--mission-font-body);
   font-size: 1rem;
   line-height: 1.4;
   color: var(--text);
@@ -56,17 +64,35 @@ body {
 }
 
 h1,
-h2 {
+h2,
+h3 {
   margin: 0 0 0.5rem;
+  font-family: var(--mission-font-heading);
   font-weight: 600;
 }
 
 h1 {
-  font-size: 1.125rem;
+  font-size: 1.375rem;
+  letter-spacing: 0.005em;
 }
 
 h2 {
+  font-size: 1.0625rem;
+}
+
+h3 {
   font-size: 0.9375rem;
+}
+
+/* The small caps label above a heading. Was defined per feature; one rule now. */
+.eyebrow {
+  margin: 0 0 0.125rem;
+  font-family: var(--mission-font-heading);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mark);
 }
 
 button,
@@ -76,6 +102,8 @@ textarea {
   font: inherit;
 }
 
+/* Three tiers, so a row of actions says which one is the action:
+   .primary (the move), default (a real alternative), .quiet (inspect or copy). */
 button {
   min-height: 2rem;
   padding: 0.25rem 0.75rem;
@@ -83,6 +111,7 @@ button {
   border-radius: 0.25rem;
   background: var(--bg);
   color: var(--text);
+  font-weight: 550;
   cursor: pointer;
 }
 
@@ -96,6 +125,17 @@ button.primary {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-text);
+}
+
+button.quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent);
+}
+
+button.quiet:hover:not(:disabled) {
+  border-color: var(--border);
+  background: var(--panel);
 }
 
 button.danger {
@@ -145,18 +185,6 @@ button:disabled {
   height: 100%;
 }
 
-.columns {
-  display: grid;
-  grid-template-columns: minmax(18rem, 24rem) 1fr;
-  min-height: 0;
-}
-
-.sidebar {
-  overflow: auto;
-  border-right: 1px solid var(--border);
-  background: var(--panel);
-}
-
 .panel {
   padding: 0.75rem;
   border-bottom: 1px solid var(--border);
@@ -174,7 +202,7 @@ button:disabled {
 
 .list > li {
   padding: 0.5rem 0;
-  border-top: 1px solid #d0d7de;
+  border-top: 1px solid var(--hairline);
 }
 
 .list > li:first-child {
@@ -190,6 +218,21 @@ button:disabled {
 .sessions > li.selected {
   border-left-color: var(--accent);
   background: var(--bg);
+}
+
+/* The ended-session disclosure sits under the list, not in it: a listbox may
+   only hold options. */
+.ended-sessions-toggle {
+  justify-self: start;
+  margin-top: 0.4rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+.ended-sessions-toggle:hover:not(:disabled) {
+  color: inherit;
 }
 
 .hint {

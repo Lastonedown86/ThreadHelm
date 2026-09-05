@@ -133,7 +133,7 @@
   place-items: center;
   border: 2px solid var(--mission-steel);
   border-radius: 50%;
-  background: #fff;
+  background: var(--bg);
   font: 650 0.95rem/1 var(--mission-font-heading);
 }
 .course-node[data-state='verified'] .node-mark {

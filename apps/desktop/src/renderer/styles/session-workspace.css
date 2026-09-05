@@ -69,18 +69,18 @@
   gap: 0.75rem;
   margin-top: 0.75rem;
 }
-@media (max-width: 760px) {
+@container workspace (max-width: 34rem) {
   .session-start-grid {
     grid-template-columns: 1fr;
   }
 }
 .session-coordination-grid {
   display: grid;
-  grid-template-columns: minmax(18rem, 0.8fr) minmax(24rem, 1.2fr);
+  grid-template-columns: minmax(min(18rem, 100%), 0.8fr) minmax(min(24rem, 100%), 1.2fr);
   gap: 0.75rem;
   margin-top: 0.75rem;
 }
-@media (max-width: 900px) {
+@container workspace (max-width: 46rem) {
   .session-coordination-grid {
     grid-template-columns: 1fr;
   }

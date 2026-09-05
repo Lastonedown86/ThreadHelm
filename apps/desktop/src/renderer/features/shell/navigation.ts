@@ -1,5 +1,5 @@
 export type WorkspaceDestination =
-  'missions' | 'sessions' | 'agents' | 'templates' | 'memory' | 'attention' | 'settings';
+  'missions' | 'sessions' | 'agents' | 'memory' | 'attention' | 'settings';
 
 export interface WorkspaceSelection {
   destination: WorkspaceDestination;

@@ -5,7 +5,6 @@ const destinations: ReadonlyArray<{ id: WorkspaceDestination; label: string; cou
     { id: 'missions', label: 'Missions', countNoun: '' },
     { id: 'sessions', label: 'Sessions', countNoun: 'with new output' },
     { id: 'agents', label: 'Agents', countNoun: '' },
-    { id: 'templates', label: 'Templates', countNoun: '' },
     { id: 'memory', label: 'Memory', countNoun: '' },
     { id: 'attention', label: 'Attention', countNoun: 'needing attention' },
     { id: 'settings', label: 'Settings', countNoun: '' },

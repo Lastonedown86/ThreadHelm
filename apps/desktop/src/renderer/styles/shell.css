@@ -57,15 +57,28 @@
 
 .app-navigation button {
   justify-content: flex-start;
+  padding-left: 0.625rem;
   text-align: left;
   border-color: transparent;
+  border-left: 3px solid transparent;
+  border-radius: 0.25rem;
   background: transparent;
+  font-family: var(--mission-font-heading);
+  font-weight: 550;
 }
 
+.app-navigation button:hover:not(.selected) {
+  background: color-mix(in srgb, var(--mission-ink) 6%, transparent);
+}
+
+/* Selected is a filled slab with a steel edge, not a hairline box: the rail
+   has to say where you are from across the room. */
 .app-navigation button.selected {
-  border-color: var(--mission-steel);
+  border-color: transparent;
+  border-left-color: var(--mission-steel);
   background: var(--mission-paper);
-  font-weight: 650;
+  color: var(--mission-steel);
+  font-weight: 700;
 }
 
 .mission-rail {

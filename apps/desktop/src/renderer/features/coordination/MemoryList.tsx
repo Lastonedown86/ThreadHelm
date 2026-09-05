@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type {
   MemoryConfidence,
   MemoryDetailView,
@@ -21,10 +21,12 @@ const KIND_LABELS: Record<MemoryKind, string> = {
 
 export function MemoryList({
   initialQuery = '',
+  searchVersion = 0,
   expanded = false,
   onAddToReadingList,
 }: {
   initialQuery?: string;
+  searchVersion?: number;
   expanded?: boolean;
   onAddToReadingList?(detail: MemoryDetailView): void;
 } = {}) {
@@ -50,14 +52,40 @@ export function MemoryList({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const searchGeneration = useRef(0);
+  const detailGeneration = useRef(0);
+  const guidedVersion = useRef(-1);
+  const clearSearch = () => {
+    searchGeneration.current += 1;
+    detailGeneration.current += 1;
+    setLoading(false);
+    setError(null);
+    setItems([]);
+    setNextCursor(null);
+    setDetail(null);
+  };
+  useEffect(
+    () => () => {
+      searchGeneration.current += 1;
+      detailGeneration.current += 1;
+    },
+    [],
+  );
+
   useEffect(() => {
-    if (!workspaceId || !state.workspaces.some((workspace) => workspace.id === workspaceId)) {
+    if (
+      !workspaceId ||
+      !state.workspaces.some((workspace) => workspace.id === workspaceId && !workspace.revokedAt)
+    ) {
+      clearSearch();
       setWorkspaceId(state.workspaces.find((workspace) => !workspace.revokedAt)?.id ?? '');
     }
   }, [state.workspaces, workspaceId]);
 
-  const runSearch = async (cursor?: string, append = false) => {
-    if (!workspaceId || !query.trim()) {
+  const runSearch = async (cursor?: string, append = false, searchQuery = query) => {
+    const generation = ++searchGeneration.current;
+    detailGeneration.current += 1;
+    if (!workspaceId || !searchQuery.trim()) {
       setItems([]);
       setNextCursor(null);
       return;
@@ -68,42 +96,41 @@ export function MemoryList({
       const result = await call(
         api.memory.search({
           scope: { workspaceId },
-          query: query.trim(),
+          query: searchQuery.trim(),
           ...(includeContested ? { includeContested: true } : {}),
           ...(cursor ? { cursor } : {}),
           limit: 20,
         }),
       );
+      if (generation !== searchGeneration.current) return;
       setItems((current) => (append ? [...current, ...result.items] : result.items));
       setNextCursor(result.nextCursor);
       if (detail && !result.items.some((item) => item.entryId === detail.summary.entryId)) {
         setDetail(null);
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Shared-memory search failed.');
+      if (generation === searchGeneration.current)
+        setError(cause instanceof Error ? cause.message : 'Shared-memory search failed.');
     } finally {
-      setLoading(false);
+      if (generation === searchGeneration.current) setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (expanded && initialQuery.trim() && workspaceId) void runSearch();
-    // The workspace is resolved after the first render; a guided query runs once for that scope.
-  }, [expanded, initialQuery, workspaceId]);
+    if (!workspaceId || guidedVersion.current === searchVersion) return;
+    guidedVersion.current = searchVersion;
+    if (!initialQuery.trim()) return;
+    clearSearch();
+    setOpen(true);
+    setQuery(initialQuery);
+    void runSearch(undefined, false, initialQuery);
+    // A new guided request changes query only, retaining the panel's scope/filter.
+  }, [initialQuery, searchVersion, workspaceId]);
 
   useEffect(() => {
     if (open && query.trim()) void runSearch();
-    if (detail) {
-      void call(
-        api.memory.get({
-          entryId: detail.summary.entryId,
-          scope: detail.summary.scope,
-        }),
-      )
-        .then(setDetail)
-        .catch(() => setDetail(null));
-    }
-    // A content-free event is only a reload signal. No event body enters renderer state.
+    if (detail) void loadDetail(detail.summary);
+    // Content-free events are reload signals; guarded reads retain target identity.
   }, [state.memorySequence]);
 
   const search = (event: FormEvent) => {
@@ -111,19 +138,20 @@ export function MemoryList({
     void runSearch();
   };
 
-  const loadDetail = async (item: MemorySearchResultView) => {
+  const loadDetail = async (item: Pick<MemorySearchResultView, 'entryId' | 'scope'>) => {
+    const generation = ++detailGeneration.current;
     setError(null);
     try {
-      setDetail(
-        await call(
-          api.memory.get({
-            entryId: item.entryId,
-            scope: item.scope,
-          }),
-        ),
+      const loaded = await call(
+        api.memory.get({
+          entryId: item.entryId,
+          scope: item.scope,
+        }),
       );
+      if (generation === detailGeneration.current) setDetail(loaded);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Memory detail failed to load.');
+      if (generation === detailGeneration.current)
+        setError(cause instanceof Error ? cause.message : 'Memory detail failed to load.');
     }
   };
 
@@ -195,10 +223,8 @@ export function MemoryList({
             <select
               value={workspaceId}
               onChange={(event) => {
+                clearSearch();
                 setWorkspaceId(event.target.value);
-                setItems([]);
-                setNextCursor(null);
-                setDetail(null);
               }}
             >
               {state.workspaces
@@ -224,9 +250,8 @@ export function MemoryList({
                 aria-label="Search shared memory"
                 value={query}
                 onChange={(event) => {
+                  clearSearch();
                   setQuery(event.target.value);
-                  setItems([]);
-                  setNextCursor(null);
                 }}
                 disabled={!workspaceId}
               />
@@ -239,10 +264,8 @@ export function MemoryList({
                 type="checkbox"
                 checked={includeContested}
                 onChange={(event) => {
+                  clearSearch();
                   setIncludeContested(event.target.checked);
-                  setItems([]);
-                  setNextCursor(null);
-                  setDetail(null);
                 }}
               />{' '}
               Include contested

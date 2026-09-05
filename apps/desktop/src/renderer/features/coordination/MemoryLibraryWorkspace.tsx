@@ -30,7 +30,12 @@ export function MemoryLibraryWorkspace() {
       <div className="memory-library-grid">
         <MemoryLibrarian onSearch={search} />
         <section className="memory-reading-desk" aria-label="Reading desk">
-          <MemoryList key={searchVersion} initialQuery={query} expanded onAddToReadingList={add} />
+          <MemoryList
+            searchVersion={searchVersion}
+            initialQuery={query}
+            expanded
+            onAddToReadingList={add}
+          />
         </section>
         <MissionReadingList
           items={readingList}

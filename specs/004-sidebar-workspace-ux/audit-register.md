@@ -175,7 +175,7 @@ PR #33 verified merged at `d8a5075`; main fast-forwarded before branch `codex/au
 | ------- | -------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | MEM-001 | High     | Invalidate supersession review after title/body edits; commit the exact newly reviewed content | Implemented and locally verified in slice 4    |
 | MEM-002 | High     | Refresh reading-list lifecycle and clarify temporary versus saved mission association          | Proposed; ownership/lifetime decision required |
-| MEM-003 | High     | Preserve selected workspace through guided search                                              | Proposed                                       |
+| MEM-003 | High     | Preserve selected workspace through guided search                                              | Implemented and locally verified in slice 5    |
 | MEM-004 | Medium   | Preserve selected detail across pagination append                                              | Proposed                                       |
 
 Validation: fresh build; 4 existing Memory E2E tests and 32 focused unit/contract/integration tests passed. Two direct audit scenarios completed with 9 retained observations and 3 inspected screenshots. Publication and lifecycle outcomes were read independently; deletion survives restart with null body and no search result. Reading-list stale state is a renderer defect, not evidence of failed durable deletion. No product edits or new implementation tasks. A07 Attention is next unaudited; A08/A09 and prior matrix gaps remain open. Full suite, hosted CI, provider execution and release readiness are not asserted.
@@ -183,3 +183,7 @@ Validation: fresh build; 4 existing Memory E2E tests and 32 focused unit/contrac
 ### Slice 4 implementation disposition
 
 Owner accepted MEM-001 via "next slice" on 2026-09-05. Title/body edits now invalidate review; exact reviewed content is visible; pending operations are guarded; cancelled responses cannot revive review; append rejection retains edits and offers fresh review inside the dialog. Implemented and locally verified; see [slice 4 evidence](verification.md#slice-4-mem-001-exact-supersession-review). Original A06 captures remain pre-fix. MEM-002/003/004 remain proposed; A07-A09 and matrix gaps remain open. No PR/hosted CI/release completion is claimed.
+
+### Slice 5 MEM-003 disposition
+
+PR #34 verified merged at 9d99ac6; MEM-001 is merged. Owner accepted MEM-003 via "Next slicew". Guided search now preserves the selected workspace and contested filter; repeat requests run without remounting; obsolete search/detail responses cannot restore old context. Implemented and locally verified in [slice 5](verification.md#slice-5-mem-003-stable-guided-search-scope). Original A06 evidence remains pre-fix. MEM-002/004 remain proposed; A07-A09 and prior matrix gaps remain open. Automatic PR creation is authorized at verified slice completion; merging remains owner-controlled.

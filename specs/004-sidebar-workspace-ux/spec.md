@@ -1,10 +1,10 @@
 # Feature Specification: Sidebar and Workspace UX Consistency
 
-**Feature Branch**: `codex/sidebar-workspace-ux-audit` (documentation PR). Implementation branches are independent of feature numbering.
+**Feature Branch**: `codex/audit-sidebar-mission-functionality` (A01/A02 audit refresh; original migration merged in PR #30). Implementation branches are independent of feature numbering.
 
 **Created**: 2026-09-05
 
-**Status**: Draft — prepared against main at `8f41aae` (PR #29); Mission findings reconciled; remaining section audits and owner design review pending.
+**Status**: First slice accepted and locally implemented — MIS-001/002 edit preservation and navigation. Broader feature remains draft; other A01/A02 findings, coverage gaps and A03–A09 audits remain open. Audit baseline: `efcd523` (PR #30). See the [audit register](audit-register.md).
 
 **Input**: User requested an audit of New mission, its related pages, the Mission sidebar and items; extended the same audit standard to every sidebar section; then requested migration into spec-driven development.
 
@@ -22,7 +22,11 @@ Feature 002 owns existing coordination and release boundaries. Feature 003 owns 
 
 The repository's roadmap explicitly preserves `.specify/feature.json` on Feature 002 until a separate transition. This specification follows the existing Feature 003 draft convention and preserves that selector. Downstream work must explicitly target `specs/004-sidebar-workspace-ux` and verify the target before writing. Use read-only resolution for inspection; later planning must use an isolated checkout because the normal feature-directory override persists the selector. See the audit register for the verified command. This documents the sequencing impact without changing the existing implementation sequence.
 
-## User Scenarios & Testing *(mandatory)*
+## Accepted first slice
+
+On 2026-09-05, the owner instructed "Start with recommended", accepting the proposed edit-preservation and navigation slice. The [plan](plan.md) and [tasks](tasks.md) cover MIS-001/002 and US2.1–3 with US7 independent effect verification. Other requirements are retained as future scope, not claimed satisfied by this slice. The full audit-before-planning sequence is narrowed only for this explicitly accepted work. See [verification](verification.md).
+
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Review comparable evidence for every sidebar section (Priority: P1)
 
@@ -145,7 +149,7 @@ As the owner, I can distinguish a screen that looks correct from a workflow whos
 - Sidebar collapse or narrow-window layout, 200% text scaling, modal dismissal, keyboard-only selection, and large inventories.
 - Navigation away from a running terminal changes the view, not process lifecycle or authority.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -178,7 +182,7 @@ As the owner, I can distinguish a screen that looks correct from a workflow whos
 - **Design decision**: An accepted, amended, rejected, or deferred proposal with rationale and affected flows.
 - **Evidence record**: A dated observation identifying revision, environment, scenario, expected/observed outcome, method, artifacts, and limitations.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

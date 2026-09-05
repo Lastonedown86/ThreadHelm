@@ -43,7 +43,7 @@ Document quality review: 16/16 items pass. This is not a UX implementation pass 
 - Refreshed for PR #29 at `8f41aae`: six destinations; starter/template audit stays nested under Agents; all 14 Mission findings have explicit current status. Shared palette, selected navigation styling, overflow work, ended-session grouping and recon guidance are recorded as merged changes, not unimplemented feature proposals.
 - Read-only feature targeting uses `Get-FeaturePathsEnv -NoPersist`; future generation uses an isolated worktree to avoid persisting a new selector in the shared checkout.
 
-## PR preparation checks
+## Original migration PR preparation checks (historical)
 
 - Markdown relative links and all 14 reconciliation IDs verified.
 - Feature-directory Prettier check and staged diff whitespace check passed.
@@ -58,3 +58,11 @@ Document quality review: 16/16 items pass. This is not a UX implementation pass 
 - The shared template separates visual, logic and runtime verdicts and requires exact targets, preconditions, authoritative outcomes and blockers.
 - All nine passes have section-specific functional scope. Historical Mission coverage remains partial; prior tests are not promoted to end-to-end functional evidence.
 - Specification quality checklist remains 16/16; functional audits themselves have not been completed by this document update.
+
+## A01/A02 evidence refresh at efcd523
+
+- [A01](../audits/a01-sidebar-navigation.md) and [A02](../audits/a02-mission-functionality.md) now include action inventories, separate visual/logic/runtime verdicts, independent state readbacks and explicit remaining coverage gaps.
+- Navigation and save-loss defects are reproduced; live-session mismatch, shared supervisor access and stale ideas have runtime/readback evidence. MIS-015 and NAV-004 add cap recovery and narrow inventory findings.
+- Successful close survives restart. Sampled mission start, pause, resume, revision, cancellation and deletion have authoritative effect checks; selected recovery tests preserve exact-target and no-replay boundaries.
+- Fresh desktop build and 32 selected E2E tests passed. Three isolated observation modes completed. Full-suite coverage and real-provider autonomy are not established.
+- The audit register now links durable observations and recapture commands. A03–A09, remaining A01/A02 scenarios, design decisions and implementation planning remain open. Application code and the Feature 002 selector remain unchanged.

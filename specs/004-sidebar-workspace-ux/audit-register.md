@@ -14,7 +14,7 @@ Current main baseline: `d8a50758ec4cfbcf8333509da078427a8f73ef8f` (merged PR #33
 | A04  | Agents, library, creation, editing, review                                       | Audit pass recorded; AGT-001/002 locally verified; AGT-003 proposed; UI and saved-state proof; matrix gaps explicit                      | [A04 report](audits/a04-agents-functionality.md)             |
 | A05  | Starter/template flows inside Agents: preview, import, create-agent relationship | Audit pass recorded; two proposed findings; dependencies and restart observed; matrix gaps explicit                                      | [A05 report](audits/a05-starters-templates-functionality.md) |
 | A06  | Memory, search, reading, editing, revisions, associations                        | Audit recorded; MEM-001/003/004 merged; MEM-002 locally verified; independent saved-state/restart proof; matrix gaps explicit            | [A06 report](audits/a06-memory-functionality.md)             |
-| A07  | Attention, prioritization, resolution, return to item                            | Pending                                                                                                                                  | Use audit template                                           |
+| A07  | Attention, prioritization, resolution, return to item                            | Audit recorded; four proposed findings; UI/logic and independent recovery/mission readback; explicit gaps                                | [A07 report](audits/a07-attention-functionality.md)          |
 | A08  | Settings, folders, providers, configuration, prerequisite return                 | Pending                                                                                                                                  | Use audit template                                           |
 | A09  | Cross-section reconciliation                                                     | Pending A01–A08                                                                                                                          | Shared conventions and conflicts                             |
 
@@ -195,3 +195,16 @@ PR #35 verified merged at 17fac62; MEM-003 is merged. Owner accepted MEM-004. Ap
 ### Slice 7 MEM-002 disposition
 
 Owner accepted the recommended temporary session list. Membership survives section navigation, exact editions retain authoritative lifecycle status, deleted content is cleared from display, failed reads offer Retry edition, and restart clears membership. No saved mission association. See [slice 7 verification](verification.md#slice-7-mem-002-temporary-reading-list-lifecycle). MEM-001/003/004 are merged; MEM-002 is locally implemented. All four confirmed A06 findings have bounded implementation evidence; this does not close the remaining A06 matrix gaps or A07-A09. A07 Attention is the next unaudited destination.
+
+## A07 Attention disposition - 2026-09-05
+
+PR #37 verified merged at c32f255; main synchronized before branch codex/audit-attention-functionality. All four confirmed Memory fixes are merged, while A06 matrix gaps remain. [A07 report](audits/a07-attention-functionality.md) inventories every reachable action and distinguishes runtime observations from source-only and pending cases.
+
+| Finding | Priority | Proposed improvement                                                         | Disposition                               |
+| ------- | -------- | ---------------------------------------------------------------------------- | ----------------------------------------- |
+| ATT-001 | Medium   | Preserve selected recovery detail when dismissing another record             | Proposed; recommended first bounded slice |
+| ATT-002 | Medium   | Clarify recovery-only Attention scope and route to pending mission decisions | Proposed; scope design decision           |
+| ATT-003 | Medium   | Resolve narrow/200% text overflow with shared sidebar and detail sizing      | Proposed; shared A01/A09 concern          |
+| ATT-004 | Medium   | Expose selected recovery state and reconcile nested main landmarks           | Proposed; shared accessibility concern    |
+
+Fresh build passed; 3 existing E2E passed; 24 focused recovery tests passed with 1 explicit locked-database startup skip. Two observation scenarios completed with 8 retained records and 3 inspected captures. Dismissal survives restart, failure does not mutate saved state, and existing replacement proof uses a distinct reviewed session. No product edits or newly accepted tasks. A08 Settings is next unaudited; A09 and prior matrix gaps remain open.

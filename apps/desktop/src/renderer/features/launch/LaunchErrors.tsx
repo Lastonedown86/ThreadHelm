@@ -119,6 +119,8 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   STRUCTURED_DRAFT_UNAVAILABLE: 'The provider could not draft a reply right now.',
   STRUCTURED_DRAFT_TIMEOUT: 'The provider took too long to draft a reply.',
   STRUCTURED_DRAFT_OUTPUT_INVALID: 'The provider returned something ThreadHelm could not use.',
+  REPO_IDEAS_UNAVAILABLE: "Couldn't generate ideas right now.",
+  REPO_IDEAS_OUTPUT_INVALID: "Couldn't generate ideas right now.",
   TEMPLATE_VARIABLE_UNRESOLVED:
     'Resolve every declared template variable before reviewing the generated agent.',
   TEMPLATE_DRAFT_INCOMPLETE:

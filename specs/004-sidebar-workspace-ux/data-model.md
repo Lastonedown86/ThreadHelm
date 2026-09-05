@@ -12,3 +12,7 @@ Existing draft ID, optimistic version and saved receipt contracts remain authori
 ## Slice 2 renderer scope
 
 Add `sessionScope: 'all' | 'mission'` to ephemeral renderer State, initially `all`. `selectDestination('sessions')` resets it to `all`; `setSessionScope` changes only the filter. Mission terminal navigation sets `mission` after selecting the destination. The effective mission filter requires a selected mission ID, and uses bindings only from detail with that same ID. Selection fallback uses visible session IDs only. No persisted model or contract schema changes.
+
+## Slice 3 renderer inventory state
+
+Track requested page count, filter, profile event sequence and retry generation. Retain the completed request identity separately from the accumulated rows and nextCursor. Only rows for the current filter/event sequence are actionable; paging may retain those rows while loading. Selection is an exact profile ID reconciled against completed visible inventory. Detail has an exact ID key and loaded sequence. No durable model changes.

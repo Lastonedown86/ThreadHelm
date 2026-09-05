@@ -17,3 +17,7 @@ No real external providers. Preserve the pre-fix audit JSON; record post-fix evi
 ## Verify SES-001
 
 Run `pnpm desktop:build`, then `pnpm exec playwright test tests/e2e/session-scope.spec.ts tests/e2e/mission-focus-workspace.spec.ts tests/e2e/mission-navigation.spec.ts`. The fixtures use isolated local sessions. Confirm the scope selector, an unrelated Settings launch landing on its own exact session, Attention return, repeated global Sessions reset, and mission Open terminal. Test assertions compare authoritative live session IDs and PIDs before and after navigation. Baseline A03 captures remain pre-fix observations; do not replace them with these regression results.
+
+## Verify AGT-001/002
+
+Build with `pnpm desktop:build`; run `pnpm exec playwright test tests/e2e/agent-roster-navigation.spec.ts tests/e2e/agent-roster.spec.ts tests/e2e/agent-profile-wizard.spec.ts`. The navigation spec seeds 51 generic profiles through main contracts, then exercises real UI pagination, exact eligibility changes, selection and filter-empty behavior. Readback verifies the exact saved profile state and no process launch. Original A04/A05 probes remain pre-fix observations and are not acceptance tests for the changed UI.

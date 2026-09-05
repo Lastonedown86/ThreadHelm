@@ -41,3 +41,14 @@ Owner accepted the recommended session-scope design on 2026-09-05. Earlier T001-
 - [x] T012 Record build/static/functional outcomes and SES-001 disposition in specs/004-sidebar-workspace-ux/verification.md and audit-register.md.
 
 Dependencies: T008 -> T009 -> T010 -> T011 -> T012. Other SES findings remain unapproved. This slice does not close A03's remaining audit matrix or Feature 004.
+
+## Slice 3: AGT-001/002 only
+
+- [x] T013 Record owner acceptance and bounded roster design in specs/004-sidebar-workspace-ux/plan.md, data-model.md and contracts/navigation.md.
+- [x] T014 [US7] Add and run failing pagination and filtered-selection scenarios in tests/e2e/agent-roster-navigation.spec.ts.
+- [x] T015 [US4] Implement bounded pages, event refresh and selection reconciliation in apps/desktop/src/renderer/features/coordination/AgentProfileList.tsx.
+- [x] T016 [US2] Add identity-safe detail loading/retry in apps/desktop/src/renderer/features/coordination/AgentProfileDetail.tsx.
+- [x] T017 [US7] Run exact-state UI regressions and existing roster/wizard checks; record evidence in specs/004-sidebar-workspace-ux/verification.md.
+- [x] T018 Complete static/artifact checks and update specs/004-sidebar-workspace-ux/audit-register.md dispositions.
+
+Dependencies: T013 -> T014 -> T015/T016 -> T017 -> T018. Other audit findings remain proposed; no parallel agents required.

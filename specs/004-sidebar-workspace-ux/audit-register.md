@@ -11,7 +11,7 @@ Current main baseline: `a8b94838850175ff6467e044366a9cbbe733402f` (merged PR #32
 | A01  | Shared sidebar and navigation                                                    | Audit pass recorded; confirmed navigation, save-loss and narrow-inventory defects; remaining matrix gaps explicit                        | [A01 report](audits/a01-sidebar-navigation.md)               |
 | A02  | Missions, New mission, drafts, workspace, detail                                 | Audit pass recorded; lifecycle and persistence independently observed; confirmed defects and remaining matrix gaps explicit              | [A02 report](audits/a02-mission-functionality.md)            |
 | A03  | Sessions, launch, terminals, controls, recovery                                  | Audit pass recorded; SES-001 locally verified; four proposed findings; process/recovery safeguards observed; explicit matrix gaps remain | [A03 report](audits/a03-sessions-functionality.md)           |
-| A04  | Agents, library, creation, editing, review                                       | Audit pass recorded; three proposed findings; UI and saved-state proof; matrix gaps explicit                                             | [A04 report](audits/a04-agents-functionality.md)             |
+| A04  | Agents, library, creation, editing, review                                       | Audit pass recorded; AGT-001/002 locally verified; AGT-003 proposed; UI and saved-state proof; matrix gaps explicit                      | [A04 report](audits/a04-agents-functionality.md)             |
 | A05  | Starter/template flows inside Agents: preview, import, create-agent relationship | Audit pass recorded; two proposed findings; dependencies and restart observed; matrix gaps explicit                                      | [A05 report](audits/a05-starters-templates-functionality.md) |
 | A06  | Memory, search, reading, editing, revisions, associations                        | Pending                                                                                                                                  | Use audit template                                           |
 | A07  | Attention, prioritization, resolution, return to item                            | Pending                                                                                                                                  | Use audit template                                           |
@@ -151,14 +151,18 @@ PR #32 verified merged at `a8b9483`; main fast-forwarded and audit branch `codex
 
 | Finding | Priority | Proposed improvement                                                                 | Disposition                                   |
 | ------- | -------- | ------------------------------------------------------------------------------------ | --------------------------------------------- |
-| AGT-001 | High     | Load every saved roster profile through bounded pagination; preserve exact selection | Proposed, not implemented                     |
-| AGT-002 | Medium   | Reconcile filtered roster and actionable detail; use accurate empty/loading copy     | Proposed, not implemented                     |
+| AGT-001 | High     | Load every saved roster profile through bounded pagination; preserve exact selection | Implemented and locally verified in slice 3   |
+| AGT-002 | Medium   | Reconcile filtered roster and actionable detail; use accurate empty/loading copy     | Implemented and locally verified in slice 3   |
 | AGT-003 | Medium   | Keep inner workspace readable at 960px / 200% text; reconcile shared sidebar width   | Proposed, shared A01/A09 concern              |
 | TPL-001 | Medium   | Resume drafts by saved name with step/update metadata and secondary ID               | Proposed, summary contract change required    |
 | TPL-002 | Medium   | Recover blocked/expired template deletion with dependency guidance and fresh review  | Proposed, retain authoritative deletion guard |
 
-Recommended next implementation scope: AGT-001 + AGT-002, subject to owner decision. No new implementation tasks or accepted design added. A06 Memory is the next unaudited destination; A07/A08 and cross-section reconciliation remain open.
+Owner accepted AGT-001 + AGT-002 via "Lets do the next slice"; slice 3 extends the existing plan and tasks (T013-T018). A06 Memory is the next unaudited destination; A07/A08 and cross-section reconciliation remain open.
 
 Verification: fresh desktop build passed; 12 existing Agents/wizard E2E passed (35.2s); 5 focused persistence/contract/Windows integration files with 79 tests passed (20.38s). Two direct observation scenarios retain 15 unique records, including reviewed-versus-saved field equality, template content equality, blocked mutation, actual restart and empty live-process inventory. Screenshot captures inspected. A draft-pagination suspicion was rejected after verifying the enforced 20-open-draft limit; roster pagination was independently reproduced at 51 profiles. Full-suite, audit-branch hosted CI, real-provider execution and release completion are not claimed.
 
 Final direct observation run: 2 scenarios completed (15.9s), 15 unique records. Both probe files lint clean; five changed text files pass formatting; 32 local documentation links resolve; diff whitespace check passes; scoped Gitleaks reports no leaks. No product-source changes or implementation tests added.
+
+### Slice 3 implementation disposition
+
+AGT-001/002 implemented in the renderer: complete bounded roster paging, selection preservation, filtered-empty state/reset, exact import landing, identity-safe detail loading and explicit retries. Main-owned readback verifies eligibility, identity and restart outcomes; controlled delayed/failed reads verify stale-response exclusion and retry behavior. Original A04/A05 captures remain pre-fix. See [verification](verification.md#slice-3-agt-001002-roster-access-and-selection). AGT-003, TPL-001/002 and A06-A09 work remain open. No merge/release or audit-branch hosted CI claim.

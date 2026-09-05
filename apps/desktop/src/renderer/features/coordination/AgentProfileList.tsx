@@ -3,6 +3,7 @@ import type {
   AgentProfileSummaryView,
   ProfilePreviewView,
   ProfileState,
+  OperationResponse,
 } from '@threadhelm/contracts';
 import { api, call, errorCode } from '../../api.js';
 import { useStore } from '../../store.js';
@@ -35,20 +36,57 @@ export function AgentProfileList() {
   const [preview, setPreview] = useState<ProfilePreviewView | null>(null);
   const [error, setError] = useState<unknown>(null);
 
+  const [pageCount, setPageCount] = useState(1);
+  const [retry, setRetry] = useState(0);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState({ filter: '', sequence: -1, key: '' });
+  const [loadError, setLoadError] = useState<{ key: string; cause: unknown } | null>(null);
+  const requestKey = `${filterState}:${state.profilesSequence}:${pageCount}:${retry}`;
+  const current = loaded.filter === filterState && loaded.sequence === state.profilesSequence;
+  const failed = loadError?.key === requestKey;
+  const pending = loaded.key !== requestKey && !failed;
+  const visibleProfiles = current ? profiles : [];
+
   useEffect(() => {
     let cancelled = false;
-    void call(api.profiles.list(filterState ? { state: filterState } : {}))
-      .then((result) => {
-        if (!cancelled) setProfiles(result.profiles);
-      })
-      .catch((cause) => {
-        if (!cancelled) setError(cause);
-      });
+    const load = async () => {
+      // Refresh every requested page after events: an updated profile can move
+      // across cursor boundaries. Publish the reconciled inventory atomically.
+      const found = new Map<string, AgentProfileSummaryView>();
+      let cursor: string | null = null;
+      for (let page = 0; page < pageCount; page++) {
+        const result: OperationResponse<'profiles.list'> = await call(
+          api.profiles.list({
+            limit: 50,
+            ...(filterState ? { state: filterState } : {}),
+            ...(cursor ? { cursor } : {}),
+          }),
+        );
+        if (cancelled) return;
+        for (const profile of result.profiles) found.set(profile.profileId, profile);
+        cursor = result.nextCursor;
+        if (!cursor) break;
+      }
+      setProfiles([...found.values()]);
+      setNextCursor(cursor);
+      setLoaded({ filter: filterState, sequence: state.profilesSequence, key: requestKey });
+      setSelectedProfileId((id) => (id && found.has(id) ? id : null));
+      setLoadError(null);
+    };
+    void load().catch((cause) => {
+      if (!cancelled) setLoadError({ key: requestKey, cause });
+    });
     return () => {
       cancelled = true;
     };
-    // A content-free event is only a reload signal; no event body enters renderer state.
-  }, [filterState, state.profilesSequence]);
+  }, [filterState, state.profilesSequence, pageCount, requestKey]);
+
+  const changeFilter = (filter: ProfileState | '') => {
+    setFilterState(filter);
+    setPageCount(1);
+    const selected = profiles.find((profile) => profile.profileId === selectedProfileId);
+    if (filter && selected?.state !== filter) setSelectedProfileId(null);
+  };
 
   const choose = async () => {
     setError(null);
@@ -82,8 +120,9 @@ export function AgentProfileList() {
       <label className="field compact">
         Filter
         <select
+          aria-label="Profile filter"
           value={filterState}
-          onChange={(event) => setFilterState(event.target.value as ProfileState | '')}
+          onChange={(event) => changeFilter(event.target.value as ProfileState | '')}
         >
           <option value="">All</option>
           <option value="active">Active</option>
@@ -91,9 +130,34 @@ export function AgentProfileList() {
         </select>
       </label>
       <LaunchError error={error} />
-      {profiles.length === 0 ? <p className="hint">No reviewed agent profiles yet.</p> : null}
+      {pending ? <p role="status">Loading profiles...</p> : null}
+      {failed ? (
+        <>
+          <LaunchError error={loadError.cause} />
+          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+            Retry profiles
+          </button>
+        </>
+      ) : null}
+      {!pending && !failed && visibleProfiles.length === 0 ? (
+        <>
+          <p className="hint">
+            {filterState ? `No ${filterState} profiles.` : 'No reviewed agent profiles yet.'}
+          </p>
+          {filterState ? (
+            <button type="button" onClick={() => changeFilter('')}>
+              Show all profiles
+            </button>
+          ) : null}
+        </>
+      ) : null}
+      {current && visibleProfiles.length > 0 ? (
+        <p className="hint">
+          {visibleProfiles.length} profiles shown{nextCursor ? ' - more available' : ''}
+        </p>
+      ) : null}
       <ul className="list profiles" aria-label="Reviewed agent profiles">
-        {profiles.map((profile) => (
+        {visibleProfiles.map((profile) => (
           <li
             key={profile.profileId}
             tabIndex={0}
@@ -112,11 +176,23 @@ export function AgentProfileList() {
           </li>
         ))}
       </ul>
-      {selectedProfileId ? (
+      {current && nextCursor ? (
+        <button
+          type="button"
+          disabled={pending || failed}
+          onClick={() => setPageCount((value) => value + 1)}
+        >
+          Load more profiles
+        </button>
+      ) : null}
+      {current &&
+      selectedProfileId &&
+      visibleProfiles.some((profile) => profile.profileId === selectedProfileId) ? (
         <AgentProfileDetail
+          key={selectedProfileId}
           profileId={selectedProfileId}
           reloadSequence={state.profilesSequence}
-          onChanged={(summary) => setProfiles((current) => upsert(current, summary))}
+          onChanged={() => setRetry((value) => value + 1)}
         />
       ) : null}
       {preview ? (
@@ -125,6 +201,8 @@ export function AgentProfileList() {
           onCancel={() => setPreview(null)}
           onImported={(summary) => {
             setPreview(null);
+            changeFilter('');
+            setRetry((value) => value + 1);
             setProfiles((current) => upsert(current, summary));
             setSelectedProfileId(summary.profileId);
           }}

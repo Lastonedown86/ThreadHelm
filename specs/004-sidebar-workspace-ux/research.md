@@ -12,3 +12,7 @@ All decisions use current repository source and audit evidence; no dependency ch
 ## SES-001 decision
 
 Current-source diagnosis: SessionWorkspace treated any selected mission as an implicit filter; its fallback selection then replaced an unrelated successful launch selection. Reuse the renderer store for explicit scope, because both global navigation and mission terminal links must choose it. Local component state would be lost on destination changes and cannot express these entry intentions. Keep session selection independent: widening scope must not discard an exact selected ID. No external API research is required for this renderer-only change.
+
+## AGT-001/002 decisions
+
+The backend already returns a bounded profiles.list cursor (default 50), so a new API/search feature is unnecessary. Loading additional pages must account for updated_at ordering: enabling/disabling can move a profile across cursor boundaries. Refresh the requested page range atomically on profile events, deduplicate by ID, and discard obsolete responses. Clear detail when filtered out rather than introduce a separately pinned outside-filter context. Keep independent draft authoring and profile import authority unchanged.

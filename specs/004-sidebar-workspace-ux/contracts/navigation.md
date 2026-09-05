@@ -20,3 +20,11 @@ No IPC contract changes. Existing success Close receipt and process confirmation
 - Attention row then Sessions: All sessions retains that exact ID.
 - Scope narrowing: retain selection if visible, otherwise select the first visible ID. Empty scope renders no terminal. Scope widening retains a visible selection.
 - Navigation retains the existing draft-save guard. Filtering does not launch, stop, restart, bind or reassign a process.
+
+## AGT-001/002 roster behavior
+
+- Load more profiles uses the existing cursor contract in 50-item pages; retain selected ID and deduplicate refreshed pages.
+- Filter changes reset to the first page. Excluded selected detail closes; a matching selection is retained if present in the completed page.
+- No filtered matches uses No active profiles / No disabled profiles and Show all profiles; a truly empty All inventory uses No reviewed agent profiles yet.
+- Loading and failures are explicit, with Retry profiles / Retry profile detail on failure. Old requests cannot publish into a newer selection/filter. No prior detail action is rendered as a new target.
+- Successful import switches to All and reveals/selects its exact profile. Enable/Disable remains bound to the displayed profile ID and revision and triggers inventory reconciliation.

@@ -149,12 +149,19 @@ export function AgentProfileDetail({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
+  const [loadedSequence, setLoadedSequence] = useState(-1);
+  const [retry, setRetry] = useState(0);
   useEffect(() => {
     setHistoryOpen(false);
+    setError(null);
+    setDetail(null);
     let cancelled = false;
     void call(api.profiles.get({ profileId }))
       .then((next) => {
-        if (!cancelled) setDetail(next);
+        if (!cancelled) {
+          setDetail(next);
+          setLoadedSequence(reloadSequence);
+        }
       })
       .catch((cause) => {
         if (!cancelled) setError(cause);
@@ -163,9 +170,23 @@ export function AgentProfileDetail({
       cancelled = true;
     };
     // A content-free event is only a reload signal for the currently open detail.
-  }, [profileId, reloadSequence]);
+  }, [profileId, reloadSequence, retry]);
 
-  if (!detail) return null;
+  if (!detail || detail.profileId !== profileId || loadedSequence !== reloadSequence)
+    return (
+      <section aria-label="Agent profile detail">
+        {error ? (
+          <>
+            <LaunchError error={error} />
+            <button type="button" onClick={() => setRetry((value) => value + 1)}>
+              Retry profile detail
+            </button>
+          </>
+        ) : (
+          <p role="status">Loading profile detail...</p>
+        )}
+      </section>
+    );
 
   const toggleEnabled = async () => {
     setBusy(true);

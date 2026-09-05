@@ -104,3 +104,17 @@ Baseline 17fac62 (PR #35 merged). Owner accepted the recommended slice via "star
 Remaining limits: no full-suite or hosted CI result inferred; new paging selection is ephemeral and has no restart-persistence contract. Full narrow/200% text, revoked-scope fault injection and all event/paging interleavings remain outside this slice. Historical A06 probes and prior captures remain unchanged. MEM-002 and A07-A09 remain open. Feature 004 prerequisites and 16/16 requirements checklist passed; Feature 002 selector bytes preserved; no extension hooks configured.
 
 Final checks: repository typecheck and ESLint passed; seven changed text files formatted; 40 local links resolve; diff whitespace check passes; scoped Gitleaks found no leaks. T029-T033 complete the bounded local slice and PR handoff. Hosted CI remains separate.
+
+## Slice 7: MEM-002 temporary reading-list lifecycle
+
+Baseline 15355c4, merged PR #36; owner accepted the temporary-list design. Red-first regression failed on return from Agents (expected one edition, received zero). A subsequent regression exposed entry-level active status incorrectly applied to a superseded selected edition; the row now uses exact revision lineage status with deleted/expired entry overrides.
+
+State contains only workspace/entry/revision references, with no bodies or durable mission association. Rows project title/status/expiry from scoped revision-specific reads; loading, denied and failed reads hide old metadata. Return navigation re-reads, memory events refresh, and one deadline timer requests authoritative expiry state. Current request identity and cleanup reject obsolete responses. Delete replaces title with content-free Deleted content; count reports editions rather than cached body bytes. Copy explicitly explains temporary session lifetime and restart clearing.
+
+New Electron scenarios verify UI add/dedup, section return, exact superseded edition retention, deletion title clearing, Remove, retraction through UI, injected read failure and Retry edition, and restart clearing of a nonempty list. Main setup operations deliberately mutate supersession/deletion to test external lifecycle events; independent scoped get verifies deleted body null before/after restart. An actual expiry deadline changes the badge and is independently read back as expired. Existing Memory regressions retain publication/review, scope, paging, conflicts and sampled accessibility evidence. No providers launch. [Deleted-edition capture](audits/evidence/slice-7-reading-deleted.png) was visually inspected.
+
+Limitations: no full-suite/hosted CI/release claim, no durable mission packet, and no full large-list/reflow/accessibility matrix. Revoked-workspace and removed-row late-response cases are source-checked, not independently fault-injected. The existing get contract returns content transiently; the reading list retains only metadata and never caches body or lineage in its state. Main remains authority for lifecycle and scope. Feature 004 prerequisites/checklist (16/16) pass; Feature 002 selector preserved; no hooks configured.
+
+Final validation: fresh desktop build, repository typecheck and ESLint passed. Ten Memory E2E tests passed (48.4s), including both new reading-list scenarios. Baseline captures from earlier slices were preserved.
+
+Artifact checks: ten changed text files formatted, 42 local links resolved, diff whitespace passed, and scoped Gitleaks found no leaks. T034-T038 complete the bounded slice and PR handoff.

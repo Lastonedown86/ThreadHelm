@@ -24,3 +24,7 @@ Supersession fields and main disclosure remain ephemeral renderer state. An oper
 ## Slice 5 search request identity
 
 MemoryList owns the selected workspace and contested filter across direct and guided requests. The parent increments a guided request version instead of remounting the list. Search and detail generations discard obsolete successes and failures; context changes clear results/detail and reset pending state. No durable state changes.
+
+## Slice 7 temporary reading-list state
+
+Renderer store holds only entryId/revisionId/scope references, deduplicated by revision ID, until app restart. Each mounted row projects a revision-specific main read into title/status/expiry metadata and discards body/lineage content. Lifecycle event/request identity gates hide obsolete metadata; cancellation prevents late results from repopulating removed/unmounted rows. A single deadline timer triggers an authoritative expiry refresh, capped at the platform timeout maximum; no periodic polling. Deleted/expired entry status overrides revision status; otherwise the exact selected lineage revision supplies status. No durable schema changes.

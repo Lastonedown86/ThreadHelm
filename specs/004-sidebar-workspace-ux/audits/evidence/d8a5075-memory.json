@@ -1,0 +1,908 @@
+[
+  {
+    "id": "environment",
+    "baseline": "d8a50758ec4cfbcf8333509da078427a8f73ef8f",
+    "os": "Windows 11 Home",
+    "release": "10.0.26200",
+    "appBuild": "ThreadHelm v44.0.0 · Electron 44.0.0 · x64",
+    "viewport": {
+      "width": 1264,
+      "height": 761,
+      "fontSize": "16px"
+    },
+    "fixtures": "isolated approved temporary workspaces; no provider launch"
+  },
+  {
+    "id": "M01-guided-scope",
+    "initial": "5db1e9e8-ce9c-4edb-88d2-b97247ef789d",
+    "selected": "0edeb5ec-123a-4e58-b253-39260762fd6e",
+    "afterScope": "5db1e9e8-ce9c-4edb-88d2-b97247ef789d",
+    "before": "auditneedle scope alpha\nactive\n\nauditneedle scope alpha\n\nFact · User\n\nView details",
+    "after": "auditneedle scope beta\nactive\n\nauditneedle scope beta\n\nFact · User\n\nView details",
+    "alpha": {
+      "entryId": "225c5d43-770a-42c6-9ca9-55ff078d1594",
+      "revisionId": "f272f7f7-d9c5-44f9-8ae9-ee07b0d8c300",
+      "scope": {
+        "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+      },
+      "kind": "fact",
+      "status": "active",
+      "title": "auditneedle scope alpha",
+      "author": {
+        "kind": "user"
+      },
+      "sourceRefs": [],
+      "confidence": "unknown",
+      "conflictCount": 0,
+      "expiresAt": null,
+      "expiredAt": null,
+      "createdAt": "2026-09-05T19:58:01.959Z",
+      "updatedAt": "2026-09-05T19:58:01.959Z"
+    },
+    "beta": {
+      "entryId": "0a66fc45-23f0-439e-a489-35a8952f0b9e",
+      "revisionId": "988f2f86-998b-4233-b951-fbff27d344f0",
+      "scope": {
+        "workspaceId": "5db1e9e8-ce9c-4edb-88d2-b97247ef789d"
+      },
+      "kind": "fact",
+      "status": "active",
+      "title": "auditneedle scope beta",
+      "author": {
+        "kind": "user"
+      },
+      "sourceRefs": [],
+      "confidence": "unknown",
+      "conflictCount": 0,
+      "expiresAt": null,
+      "expiredAt": null,
+      "createdAt": "2026-09-05T19:58:02.002Z",
+      "updatedAt": "2026-09-05T19:58:02.002Z"
+    },
+    "live": []
+  },
+  {
+    "id": "M02-paging-detail",
+    "beforeDetail": "pagingmarker 20\nActive\n\nFact · Confidence: Unknown · Revision 1\n\npagingmarker 20\nCitations\n\nNo cited source references.\n\nRevision lineage (1)\nSupersede…\nRetract…\nDelete content…",
+    "resultCount": 21,
+    "detailAfter": 0,
+    "authoritative": {
+      "items": [
+        {
+          "entryId": "c70f0285-1fe0-4c42-9bcc-fe171f684efb",
+          "revisionId": "352b979b-ba67-47cf-9a49-191bf7f5e159",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 20",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.355Z",
+          "updatedAt": "2026-09-05T19:58:03.355Z",
+          "excerpt": "pagingmarker 20",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "3167b609-7316-4045-8101-77637e83d5f8",
+          "revisionId": "dde4a2f5-d7fa-4ba5-84e1-8f5cc0413024",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 19",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.325Z",
+          "updatedAt": "2026-09-05T19:58:03.325Z",
+          "excerpt": "pagingmarker 19",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "c8e8ddcc-f8a1-4630-9660-e1db923e51dd",
+          "revisionId": "eaea8a7a-7251-4458-9bc6-82cf75b9d716",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 18",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.299Z",
+          "updatedAt": "2026-09-05T19:58:03.299Z",
+          "excerpt": "pagingmarker 18",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "364a5052-b06e-43a5-b277-c746895d46b7",
+          "revisionId": "7d250fec-308f-4fcb-a17a-67185998fc7e",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 17",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.273Z",
+          "updatedAt": "2026-09-05T19:58:03.273Z",
+          "excerpt": "pagingmarker 17",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "f958a840-af48-4634-a710-a8a476e74898",
+          "revisionId": "3de6cb9b-4c4d-4551-9275-eaccea8b193a",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 16",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.247Z",
+          "updatedAt": "2026-09-05T19:58:03.247Z",
+          "excerpt": "pagingmarker 16",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "08313f27-aa5f-47de-8502-c481df4a6afc",
+          "revisionId": "8b88d510-c70d-42a4-a099-caa5dc87e64a",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 15",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.221Z",
+          "updatedAt": "2026-09-05T19:58:03.221Z",
+          "excerpt": "pagingmarker 15",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "3085bb74-3590-40c7-acb5-d03f0867e806",
+          "revisionId": "938e2262-af49-486d-a736-8fa1de9daa68",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 14",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.197Z",
+          "updatedAt": "2026-09-05T19:58:03.197Z",
+          "excerpt": "pagingmarker 14",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "d816f319-1d95-4282-bdb3-78480a66f50a",
+          "revisionId": "9cc4f17e-6026-4a0c-861f-eeeab926453e",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 13",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.172Z",
+          "updatedAt": "2026-09-05T19:58:03.172Z",
+          "excerpt": "pagingmarker 13",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "d3e4bcdc-3b3c-4a92-a8ee-2064334cf084",
+          "revisionId": "feb9ca83-9981-4286-a7e8-3a1b378fcca1",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 12",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.149Z",
+          "updatedAt": "2026-09-05T19:58:03.149Z",
+          "excerpt": "pagingmarker 12",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "96df05cb-1ccf-4b7f-898d-f5ac1e631ed7",
+          "revisionId": "e86cb159-f143-4dcc-b501-4aa88c8b9179",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 11",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.126Z",
+          "updatedAt": "2026-09-05T19:58:03.126Z",
+          "excerpt": "pagingmarker 11",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "0aa975a7-73e7-47f4-878a-b10c8b1cad08",
+          "revisionId": "8b5af700-052f-4ffc-a6e8-5aa86485c6db",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 10",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.102Z",
+          "updatedAt": "2026-09-05T19:58:03.102Z",
+          "excerpt": "pagingmarker 10",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "dd163111-b622-400b-8c23-0a72b5286283",
+          "revisionId": "f1560a8c-5c9a-4779-b8c8-ba9961a9226a",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 9",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.077Z",
+          "updatedAt": "2026-09-05T19:58:03.077Z",
+          "excerpt": "pagingmarker 9",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "90d988e5-2f5d-4c2c-8cde-e3f98659f0e5",
+          "revisionId": "e9c48b6c-3c0b-49f1-9517-9893a97542c1",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 8",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.046Z",
+          "updatedAt": "2026-09-05T19:58:03.046Z",
+          "excerpt": "pagingmarker 8",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "8ad9aef4-97a4-4c79-a2db-49a074c0dff5",
+          "revisionId": "e6a7ef79-0201-4910-b845-8c8efa948513",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 7",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:03.019Z",
+          "updatedAt": "2026-09-05T19:58:03.019Z",
+          "excerpt": "pagingmarker 7",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "a72f13eb-8de1-4dbf-a2c3-db7ab74ce587",
+          "revisionId": "1e60ce5b-e939-4db1-8da6-f42d310067c8",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 6",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:02.996Z",
+          "updatedAt": "2026-09-05T19:58:02.996Z",
+          "excerpt": "pagingmarker 6",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "4bacc8c4-290c-4adb-828a-a12e006dcfed",
+          "revisionId": "3a4f44de-75f5-4060-b849-ddb1d1453224",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 5",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:02.971Z",
+          "updatedAt": "2026-09-05T19:58:02.971Z",
+          "excerpt": "pagingmarker 5",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "34ecb3bc-b2a5-4648-92b0-da0738510268",
+          "revisionId": "7de286a7-6713-469b-8ae5-2abbd9e40f68",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 4",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:02.949Z",
+          "updatedAt": "2026-09-05T19:58:02.949Z",
+          "excerpt": "pagingmarker 4",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "7441fbd6-b076-4462-ae8f-79bc888195c0",
+          "revisionId": "3739f52d-76b2-422e-a4b5-e905a0a8ce59",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 3",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:02.925Z",
+          "updatedAt": "2026-09-05T19:58:02.925Z",
+          "excerpt": "pagingmarker 3",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "52be7833-193a-4854-8879-6e7783fbd9b1",
+          "revisionId": "ed73854a-8401-4147-a2f3-0c545e95b24e",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 2",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:02.900Z",
+          "updatedAt": "2026-09-05T19:58:02.900Z",
+          "excerpt": "pagingmarker 2",
+          "rank": -0.000001391304347826087
+        },
+        {
+          "entryId": "069aa536-6d83-4989-8497-09f415164ce7",
+          "revisionId": "6881cf12-caed-49b2-be9a-1c48f1b040e1",
+          "scope": {
+            "workspaceId": "0edeb5ec-123a-4e58-b253-39260762fd6e"
+          },
+          "kind": "fact",
+          "status": "active",
+          "title": "pagingmarker 1",
+          "author": {
+            "kind": "user"
+          },
+          "sourceRefs": [],
+          "confidence": "unknown",
+          "conflictCount": 0,
+          "expiresAt": null,
+          "expiredAt": null,
+          "createdAt": "2026-09-05T19:58:02.875Z",
+          "updatedAt": "2026-09-05T19:58:02.875Z",
+          "excerpt": "pagingmarker 1",
+          "rank": -0.000001391304347826087
+        }
+      ],
+      "nextCursor": "eyJxdWVyeUhhc2giOiJjZDIyZTJiZDcyMzcxYzBiZGM1NjVlYTQyN2Y3ZWI2NDEzNDNjMzMwODEwOTNmYWRlMmZlMDhmZWVmZDg1ZmFhIiwicmFuayI6LTAuMDAwMDAxMzkxMzA0MzQ3ODI2MDg3LCJjcmVhdGVkQXQiOiIyMDI2LTA5LTA1VDE5OjU4OjAyLjg3NVoiLCJyZXZpc2lvbklkIjoiNjg4MWNmMTItY2FlZC00OWIyLWJlOWEtMWM0OGYxYjA0MGUxIn0"
+    }
+  },
+  {
+    "id": "M03-publish-readback",
+    "saved": {
+      "summary": {
+        "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+        "revisionId": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+        "scope": {
+          "workspaceId": "c12622f5-5dcf-4739-b7d1-3cd076bae15a"
+        },
+        "kind": "fact",
+        "status": "active",
+        "title": "Audit exact memory",
+        "author": {
+          "kind": "user"
+        },
+        "sourceRefs": [],
+        "confidence": "unknown",
+        "conflictCount": 0,
+        "expiresAt": null,
+        "expiredAt": null,
+        "createdAt": "2026-09-05T19:58:06.693Z",
+        "updatedAt": "2026-09-05T19:58:06.693Z"
+      },
+      "body": "Initial audit evidence.",
+      "lineage": [
+        {
+          "id": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 1,
+          "title": "Audit exact memory",
+          "body": "Initial audit evidence.",
+          "sourceRefs": [],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "active",
+          "supersedesRevisionId": null,
+          "contentBytes": 41,
+          "createdAt": "2026-09-05T19:58:06.693Z"
+        }
+      ],
+      "conflicts": [],
+      "availableActions": [
+        "supersede",
+        "retract",
+        "delete"
+      ]
+    },
+    "live": []
+  },
+  {
+    "id": "M04-supersede-stale-review",
+    "displayedBeforeAppend": "Later visible edit after review.",
+    "saved": {
+      "summary": {
+        "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+        "revisionId": "267fcd5f-be1b-4399-9d81-e0d21a62da82",
+        "scope": {
+          "workspaceId": "c12622f5-5dcf-4739-b7d1-3cd076bae15a"
+        },
+        "kind": "fact",
+        "status": "active",
+        "title": "Audit exact memory",
+        "author": {
+          "kind": "user"
+        },
+        "sourceRefs": [
+          {
+            "kind": "memory",
+            "id": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca"
+          }
+        ],
+        "confidence": "unknown",
+        "conflictCount": 0,
+        "expiresAt": null,
+        "expiredAt": null,
+        "createdAt": "2026-09-05T19:58:06.693Z",
+        "updatedAt": "2026-09-05T19:58:07.594Z"
+      },
+      "body": "Reviewed audit replacement.",
+      "lineage": [
+        {
+          "id": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 1,
+          "title": "Audit exact memory",
+          "body": "Initial audit evidence.",
+          "sourceRefs": [],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "superseded",
+          "supersedesRevisionId": null,
+          "contentBytes": 41,
+          "createdAt": "2026-09-05T19:58:06.693Z"
+        },
+        {
+          "id": "267fcd5f-be1b-4399-9d81-e0d21a62da82",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 2,
+          "title": "Audit exact memory",
+          "body": "Reviewed audit replacement.",
+          "sourceRefs": [
+            {
+              "kind": "memory",
+              "id": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca"
+            }
+          ],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "active",
+          "supersedesRevisionId": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "contentBytes": 45,
+          "createdAt": "2026-09-05T19:58:07.594Z"
+        }
+      ],
+      "conflicts": [],
+      "availableActions": [
+        "supersede",
+        "retract",
+        "delete"
+      ]
+    }
+  },
+  {
+    "id": "M05-reading-retracted",
+    "reading": "MISSION CONTEXT PACKET\n\nReading list\n27 bytes\nAudit exact memory active\nedition 267fcd5f-be1b-4399-9d81-e0d21a62da82\nRemove\n\nReading-list membership supplies evidence only. It grants no tools, workspace, permission, or launch authority.",
+    "saved": {
+      "summary": {
+        "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+        "revisionId": "267fcd5f-be1b-4399-9d81-e0d21a62da82",
+        "scope": {
+          "workspaceId": "c12622f5-5dcf-4739-b7d1-3cd076bae15a"
+        },
+        "kind": "fact",
+        "status": "retracted",
+        "title": "Audit exact memory",
+        "author": {
+          "kind": "user"
+        },
+        "sourceRefs": [
+          {
+            "kind": "memory",
+            "id": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca"
+          }
+        ],
+        "confidence": "unknown",
+        "conflictCount": 0,
+        "expiresAt": null,
+        "expiredAt": null,
+        "createdAt": "2026-09-05T19:58:06.693Z",
+        "updatedAt": "2026-09-05T19:58:07.851Z"
+      },
+      "body": "Reviewed audit replacement.",
+      "lineage": [
+        {
+          "id": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 1,
+          "title": "Audit exact memory",
+          "body": "Initial audit evidence.",
+          "sourceRefs": [],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "superseded",
+          "supersedesRevisionId": null,
+          "contentBytes": 41,
+          "createdAt": "2026-09-05T19:58:06.693Z"
+        },
+        {
+          "id": "267fcd5f-be1b-4399-9d81-e0d21a62da82",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 2,
+          "title": "Audit exact memory",
+          "body": "Reviewed audit replacement.",
+          "sourceRefs": [
+            {
+              "kind": "memory",
+              "id": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca"
+            }
+          ],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "retracted",
+          "supersedesRevisionId": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "contentBytes": 45,
+          "createdAt": "2026-09-05T19:58:07.594Z"
+        }
+      ],
+      "conflicts": [],
+      "availableActions": [
+        "delete"
+      ]
+    }
+  },
+  {
+    "id": "M06-reading-deleted",
+    "reading": "MISSION CONTEXT PACKET\n\nReading list\n27 bytes\nAudit exact memory active\nedition 267fcd5f-be1b-4399-9d81-e0d21a62da82\nRemove\n\nReading-list membership supplies evidence only. It grants no tools, workspace, permission, or launch authority.",
+    "saved": {
+      "summary": {
+        "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+        "revisionId": "267fcd5f-be1b-4399-9d81-e0d21a62da82",
+        "scope": {
+          "workspaceId": "c12622f5-5dcf-4739-b7d1-3cd076bae15a"
+        },
+        "kind": "fact",
+        "status": "deleted",
+        "title": null,
+        "author": {
+          "kind": "user"
+        },
+        "sourceRefs": [],
+        "confidence": "unknown",
+        "conflictCount": 0,
+        "expiresAt": null,
+        "expiredAt": null,
+        "createdAt": "2026-09-05T19:58:06.693Z",
+        "updatedAt": "2026-09-05T19:58:08.069Z"
+      },
+      "body": null,
+      "lineage": [
+        {
+          "id": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 1,
+          "title": null,
+          "body": null,
+          "sourceRefs": [],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "deleted",
+          "supersedesRevisionId": null,
+          "contentBytes": null,
+          "createdAt": "2026-09-05T19:58:06.693Z"
+        },
+        {
+          "id": "267fcd5f-be1b-4399-9d81-e0d21a62da82",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 2,
+          "title": null,
+          "body": null,
+          "sourceRefs": [],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "deleted",
+          "supersedesRevisionId": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "contentBytes": null,
+          "createdAt": "2026-09-05T19:58:07.594Z"
+        }
+      ],
+      "conflicts": [],
+      "availableActions": []
+    }
+  },
+  {
+    "id": "M07-reading-return",
+    "count": 0,
+    "saved": {
+      "summary": {
+        "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+        "revisionId": "267fcd5f-be1b-4399-9d81-e0d21a62da82",
+        "scope": {
+          "workspaceId": "c12622f5-5dcf-4739-b7d1-3cd076bae15a"
+        },
+        "kind": "fact",
+        "status": "deleted",
+        "title": null,
+        "author": {
+          "kind": "user"
+        },
+        "sourceRefs": [],
+        "confidence": "unknown",
+        "conflictCount": 0,
+        "expiresAt": null,
+        "expiredAt": null,
+        "createdAt": "2026-09-05T19:58:06.693Z",
+        "updatedAt": "2026-09-05T19:58:08.069Z"
+      },
+      "body": null,
+      "lineage": [
+        {
+          "id": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 1,
+          "title": null,
+          "body": null,
+          "sourceRefs": [],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "deleted",
+          "supersedesRevisionId": null,
+          "contentBytes": null,
+          "createdAt": "2026-09-05T19:58:06.693Z"
+        },
+        {
+          "id": "267fcd5f-be1b-4399-9d81-e0d21a62da82",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 2,
+          "title": null,
+          "body": null,
+          "sourceRefs": [],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "deleted",
+          "supersedesRevisionId": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "contentBytes": null,
+          "createdAt": "2026-09-05T19:58:07.594Z"
+        }
+      ],
+      "conflicts": [],
+      "availableActions": []
+    }
+  },
+  {
+    "id": "M08-deletion-restart",
+    "saved": {
+      "summary": {
+        "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+        "revisionId": "267fcd5f-be1b-4399-9d81-e0d21a62da82",
+        "scope": {
+          "workspaceId": "c12622f5-5dcf-4739-b7d1-3cd076bae15a"
+        },
+        "kind": "fact",
+        "status": "deleted",
+        "title": null,
+        "author": {
+          "kind": "user"
+        },
+        "sourceRefs": [],
+        "confidence": "unknown",
+        "conflictCount": 0,
+        "expiresAt": null,
+        "expiredAt": null,
+        "createdAt": "2026-09-05T19:58:06.693Z",
+        "updatedAt": "2026-09-05T19:58:08.069Z"
+      },
+      "body": null,
+      "lineage": [
+        {
+          "id": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 1,
+          "title": null,
+          "body": null,
+          "sourceRefs": [],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "deleted",
+          "supersedesRevisionId": null,
+          "contentBytes": null,
+          "createdAt": "2026-09-05T19:58:06.693Z"
+        },
+        {
+          "id": "267fcd5f-be1b-4399-9d81-e0d21a62da82",
+          "entryId": "38c13ad0-953e-4436-b4f3-2cd75b2bcfca",
+          "revision": 2,
+          "title": null,
+          "body": null,
+          "sourceRefs": [],
+          "author": {
+            "kind": "user"
+          },
+          "confidence": "unknown",
+          "status": "deleted",
+          "supersedesRevisionId": "aac7d47c-2f6b-47f7-bf87-3eaf2278c699",
+          "contentBytes": null,
+          "createdAt": "2026-09-05T19:58:07.594Z"
+        }
+      ],
+      "conflicts": [],
+      "availableActions": []
+    },
+    "searchResults": [],
+    "live": []
+  }
+]

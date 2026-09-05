@@ -9,6 +9,7 @@ import { LaunchDialog } from './features/launch/LaunchDialog.js';
 import { ComposerContext } from './features/mission-composer/ComposerContext.js';
 import type { Stage, WorkerFields } from './features/mission-composer/composer-fields.js';
 import { MissionComposerWorkspace } from './features/mission-composer/MissionComposerWorkspace.js';
+import { RepoIdeaEntry, type RepoIdeaFields } from './features/mission-composer/RepoIdeaEntry.js';
 import { ContextToggle } from './features/mission-focus/ContextToggle.js';
 import { MissionContext } from './features/mission-focus/MissionContext.js';
 import { MissionContextFrame } from './features/mission-focus/MissionContextFrame.js';
@@ -74,6 +75,8 @@ function Shell() {
     workers: WorkerFields[];
   } | null>(null);
   const [detailMissionId, setDetailMissionId] = useState<string | null>(null);
+  // The screen before step 1: pick a repo for ideas, or skip to a blank Outcome.
+  const [pickingRepo, setPickingRepo] = useState(false);
   const [drafts, setDrafts] = useState<MissionComposerDraftSummaryView[]>([]);
   const missionSelected = state.selectedDestination === 'missions';
   // Spec §1.2 close-flow / gate 6: a mission-rail or destination switch while
@@ -92,6 +95,7 @@ function Shell() {
   }, [actions]);
   const selectMission = useCallback(
     (id: string) => {
+      setPickingRepo(false);
       void flushComposer().then(() => actions.selectMission(id));
     },
     [flushComposer, actions],
@@ -117,12 +121,27 @@ function Shell() {
     };
   }, [state.missionSequence, state.composerSequence, state.storageDegraded]);
 
-  const openComposer = (sourceMissionId?: string) => {
+  const openComposer = (sourceMissionId?: string, initialFields?: RepoIdeaFields) => {
     // A composer may already be open (editing a different draft) — flush its
     // pending save before replacing it, same as any other composer switch.
+    // A picked repo idea is written through the ordinary updateDraft path, so
+    // it lands on Outcome as if the user had typed it: editable, autosaved.
+    setPickingRepo(false);
     void flushComposer().then(() =>
       call(api.missionComposer.createDraft(sourceMissionId ? { sourceMissionId } : undefined))
-        .then((draft) => setComposerDraftId(draft.draftId))
+        .then((draft) =>
+          initialFields
+            ? call(
+                api.missionComposer.updateDraft({
+                  draftId: draft.draftId,
+                  expectedVersion: draft.version,
+                  fieldValues: initialFields,
+                  currentStage: 'outcome',
+                }),
+              ).then(() => draft.draftId)
+            : draft.draftId,
+        )
+        .then((draftId) => setComposerDraftId(draftId))
         .catch((cause) =>
           actions.setNotice(reasonLabel(errorCode(cause)) ?? 'The draft could not be created.'),
         ),
@@ -130,6 +149,7 @@ function Shell() {
   };
   const resumeDraft = useCallback(
     (draftId: string) => {
+      setPickingRepo(false);
       void flushComposer().then(() => setComposerDraftId(draftId));
     },
     [flushComposer],
@@ -192,7 +212,7 @@ function Shell() {
               titles={workspace.titles}
               selectedMissionId={state.selectedMissionId}
               onSelect={selectMission}
-              onCreate={() => openComposer()}
+              onCreate={() => setPickingRepo(true)}
               drafts={drafts}
               onResumeDraft={resumeDraft}
             />
@@ -210,6 +230,17 @@ function Shell() {
         workspace={
           state.selectedDestination !== 'missions' ? (
             <LegacyDestination mission={workspace.detail} />
+          ) : pickingRepo ? (
+            <RepoIdeaEntry
+              workspaces={state.workspaces}
+              readiness={state.readiness}
+              onSkip={() => openComposer()}
+              onPick={(fields) => openComposer(undefined, fields)}
+              onGoToSettings={() => {
+                setPickingRepo(false);
+                actions.selectDestination('settings');
+              }}
+            />
           ) : composerDraftId ? (
             <MissionComposerWorkspace
               draftId={composerDraftId}

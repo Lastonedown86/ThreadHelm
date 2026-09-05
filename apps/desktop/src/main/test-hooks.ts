@@ -16,11 +16,13 @@ import {
   ProviderLifecycleEvidence,
   CoordinationEventEnvelope,
   EscalationView,
+  ThreadHelmError,
   type HandoffKind,
   type MemoryDetailView,
   type PowerEvent,
   type ProviderMemoryProposeRevisionInput,
   type ProviderId,
+  type RepoIdeaCandidate,
   type WorkOutcome,
 } from '@threadhelm/contracts';
 import {
@@ -82,6 +84,8 @@ export interface TestHooks {
   dropProviderPipe(sessionId: string): Promise<void>;
   /** Deterministic wait for a recon run's collection, instead of polling disk. */
   reconWhenCollected(runId: string): Promise<void>;
+  /** Replaces repo-idea generation with a fixed reply (null: held) so no provider CLI runs. */
+  fakeRepoIdeas(ideas: RepoIdeaCandidate[] | null): void;
   storagePath(): string;
   breakStorage(): void;
   advanceClock(ms: number): void;
@@ -352,6 +356,14 @@ export function installTestHooks(ctx: Context, router: Router, allowedOrigin: ()
     reconWhenCollected: (runId) => {
       if (!ctx.recon) throw new Error('TEST_RECON_NOT_AVAILABLE');
       return ctx.recon.whenCollected(runId);
+    },
+    fakeRepoIdeas: (ideas) => {
+      ctx.repoIdeas = {
+        propose: async () => {
+          if (!ideas) throw new ThreadHelmError('REPO_IDEAS_UNAVAILABLE', 'Held by test hook.');
+          return { ideas };
+        },
+      };
     },
     storagePath: () => ctx.storage?.db.name ?? '',
     breakStorage: () => {

@@ -81,6 +81,7 @@ export function RepoIdeaEntry({
   if (approved.length === 0)
     return (
       <section className="repo-idea-entry" aria-labelledby={headingId}>
+        <p className="visually-hidden" role="status" aria-live="polite" />
         <h1 id={headingId} tabIndex={-1} ref={heading}>
           Pick a repo to get mission ideas, or write your own.
         </h1>

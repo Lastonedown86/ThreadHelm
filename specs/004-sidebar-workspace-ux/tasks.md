@@ -112,3 +112,13 @@ Dependencies: T039 -> T040 -> T041 -> T042 -> T043. ATT-002/003/004 remain propo
 - [x] T048 Finish static checks, verification/register and open PR.
 
 Dependencies: T044 -> T045 -> T046 -> T047 -> T048. ATT-003/004 and A08/A09 remain open.
+
+## Slice 10: ATT-003 reflow
+
+- [x] T049 Record bounded reflow design and merged baseline.
+- [x] T050 [US7] Add and run failing Attention layout regression.
+- [x] T051 [US2] Correct medium sidebar and recovery content sizing.
+- [x] T052 [US7] Verify reflow, exact dismissal and existing recovery/navigation behavior.
+- [x] T053 Complete static checks, update evidence/register and open PR.
+
+Dependencies: T049 -> T050 -> T051 -> T052 -> T053. ATT-004 and A08/A09 remain open.

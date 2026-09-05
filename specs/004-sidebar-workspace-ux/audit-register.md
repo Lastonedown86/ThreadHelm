@@ -216,3 +216,7 @@ Owner accepted ATT-001 via "next slice" while PR #38 remained open; implementati
 ### Slice 9 ATT-002 disposition
 
 PR #38 merged at 51d0cc8. The next slice adopts recovery-only labeling plus mission navigation, preserving separate resolution authority. Added Session recovery scope, explicit queue/badge explanation, and guarded Open selected mission / Open Missions controls. [Slice 9 verification](verification.md#slice-9-att-002-recovery-scope-and-mission-return) records exact mission/decision and process readback. ATT-001 is merged; ATT-002 locally verified; ATT-003/004 remain proposed.
+
+### ATT-003 disposition after slice 10
+
+PR #39 merged at efb90d6. ATT-003 is locally verified for the sampled Attention reflow matrix and shared sidebar sizing, with exact keyboard dismissal readback. See [slice 10 verification](verification.md#slice-10-att-003-attention-reflow). This does not close the remaining A01/A09 inventory or AGT-003 cross-section matrix. ATT-004 remains the next bounded recommendation; A08/A09 remain pending.

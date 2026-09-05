@@ -82,6 +82,8 @@
 }
 
 .mission-rail {
+  min-width: 0;
+  overflow-wrap: anywhere;
   display: grid;
   gap: 0.75rem;
   padding: 1rem;
@@ -92,6 +94,20 @@
   display: flex;
   align-items: center;
   gap: 0.625rem;
+}
+
+.mission-rail > *,
+.mission-rail header > div {
+  min-width: 0;
+}
+
+.mission-rail header > div {
+  flex-wrap: wrap;
+}
+
+.mission-rail header > button {
+  max-width: 100%;
+  white-space: normal;
 }
 
 .mission-rail header {
@@ -180,7 +196,7 @@
 
 @media (max-width: 980px) {
   .mission-shell-regions {
-    grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+    grid-template-columns: minmax(0, min(18rem, 30vw)) minmax(0, 1fr);
   }
 
   .mission-shell-context {

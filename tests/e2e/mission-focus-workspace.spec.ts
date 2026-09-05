@@ -7,7 +7,7 @@ import type {
 } from '@threadhelm/contracts';
 import { launchApp, type LaunchedApp } from './helpers/app.js';
 import { missionProfile, missionSession, prepareFixtureMission } from './helpers/mission.js';
-import { launchWithFixtures, teardown, tempWorkspace } from './helpers/ui.js';
+import { launchWithFixtures, newMissionViaUi, teardown, tempWorkspace } from './helpers/ui.js';
 
 // Reason codes match /^[A-Z][A-Z0-9_]{2,63}$/ (packages/contracts/src/index.ts) — no
 // underscore required, e.g. the real 'BACKPRESSURE' shipped by
@@ -523,7 +523,7 @@ test('composer never surfaces a raw reason code at any of its four stages', asyn
     const session = await missionSession(app, dir);
     const workerSession = await missionSession(app, workerDir);
     await page.reload();
-    await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+    await newMissionViaUi(page);
     await page.getByLabel('Finish line', { exact: true }).fill('Fix the flaky terminal test.');
     await page
       .getByLabel('Proof of completion', { exact: true })

@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import type { MissionEnvelopeInput, OperationResponse } from '@threadhelm/contracts';
 import type { LaunchedApp } from './app.js';
+import { newMissionViaUi } from './ui.js';
 
 export async function missionProfile(
   app: LaunchedApp,
@@ -142,7 +143,7 @@ export async function composeMissionViaUi(app: LaunchedApp, dirs: string[]) {
   const supervisorId = (await missionSession(app, dirs[0]!)).id;
   const workerId = (await missionSession(app, dirs[1]!)).id;
   await page.reload();
-  await page.getByRole('button', { name: 'New mission…', exact: true }).click();
+  await newMissionViaUi(page);
   await page.getByLabel('Finish line', { exact: true }).fill('Review a bounded local change.');
   await page
     .getByLabel('Proof of completion', { exact: true })

@@ -118,3 +118,13 @@ Limitations: no full-suite/hosted CI/release claim, no durable mission packet, a
 Final validation: fresh desktop build, repository typecheck and ESLint passed. Ten Memory E2E tests passed (48.4s), including both new reading-list scenarios. Baseline captures from earlier slices were preserved.
 
 Artifact checks: ten changed text files formatted, 42 local links resolved, diff whitespace passed, and scoped Gitleaks found no leaks. T034-T038 complete the bounded slice and PR handoff.
+
+## Slice 8: ATT-001 recovery selection
+
+Owner accepted ATT-001 via "next slice" on open PR #38. Baseline main c32f255, audit 723789e. The red-first regression failed because dismissing a nonselected record replaced the selected third record ID with the first ID. The initial fixture lookup used CSS-transformed innerText; matching raw textContent corrected that harness issue before reproducing the product defect.
+
+RecoveryAttentionQueue now preserves a still-unresolved selection. If it disappears, the next surviving ID in prior order wins, then the previous surviving ID, then new first/empty. Current inventory drives reconciliation; asynchronous dismiss completion no longer resets selection. Main resolution, storage guards and reviewed replacement authority are unchanged.
+
+`pnpm desktop:build` passed. `pnpm exec playwright test tests/e2e/recovery-selection.spec.ts tests/e2e/recovery.spec.ts tests/e2e/session-scope.spec.ts`: 4 passed (32.5s). New test produces five recovery records through real isolated local-fixture crash/restart, then verifies nonselected dismissal, injected rejected dismissal with unchanged unresolved count, a held dismissal completed after a newer selection, next and previous neighbor fallbacks and final empty state. Independent sessions.list confirms exact dismissed session stopped, all final sessions stopped and zero unresolved records; restart preserves resolution and launches no sessions. Existing recovery test retains distinct reviewed replacement and no-replay proof.
+
+Repository typecheck and ESLint passed. Typecheck initially found an untyped test accumulator; explicit recovery-record array type corrected it. This was a test typing issue, not an application failure. Feature 004 prerequisites resolved, checklist 16/16, Feature 002 selector bytes restored; no hooks configured. Previous audit captures remain pre-fix. No whole-feature, full-suite or hosted CI claim. ATT-002/003/004 and A08/A09 remain open. Full keyboard focus after deletion and high-volume queue interleavings remain outside this bounded slice.

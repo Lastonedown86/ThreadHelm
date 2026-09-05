@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, call } from '../../api.js';
 import { useStore } from '../../store.js';
 import { RecoveryDetail } from './RecoveryDetail.js';
@@ -8,7 +8,26 @@ export function RecoveryAttentionQueue() {
   const { state, actions } = useStore();
   const open = state.recoveryRecords.filter((record) => record.resolvedAt === null);
   const [selectedId, setSelectedId] = useState(open[0]?.id ?? null);
-  const selected = open.find((record) => record.id === selectedId) ?? open[0];
+  const previousOrder = useRef(open.map((record) => record.id));
+  const selectedIndex = previousOrder.current.indexOf(selectedId ?? '');
+  const remaining = new Set(open.map((record) => record.id));
+  const neighborId =
+    previousOrder.current.slice(selectedIndex + 1).find((id) => remaining.has(id)) ??
+    previousOrder.current
+      .slice(0, Math.max(0, selectedIndex))
+      .reverse()
+      .find((id) => remaining.has(id));
+  const selected =
+    open.find((record) => record.id === selectedId) ??
+    open.find((record) => record.id === neighborId) ??
+    open[0];
+  const effectiveId = selected?.id ?? null;
+  useEffect(() => {
+    setSelectedId(effectiveId);
+    previousOrder.current = state.recoveryRecords
+      .filter((record) => record.resolvedAt === null)
+      .map((record) => record.id);
+  }, [state.recoveryRecords, effectiveId]);
   const labels = {
     interrupted_start: 'Interrupted while starting',
     unexpected_shutdown: 'ThreadHelm ended unexpectedly',
@@ -20,7 +39,6 @@ export function RecoveryAttentionQueue() {
     actions.recoveryChanged(
       await call(api.recovery.resolve({ recordId, resolution: 'dismissed' })),
     );
-    setSelectedId(null);
   };
   const replace = (recordId: string) => {
     const record = open.find((item) => item.id === recordId);

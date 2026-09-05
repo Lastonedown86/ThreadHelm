@@ -28,3 +28,7 @@ MemoryList owns the selected workspace and contested filter across direct and gu
 ## Slice 7 temporary reading-list state
 
 Renderer store holds only entryId/revisionId/scope references, deduplicated by revision ID, until app restart. Each mounted row projects a revision-specific main read into title/status/expiry metadata and discards body/lineage content. Lifecycle event/request identity gates hide obsolete metadata; cancellation prevents late results from repopulating removed/unmounted rows. A single deadline timer triggers an authoritative expiry refresh, capped at the platform timeout maximum; no periodic polling. Deleted/expired entry status overrides revision status; otherwise the exact selected lineage revision supplies status. No durable schema changes.
+
+## Slice 8 recovery selection
+
+Local selected record ID is reconciled against the current unresolved inventory. A ref holds the previous open order solely to choose the next surviving neighbor, then previous neighbor, when selection disappears. Dismissal completion updates authoritative recovery state without resetting selection. No durable model changes.

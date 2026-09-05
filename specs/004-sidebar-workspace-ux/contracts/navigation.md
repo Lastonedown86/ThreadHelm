@@ -48,3 +48,7 @@ Appending a page preserves the selected detail and all earlier rows. A failed pa
 ## MEM-002 temporary reading list
 
 Membership is an exact workspace/entry/revision reference and survives section navigation in the current app session. Restart clears it. The list has no saved mission association or execution authority. Metadata is loaded through revision-specific scoped reads and refreshed after memory events/return; bodies are not stored in list state. Deleted content cannot remain displayed under an active badge. Pending/error/unavailable reads hide obsolete metadata and offer retry/remove. Duplicate editions are ignored; Remove targets one edition.
+
+## ATT-001 recovery queue selection
+
+Dismissing another record preserves a still-open selected detail. Removing the selected record chooses the next surviving record in prior queue order, otherwise the previous surviving record, otherwise the first new record or empty state. Completion of an older dismissal cannot override a newer selection. Rejected dismissal retains record and selection; only main-owned resolution changes durable lifecycle.

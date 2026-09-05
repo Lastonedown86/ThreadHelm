@@ -2,7 +2,7 @@
 
 Created 2026-09-05. Feature: [Sidebar and Workspace UX Consistency](spec.md).
 
-Current main baseline: `a8b94838850175ff6467e044366a9cbbe733402f` (merged PR #32). A04/A05 use this baseline. A03 retains its pre-fix `83883d0` evidence; SES-001 is subsequently merged in PR #32. A01/A02 retain their pre-fix `efcd523` evidence, with MIS-001/002 subsequently implemented and merged in PR #31. Read the [merge reconciliation](audits/main-merge-reconciliation.md) before using older PR #29 evidence.
+Current main baseline: `d8a50758ec4cfbcf8333509da078427a8f73ef8f` (merged PR #33). A06 uses this baseline; AGT-001/002 are merged in PR #33. A04/A05 retain their pre-fix `a8b9483` baseline (PR #32). A03 retains its pre-fix `83883d0` evidence; SES-001 is subsequently merged in PR #32. A01/A02 retain their pre-fix `efcd523` evidence, with MIS-001/002 subsequently implemented and merged in PR #31. Read the [merge reconciliation](audits/main-merge-reconciliation.md) before using older PR #29 evidence.
 
 ## Coverage
 
@@ -13,7 +13,7 @@ Current main baseline: `a8b94838850175ff6467e044366a9cbbe733402f` (merged PR #32
 | A03  | Sessions, launch, terminals, controls, recovery                                  | Audit pass recorded; SES-001 locally verified; four proposed findings; process/recovery safeguards observed; explicit matrix gaps remain | [A03 report](audits/a03-sessions-functionality.md)           |
 | A04  | Agents, library, creation, editing, review                                       | Audit pass recorded; AGT-001/002 locally verified; AGT-003 proposed; UI and saved-state proof; matrix gaps explicit                      | [A04 report](audits/a04-agents-functionality.md)             |
 | A05  | Starter/template flows inside Agents: preview, import, create-agent relationship | Audit pass recorded; two proposed findings; dependencies and restart observed; matrix gaps explicit                                      | [A05 report](audits/a05-starters-templates-functionality.md) |
-| A06  | Memory, search, reading, editing, revisions, associations                        | Pending                                                                                                                                  | Use audit template                                           |
+| A06  | Memory, search, reading, editing, revisions, associations                        | Audit recorded; MEM-001 locally verified; three proposed findings; independent saved-state/restart proof; matrix gaps explicit           | [A06 report](audits/a06-memory-functionality.md)             |
 | A07  | Attention, prioritization, resolution, return to item                            | Pending                                                                                                                                  | Use audit template                                           |
 | A08  | Settings, folders, providers, configuration, prerequisite return                 | Pending                                                                                                                                  | Use audit template                                           |
 | A09  | Cross-section reconciliation                                                     | Pending A01–A08                                                                                                                          | Shared conventions and conflicts                             |
@@ -53,7 +53,7 @@ Capture baseline: `pnpm desktop:build`, then `PARITY_SHOTS=1 pnpm exec playwrigh
 
 ## Next stages
 
-1. Continue A04–A08 using [the shared template](audits/template.md); close the explicit A01–A03 matrix gaps without treating source-only checks as runtime passes.
+1. Continue A07–A08 using [the shared template](audits/template.md); close the explicit A01–A03 matrix gaps without treating source-only checks as runtime passes.
 2. Reconcile A09, update requirements if new evidence warrants, and record findings as accepted, amended, deferred, or rejected with reasons.
 3. Present the shared interaction design and section-specific deviations for owner review. The present spec is a draft, not that approval.
 4. Run Spec Kit clarification if material questions remain, then planning in an isolated worktree targeting Feature 004. The normal `SPECIFY_FEATURE_DIRECTORY` override persists `.specify/feature.json`; do not run it in the shared checkout as though it were read-only. Use the read-only resolution below for inspection and exclude any selector change from this audit PR.
@@ -89,7 +89,7 @@ Owner scope clarification: every pass includes presentation, decision logic, and
 | A03  | Launch and terminal attachment, input/interrupt/stop target, actual lifecycle result, ended-session disclosure, recovery and restart behavior |
 | A04  | Profile creation/edit/revision, persistence, eligibility and binding effects, confirmation and cancellation                                   |
 | A05  | Template preview/import/duplicate, validation, draft creation, saved profile provenance and absence of unintended launch effects              |
-| A06  | Search/filter correctness, item read/edit/revision, saved state, mission associations, permission boundaries and deletion where supported     |
+| A06  | Memory, search, reading, editing, revisions, associations                                                                                     | Audit recorded; MEM-001 locally verified; three proposed findings; independent saved-state/restart proof; matrix gaps explicit | [A06 report](audits/a06-memory-functionality.md) |
 | A07  | Queue inclusion/counting, underlying unresolved state, exact resolution target, actual resolution, retry and return navigation                |
 | A08  | Folder approval/revocation, provider availability, effective configuration, recon stop/collection behavior and prerequisite return            |
 | A09  | Consistency between originating control, destination, authoritative result and restored state across sections                                 |
@@ -157,7 +157,7 @@ PR #32 verified merged at `a8b9483`; main fast-forwarded and audit branch `codex
 | TPL-001 | Medium   | Resume drafts by saved name with step/update metadata and secondary ID               | Proposed, summary contract change required    |
 | TPL-002 | Medium   | Recover blocked/expired template deletion with dependency guidance and fresh review  | Proposed, retain authoritative deletion guard |
 
-Owner accepted AGT-001 + AGT-002 via "Lets do the next slice"; slice 3 extends the existing plan and tasks (T013-T018). A06 Memory is the next unaudited destination; A07/A08 and cross-section reconciliation remain open.
+Owner accepted AGT-001 + AGT-002 via "Lets do the next slice"; slice 3 extends the existing plan and tasks (T013-T018). A06 Memory was subsequently audited on merged PR #33; A07/A08 and cross-section reconciliation remain open.
 
 Verification: fresh desktop build passed; 12 existing Agents/wizard E2E passed (35.2s); 5 focused persistence/contract/Windows integration files with 79 tests passed (20.38s). Two direct observation scenarios retain 15 unique records, including reviewed-versus-saved field equality, template content equality, blocked mutation, actual restart and empty live-process inventory. Screenshot captures inspected. A draft-pagination suspicion was rejected after verifying the enforced 20-open-draft limit; roster pagination was independently reproduced at 51 profiles. Full-suite, audit-branch hosted CI, real-provider execution and release completion are not claimed.
 
@@ -166,3 +166,20 @@ Final direct observation run: 2 scenarios completed (15.9s), 15 unique records. 
 ### Slice 3 implementation disposition
 
 AGT-001/002 implemented in the renderer: complete bounded roster paging, selection preservation, filtered-empty state/reset, exact import landing, identity-safe detail loading and explicit retries. Main-owned readback verifies eligibility, identity and restart outcomes; controlled delayed/failed reads verify stale-response exclusion and retry behavior. Original A04/A05 captures remain pre-fix. See [verification](verification.md#slice-3-agt-001002-roster-access-and-selection). AGT-003, TPL-001/002 and A06-A09 work remain open. No merge/release or audit-branch hosted CI claim.
+
+## A06 Memory disposition - 2026-09-05
+
+PR #33 verified merged at `d8a5075`; main fast-forwarded before branch `codex/audit-memory-functionality`. AGT-001/002 are merged; original A04/A05 evidence remains pre-fix. [A06 report](audits/a06-memory-functionality.md) records four proposed findings and the complete action inventory with explicit gaps:
+
+| Finding | Priority | Proposed improvement                                                                           | Disposition                                    |
+| ------- | -------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| MEM-001 | High     | Invalidate supersession review after title/body edits; commit the exact newly reviewed content | Implemented and locally verified in slice 4    |
+| MEM-002 | High     | Refresh reading-list lifecycle and clarify temporary versus saved mission association          | Proposed; ownership/lifetime decision required |
+| MEM-003 | High     | Preserve selected workspace through guided search                                              | Proposed                                       |
+| MEM-004 | Medium   | Preserve selected detail across pagination append                                              | Proposed                                       |
+
+Validation: fresh build; 4 existing Memory E2E tests and 32 focused unit/contract/integration tests passed. Two direct audit scenarios completed with 9 retained observations and 3 inspected screenshots. Publication and lifecycle outcomes were read independently; deletion survives restart with null body and no search result. Reading-list stale state is a renderer defect, not evidence of failed durable deletion. No product edits or new implementation tasks. A07 Attention is next unaudited; A08/A09 and prior matrix gaps remain open. Full suite, hosted CI, provider execution and release readiness are not asserted.
+
+### Slice 4 implementation disposition
+
+Owner accepted MEM-001 via "next slice" on 2026-09-05. Title/body edits now invalidate review; exact reviewed content is visible; pending operations are guarded; cancelled responses cannot revive review; append rejection retains edits and offers fresh review inside the dialog. Implemented and locally verified; see [slice 4 evidence](verification.md#slice-4-mem-001-exact-supersession-review). Original A06 captures remain pre-fix. MEM-002/003/004 remain proposed; A07-A09 and matrix gaps remain open. No PR/hosted CI/release completion is claimed.

@@ -28,3 +28,11 @@ No IPC contract changes. Existing success Close receipt and process confirmation
 - No filtered matches uses No active profiles / No disabled profiles and Show all profiles; a truly empty All inventory uses No reviewed agent profiles yet.
 - Loading and failures are explicit, with Retry profiles / Retry profile detail on failure. Old requests cannot publish into a newer selection/filter. No prior detail action is rendered as a new target.
 - Successful import switches to All and reveals/selects its exact profile. Enable/Disable remains bound to the displayed profile ID and revision and triggers inventory reconciliation.
+
+## MEM-001 exact memory supersession
+
+- Any title/body edit invalidates the existing disclosure; Append requires a fresh review of the visible text.
+- Review displays exact title/body from the authoritative disclosure. Main still binds revision, scope, sources and confidence.
+- Only one review/append request runs at a time. Cancelled or replaced reviews cannot repopulate the dialog.
+- A failed append retains edits and requires fresh review; show the failure within the active dialog. Cancel performs no write; pending append cannot be dismissed or edited.
+- Independent get/restart must return the exact newly reviewed fields and one appended revision.

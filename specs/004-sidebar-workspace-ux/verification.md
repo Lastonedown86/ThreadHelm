@@ -72,3 +72,15 @@ Owner accepted the recommended slice via "Lets do the next slice" on 2026-09-05.
 Current renderer request identities prevent obsolete publication; page refresh is atomic and deduplicated, with no polling. Existing profile revision/eligibility authority remains unchanged. Full-suite, full accessibility matrix, failed import/slow mutation matrix, real-provider execution and hosted CI remain unverified for this slice. AGT-003 and TPL-001/002 remain proposed. Feature 004 is not complete.
 
 Final validation: four roster navigation/import/failure/restart regressions PASS (19.9s). Together with 12 existing roster/wizard and six sampled accessibility scenarios, 22 distinct selected E2E scenarios have passing evidence. Fresh desktop build, final typecheck and full lint PASS. Twelve changed text files formatted; 40 local documentation links resolve; diff whitespace check and scoped Gitleaks scans pass. Full suite and hosted CI were not run.
+
+## Slice 4: MEM-001 exact supersession review
+
+Accepted via "next slice", 2026-09-05. Baseline d8a5075; A06 audit d8623bd. Changes are limited to MemoryDetail renderer state and presentation, regression tests and Feature 004 records. No persistence or IPC change.
+
+The red-first test failed because Append remained after editing a reviewed title (expected 0 controls, actual 1). With the fix, title and body edits independently invalidate disclosure. Fresh review shows the authoritative title/body. Cancellation preserves editable fields and writes no revision; reopening requires review. Keyboard append writes the exact new fields and exactly one revision, retained after app restart. Independent main-owned get verifies outcomes; no provider sessions launched.
+
+A controlled renderer IPC delay holds a review while Escape cancels it; reopening and a fresh review remain usable when the old response returns. A simulated TOKEN_EXPIRED rejection performs no mutation, displays correction inside the dialog, preserves body text and removes Append until fresh review succeeds. This exercises renderer rejection recovery, not real-clock token expiry. Existing Memory E2E covers keyboard publication, conflicts, expiry, pagination and sampled accessibility.
+
+Validation: fresh desktop build passed; full TypeScript build and repository ESLint passed. Existing Memory E2E: 4 passed. New exact-review/recovery E2E: 2 passed (final run 8.0s, including review capture). Focused domain/persistence/contract Memory tests: 3 files, 27 passed (3.23s). Initial post-fix E2E attempts failed on an overly strict Body label locator; using the existing suite's label lookup resolved those harness failures.
+
+[Reviewed-content capture](audits/evidence/slice-4-memory-review.png) records the final dialog and was visually inspected. Full suite, narrow/200% text, real-clock UI expiry, interrupted append and hosted CI remain unverified. MEM-002/003/004 remain open. T019-T023 complete only MEM-001 locally. No extension hooks configured.

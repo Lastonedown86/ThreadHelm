@@ -52,3 +52,13 @@ Dependencies: T008 -> T009 -> T010 -> T011 -> T012. Other SES findings remain un
 - [x] T018 Complete static/artifact checks and update specs/004-sidebar-workspace-ux/audit-register.md dispositions.
 
 Dependencies: T013 -> T014 -> T015/T016 -> T017 -> T018. Other audit findings remain proposed; no parallel agents required.
+
+## Slice 4: MEM-001 only
+
+- [x] T019 Record accepted exact-review behavior and bounded renderer design in plan.md and contracts/navigation.md.
+- [x] T020 [US7] Add and run failing exact-review regression in tests/e2e/memory-review.spec.ts.
+- [x] T021 [US2] Implement disclosure invalidation, pending guards and in-dialog recovery in apps/desktop/src/renderer/features/coordination/MemoryDetail.tsx.
+- [x] T022 [US7] Verify exact saved values/restart, cancellation, rejected review and delayed responses; run existing Memory regressions.
+- [x] T023 Record validation and disposition in verification.md and audit-register.md; complete static checks.
+
+Dependencies: T019 -> T020 -> T021 -> T022 -> T023. Other Memory findings and A07-A09 remain open.

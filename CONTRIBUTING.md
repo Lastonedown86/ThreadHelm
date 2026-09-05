@@ -6,10 +6,12 @@ architecture changes before investing in implementation.
 ## Before contributing
 
 1. Read the [project constitution](.specify/memory/constitution.md).
-2. Search existing issues and pull requests for related work.
-3. Use a feature branch and submit changes through a pull request.
-4. Keep changes focused and document any Windows-specific behavior.
-5. Add or update tests when implementation code exists.
+2. Set up a local build with the [development guide](docs/development.md), and run the quality
+   gates listed there before opening a pull request.
+3. Search existing issues and pull requests for related work.
+4. Use a feature branch and submit changes through a pull request.
+5. Keep changes focused and document any Windows-specific behavior.
+6. Add or update tests when implementation code exists.
 
 ## Pull requests
 

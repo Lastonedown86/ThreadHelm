@@ -60,4 +60,11 @@ describe('reason labels', () => {
       expect(REASON_LABELS[code]).not.toMatch(/[A-Z]{3,}_/);
     }
   });
+
+  it('labels the repo-idea codes as a sentence', () => {
+    for (const code of ['REPO_IDEAS_UNAVAILABLE', 'REPO_IDEAS_OUTPUT_INVALID']) {
+      expect(REASON_LABELS[code]).toMatch(/^[A-Z].*\.$/);
+      expect(REASON_LABELS[code]).not.toMatch(/[A-Z]{3,}_/);
+    }
+  });
 });

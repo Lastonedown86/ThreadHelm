@@ -23,6 +23,8 @@ export const REASON_LABELS: Readonly<Record<string, string>> = {
   PERMISSION_MAPPING_MISMATCH:
     "The provider's permission mapping did not match the reviewed launch policy.",
   PERMISSION_POLICY_HELD: 'Permission policy held this action for your review.',
+  REPO_IDEAS_UNAVAILABLE: "Couldn't generate ideas right now.",
+  REPO_IDEAS_OUTPUT_INVALID: "Couldn't generate ideas right now.",
   STARTUP_DELIVERY_UNCERTAIN: 'A delivery outcome is uncertain after restart.',
   STARTUP_FAILED: 'ThreadHelm could not finish starting.',
   STARTUP_RECONCILIATION: 'ThreadHelm restarted and could not confirm this work.',

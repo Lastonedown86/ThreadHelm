@@ -200,11 +200,15 @@ Owner accepted the recommended temporary session list. Membership survives secti
 
 PR #37 verified merged at c32f255; main synchronized before branch codex/audit-attention-functionality. All four confirmed Memory fixes are merged, while A06 matrix gaps remain. [A07 report](audits/a07-attention-functionality.md) inventories every reachable action and distinguishes runtime observations from source-only and pending cases.
 
-| Finding | Priority | Proposed improvement                                                         | Disposition                               |
-| ------- | -------- | ---------------------------------------------------------------------------- | ----------------------------------------- |
-| ATT-001 | Medium   | Preserve selected recovery detail when dismissing another record             | Proposed; recommended first bounded slice |
-| ATT-002 | Medium   | Clarify recovery-only Attention scope and route to pending mission decisions | Proposed; scope design decision           |
-| ATT-003 | Medium   | Resolve narrow/200% text overflow with shared sidebar and detail sizing      | Proposed; shared A01/A09 concern          |
-| ATT-004 | Medium   | Expose selected recovery state and reconcile nested main landmarks           | Proposed; shared accessibility concern    |
+| Finding | Priority | Proposed improvement                                                         | Disposition                                 |
+| ------- | -------- | ---------------------------------------------------------------------------- | ------------------------------------------- |
+| ATT-001 | Medium   | Preserve selected recovery detail when dismissing another record             | Implemented and locally verified in slice 8 |
+| ATT-002 | Medium   | Clarify recovery-only Attention scope and route to pending mission decisions | Proposed; scope design decision             |
+| ATT-003 | Medium   | Resolve narrow/200% text overflow with shared sidebar and detail sizing      | Proposed; shared A01/A09 concern            |
+| ATT-004 | Medium   | Expose selected recovery state and reconcile nested main landmarks           | Proposed; shared accessibility concern      |
 
 Fresh build passed; 3 existing E2E passed; 24 focused recovery tests passed with 1 explicit locked-database startup skip. Two observation scenarios completed with 8 retained records and 3 inspected captures. Dismissal survives restart, failure does not mutate saved state, and existing replacement proof uses a distinct reviewed session. No product edits or newly accepted tasks. A08 Settings is next unaudited; A09 and prior matrix gaps remain open.
+
+### Slice 8 ATT-001 disposition
+
+Owner accepted ATT-001 via "next slice" while PR #38 remained open; implementation is added to that PR. Selection now survives dismissal of another record and delayed completion; selected removal chooses next/previous surviving record, then empty state. [Slice 8 verification](verification.md#slice-8-att-001-recovery-selection) records exact-target saved-state and restart evidence plus 4 passing E2E tests. Original A07 evidence remains pre-fix. ATT-002/003/004 remain proposed; no broader audit acceptance is inferred.

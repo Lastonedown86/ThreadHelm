@@ -92,3 +92,13 @@ Dependencies: T029 -> T030 -> T031 -> T032 -> T033. MEM-002 and A07-A09 remain o
 - [x] T038 Complete static checks and evidence, update register, open PR.
 
 Dependencies: T034 -> T035 -> T036 -> T037 -> T038. Durable mission association and A07-A09 remain outside scope.
+
+## Slice 8: ATT-001 only
+
+- [x] T039 Record owner acceptance and queue-selection contract.
+- [x] T040 [US7] Add and run failing recovery selection regression in tests/e2e/recovery-selection.spec.ts.
+- [x] T041 [US2] Reconcile selected recovery identity against current open records in RecoveryAttentionQueue.tsx.
+- [x] T042 [US7] Verify failed/delayed dismissal, neighbor and empty selection, authoritative resolution and restart; run existing recovery regressions.
+- [x] T043 Complete static checks, update verification/register and update PR #38.
+
+Dependencies: T039 -> T040 -> T041 -> T042 -> T043. ATT-002/003/004 remain proposed.

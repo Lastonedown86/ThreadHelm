@@ -52,3 +52,7 @@ Membership is an exact workspace/entry/revision reference and survives section n
 ## ATT-001 recovery queue selection
 
 Dismissing another record preserves a still-open selected detail. Removing the selected record chooses the next surviving record in prior queue order, otherwise the previous surviving record, otherwise the first new record or empty state. Completion of an older dismissal cannot override a newer selection. Rejected dismissal retains record and selection; only main-owned resolution changes durable lifecycle.
+
+## ATT-002 recovery-only scope
+
+Attention's badge and queue count unresolved session recovery records. Copy explicitly separates mission decisions, which remain in Missions. Open selected mission uses the existing guarded exact-ID selection; without selection, Open Missions uses guarded destination navigation. These routes never resolve a decision, dismiss recovery or launch a session. No global mission-decision aggregation is implied.

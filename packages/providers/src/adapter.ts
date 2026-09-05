@@ -57,6 +57,30 @@ export interface ProbeContext {
   ): Promise<ProbeExecResult>;
 }
 
+export interface StructuredDraftContext {
+  /** The exact text sent to the CLI on stdin. Main assembled this; adapters never edit it. */
+  prompt: string;
+  resolvedExecutable: string;
+  executableKind: ExecutableKind;
+  /** Exact per-call override; absent keeps the CLI's local default. */
+  model?: string | null;
+  effort?: string | null;
+}
+
+export interface StructuredDraftDescriptor {
+  executable: string;
+  /** Fixed adapter-owned tokens only; the prompt never enters argv. */
+  args: string[];
+  /** Written to the child's stdin, then stdin is closed. */
+  stdin: string;
+}
+
+export interface StructuredDraftExecResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+}
+
 export interface ReadinessResult {
   providerId: ProviderId;
   resolvedExecutable: string | null;
@@ -236,6 +260,8 @@ export interface ProviderAdapter {
   readonly capabilities: {
     interactivePty: true;
     structuredActivity: boolean;
+    /** True only for adapters with a verified non-interactive JSON-emitting mode. */
+    structuredDraft?: boolean;
     cleanStopStrategy: 'slash_exit' | 'ctrl_d';
     bridgeConfiguration?: BridgeConfigurationCapability;
     safePointEvidence?: SafePointEvidenceCapability;
@@ -251,6 +277,10 @@ export interface ProviderAdapter {
   buildLaunch(ctx: LaunchContext): LaunchDescriptor;
   buildLaunchDisclosure(ctx: LaunchContext): ProviderLaunchDisclosure | null;
   buildCleanStop(ctx: StopContext): CleanStopAction;
+  /** Absent when the adapter has no verified non-interactive mode. */
+  buildStructuredDraft?(ctx: StructuredDraftContext): StructuredDraftDescriptor;
+  /** Raw CLI output is reduced to one string here; main never sees the raw shape. */
+  parseStructuredDraftOutput?(raw: StructuredDraftExecResult): string | null;
   parseStructuredActivity?(event: Uint8Array): ActivityEvidence | null;
   /** Raw provider payloads are reduced or rejected inside the adapter. */
   parseLifecycleEvidence?(event: unknown): ProviderLifecycleEvidence | null;
@@ -621,6 +651,23 @@ export async function runProbe(adapter: ProviderAdapter, ctx: ProbeContext, spec
 
 function sig(ctx: ProbeContext): { signal?: AbortSignal } {
   return ctx.signal ? { signal: ctx.signal } : {};
+}
+
+/**
+ * Structured-draft descriptor shared by both MVP adapters: fixed tokens on
+ * argv (cmd.exe-quoted for a shim), the prompt on stdin. Keeping the prompt
+ * off argv sidesteps Windows command-line limits and cmd.exe's forbidden
+ * characters, which README text would otherwise trip.
+ */
+export function structuredDraftInvocation(
+  ctx: StructuredDraftContext,
+  fixedArgs: readonly string[],
+): StructuredDraftDescriptor {
+  const { executable, args } =
+    ctx.executableKind === 'cmd_shim'
+      ? buildCmdShimInvocation(ctx.resolvedExecutable, fixedArgs)
+      : { executable: ctx.resolvedExecutable, args: [...fixedArgs] };
+  return { executable, args, stdin: ctx.prompt };
 }
 
 /** Launch descriptor shared by both MVP adapters: interactive TUI, no user text. */

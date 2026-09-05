@@ -36,3 +36,7 @@ No IPC contract changes. Existing success Close receipt and process confirmation
 - Only one review/append request runs at a time. Cancelled or replaced reviews cannot repopulate the dialog.
 - A failed append retains edits and requires fresh review; show the failure within the active dialog. Cancel performs no write; pending append cannot be dismissed or edited.
 - Independent get/restart must return the exact newly reviewed fields and one appended revision.
+
+## MEM-003 shared Memory search scope
+
+Direct and guided searches use one selected approved workspace. Repeated guided queries run again without remounting the panel or resetting scope/filter. Query, scope and contested-filter changes invalidate old search/detail responses and clear obsolete actionable detail. Stale success/failure cannot overwrite newer results. Search and navigation never mutate memory or launch processes.

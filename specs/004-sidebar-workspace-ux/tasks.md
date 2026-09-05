@@ -62,3 +62,13 @@ Dependencies: T013 -> T014 -> T015/T016 -> T017 -> T018. Other audit findings re
 - [x] T023 Record validation and disposition in verification.md and audit-register.md; complete static checks.
 
 Dependencies: T019 -> T020 -> T021 -> T022 -> T023. Other Memory findings and A07-A09 remain open.
+
+## Slice 5: MEM-003 only
+
+- [x] T024 Record accepted scope and search ownership contract in plan.md and contracts/navigation.md.
+- [x] T025 [US7] Add and run failing scoped guided-search regression in tests/e2e/memory-search-scope.spec.ts.
+- [x] T026 [US2] Retain MemoryList instance and guard search/detail request identities in MemoryLibraryWorkspace.tsx and MemoryList.tsx.
+- [x] T027 [US7] Verify two-workspace and delayed-response behavior plus existing Memory regressions.
+- [x] T028 Update verification/register, complete static checks and open a PR.
+
+Dependencies: T024 -> T025 -> T026 -> T027 -> T028. MEM-002/004 remain proposed.

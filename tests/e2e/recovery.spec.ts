@@ -7,6 +7,7 @@ import {
   launchViaUi,
   launchWithFixtures,
   sessionOption,
+  showEndedSessions,
   stopViaUi,
   teardown,
   tempWorkspace,
@@ -56,6 +57,7 @@ test('crash → restart shows recovery records with explicit next actions', asyn
     ).toHaveCount(2);
     await expect(panel).toContainText(pathA);
     await expect(panel).toContainText(pathB);
+    await showEndedSessions(page);
     await expect(sessionOption(page, a)).toContainText('Recovery required');
     await expect(sessionOption(page, b)).toContainText('Recovery required');
     await expect(sessionOption(page, clean)).toContainText('Stopped');

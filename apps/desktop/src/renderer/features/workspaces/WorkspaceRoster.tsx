@@ -165,6 +165,11 @@ function ReconDisclosureDialog({
                 }
               />
               <p className="notice">{preview.autoHireStatement}</p>
+              <p className="hint">
+                ThreadHelm reads the roles when this session ends. Most agent tools stay at their
+                prompt once they have written them, so you stop the session yourself to finish the
+                run.
+              </p>
               <h3>Recon prompt</h3>
               <pre>{preview.reconPrompt}</pre>
               <p id="recon-boundary" className="notice warning">
@@ -300,7 +305,15 @@ export function WorkspaceRoster({
         <p>No roster yet. Recon can read this workspace and propose one.</p>
       ) : (
         <>
-          <p role="status">{run.outcome ? OUTCOME_TEXT[run.outcome] : 'Recon is running.'}</p>
+          <p role="status">
+            {run.outcome
+              ? OUTCOME_TEXT[run.outcome]
+              : // Roles are read from disk when the session reaches a terminal
+                // state, and an interactive CLI does not exit on its own after
+                // writing them. Say so, or the owner waits on a list that only
+                // a stop will produce.
+                'Recon is running. An agent tool stays at its prompt after it has written the roles, so stop this session when it says it has finished — ThreadHelm reads what it wrote once the session ends.'}
+          </p>
           {run.outcome && !run.promptSubmitted ? (
             <p className="notice warning">
               ThreadHelm could not deliver the recon prompt to this session.

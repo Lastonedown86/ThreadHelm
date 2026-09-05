@@ -148,6 +148,17 @@ export function sessionOption(page: Page, sessionId: string): Locator {
   return page.locator(`#session-${sessionId}`);
 }
 
+/**
+ * Ended sessions (stopped, failed, recovery required) are collapsed behind one
+ * disclosure in the session list. Specs that assert on a session they did not
+ * select have to open it first.
+ */
+export async function showEndedSessions(page: Page): Promise<void> {
+  const toggle = page.getByRole('button', { name: /^Show \d+ ended session/ });
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+}
+
 export async function stopViaUi(app: LaunchedApp, sessionId: string): Promise<void> {
   await sessionOption(app.page, sessionId).click();
   await app.page.getByRole('button', { name: 'Stop…', exact: true }).click();

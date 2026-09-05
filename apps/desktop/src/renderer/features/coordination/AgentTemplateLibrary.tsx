@@ -118,7 +118,7 @@ export function AgentTemplateLibrary() {
             <div className="actions inline">
               <button
                 type="button"
-                className="small"
+                className="small quiet"
                 disabled={busy}
                 onClick={() =>
                   void act(async () =>
@@ -132,7 +132,7 @@ export function AgentTemplateLibrary() {
               </button>
               <button
                 type="button"
-                className="small"
+                className="small primary"
                 disabled={busy || state.storageDegraded || template.state !== 'active'}
                 onClick={() =>
                   setDialog({ kind: 'wizard', sourceRevisionId: template.currentRevisionId })
@@ -142,7 +142,7 @@ export function AgentTemplateLibrary() {
               </button>
               <button
                 type="button"
-                className="small"
+                className="small quiet"
                 disabled={busy || state.storageDegraded || template.state !== 'active'}
                 onClick={() => {
                   setDuplicateName(`${template.name} copy`);

@@ -93,7 +93,7 @@ test('capture parity screenshots', async () => {
   await app.page.setViewportSize({ width: 1400, height: 860 });
   await expect(app.page.locator('.status-bar')).toContainText('ThreadHelm v');
   await shot(app, '01-missions-empty');
-  for (const d of ['Sessions', 'Agents', 'Templates', 'Memory', 'Attention', 'Settings']) {
+  for (const d of ['Sessions', 'Agents', 'Memory', 'Attention', 'Settings']) {
     await nav(app, d);
     await shot(app, `02-empty-${d.toLowerCase()}`);
   }

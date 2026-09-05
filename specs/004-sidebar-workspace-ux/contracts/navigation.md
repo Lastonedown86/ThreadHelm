@@ -40,3 +40,7 @@ No IPC contract changes. Existing success Close receipt and process confirmation
 ## MEM-003 shared Memory search scope
 
 Direct and guided searches use one selected approved workspace. Repeated guided queries run again without remounting the panel or resetting scope/filter. Query, scope and contested-filter changes invalidate old search/detail responses and clear obsolete actionable detail. Stale success/failure cannot overwrite newer results. Search and navigation never mutate memory or launch processes.
+
+## MEM-004 Memory pagination selection
+
+Appending a page preserves the selected detail and all earlier rows. A failed page request preserves rows, selection and cursor; Load more memories remains available to retry after the request finishes. A replacement search reconciles the current selection against replacement results. Query/scope/filter changes clear obsolete detail and invalidate pending responses as in MEM-003.

@@ -105,8 +105,13 @@ export function MemoryList({
       if (generation !== searchGeneration.current) return;
       setItems((current) => (append ? [...current, ...result.items] : result.items));
       setNextCursor(result.nextCursor);
-      if (detail && !result.items.some((item) => item.entryId === detail.summary.entryId)) {
-        setDetail(null);
+      if (!append) {
+        // Appended pages retain earlier rows, including the selected memory.
+        setDetail((current) =>
+          current && !result.items.some((item) => item.entryId === current.summary.entryId)
+            ? null
+            : current,
+        );
       }
     } catch (cause) {
       if (generation === searchGeneration.current)

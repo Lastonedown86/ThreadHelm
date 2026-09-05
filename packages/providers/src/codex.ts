@@ -6,10 +6,34 @@ import {
   interactiveLaunch,
   profileLaunchDisclosure,
   runProbe,
+  structuredDraftInvocation,
   type LaunchContext,
   type ProbeContext,
   type ProviderAdapter,
 } from './adapter.js';
+
+/**
+ * `codex exec --json` streams JSON Lines; the reply is the last
+ * `item.completed` whose item is an `agent_message` (verified on 0.150.1).
+ * Anything unparseable is skipped, never surfaced.
+ */
+function parseCodexAgentMessage(stdout: string): string | null {
+  let text: string | null = null;
+  for (const line of stdout.split('\n')) {
+    let event: unknown;
+    try {
+      event = JSON.parse(line.trim());
+    } catch {
+      continue;
+    }
+    if (typeof event !== 'object' || event === null) continue;
+    const { type, item } = event as { type?: unknown; item?: unknown };
+    if (type !== 'item.completed' || typeof item !== 'object' || item === null) continue;
+    const { type: itemType, text: itemText } = item as { type?: unknown; text?: unknown };
+    if (itemType === 'agent_message' && typeof itemText === 'string') text = itemText;
+  }
+  return text;
+}
 
 function launchArgs(ctx: LaunchContext): string[] {
   const args: string[] = [];
@@ -49,6 +73,7 @@ export const codexAdapter: ProviderAdapter = {
   capabilities: {
     interactivePty: true,
     structuredActivity: false,
+    structuredDraft: true,
     cleanStopStrategy: 'slash_exit',
     bridgeConfiguration: 'session_scoped_stdio_mcp',
     safePointEvidence: {
@@ -88,6 +113,19 @@ export const codexAdapter: ProviderAdapter = {
   },
   buildCleanStop(): CleanStopAction {
     return { writes: ['/quit\r'], graceMs: 10_000 };
+  },
+  buildStructuredDraft(ctx) {
+    // --skip-git-repo-check: main runs this in an app-owned temp dir, which
+    // is not a repository. --sandbox read-only: no writes even if the model
+    // tries a command. The prompt itself arrives on stdin.
+    const args = ['exec', '--json', '--skip-git-repo-check', '--sandbox', 'read-only'];
+    if (ctx.model) args.push('--model', ctx.model);
+    if (ctx.effort) args.push('--config', `model_reasoning_effort=${ctx.effort}`);
+    return structuredDraftInvocation(ctx, args);
+  },
+  parseStructuredDraftOutput(raw) {
+    if (raw.exitCode !== 0) return null;
+    return parseCodexAgentMessage(raw.stdout);
   },
   parseLifecycleEvidence() {
     // Exact Codex CLI 0.150.1 Stop/app-server schemas expose completed turns,

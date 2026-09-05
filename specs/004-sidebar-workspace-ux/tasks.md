@@ -72,3 +72,13 @@ Dependencies: T019 -> T020 -> T021 -> T022 -> T023. Other Memory findings and A0
 - [x] T028 Update verification/register, complete static checks and open a PR.
 
 Dependencies: T024 -> T025 -> T026 -> T027 -> T028. MEM-002/004 remain proposed.
+
+## Slice 6: MEM-004 only
+
+- [x] T029 Record accepted paging-selection design in plan.md and contracts/navigation.md.
+- [x] T030 [US7] Add and run failing paging/retry regression in tests/e2e/memory-paging-selection.spec.ts.
+- [x] T031 [US2] Preserve selected detail on appended results in MemoryList.tsx.
+- [x] T032 [US7] Verify failed-page retry, exact selected detail and context clearing; run Memory regressions.
+- [x] T033 Complete static checks, update verification/register and open a PR.
+
+Dependencies: T029 -> T030 -> T031 -> T032 -> T033. MEM-002 and A07-A09 remain open.

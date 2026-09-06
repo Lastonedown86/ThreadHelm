@@ -1,5 +1,8 @@
 .guided-setup {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  overflow-wrap: anywhere;
   gap: 1rem;
   padding: 1.25rem;
   max-width: 72rem;
@@ -58,6 +61,28 @@
 }
 @container workspace (max-width: 30rem) {
   .setup-check {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.guided-setup > *,
+.guided-setup .setup-check > *,
+.guided-setup .list > li {
+  min-width: 0;
+}
+.guided-setup .actions {
+  flex-wrap: wrap;
+}
+.guided-setup .modal .facts {
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+}
+@container workspace (max-width: 46rem) {
+  .guided-setup .setup-evidence,
+  .guided-setup .modal .facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .guided-setup .setup-evidence dd + dt,
+  .guided-setup .modal .facts dd + dt {
+    margin-top: 0.5rem;
   }
 }

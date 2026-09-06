@@ -194,3 +194,15 @@ New regression uses two approved temporary folders and local echo adapters. It s
 Fresh desktop build and repository typecheck passed. Feature 004 prerequisites resolve; checklist 16/16, Feature 002 selector preserved, no hooks configured. Original A08 observations remain historical. Full startup-refresh interleavings, system clock rollback, real provider install/auth transitions, full suite, screen-reader speech and hosted CI/release remain unverified. SET-004/005 and A09 remain open.
 
 Final validation: repository ESLint passed. Five selected E2E tests passed (43.2s): provider recheck, reviewed launch, roster read recovery, recon import and empty recon. Eight changed text files formatted; 60 local links resolved. T069-T073 complete the bounded slice and PR handoff.
+
+## Slice 15: SET-004 Settings reflow
+
+PR #44 verified merged at bbf80a9. Red-first Electron test reproduced 41px horizontal overflow at 960px/200% text. Scoped guided-setup CSS now uses a shrinkable single track, constrains child minimum widths, wraps content/actions, and stacks Settings health and modal facts in constrained workspaces. The shared sidebar and non-Settings modal styles remain unchanged.
+
+New test approves an isolated long-path workspace, checks Settings/cards/roster/health geometry and both approval/recon disclosures at 1264/960/680 widths with 100%/200% root text. Recon is reviewed then cancelled in every case, with no execution. At 960/200%, keyboard Check again completes and keyboard approval of the existing exact folder preserves one saved ID/path. Independent sessions.list and liveSessions remain empty. [Settings capture](audits/evidence/slice-15-settings-200.png) and [reachable approval controls](audits/evidence/slice-15-approval-200.png) visually inspected; vertical scrolling remains necessary at enlarged text. Original A08 screenshots remain pre-fix.
+
+Fresh desktop build passed; initial focused layout regression passed (6.7s). Feature 004 prerequisites/checklist pass (16/16), Feature 002 selector preserved, no hooks. Full inventory/contrast/screen-reader matrix, external-provider behavior, full suite and hosted CI/release remain unverified. SET-005 temporary proposal lifetime and A09 remain open.
+
+Final regression: six selected E2E tests passed (45.5s), covering layout, pending approval, recheck, reviewed launch, recon import and empty recon. Repository typecheck passed. Seven changed text files formatted; 63 local links resolved. T074-T078 complete the bounded slice and PR handoff.
+
+Repository ESLint, scoped Gitleaks and diff whitespace passed.

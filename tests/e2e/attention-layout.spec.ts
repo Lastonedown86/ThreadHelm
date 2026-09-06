@@ -47,7 +47,7 @@ test('Attention reflows long recovery identities and keeps exact dismissal usabl
         expect(item.overflow, `${width}/${font}: ${item.name}`).toBeLessThanOrEqual(1);
         expect(item.right, `${width}/${font}: ${item.name}`).toBeLessThanOrEqual(width!);
       }
-      await expect(detail).toContainText(dir);
+      await expect(detail).toContainText(workspace.displayPath);
     }
     await app.page.setViewportSize({ width: 960, height: 800 });
     await app.page.locator('.mission-shell-workspace').evaluate((node) => {

@@ -109,11 +109,39 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
                 key={session.id}
                 type="button"
                 role="tab"
+                id={`session-tab-${session.id}`}
+                aria-controls={`session-panel-${session.id}`}
+                aria-label={`${session.providerDisplayName} in ${session.workspaceDisplayPath}, session ${session.id}, ${LIFECYCLE_LABEL[session.lifecycleState]}${state.unread[session.id] ? ', new output' : ''}`}
+                title={`${session.workspaceDisplayPath} - ${session.id}`}
+                tabIndex={session.id === (selected?.id ?? sessions[0]?.id) ? 0 : -1}
+                onKeyDown={(event) => {
+                  const index = sessions.findIndex((candidate) => candidate.id === session.id);
+                  const nextIndex =
+                    event.key === 'ArrowRight'
+                      ? (index + 1) % sessions.length
+                      : event.key === 'ArrowLeft'
+                        ? (index - 1 + sessions.length) % sessions.length
+                        : event.key === 'Home'
+                          ? 0
+                          : event.key === 'End'
+                            ? sessions.length - 1
+                            : null;
+                  if (nextIndex === null) return;
+                  event.preventDefault();
+                  const next = sessions[nextIndex]!;
+                  actions.select(next.id);
+                  document.getElementById(`session-tab-${next.id}`)?.focus();
+                }}
                 aria-selected={session.id === selected?.id}
                 className={session.id === selected?.id ? 'selected' : undefined}
                 onClick={() => actions.select(session.id)}
               >
                 {session.providerDisplayName}{' '}
+                <span>
+                  {session.workspaceDisplayPath.split(/[\\/]/).filter(Boolean).at(-1) ??
+                    session.workspaceDisplayPath}
+                </span>
+                <span className="mono small-text">{session.id.slice(0, 8)}</span>
                 <span className="small-text">{LIFECYCLE_LABEL[session.lifecycleState]}</span>
                 {state.unread[session.id] ? (
                   <span className="badge attention">new output</span>

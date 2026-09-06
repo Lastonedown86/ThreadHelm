@@ -44,11 +44,19 @@ export function ReviewStage({
   const expiry = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const checkWorkers = async () => {
-    const sessions = await call(api.missions.eligibleSessions(undefined));
+    // Review can mount before the parent roster loads. Resolve both inputs here
+    // rather than interpreting a missing profile as the other provider.
+    const [sessions, roster] = await Promise.all([
+      call(api.missions.eligibleSessions(undefined)),
+      call(api.profiles.list({ state: 'active', limit: 100 })),
+    ]);
     return (
       workers
         .map((w, i) => {
-          const provider = profiles.find((p) => p.profileId === w.profileId)?.requestedProvider;
+          const profile = roster.profiles.find((p) => p.profileId === w.profileId);
+          if (!profile)
+            return `Worker ${i + 1}'s profile is unavailable. Choose an active profile before reviewing.`;
+          const provider = profile.requestedProvider;
           const providerId =
             provider === 'codex' || provider === 'codex-cli' ? 'codex-cli' : 'claude-code';
           return existingRuntimeIssue(

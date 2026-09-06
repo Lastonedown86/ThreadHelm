@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import type { OperationResponse } from '@threadhelm/contracts';
 import { launchApp } from './helpers/app.js';
@@ -12,6 +13,8 @@ test('folder approval is single-flight and cancellation is truthful through fail
     const dialog = app.page.getByRole('dialog', { name: 'Approve this folder?' });
     await app.setPickerPath(dir);
     await choose.click();
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeEnabled();
     await app.page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
     await expect(choose).toBeFocused();
@@ -83,7 +86,7 @@ test('folder approval is single-flight and cancellation is truthful through fail
     }
     const saved = await app.call<OperationResponse<'workspaces.list'>>('workspaces.list');
     expect(saved).toHaveLength(1);
-    expect(saved[0]!.displayPath).toBe(dir);
+    expect(saved[0]!.displayPath).toBe(realpathSync.native(dir));
     expect(saved[0]!.revokedAt).toBeNull();
     await expect(app.page.getByRole('alert')).toHaveCount(0);
     expect(await app.liveSessions()).toEqual([]);

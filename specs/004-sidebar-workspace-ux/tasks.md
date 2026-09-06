@@ -1,6 +1,6 @@
 # Tasks: Slice 1 edit preservation and navigation
 
-Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slice 20 is merged; slice 21 is locally verified pending merge; slices 22-33 are pending. Historical checkpoints below retain their original scope.
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-21 are merged; slice 22 is locally verified pending merge; slices 23-33 are pending. Historical checkpoints below retain their original scope.
 
 Scope: accepted MIS-001/002 only. Other Feature 004 work is not included in this completion ledger. Specification US2 owns behavior; US7 owns independent proof. Tests are required by FR-016–019 and the constitution.
 
@@ -246,3 +246,13 @@ Dependencies: T099 -> T100 -> T101 -> T102 -> T103. Next roadmap slice: 21, SES-
 - [x] T108 Complete checks, register/roadmap/evidence and open PR.
 
 Dependencies: T104 -> T105 -> T106 -> T107 -> T108. Next: slice 22, SES-003 and remaining SES-005.
+
+## Slice 22: session tabs and terminal IDs
+
+- [x] T109 Verify merge and record bounded identity/keyboard contract.
+- [x] T110 Add failing same-provider keyboard/identity/DOM regression.
+- [x] T111 Implement roving tabs, panel relationships and unique terminal IDs.
+- [x] T112 Verify exact selection, hidden panels, scope/disclosure and process invariants.
+- [x] T113 Complete static checks, audit/roadmap/evidence and PR.
+
+Dependencies: T109 -> T110 -> T111 -> T112 -> T113. Next: slice 23, Mission draft inventory/management.

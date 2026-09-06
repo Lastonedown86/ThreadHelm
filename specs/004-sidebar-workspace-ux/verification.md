@@ -298,3 +298,42 @@ Baseline: main `3b71d9f` (PR #52 already merged), branch `codex/ended-session-in
 - Scope limits: no new restart persistence policy; disclosure is renderer state. Full lifecycle/large-inventory/accessibility/performance coverage remains pending. SES-003 tab naming/keyboard and remaining SES-005 IDs belong to slice 22. Existing process/main authority and schema remain unchanged. No hooks; Feature 002 selector preserved.
 
 Recapture: `pnpm desktop:build`, then `pnpm exec playwright test tests/e2e/ended-session-inventory.spec.ts`. Other selected tests are session-scope, multi-session, terminal-visibility, attention-accessibility and recovery-selection. Historical generated screenshots overwritten during regression execution were restored to their recorded baseline.
+
+## Slice 22: SES-003 and remaining SES-005
+
+Baseline main `dc60e3acd4c8a0246c75b75b95629ff37f5b1b2b` (PR #53 merged); branch `codex/session-tab-identity`. Local Windows Electron with isolated echo fixtures. Locally verified, pending PR merge.
+
+- Before: same-provider tabs rendered only provider/state, without IDs or keyboard model; mounted terminal headings/hosts reused IDs. New regression reproduced missing identity on the baseline.
+- UI/UX: tabs show provider, workspace leaf and short session ID; full path and full ID remain in accessible names/tooltips. Left/Right wrap, Home/End select endpoints, with one tab stop and retained focus. Keyboard selection keeps the focused tab in view. Inspected [session tabs screenshot](audits/evidence/slice-22-session-tabs.png), including identical workspace leaf names and distinct IDs.
+- Logic/functionality: new Electron regression verifies exact returned session IDs against displayed order, arrow/end/home selection and focus, matching terminal hosts, tab-panel relationships, one exposed panel, two retained panels, no duplicate DOM IDs and unchanged live session/PID snapshot. Existing 2 ended-inventory, 2 scope, multi-session isolation and terminal-visibility tests passed: 7 unique selected tests. Terminal visibility and the new identity test reran successfully after the focus-scroll change.
+- Setup corrections: two launches in one workspace are denied by existing policy, so the test uses separate approved workspaces with identical leaf names. The inventory is newest-first, so test assertions use actual ordered IDs rather than assumed launch order.
+- Desktop build, typecheck, lint and full repository Prettier passed. No IPC/schema/dependencies, process authority or idle polling added. Existing single-main and ended disclosure behavior preserved. Feature 002 selector restored; requirements 16/16; no hooks.
+- CI carry-forward: PR #53 installer acceptance and CodeQL passed; both Windows CI jobs reported seven E2E failures. The owned ended-inventory failure compares a short Windows temporary path (RUNNER~1) with its canonical display path (runneradmin); fixed to assert the approved display path while retaining exact-ID checks. Prior failures also include attention-layout, mission-focus-workspace, settings-layout, supervisor-mission, template-delete-recovery and workspace-approval-pending. These remain recorded CI failures, not silently passed by this slice. The template case shows a still-open dialog intercepting a later click; no unrelated fix is claimed here.
+- Limits: no full suite or fresh real-provider/release acceptance. Lazy loading/failure identity was source-checked; the new runtime scenario covers loaded multiple terminals. Broad scaling/contrast and all asynchronous lifecycle cases retain their existing matrix gates.
+
+Recapture: `pnpm desktop:build`, then `pnpm exec playwright test tests/e2e/session-tab-identity.spec.ts`. Selected regressions: ended-session-inventory, session-scope, multi-session, terminal-visibility. Historical slice-2 screenshots overwritten by regression capture were restored to their recorded baseline.
+
+## PR #54 CI repair checkpoint
+
+Owner requested fixing CI before slice 23. On head `7f3ca67`, Windows x64/arm64 CI run 34052041060 failed the same six E2E cases; installer acceptance and CodeQL passed. The corrections are test-only:
+
+- Attention/Settings/workspace approval compare canonical approved/saved paths instead of raw Windows short temporary paths. Exact workspace/session IDs and persistence checks remain.
+- Mission workspace assertion matches the accepted ended-inventory description from slice 21.
+- Template and workspace cancellation wait for a visible, dismissible dialog before Escape, preventing a premature hidden assertion followed by a late-open dialog.
+- Stale revision test waits for the original confirmable review before an external revision; it still verifies stale submission rejection and unchanged newer objective.
+
+Baseline local run: 16 of 18 affected-file tests passed; stale copy and revision race reproduced. Corrected targeted run: all six formerly failing scenarios passed (32.3 seconds). Typecheck, lint and full repository formatting passed. No product behavior, timeout increases, retries or reduced safety assertions. Full local suite and fresh hosted CI are verified separately after pushing this checkpoint; historical failures are not retroactively relabeled.
+
+### Follow-up: real review dependency race
+
+The full local E2E run on 7793e32 completed with 105 passed, 1 skipped (opt-in parity capture), and 1 stale-revision test failure. Its captured UI reported a valid Codex worker as ineligible. Review mounted before the parent profile list arrived, and missing provider metadata was treated as Claude. A forced 500ms roster delay reproduced the failure deterministically before the fix.
+
+Review worker validation now awaits fresh profile and eligible-session reads together. Missing profiles produce an explicit unavailable-profile repair message instead of an inferred provider. Main preview/confirmation and exact runtime guards remain authoritative. This is a renderer correctness fix, not just a test change. The delayed-roster stale-authority regression and all 17 composer/runtime/supervisor tests passed after the fix; desktop build, typecheck, lint and full formatting passed. Fresh hosted checks must run on the follow-up commit; the earlier full-suite failure remains historical evidence.
+
+### Follow-up: workspace approval during startup
+
+The full local run on 2e2845c completed with 105 passed, 1 skipped and 1 repository-ideas failure. Repeated runs showed a newly approved folder disappearing from the renderer when a slow startup snapshot finished. The persisted approval remained intact. A deterministic Electron regression holds application info until after the empty workspace snapshot and UI approval, then releases startup: before the fix the Repo selector disappears; after the fix it retains the exact selected workspace ID and the main-owned inventory is unchanged.
+
+Each active store refresh now records workspace updates received while its reads are pending and applies them over its snapshot. Both workspace events and direct UI updates participate, and the journal is removed when the refresh settles. No polling, provider execution, timeout increases or retries added. The controlled regression plus repository-ideas and folder-approval scenarios passed (6 tests, 19.4 seconds). Fresh hosted CI is required on this follow-up commit.
+
+Repeated repository-ideas and controlled-startup coverage passed all 15 executions (three repetitions, 45.4 seconds). Build, typecheck, lint and full repository formatting passed. Hosted CI on prior 2e2845c passed both Windows architectures; this additional startup correction requires its own fresh checks.

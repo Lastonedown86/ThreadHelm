@@ -55,14 +55,17 @@ export function MissionTerminalDock({
         </p>
       ) : null}
       <div className="mission-terminal-stack">
-        {sessions
-          .filter((candidate) => mountedSessionIds.current.has(candidate.id))
-          .map((candidate) => (
-            <div
-              key={candidate.id}
-              className={candidate.id === session.id ? 'active-terminal' : 'inactive-terminal'}
-              aria-hidden={candidate.id !== session.id}
-            >
+        {sessions.map((candidate) => (
+          <div
+            key={candidate.id}
+            id={`session-panel-${candidate.id}`}
+            role="tabpanel"
+            aria-labelledby={`session-tab-${candidate.id}`}
+            tabIndex={candidate.id === session.id ? 0 : -1}
+            className={candidate.id === session.id ? 'active-terminal' : 'inactive-terminal'}
+            aria-hidden={candidate.id !== session.id}
+          >
+            {mountedSessionIds.current.has(candidate.id) ? (
               <LazyTerminalPane
                 session={candidate}
                 active={candidate.id === session.id}
@@ -70,8 +73,9 @@ export function MissionTerminalDock({
                 streamFailure={state.streamFailed[candidate.id] ?? null}
                 inputNotice={state.inputNotice[candidate.id] ?? null}
               />
-            </div>
-          ))}
+            ) : null}
+          </div>
+        ))}
       </div>
     </section>
   );

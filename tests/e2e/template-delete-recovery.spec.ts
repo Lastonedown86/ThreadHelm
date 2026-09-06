@@ -75,6 +75,8 @@ test('template dependency denial requires fresh deletion review and preserves ex
       ).drafts,
     ).toHaveLength(0);
     await row.getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Keep template' })).toBeEnabled();
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
     expect(

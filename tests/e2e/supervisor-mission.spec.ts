@@ -165,9 +165,26 @@ test('revision editor cannot submit stale fields against a refreshed mission ver
     const original = await app.call<MissionDetailView>('missions.detail', {
       missionId: summary!.id,
     });
+    // Force the roster to arrive after eligible sessions when entering Review directly.
+    await app.app.evaluate(({ ipcMain }) => {
+      const g = globalThis as unknown as {
+        __threadhelmTest: { dispatch(op: string, p: unknown): Promise<unknown> };
+      };
+      ipcMain.removeHandler('op:profiles.list');
+      ipcMain.handle('op:profiles.list', async (_e, p: unknown) => {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return g.__threadhelmTest.dispatch('profiles.list', p);
+      });
+    });
     await detail.getByRole('button', { name: 'Revise envelope…', exact: true }).click();
     await expect(detail).toBeHidden();
     await expect(page.getByText('Step 4 of 4 · Review · Revise mission')).toBeVisible();
+    // Establish the old reviewed authority before another client changes the mission.
+    const confirmation = page.getByRole('checkbox', {
+      name: 'I reviewed this exact mission authority',
+    });
+    await expect(confirmation).toBeVisible();
+    await expect(confirmation).toBeEnabled();
     const newer = await app.call<MissionPreviewView>('missions.previewRevision', {
       missionId: original.id,
       expectedVersion: original.version,

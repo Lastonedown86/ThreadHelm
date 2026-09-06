@@ -88,7 +88,7 @@ test('Settings and its disclosures reflow while exact approval and recheck remai
     const after = await app.call<OperationResponse<'workspaces.list'>>('workspaces.list');
     expect(after).toHaveLength(1);
     expect(after[0]!.id).toBe(saved[0]!.id);
-    expect(after[0]!.displayPath).toBe(dir);
+    expect(after[0]!.displayPath).toBe(saved[0]!.displayPath);
     expect((await app.call<OperationResponse<'sessions.list'>>('sessions.list')).sessions).toEqual(
       [],
     );

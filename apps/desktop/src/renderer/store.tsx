@@ -371,8 +371,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reduce, initial);
   const selectedRef = useRef<string | null>(null);
   selectedRef.current = state.selectedSessionId;
+  const workspaceReads = useRef(new Set<Map<string, ApprovedWorkspaceView>>());
+  const applyWorkspace = useCallback((workspace: ApprovedWorkspaceView) => {
+    for (const changes of workspaceReads.current) changes.set(workspace.id, workspace);
+    dispatch({ type: 'workspace', workspace });
+  }, []);
 
   const refresh = useCallback(async () => {
+    const changes = new Map<string, ApprovedWorkspaceView>();
+    workspaceReads.current.add(changes);
     try {
       const [workspaces, readiness, list, appInfo, coordination] = await Promise.all([
         call(api.workspaces.list(undefined)),
@@ -384,9 +391,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           storageDegraded: true,
         })),
       ]);
+      // Events received while other startup reads were pending supersede this snapshot.
+      let currentWorkspaces = workspaces;
+      for (const workspace of changes.values()) {
+        currentWorkspaces = upsertBy(currentWorkspaces, workspace, (item) => item.id);
+      }
       dispatch({
         type: 'loaded',
-        workspaces,
+        workspaces: currentWorkspaces,
         readiness,
         sessions: list.sessions,
         recoveryRecords: list.recoveryRecords,
@@ -399,6 +411,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       dispatch({ type: 'notice', notice: describeError(error) });
+    } finally {
+      workspaceReads.current.delete(changes);
     }
   }, []);
 
@@ -432,7 +446,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
     });
     const offs = [
-      api.on('workspace.changed', (workspace) => dispatch({ type: 'workspace', workspace })),
+      api.on('workspace.changed', applyWorkspace),
       api.on('provider.readinessChanged', (readiness) =>
         dispatch({ type: 'readiness', readiness }),
       ),
@@ -498,7 +512,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       uninstall();
     };
     // selectedRef is a plain object updated on every render; hooks read it live.
-  }, [refresh, refreshCoordination]);
+  }, [refresh, refreshCoordination, applyWorkspace]);
 
   const actions = useMemo<Actions>(
     () => ({
@@ -520,11 +534,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (STREAM_READY.has(session.lifecycleState)) subscribeOutput(session.id);
       },
       recoveryChanged: (record) => dispatch({ type: 'recovery', record }),
-      workspaceChanged: (workspace) => dispatch({ type: 'workspace', workspace }),
+      workspaceChanged: applyWorkspace,
       handoffChanged: (handoff) => dispatch({ type: 'handoff', handoff }),
       refreshCoordination,
     }),
-    [refresh, refreshCoordination],
+    [refresh, refreshCoordination, applyWorkspace],
   );
 
   const value = useMemo(() => ({ state, actions }), [state, actions]);

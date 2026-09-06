@@ -16,7 +16,8 @@ test('ended disclosure collapses selected records consistently across list and t
   const dirs = [tempWorkspace('ended-a'), tempWorkspace('ended-b')];
   try {
     const a = await launchViaUi(app, 'codex-cli', await approveViaUi(app, dirs[0]!));
-    const b = await launchViaUi(app, 'codex-cli', await approveViaUi(app, dirs[1]!));
+    const bPath = await approveViaUi(app, dirs[1]!);
+    const b = await launchViaUi(app, 'codex-cli', bPath);
     await stopViaUi(app, b);
     const page = app.page;
     const before = await app.liveSessions();
@@ -31,7 +32,7 @@ test('ended disclosure collapses selected records consistently across list and t
     await page.getByRole('button', { name: 'Show 1 ended session', exact: true }).click();
     await expect(page.getByRole('tab')).toHaveCount(2);
     await sessionOption(page, b).click();
-    await expect(page.locator('#terminal-dock-heading')).toContainText(dirs[1]!);
+    await expect(page.locator('#terminal-dock-heading')).toContainText(bPath);
     await stopViaUi(app, a);
     await page.getByRole('button', { name: 'Hide 2 ended sessions', exact: true }).click();
     await expect(page.getByRole('listbox', { name: 'Sessions' }).getByRole('option')).toHaveCount(
@@ -52,7 +53,7 @@ test('ended disclosure collapses selected records consistently across list and t
     await page.getByRole('button', { name: 'Sessions', exact: true }).click();
     await expect(sessionOption(page, b)).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('tab')).toHaveCount(2);
-    await expect(page.locator('#terminal-dock-heading')).toContainText(dirs[1]!);
+    await expect(page.locator('#terminal-dock-heading')).toContainText(bPath);
     expect((await app.call<OperationResponse<'sessions.list'>>('sessions.list')).sessions).toEqual(
       list.sessions,
     );

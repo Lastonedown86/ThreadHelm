@@ -1,6 +1,6 @@
 # Implementation Plan: Edit preservation and navigation consistency
 
-Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slice 20 is merged; slice 21 is locally verified pending merge; slices 22-33 are pending. Historical checkpoints below retain their original scope.
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-21 are merged; slice 22 is locally verified pending merge; slices 23-33 are pending. Historical checkpoints below retain their original scope.
 
 Branch: `codex/audit-sidebar-mission-functionality`. Date: 2026-09-05. [Specification](spec.md).
 
@@ -167,3 +167,7 @@ Owner accepted the next roadmap slice after PR #51 merged at `44de3ef`. Failed d
 ## Slice 21: SES-002 ended-session inventory
 
 Owner requested the next slice; PR #52 already merged at `3b71d9f`. One shared inventory derivation drives list, tabs and dock within the current scope. Show/Hide applies to stopped, failed and recovery-required records. A selected ended record reveals ended inventory; explicit Hide selects the first live scoped record or null before collapse. All-ended collapsed scope retains Show and clear empty guidance. Scope changes preserve a visible selection or choose the first visible record; external ended selection reveals it. Attention uses the same list policy. No lifecycle, persistence, IPC or process-authority changes. Constitution PASS; requirements 16/16; selector restored; no extension hooks. Use red-first UI proof with independent lifecycle/PID/readback plus scope/recovery regressions. PR #52 CI formatting failure names tests/e2e/mission-folder-access.spec.ts; include its formatting-only repair and full formatter check.
+
+## Slice 22: SES-003 and remaining SES-005
+
+Owner accepted next slice after PR #53 merged at `dc60e3a`. Tabs show provider, workspace leaf and short session ID with full path/ID accessible context. Roving tab stop, Left/Right wrapping and Home/End update exact selection and retain focus. Each tab controls an exact named terminal panel; mounted inactive terminals remain hidden. Terminal host/heading IDs include session ID in loaded and lazy states. Preserve single-main and ended-inventory fixes. No process, IPC, schema or dependency changes. Constitution PASS; requirements checklist 16/16; selector restored; no hooks. Add red-first Electron identity/keyboard/ID test and run terminal/scope/ended regressions with independent lifecycle readback. CI carry-forward: PR #53 installer/CodeQL passed but full E2E failed; repair the evidenced short-path assumption in the owned ended-inventory test and record other failures separately.

@@ -22,8 +22,16 @@ export function LazyTerminalPane(props: ComponentProps<typeof TerminalPane>) {
   }, []);
   if (Pane) return <Pane {...props} />;
   return (
-    <section className="terminal-pane" aria-label="Session terminal">
-      <div id="terminal" className="terminal-host" tabIndex={-1} aria-busy={!failed}>
+    <section
+      className="terminal-pane"
+      aria-label={`Terminal for ${props.session.providerDisplayName} in ${props.session.workspaceDisplayPath}`}
+    >
+      <div
+        id={`terminal-${props.session.id}`}
+        className="terminal-host"
+        tabIndex={-1}
+        aria-busy={!failed}
+      >
         <p className={failed ? 'notice error' : 'hint'} role="status">
           {failed
             ? 'The terminal could not load. The session may still be running; its controls remain available.'

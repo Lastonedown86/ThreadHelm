@@ -81,7 +81,10 @@ export function TerminalPane({
     // nothing. Selecting a session is a request to watch it: bring it into view
     // once per selection — `nearest` is a no-op when it is already visible, so a
     // user reading elsewhere in the workspace is never yanked around.
-    host.current?.scrollIntoView({ block: 'nearest' });
+    // Keep keyboard tab navigation in view; the tab panel can be reached with Tab.
+    if (document.activeElement?.getAttribute('role') !== 'tab') {
+      host.current?.scrollIntoView({ block: 'nearest' });
+    }
     const repaint = requestAnimationFrame(() => {
       entry.fit.fit();
       entry.term.refresh(0, Math.max(0, entry.term.rows - 1));
@@ -90,13 +93,13 @@ export function TerminalPane({
   }, [active, sessionId]);
 
   return (
-    <section className="terminal-pane" aria-labelledby="terminal-heading">
-      <h2 id="terminal-heading" className="visually-hidden">
+    <section className="terminal-pane" aria-labelledby={`terminal-heading-${sessionId}`}>
+      <h2 id={`terminal-heading-${sessionId}`} className="visually-hidden">
         Terminal for {session.providerDisplayName} in {session.workspaceDisplayPath}
       </h2>
       <div
         ref={host}
-        id="terminal"
+        id={`terminal-${sessionId}`}
         className="terminal-host"
         tabIndex={-1}
         aria-label={`Terminal for ${session.providerDisplayName} in ${session.workspaceDisplayPath}`}

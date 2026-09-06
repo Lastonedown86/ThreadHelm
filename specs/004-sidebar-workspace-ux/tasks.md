@@ -186,3 +186,7 @@ Dependencies: T074 -> T075 -> T076 -> T077 -> T078. SET-005 and A09 remain open.
 - [x] T083 Complete static checks, update evidence/register and open PR.
 
 Dependencies: T079 -> T080 -> T081 -> T082 -> T083. Durable recovery is deferred; A09 and prior matrix gaps remain open.
+
+## A09 reconciliation checkpoint
+
+After PR #46 merged at `560d4aa`, [A09](audits/a09-cross-section-reconciliation.md) reconciles A01-A08 and slices 1-16 with current observations and explicit gaps. T001-T083 remain complete. MIS-003 is the next proposed bounded slice; no new product implementation tasks are accepted by this audit checkpoint. Extend this ledger after owner acceptance.

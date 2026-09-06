@@ -250,3 +250,7 @@ PR #42 merged at 29ef3a5. SET-002 now distinguishes loading/error/empty roster s
 ### SET-003 disposition after slice 14
 
 PR #43 merged at a834317. SET-003 provides explicit provider-readiness recheck, pending/failure feedback, per-provider timestamps and protection from older readiness events. [Slice 14 verification](verification.md#slice-14-set-003-provider-readiness-recheck) records exact workspace preservation and no session launch. SET-004 Settings reflow is the next recommendation; SET-005 proposal lifetime and A09 remain open.
+
+### SET-004 disposition after slice 15
+
+PR #44 merged at bbf80a9. SET-004 now constrains inner Settings tracks and wraps/stacks exact paths, facts and actions, including approval/recon disclosures. [Slice 15 verification](verification.md#slice-15-set-004-settings-reflow) records six geometry combinations, inspected captures and exact saved-ID/no-launch checks. This does not close remaining cross-section reflow matrices. SET-005 lifetime clarification is next; durable recon recovery requires separate design, and A09 remains open.

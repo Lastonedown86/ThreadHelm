@@ -166,3 +166,13 @@ Dependencies: T064 -> T065 -> T066 -> T067 -> T068. SET-003/004/005 and A09 rema
 - [x] T073 Complete static checks, evidence/register and open PR.
 
 Dependencies: T069 -> T070 -> T071 -> T072 -> T073. SET-004/005 and A09 remain open.
+
+## Slice 15: SET-004 Settings reflow
+
+- [x] T074 Record accepted bounded Settings reflow design.
+- [x] T075 [US7] Add and run failing Settings and disclosure layout regression.
+- [x] T076 [US2] Correct Settings sizing, wrapping and constrained facts.
+- [x] T077 [US7] Inspect captures and verify exact actions plus existing regressions.
+- [x] T078 Complete static checks, evidence/register and open PR.
+
+Dependencies: T074 -> T075 -> T076 -> T077 -> T078. SET-005 and A09 remain open.

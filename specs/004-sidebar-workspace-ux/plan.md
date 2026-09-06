@@ -123,3 +123,9 @@ Red-first real Electron fixtures cover initial read failure, held retry, late re
 Owner accepted next slice after PR #43 merged at a834317. Rename the Agents heading to Provider readiness. Add single-flight Check again with checking/success/failure feedback and each provider's probedAt timestamp. Preserve workspace selection. Checking and request failure disable launch from this panel until successful recheck; per-provider availability remains independently authoritative. The existing listReadiness operation emits readiness events; ignore local completion after unmount and reject older probedAt events in the shared store. No install, sign-in, launch, IPC or persistence changes. Constitution PASS; checklist 16/16, selector preserved, no hooks.
 
 Verify red-first through the UI with local fixtures: duplicate recheck, held failure/retry, exact workspace preservation, updated per-provider evidence, obsolete completion after navigation and unchanged sessions/workspaces. Timestamp ordering gets a focused regression. Existing launch/recon tests retain authority coverage.
+
+## Slice 15: SET-004 Settings reflow
+
+Owner accepted next slice after PR #44 merged at bbf80a9. Scope inner Settings sizing: shrinkable cards/grid children, wrapped exact paths and actions, stacked health/disclosure facts when constrained. Preserve shared sidebar behavior and all approval/launch/recon authority. Product changes are scoped CSS; no persistence/IPC/dependencies. Constitution PASS; checklist 16/16; selector preserved, no hooks.
+
+Red-first Electron geometry checks cover 1264/960/680 widths with 100%/200% text, long folder identity, approval and recon dialogs. Verify keyboard approval/readiness/cancellation against exact saved workspace and zero sessions; retain existing approval, recheck, recon and launch regressions. Inspect captures before PR.

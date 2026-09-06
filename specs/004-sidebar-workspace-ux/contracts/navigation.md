@@ -76,3 +76,7 @@ A roster reports empty only after a successful null read. Initial loading and fa
 ## SET-003 provider readiness recheck
 
 Check again invokes the existing readiness operation without changing workspace selection, installing, authenticating or launching. Single-flight checking and request-failure feedback identify previous results; panel launch controls stay disabled while checking or after request failure until a successful recheck. Each provider displays its own last-check timestamp and availability. Completion means the check finished, not that every provider is available. Local completion after unmount is ignored; older readiness events cannot replace a newer probedAt for that provider.
+
+## SET-004 Settings reflow
+
+Settings cards and their approval/recon disclosures fit available width at enlarged text. Long exact paths wrap; constrained health/disclosure facts stack; action rows wrap. Vertical scrolling remains available and no label or control is hidden to achieve containment. Approval, readiness and recon authority remain unchanged.

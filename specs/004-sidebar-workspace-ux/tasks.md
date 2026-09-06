@@ -176,3 +176,13 @@ Dependencies: T069 -> T070 -> T071 -> T072 -> T073. SET-004/005 and A09 remain o
 - [x] T078 Complete static checks, evidence/register and open PR.
 
 Dependencies: T074 -> T075 -> T076 -> T077 -> T078. SET-005 and A09 remain open.
+
+## Slice 16: SET-005 temporary proposal lifetime
+
+- [x] T079 Record accepted lifetime wording and scope.
+- [x] T080 [US7] Add and run failing lifetime/restart regression.
+- [x] T081 [US2] Add pre-launch and roster guidance with honest loaded-empty wording.
+- [x] T082 [US7] Verify exact imported profile, cancellation/restart and existing regressions.
+- [x] T083 Complete static checks, update evidence/register and open PR.
+
+Dependencies: T079 -> T080 -> T081 -> T082 -> T083. Durable recovery is deferred; A09 and prior matrix gaps remain open.

@@ -32,7 +32,7 @@ test('approve, run recon, accept two roles, and name them yourself', async () =>
   const page = app.page;
   const dir = await approveFixtureWorkspace(app);
   try {
-    await expect(page.getByText('No roster yet.')).toBeVisible();
+    await expect(page.getByText('No recon run is loaded.')).toBeVisible();
 
     await page.getByRole('button', { name: 'Run recon' }).click();
     const launchDialog = page.getByRole('dialog', { name: 'Run recon' });
@@ -88,7 +88,7 @@ test('a workspace opens with no recon and no provider contact', async () => {
   const page = app.page;
   const dir = await approveFixtureWorkspace(app);
   try {
-    await expect(page.getByText('No roster yet.')).toBeVisible();
+    await expect(page.getByText('No recon run is loaded.')).toBeVisible();
     expect(await countLaunchedSessions(app)).toBe(0);
   } finally {
     await teardown(app, dir);

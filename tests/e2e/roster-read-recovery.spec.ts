@@ -63,7 +63,7 @@ test('roster retry preserves exact proposals through read failure, late reply an
       }, value);
     await reopen();
     await expect(roster).toContainText('Could not load roster');
-    await expect(roster).not.toContainText('No roster yet');
+    await expect(roster).not.toContainText('No recon run is loaded');
     await expect(roster.getByRole('button', { name: 'Run recon', exact: true })).toBeDisabled();
     const retry = roster.getByRole('button', { name: 'Retry roster', exact: true });
     await mode('hold');

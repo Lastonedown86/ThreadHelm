@@ -254,3 +254,7 @@ PR #43 merged at a834317. SET-003 provides explicit provider-readiness recheck, 
 ### SET-004 disposition after slice 15
 
 PR #44 merged at bbf80a9. SET-004 now constrains inner Settings tracks and wraps/stacks exact paths, facts and actions, including approval/recon disclosures. [Slice 15 verification](verification.md#slice-15-set-004-settings-reflow) records six geometry combinations, inspected captures and exact saved-ID/no-launch checks. This does not close remaining cross-section reflow matrices. SET-005 lifetime clarification is next; durable recon recovery requires separate design, and A09 remains open.
+
+### SET-005 disposition after slice 16
+
+PR #45 merged at b3b0a1b. SET-005's bounded lifetime clarification now appears before recon confirmation and in the roster, with honest loaded-empty wording and the existing Review/import keep path. [Slice 16 verification](verification.md#slice-16-set-005-temporary-recon-proposal-lifetime) records exact accepted-profile persistence and temporary-run loss at restart, with no automatic launch. Durable proposal recovery is deferred rather than marked implemented. All five confirmed A08 findings now have bounded implementation dispositions; this does not close the remaining A08 matrix gaps. A09 cross-section reconciliation is the next recommendation.

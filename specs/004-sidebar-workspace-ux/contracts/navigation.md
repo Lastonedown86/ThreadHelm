@@ -80,3 +80,7 @@ Check again invokes the existing readiness operation without changing workspace 
 ## SET-004 Settings reflow
 
 Settings cards and their approval/recon disclosures fit available width at enlarged text. Long exact paths wrap; constrained health/disclosure facts stack; action rows wrap. Vertical scrolling remains available and no label or control is hidden to achieve containment. Approval, readiness and recon authority remain unchanged.
+
+## SET-005 recon proposal lifetime
+
+Before recon confirmation and in the roster, disclose that unaccepted proposals are temporary: exiting/restarting clears them, and a new recon run replaces the current proposals. Point to the existing Review/import flow to keep roles as saved profiles in Agents. Loaded-empty copy states only that no recon run is loaded. Cancelled replacement does not discard the existing run. This contract adds no durable proposal recovery, export or automatic rerun/import.

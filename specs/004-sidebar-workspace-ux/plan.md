@@ -129,3 +129,9 @@ Verify red-first through the UI with local fixtures: duplicate recheck, held fai
 Owner accepted next slice after PR #44 merged at bbf80a9. Scope inner Settings sizing: shrinkable cards/grid children, wrapped exact paths and actions, stacked health/disclosure facts when constrained. Preserve shared sidebar behavior and all approval/launch/recon authority. Product changes are scoped CSS; no persistence/IPC/dependencies. Constitution PASS; checklist 16/16; selector preserved, no hooks.
 
 Red-first Electron geometry checks cover 1264/960/680 widths with 100%/200% text, long folder identity, approval and recon dialogs. Verify keyboard approval/readiness/cancellation against exact saved workspace and zero sessions; retain existing approval, recheck, recon and launch regressions. Inspect captures before PR.
+
+## Slice 16: SET-005 temporary recon lifetime
+
+Owner accepted the recommended lifetime-clarification slice after PR #45 merged at b3b0a1b. Explain before confirmation and in the roster that unaccepted proposals last only for the current app session; exiting/restarting or starting another recon clears/replaces them. Review/import is the existing deliberate keep path; imported profiles are saved in Agents. Loaded-empty wording states that no recon run is loaded rather than implying no roster has ever existed. No new export, persistence, recovery, confirmation or provider authority. Constitution PASS; checklist 16/16, selector preserved, no hooks.
+
+Red-first Electron lifecycle regression verifies disclosure before launch, reviewed import of one exact proposal, preservation through cancelled replacement, and restart: imported profile ID remains while getRun is null and no sessions restart. Existing recon, read-retry and enlarged-text checks retain functional/layout coverage. Durable proposal recovery remains a separately deferred capability decision.

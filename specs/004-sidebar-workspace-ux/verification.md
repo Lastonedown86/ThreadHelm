@@ -323,3 +323,9 @@ Owner requested fixing CI before slice 23. On head `7f3ca67`, Windows x64/arm64 
 - Stale revision test waits for the original confirmable review before an external revision; it still verifies stale submission rejection and unchanged newer objective.
 
 Baseline local run: 16 of 18 affected-file tests passed; stale copy and revision race reproduced. Corrected targeted run: all six formerly failing scenarios passed (32.3 seconds). Typecheck, lint and full repository formatting passed. No product behavior, timeout increases, retries or reduced safety assertions. Full local suite and fresh hosted CI are verified separately after pushing this checkpoint; historical failures are not retroactively relabeled.
+
+### Follow-up: real review dependency race
+
+The full local E2E run on 7793e32 completed with 105 passed, 1 skipped (opt-in parity capture), and 1 stale-revision test failure. Its captured UI reported a valid Codex worker as ineligible. Review mounted before the parent profile list arrived, and missing provider metadata was treated as Claude. A forced 500ms roster delay reproduced the failure deterministically before the fix.
+
+Review worker validation now awaits fresh profile and eligible-session reads together. Missing profiles produce an explicit unavailable-profile repair message instead of an inferred provider. Main preview/confirmation and exact runtime guards remain authoritative. This is a renderer correctness fix, not just a test change. The delayed-roster stale-authority regression and all 17 composer/runtime/supervisor tests passed after the fix; desktop build, typecheck, lint and full formatting passed. Fresh hosted checks must run on the follow-up commit; the earlier full-suite failure remains historical evidence.

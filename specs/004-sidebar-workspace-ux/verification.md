@@ -174,3 +174,13 @@ Feature 004 prerequisites and checklist pass (16/16); Feature 002 selector bytes
 Final validation: fresh desktop build, repository typecheck and ESLint passed. Four selected E2E tests passed (23.4s): pending approval, reviewed launch, recon reviewed imports and empty recon. T059-T063 complete the bounded slice and PR update.
 
 Artifact checks: eight changed text files formatted, 64 local links resolved, scoped Gitleaks and diff whitespace passed.
+
+## Slice 13: SET-002 roster read recovery
+
+PR #42 verified merged at 29ef3a5. Red-first Electron regression reproduced false No roster yet after a failed getRun. WorkspaceRoster now separates loading/ready/error/waiting, retains last-loaded run data with explicit labeling and provides Retry roster. Poll errors are caught, timers are cleared on cleanup, and five-read exhaustion leaves a recoverable waiting state. An ended session is no longer labeled running while collection is pending. Run recon and proposal review require known read state; Run recon is disabled for unfinished runs. No main, IPC, schema or provider-authority changes.
+
+New test starts one isolated real local recon fixture and reads its completed run independently. Controlled renderer IPC rejection, held old response, pending collection and second-read rejection exercise the recovery states. Keyboard Retry enters loading without false empty content. Leaving/reopening and releasing an obsolete null reply preserves four current proposals. Exhaustion produces exactly six requests including the initial read; collection failure produces two. Retry restores four proposals and enables Run recon only after fresh completed data. Main getRun and sessions.list are unchanged; profiles.list stays empty and no sessions are live. These counts are bounded-sequence evidence, not a broad performance benchmark.
+
+Fresh desktop build, repository typecheck and lint passed. An intermediate scripted JSX edit touched a disclosure closing branch and was caught by formatting/build; it was corrected before the fresh successful build. Initial focused recovery test passed (9.4s). Feature 004 prerequisites resolve, checklist 16/16, Feature 002 selector bytes preserved; no hooks configured. Original A08 evidence remains pre-fix. Full suite, screen-reader speech, real provider behavior and hosted CI/release remain outside this slice. SET-003/004/005 and A09 remain open.
+
+Final regression: five selected E2E tests passed (29.5s): roster read recovery, pending approval, reviewed launch, recon import and empty recon. Seven changed text files formatted, 59 local links resolved, scoped Gitleaks and diff whitespace passed. T064-T068 complete the bounded slice and PR handoff.

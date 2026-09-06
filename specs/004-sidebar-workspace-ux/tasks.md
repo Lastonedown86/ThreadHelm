@@ -146,3 +146,13 @@ After PR #41 merged at ca2c620, A08 Settings was audited using the shared templa
 - [x] T063 Update findings/verification, finish static checks and update PR #42.
 
 Dependencies: T059 -> T060 -> T061 -> T062 -> T063. SET-002 through SET-005 remain proposed.
+
+## Slice 13: SET-002 roster read recovery
+
+- [x] T064 Record accepted read/retry and bounded collection contract.
+- [x] T065 [US7] Add and run failing roster recovery regression.
+- [x] T066 [US2] Implement load/error/retry state and bounded collection recovery.
+- [x] T067 [US7] Verify exact run preservation, failures/late replies and existing regressions.
+- [x] T068 Complete static checks, update verification/register and open PR.
+
+Dependencies: T064 -> T065 -> T066 -> T067 -> T068. SET-003/004/005 and A09 remain open.

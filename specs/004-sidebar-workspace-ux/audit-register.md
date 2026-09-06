@@ -242,3 +242,7 @@ No product implementation is included. Owner review of the proposed flow precede
 ### SET-001 disposition after slice 12
 
 Owner accepted the recommended next slice on PR #42. SET-001 now keeps exact approval disclosure visible during a single pending request and prevents misleading Cancel/Escape/repeated submission. [Slice 12 verification](verification.md#slice-12-set-001-pending-folder-approval) records rejection, fresh choice, exact saved identity and restart evidence. The original A08 captures/probe remain historical. SET-002 roster loading/error/retry is the next recommendation; SET-003 through SET-005 and A09 remain open.
+
+### SET-002 disposition after slice 13
+
+PR #42 merged at 29ef3a5. SET-002 now distinguishes loading/error/empty roster states, catches failed collection reads and provides bounded recovery through Retry roster. [Slice 13 verification](verification.md#slice-13-set-002-roster-read-recovery) records exact run/proposal/session preservation through failures, late response and read-budget exhaustion. SET-003 provider readiness recheck is the next recommendation; SET-004/005 and A09 remain open.

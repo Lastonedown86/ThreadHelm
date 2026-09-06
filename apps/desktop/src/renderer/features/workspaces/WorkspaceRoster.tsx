@@ -221,60 +221,67 @@ export function WorkspaceRoster({
   } | null>(null);
   const [error, setError] = useState<unknown>(null);
 
+  const [readState, setReadState] = useState<'loading' | 'ready' | 'error' | 'waiting'>('loading');
+  const [readError, setReadError] = useState<unknown>(null);
+  const [retryVersion, setRetryVersion] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
+    setReadState('loading');
+    setReadError(null);
     void call(api.workspaceRecon.getRun({ workspaceId })).then(
       (view) => {
-        if (!cancelled) setRun(view);
+        if (cancelled) return;
+        setRun(view);
+        setReadState('ready');
       },
       (cause: unknown) => {
-        if (!cancelled) setError(cause);
+        if (cancelled) return;
+        setReadError(cause);
+        setReadState('error');
       },
     );
     return () => {
       cancelled = true;
     };
-  }, [workspaceId]);
+  }, [workspaceId, retryVersion]);
 
-  // Collection runs after the session's teardown signal, which reaches the
-  // renderer as `session.changed`; state.sessions is already kept live by it.
-  // No dedicated recon event exists, so once that session has ended this
-  // polls getRun up to 5 times, 300ms apart, to bridge the short gap until
-  // collection finishes, then stops for good. It never runs while idle.
-  // ponytail: bounded poll, not a background interval; add a recon.changed
-  // event instead if this ever proves flaky in practice.
-  //
-  // Keyed only on runId/sessionId/outcome/sessionEndedAt (all primitives that
-  // stay constant for the life of one poll sequence) rather than the whole
-  // `run` object: each `setRun` below creates a new object reference, so
-  // depending on `run` itself would tear down and restart this effect on
-  // every poll response — resetting `attempts` to 0 and dropping the 300ms
-  // spacing, turning "bounded poll" into an unbounded one racing the IPC
-  // round-trip. Confirmed via a manual instrumented run (logged each
-  // `attempts` value and watched it stop): the real fixture case resolves in
-  // exactly 2 attempts, strictly increasing, then nothing further for 4.5s.
+  // Bridge session teardown to collection with a bounded read budget. A manual
+  // retry first loads the current run, then starts a fresh budget if needed.
   const runId = run?.runId;
   const sessionId = run?.sessionId ?? null;
   const outcome = run?.outcome ?? null;
   const sessionEndedAt = (sessionId ? state.sessions[sessionId] : undefined)?.endedAt;
   useEffect(() => {
-    if (!runId || outcome !== null || !sessionId || !sessionEndedAt) return;
+    if (readState !== 'ready' || !runId || outcome !== null || !sessionId || !sessionEndedAt)
+      return;
     let cancelled = false;
     let attempts = 0;
+    let timer: number | undefined;
     const poll = () => {
-      if (cancelled) return;
       attempts += 1;
-      void call(api.workspaceRecon.getRun({ workspaceId })).then((next) => {
-        if (cancelled) return;
-        setRun(next);
-        if (next && next.outcome === null && attempts < 5) window.setTimeout(poll, 300);
-      });
+      void call(api.workspaceRecon.getRun({ workspaceId })).then(
+        (next) => {
+          if (cancelled) return;
+          setRun(next);
+          if (next && next.outcome === null) {
+            if (attempts < 5) timer = window.setTimeout(poll, 300);
+            else setReadState('waiting');
+          }
+        },
+        (cause: unknown) => {
+          if (cancelled) return;
+          setReadError(cause);
+          setReadState('error');
+        },
+      );
     };
     poll();
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
-  }, [workspaceId, runId, outcome, sessionId, sessionEndedAt]);
+  }, [workspaceId, runId, outcome, sessionId, sessionEndedAt, readState]);
 
   const availableProviders = state.readiness
     .filter((readiness) => readiness.availability === 'available')
@@ -301,18 +308,36 @@ export function WorkspaceRoster({
   return (
     <section className="panel roster" aria-labelledby={headingId}>
       <h2 id={headingId}>Roster</h2>
-      {!run ? (
+      {readState === 'loading' ? <p role="status">Loading roster...</p> : null}
+      {readState === 'error' ? (
+        <div>
+          <p role="alert">Could not load roster. Retry to check this workspace again.</p>
+          <LaunchError error={readError} />
+        </div>
+      ) : null}
+      {readState === 'waiting' ? (
+        <p role="status">Collection is not ready yet. Retry to check for the completed results.</p>
+      ) : null}
+      {run && readState !== 'ready' ? <p className="hint">Showing the last loaded run.</p> : null}
+      {readState === 'error' || readState === 'waiting' ? (
+        <button type="button" onClick={() => setRetryVersion((value) => value + 1)}>
+          Retry roster
+        </button>
+      ) : null}
+      {!run && readState === 'ready' ? (
         <p>No roster yet. Recon can read this workspace and propose one.</p>
-      ) : (
+      ) : run ? (
         <>
           <p role="status">
             {run.outcome
               ? OUTCOME_TEXT[run.outcome]
-              : // Roles are read from disk when the session reaches a terminal
-                // state, and an interactive CLI does not exit on its own after
-                // writing them. Say so, or the owner waits on a list that only
-                // a stop will produce.
-                'Recon is running. An agent tool stays at its prompt after it has written the roles, so stop this session when it says it has finished — ThreadHelm reads what it wrote once the session ends.'}
+              : sessionEndedAt
+                ? 'Recon session ended. Its collected results are not available yet.'
+                : // Roles are read from disk when the session reaches a terminal
+                  // state, and an interactive CLI does not exit on its own after
+                  // writing them. Say so, or the owner waits on a list that only
+                  // a stop will produce.
+                  'Recon is running. An agent tool stays at its prompt after it has written the roles, so stop this session when it says it has finished — ThreadHelm reads what it wrote once the session ends.'}
           </p>
           {run.outcome && !run.promptSubmitted ? (
             <p className="notice warning">
@@ -335,7 +360,7 @@ export function WorkspaceRoster({
                   </p>
                   <button
                     type="button"
-                    disabled={state.storageDegraded}
+                    disabled={state.storageDegraded || readState !== 'ready'}
                     onClick={() => void review(proposal.proposalId)}
                   >
                     Review
@@ -357,9 +382,15 @@ export function WorkspaceRoster({
             <p className="hint">{run.ignoredFileCount} further files were not read.</p>
           ) : null}
         </>
-      )}
+      ) : null}
       <LaunchError error={error} />
-      <button type="button" disabled={state.storageDegraded} onClick={runRecon}>
+      <button
+        type="button"
+        disabled={
+          state.storageDegraded || readState !== 'ready' || (run !== null && run.outcome === null)
+        }
+        onClick={runRecon}
+      >
         Run recon
       </button>
       {disclosureOpen ? (

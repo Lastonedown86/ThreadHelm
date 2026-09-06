@@ -168,6 +168,12 @@ test('revision editor cannot submit stale fields against a refreshed mission ver
     await detail.getByRole('button', { name: 'Revise envelope…', exact: true }).click();
     await expect(detail).toBeHidden();
     await expect(page.getByText('Step 4 of 4 · Review · Revise mission')).toBeVisible();
+    // Establish the old reviewed authority before another client changes the mission.
+    const confirmation = page.getByRole('checkbox', {
+      name: 'I reviewed this exact mission authority',
+    });
+    await expect(confirmation).toBeVisible();
+    await expect(confirmation).toBeEnabled();
     const newer = await app.call<MissionPreviewView>('missions.previewRevision', {
       missionId: original.id,
       expectedVersion: original.version,

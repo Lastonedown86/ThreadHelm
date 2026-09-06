@@ -312,3 +312,14 @@ Baseline main `dc60e3acd4c8a0246c75b75b95629ff37f5b1b2b` (PR #53 merged); branch
 - Limits: no full suite or fresh real-provider/release acceptance. Lazy loading/failure identity was source-checked; the new runtime scenario covers loaded multiple terminals. Broad scaling/contrast and all asynchronous lifecycle cases retain their existing matrix gates.
 
 Recapture: `pnpm desktop:build`, then `pnpm exec playwright test tests/e2e/session-tab-identity.spec.ts`. Selected regressions: ended-session-inventory, session-scope, multi-session, terminal-visibility. Historical slice-2 screenshots overwritten by regression capture were restored to their recorded baseline.
+
+## PR #54 CI repair checkpoint
+
+Owner requested fixing CI before slice 23. On head `7f3ca67`, Windows x64/arm64 CI run 34052041060 failed the same six E2E cases; installer acceptance and CodeQL passed. The corrections are test-only:
+
+- Attention/Settings/workspace approval compare canonical approved/saved paths instead of raw Windows short temporary paths. Exact workspace/session IDs and persistence checks remain.
+- Mission workspace assertion matches the accepted ended-inventory description from slice 21.
+- Template and workspace cancellation wait for a visible, dismissible dialog before Escape, preventing a premature hidden assertion followed by a late-open dialog.
+- Stale revision test waits for the original confirmable review before an external revision; it still verifies stale submission rejection and unchanged newer objective.
+
+Baseline local run: 16 of 18 affected-file tests passed; stale copy and revision race reproduced. Corrected targeted run: all six formerly failing scenarios passed (32.3 seconds). Typecheck, lint and full repository formatting passed. No product behavior, timeout increases, retries or reduced safety assertions. Full local suite and fresh hosted CI are verified separately after pushing this checkpoint; historical failures are not retroactively relabeled.

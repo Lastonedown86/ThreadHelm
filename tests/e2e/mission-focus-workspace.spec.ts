@@ -124,7 +124,7 @@ test('missions are the focused default and approved destinations remain explicit
     await expect(page.getByRole('heading', { name: 'Local sessions', exact: true })).toBeVisible();
     await expect(
       page.getByText(
-        'All local sessions are shown. Use Session scope to narrow the dock to the selected mission.',
+        'All local sessions are available here. Use Session scope to narrow the dock and Show ended sessions to reveal history.',
       ),
     ).toBeVisible();
 

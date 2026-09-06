@@ -2,15 +2,15 @@
 
 ## Decision and baseline
 
-Owner requested this roadmap after the remaining-slice estimate. Baseline: remote main `42ff10bff1212940a8efc903898846778159db5d`, PR #50 verified merged. Implementation slices 1-19 are merged; T001-T098 retain their completed checkpoints. This planning PR does not count as slice 20 and does not implement product changes.
+Owner requested this roadmap after the remaining-slice estimate. Original planning baseline: remote main `42ff10bff1212940a8efc903898846778159db5d`, PR #50 verified merged. Implementation slices 1-19 are merged; T001-T098 retain their completed checkpoints. This planning PR does not count as slice 20 and does not implement product changes.
 
-**14 planned remaining slices, numbered 20-33:** 12 implementation/revalidation slices covering 18 unresolved finding IDs, followed by two verification and closure slices. This is the current scoped plan, not a guarantee that verification will discover no additional defects. Partial findings count once for their remaining scope.
+**14 planned remaining slices, numbered 20-33:** 12 implementation/revalidation slices covering 18 unresolved finding IDs, followed by two verification and closure slices. This is the original scoped plan, not a guarantee that verification will discover no additional defects. Partial findings count once for their remaining scope.
 
 The roadmap supersedes historical next-step wording in the [register](audit-register.md), [plan](plan.md), [tasks](tasks.md) and [A09 snapshot](audits/a09-cross-section-reconciliation.md). Original audit evidence retains its recorded baseline and limitations. Requirements remain those in the existing [specification](spec.md).
 
 ## Ordered slices
 
-Slice 20 is implemented and locally verified, pending PR merge; slices 21-33 remain **Pending**. See [slice evidence](verification.md). Execute in numeric order; each depends on the previous slice's merged/reconciled outcome. At the start of each slice, refresh remote main, reproduce the remaining issue, present the bounded interaction design and expand the existing plan/task ledger under the owner's accepted scope. Do not regenerate the feature or change Feature 002's selector.
+Slice 20 merged in PR #52 at `3b71d9f`. Slice 21 is locally verified, pending PR merge; slices 22-33 remain **Pending**. After slice 21 merges, 12 planned slices remain. See [slice evidence](verification.md). Execute in numeric order; each depends on the previous slice's merged/reconciled outcome. At the start of each slice, refresh remote main, reproduce the remaining issue, present the bounded interaction design and expand the existing plan/task ledger under the owner's accepted scope. Do not regenerate the feature or change Feature 002's selector.
 
 | Slice | Scope and finding ownership                                               | Bounded outcome and exit evidence                                                                                                                                                                                                                                                                                                                                                                                     | Requirements                                           |
 | ----- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -53,4 +53,4 @@ Fresh-main revalidation can close an already-resolved finding with evidence and 
 
 Durable recon proposal recovery and unified Mission/Attention aggregation remain separate capability decisions. Real external-provider runs retain their existing owner-authorization boundaries; this roadmap grants no additional provider execution or release authority.
 
-**Next after slice 20 merges: slice 21, SES-002 ended-session inventory.** The original roadmap checkpoint authorized planning only; the slice 20 evidence now records its bounded implementation separately.
+**Next after slice 21 merges: slice 22, SES-003 and remaining SES-005 session tabs and terminal identity.** The original roadmap checkpoint authorized planning only; later slice evidence records bounded implementations separately.

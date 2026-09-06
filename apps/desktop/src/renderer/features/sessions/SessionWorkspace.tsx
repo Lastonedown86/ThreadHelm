@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import type { MissionDetailView } from '@threadhelm/contracts';
 import { useStore } from '../../store.js';
+import { useSessionInventory } from './useSessionInventory.js';
 import { MissionTerminalDock } from '../session/MissionTerminalDock.js';
 import { LIFECYCLE_LABEL } from './SessionList.js';
-import { SessionList } from './SessionList.js';
+import { SessionList, EndedSessionsToggle } from './SessionList.js';
 import { WorkspacePanel } from '../workspaces/WorkspacePanel.js';
 import { ProviderReadiness } from '../workspaces/ProviderReadiness.js';
 import { CoordinationPanel } from '../coordination/CoordinationPanel.js';
@@ -18,9 +19,11 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
       binding.sessionId ? [binding.sessionId] : [],
     ) ?? [],
   );
-  const sessions = state.sessionOrder
+  const scopedSessions = state.sessionOrder
     .map((id) => state.sessions[id]!)
     .filter((session) => !missionScoped || boundIds.has(session.id));
+  const inventory = useSessionInventory(scopedSessions);
+  const sessions = inventory.sessions;
   const selected = sessions.find((session) => session.id === state.selectedSessionId);
   // Resolve selection only from the visible scope; stale mission details supply no candidates.
   const firstVisibleId = !selected ? sessions[0]?.id : undefined;
@@ -39,7 +42,7 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
         <p>
           {missionScoped
             ? 'Only sessions bound to this selected mission appear here.'
-            : 'All local sessions are shown. Use Session scope to narrow the dock to the selected mission.'}
+            : 'All local sessions are available here. Use Session scope to narrow the dock and Show ended sessions to reveal history.'}
         </p>
         <label className="field">
           Session scope
@@ -55,7 +58,9 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
             </option>
           </select>
         </label>
-        <p className="small-text">{sessions.length} sessions in this scope</p>
+        <p className="small-text">
+          {scopedSessions.length} sessions in this scope; {sessions.length} shown
+        </p>
       </header>
       {!missionScoped ? (
         <details className="session-start-controls" open>
@@ -66,7 +71,7 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
           </div>
         </details>
       ) : null}
-      {sessions.length === 0 ? (
+      {scopedSessions.length === 0 ? (
         <section className="mission-workspace-state">
           <h2>
             {missionScoped && !currentMission
@@ -77,7 +82,14 @@ export function SessionWorkspace({ mission }: { mission: MissionDetailView | nul
         </section>
       ) : (
         <>
-          {!missionScoped ? <SessionList showHeading={false} /> : null}
+          {!missionScoped ? (
+            <SessionList showHeading={false} inventory={inventory} />
+          ) : (
+            <>
+              {sessions.length === 0 ? <p className="hint">No running sessions.</p> : null}
+              <EndedSessionsToggle inventory={inventory} />
+            </>
+          )}
           {!missionScoped ? (
             <details className="session-start-controls" open>
               <summary>Directed handoffs and conversations</summary>

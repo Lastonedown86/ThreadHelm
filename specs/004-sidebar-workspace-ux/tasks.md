@@ -1,6 +1,6 @@
 # Tasks: Slice 1 edit preservation and navigation
 
-Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-33 are pending. Historical checkpoints below retain their original scope.
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slice 20 is locally verified pending merge; slices 21-33 are pending. Historical checkpoints below retain their original scope.
 
 Scope: accepted MIS-001/002 only. Other Feature 004 work is not included in this completion ledger. Specification US2 owns behavior; US7 owns independent proof. Tests are required by FR-016–019 and the constitution.
 
@@ -226,3 +226,13 @@ Dependencies: T094 -> T095 -> T096 -> T097 -> T098. TPL-002 is next proposed; ot
 ## Completion roadmap checkpoint
 
 Owner requested a numbered roadmap after PR #50 merged at `42ff10b`. The roadmap maps 18 remaining finding IDs to 12 implementation/revalidation slices and two final verification slices. T001-T098 remain complete; future granular tasks will be added when each bounded slice starts. This documentation checkpoint performs no product implementation. Next: slice 20, TPL-002.
+
+## Slice 20: TPL-002 only
+
+- [x] T099 Record accepted deletion review recovery contract and baseline.
+- [x] T100 Add and run failing deletion recovery regression.
+- [x] T101 Implement invalidation, fresh review and deletion-specific feedback.
+- [x] T102 Verify denial, recovery, cancellation and independent saved state plus regressions.
+- [x] T103 Complete static checks, evidence/register/roadmap and open PR.
+
+Dependencies: T099 -> T100 -> T101 -> T102 -> T103. Next roadmap slice: 21, SES-002.

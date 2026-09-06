@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { OperationResponse } from '@threadhelm/contracts';
-import { api, call } from '../../api.js';
+import { api, call, errorCode } from '../../api.js';
 import { useStore } from '../../store.js';
 import { AgentAuthoringError } from './AgentAuthoringError.js';
 import { LazyAgentProfileWizard } from './LazyAgentProfileWizard.js';
@@ -16,7 +16,7 @@ type Dialog =
   | {
       kind: 'delete';
       template: Template;
-      preview: OperationResponse<'agentTemplates.previewDelete'>;
+      preview: OperationResponse<'agentTemplates.previewDelete'> | null;
     }
   | null;
 
@@ -29,6 +29,7 @@ export function AgentTemplateLibrary() {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
   const [refresh, setRefresh] = useState(0);
   const [duplicateName, setDuplicateName] = useState('');
   const [duplicateKey, setDuplicateKey] = useState('');
@@ -54,7 +55,8 @@ export function AgentTemplateLibrary() {
   }, [state.agentAuthoringSequence, refresh]);
 
   async function act(fn: () => Promise<void>) {
-    if (busy) return;
+    if (pending.current) return;
+    pending.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -62,6 +64,7 @@ export function AgentTemplateLibrary() {
     } catch (cause) {
       setError(cause);
     } finally {
+      pending.current = false;
       setBusy(false);
     }
   }
@@ -86,7 +89,7 @@ export function AgentTemplateLibrary() {
       <p className="hint">
         Generic starters and your local scaffolds. Nothing here launches an agent.
       </p>
-      <AgentAuthoringError error={error} />
+      {dialog?.kind !== 'delete' ? <AgentAuthoringError error={error} /> : null}
       {drafts.length ? (
         <>
           <h3>Saved drafts</h3>
@@ -325,7 +328,10 @@ export function AgentTemplateLibrary() {
         <ModalDialog
           label="Delete local template"
           onDismiss={() => {
-            if (!busy) setDialog(null);
+            if (!pending.current) {
+              setDialog(null);
+              setError(null);
+            }
           }}
         >
           <h3>Delete local template</h3>
@@ -333,16 +339,47 @@ export function AgentTemplateLibrary() {
             Delete {dialog.template.name} and its retained template content? Open drafts must be
             deleted or completed first. This cannot be undone.
           </p>
-          <AgentAuthoringError error={error} />
+          {error ? (
+            <p className="notice error" role="alert">
+              {errorCode(error) === 'INVALID_STATE'
+                ? 'This template cannot be deleted now. Delete or complete its dependent drafts first, then refresh the deletion review.'
+                : 'Deletion was not confirmed. The review may have expired or the template may have changed. Refresh the deletion review and confirm again, or keep the template.'}
+            </p>
+          ) : null}
+          {!dialog.preview ? (
+            <button
+              type="button"
+              disabled={busy || state.storageDegraded}
+              onClick={() =>
+                void act(async () => {
+                  const current = await call(
+                    api.agentTemplates.get({ templateId: dialog.template.templateId }),
+                  );
+                  const preview = await call(
+                    api.agentTemplates.previewDelete({
+                      templateId: current.templateId,
+                      revisionId: current.currentRevisionId,
+                    }),
+                  );
+                  setDialog({ kind: 'delete', template: current, preview });
+                })
+              }
+            >
+              Refresh deletion review
+            </button>
+          ) : null}
           <div className="actions">
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || state.storageDegraded || !dialog.preview}
               onClick={() =>
                 void act(async () => {
+                  if (!dialog.preview) return;
+                  const deleteToken = dialog.preview.deleteToken;
+                  setDialog({ ...dialog, preview: null });
                   await call(
                     api.agentTemplates.delete({
-                      deleteToken: dialog.preview.deleteToken,
+                      deleteToken,
                       deleteConfirmation: true,
                     }),
                   );
@@ -353,7 +390,14 @@ export function AgentTemplateLibrary() {
             >
               Confirm delete template
             </button>
-            <button type="button" disabled={busy} onClick={() => setDialog(null)}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setDialog(null);
+                setError(null);
+              }}
+            >
               Keep template
             </button>
           </div>

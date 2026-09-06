@@ -1,6 +1,6 @@
 # Implementation Plan: Edit preservation and navigation consistency
 
-Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slice 20 is locally verified pending merge; slices 21-33 are pending. Historical checkpoints below retain their original scope.
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slice 20 is merged; slice 21 is locally verified pending merge; slices 22-33 are pending. Historical checkpoints below retain their original scope.
 
 Branch: `codex/audit-sidebar-mission-functionality`. Date: 2026-09-05. [Specification](spec.md).
 
@@ -163,3 +163,7 @@ Owner requested a numbered roadmap after PR #50 merged at `42ff10b`. The roadmap
 ## Slice 20: TPL-002 deletion review recovery
 
 Owner accepted the next roadmap slice after PR #51 merged at `44de3ef`. Failed deletion consumes/invalidate its renderer review and disables confirmation. Refresh deletion review reads the current revision of the same template, displays a fresh review and requires another explicit Confirm delete template. Keep template/Escape dismiss when idle; pending operations block dismissal and repeated submission. Error guidance names deletion and dependent drafts. Existing main token consumption, revision checks and dependency denial remain authoritative. No IPC/schema/dependency changes. Constitution PASS; requirements 16/16; selector preserved; no hooks. Red-first Electron proof covers real dependent-draft denial, refreshed retry, independent template/draft readback, cancellation, expiry and delayed/failed refresh as applicable.
+
+## Slice 21: SES-002 ended-session inventory
+
+Owner requested the next slice; PR #52 already merged at `3b71d9f`. One shared inventory derivation drives list, tabs and dock within the current scope. Show/Hide applies to stopped, failed and recovery-required records. A selected ended record reveals ended inventory; explicit Hide selects the first live scoped record or null before collapse. All-ended collapsed scope retains Show and clear empty guidance. Scope changes preserve a visible selection or choose the first visible record; external ended selection reveals it. Attention uses the same list policy. No lifecycle, persistence, IPC or process-authority changes. Constitution PASS; requirements 16/16; selector restored; no extension hooks. Use red-first UI proof with independent lifecycle/PID/readback plus scope/recovery regressions. PR #52 CI formatting failure names tests/e2e/mission-folder-access.spec.ts; include its formatting-only repair and full formatter check.

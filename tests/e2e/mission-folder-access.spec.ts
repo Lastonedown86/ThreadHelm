@@ -75,11 +75,9 @@ test('shared folder access keeps the supervisor visible and directly repairable 
     await leader.getByRole('radio', { name: 'Write', exact: true }).focus();
     await page.keyboard.press('Space');
     await expect(leader.getByRole('radio', { name: 'Write', exact: true })).toBeChecked();
-    await page
-      .locator('[aria-labelledby="composer-access-heading"]')
-      .screenshot({
-        path: 'specs/004-sidebar-workspace-ux/audits/evidence/slice-18-folder-access.png',
-      });
+    await page.locator('[aria-labelledby="composer-access-heading"]').screenshot({
+      path: 'specs/004-sidebar-workspace-ux/audits/evidence/slice-18-folder-access.png',
+    });
     await page.getByRole('button', { name: 'Continue to review', exact: true }).click();
     await expect(page.getByText('Ready to start.', { exact: true })).toBeVisible();
     const saved = (await read()).fieldValues.workspaces;

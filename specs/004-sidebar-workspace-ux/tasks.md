@@ -1,6 +1,6 @@
 # Tasks: Slice 1 edit preservation and navigation
 
-Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slice 20 is locally verified pending merge; slices 21-33 are pending. Historical checkpoints below retain their original scope.
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slice 20 is merged; slice 21 is locally verified pending merge; slices 22-33 are pending. Historical checkpoints below retain their original scope.
 
 Scope: accepted MIS-001/002 only. Other Feature 004 work is not included in this completion ledger. Specification US2 owns behavior; US7 owns independent proof. Tests are required by FR-016–019 and the constitution.
 
@@ -236,3 +236,13 @@ Owner requested a numbered roadmap after PR #50 merged at `42ff10b`. The roadmap
 - [x] T103 Complete static checks, evidence/register/roadmap and open PR.
 
 Dependencies: T099 -> T100 -> T101 -> T102 -> T103. Next roadmap slice: 21, SES-002.
+
+## Slice 21: SES-002 only
+
+- [x] T104 Verify merged baseline and record accepted inventory/selection policy.
+- [x] T105 Reproduce ineffective selected-ended collapse with an Electron regression.
+- [x] T106 Share visibility between list, tabs and dock; implement deterministic collapse selection.
+- [x] T107 Verify all-ended, mixed, scope, lifecycle and cross-section behavior independently.
+- [x] T108 Complete checks, register/roadmap/evidence and open PR.
+
+Dependencies: T104 -> T105 -> T106 -> T107 -> T108. Next: slice 22, SES-003 and remaining SES-005.

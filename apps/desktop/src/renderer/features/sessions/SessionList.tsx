@@ -8,9 +8,10 @@
  * join the listbox — and its keyboard order — while it is open.
  */
 
-import { useRef, useState, type KeyboardEvent } from 'react';
+import { useRef, type KeyboardEvent } from 'react';
 import type { ActivityState, LifecycleState } from '@threadhelm/contracts';
 import { useStore } from '../../store.js';
+import { useSessionInventory, type SessionInventory } from './useSessionInventory.js';
 
 export const LIFECYCLE_LABEL: Record<LifecycleState, string> = {
   starting: 'Starting',
@@ -29,27 +30,35 @@ export const ACTIVITY_LABEL: Record<ActivityState, string> = {
   awaiting_user: 'Awaiting user',
 };
 
-const ENDED: ReadonlySet<LifecycleState> = new Set<LifecycleState>([
-  'stopped',
-  'failed',
-  'recovery_required',
-]);
+export function SessionList({
+  showHeading = true,
+  inventory,
+}: { showHeading?: boolean; inventory?: SessionInventory } = {}) {
+  return inventory ? (
+    <SessionListContent showHeading={showHeading} inventory={inventory} />
+  ) : (
+    <StandaloneSessionList showHeading={showHeading} />
+  );
+}
 
-export function SessionList({ showHeading = true }: { showHeading?: boolean } = {}) {
+function StandaloneSessionList({ showHeading }: { showHeading: boolean }) {
+  const { state } = useStore();
+  const inventory = useSessionInventory(state.sessionOrder.map((id) => state.sessions[id]!));
+  return <SessionListContent showHeading={showHeading} inventory={inventory} />;
+}
+
+function SessionListContent({
+  showHeading,
+  inventory,
+}: {
+  showHeading: boolean;
+  inventory: SessionInventory;
+}) {
   const { state, actions } = useStore();
   const listRef = useRef<HTMLUListElement>(null);
-  const [expandEnded, setExpandEnded] = useState(false);
   const selected = state.selectedSessionId;
-
-  const live: string[] = [];
-  const ended: string[] = [];
-  for (const id of state.sessionOrder) {
-    (ENDED.has(state.sessions[id]!.lifecycleState) ? ended : live).push(id);
-  }
-  // A selected ended session stays listed whatever the disclosure says: hiding
-  // it would leave aria-activedescendant pointing at an element that is gone.
-  const endedShown = expandEnded || (selected !== null && ended.includes(selected));
-  const ids = endedShown ? [...live, ...ended] : live;
+  const { endedShown } = inventory;
+  const ids = inventory.sessions.map((session) => session.id);
 
   const move = (event: KeyboardEvent<HTMLUListElement>) => {
     if (ids.length === 0) return;
@@ -86,15 +95,17 @@ export function SessionList({ showHeading = true }: { showHeading?: boolean } = 
       {...(showHeading ? { 'aria-labelledby': 'sessions-heading' } : { 'aria-label': 'Sessions' })}
     >
       {showHeading ? <h2 id="sessions-heading">Sessions</h2> : null}
-      {state.sessionOrder.length === 0 ? <p className="hint">No sessions yet.</p> : null}
-      {state.sessionOrder.length > 0 && live.length === 0 && !endedShown ? (
+      {inventory.totalCount === 0 ? <p className="hint">No sessions yet.</p> : null}
+      {inventory.totalCount > 0 && inventory.liveCount === 0 && !endedShown ? (
         <p className="hint">No running sessions.</p>
       ) : null}
       <ul
         ref={listRef}
         role="listbox"
         aria-label="Sessions"
-        aria-activedescendant={selected ? `session-${selected}` : undefined}
+        aria-activedescendant={
+          selected && ids.includes(selected) ? `session-${selected}` : undefined
+        }
         tabIndex={0}
         className="list sessions"
         onKeyDown={move}
@@ -135,17 +146,21 @@ export function SessionList({ showHeading = true }: { showHeading?: boolean } = 
           );
         })}
       </ul>
-      {ended.length > 0 ? (
-        <button
-          type="button"
-          className="small ended-sessions-toggle"
-          aria-expanded={endedShown}
-          onClick={() => setExpandEnded((open) => !open)}
-        >
-          {endedShown ? 'Hide' : 'Show'} {ended.length} ended session
-          {ended.length === 1 ? '' : 's'}
-        </button>
-      ) : null}
+      <EndedSessionsToggle inventory={inventory} />
     </section>
   );
+}
+
+export function EndedSessionsToggle({ inventory }: { inventory: SessionInventory }) {
+  return inventory.endedCount > 0 ? (
+    <button
+      type="button"
+      className="small ended-sessions-toggle"
+      aria-expanded={inventory.endedShown}
+      onClick={inventory.toggleEnded}
+    >
+      {inventory.endedShown ? 'Hide' : 'Show'} {inventory.endedCount} ended session
+      {inventory.endedCount === 1 ? '' : 's'}
+    </button>
+  ) : null;
 }

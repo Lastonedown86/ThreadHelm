@@ -53,7 +53,7 @@ Capture baseline: `pnpm desktop:build`, then `PARITY_SHOTS=1 pnpm exec playwrigh
 
 ## Next stages
 
-A01-A08 have recorded audits and slices 1-16 are merged. A09 now reconciles the remaining findings and verification gaps. Owner accepted MIS-003 (truthful existing-session runtime controls) as slice 17 after PR #47. Owner subsequently accepted MIS-004 access clarity as slice 18 after PR #48. SES-004 review recovery is next in the A09 proposed sequence. Extend existing plan/tasks when accepted; do not regenerate the feature or disturb Feature 002's selector.
+A01-A08 have recorded audits and slices 1-16 are merged. A09 now reconciles the remaining findings and verification gaps. Owner accepted MIS-003 (truthful existing-session runtime controls) as slice 17 after PR #47. Owner subsequently accepted MIS-004 access clarity as slice 18 after PR #48. Owner accepted SES-004 launch review recovery as slice 19 after PR #49; TPL-002 is next in the A09 proposed sequence. Extend existing plan/tasks when accepted; do not regenerate the feature or disturb Feature 002's selector.
 
 Historical per-slice paragraphs below describe their original checkpoint, including then-pending audits or local-only status. Use A09 for current dispositions and each original section matrix for unexercised cases. Feature 004 is not declared complete.
 
@@ -261,3 +261,7 @@ Owner accepted the A09 recommendation via "merged next slice" after PR #47 merge
 ## Slice 18: MIS-004 shared-folder access
 
 Owner accepted the next A09 slice after PR #48 merged at 2916702. Folder assignment and access controls are separate. One group names each bound folder and all affected members, including the supervisor; supervisor-only access remains editable when workers move away. Existing derivation preserves modes on retained folders and drops unused ones. Deliberate access changes preserve entry order and can repair an absent mode. Copy describes shared mission rules without implying OS confinement. Main holds unsupported Read bindings as before. See [slice 18 verification](verification.md#slice-18-mis-004-shared-folder-access). Original A02/A09 observations remain historical; remaining coverage gaps stay open. SES-004 is next proposed.
+
+## Slice 19: SES-004 launch review recovery
+
+Owner accepted the next A09 slice after PR #49 merged at 6a28030. Expired/rejected reviews lose confirmation and offer Refresh review with preserved form values. Fresh recovery review requires renewed confirmation. Ordinary model/effort edits still refresh automatically with the established boundary acknowledgement. Matching input identity, deadline, readiness and single-flight guards gate submission. Pending launch blocks editing and Escape/cancel; obsolete preview results after replacement/cancel are ignored. Main token and launch authority are unchanged. See [slice 19 verification](verification.md#slice-19-ses-004-launch-review-recovery). A03/A09 expiry observations remain historical. TPL-002 is next proposed; remaining matrices stay open.

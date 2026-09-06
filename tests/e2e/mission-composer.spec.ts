@@ -190,10 +190,10 @@ test('access stage explains read or write, shows readiness, and keeps limits col
       .getByRole('combobox', { name: 'Worker 1 folder', exact: true })
       .selectOption({ index: 1 });
     await expect(
-      page.getByText('Write: this worker changes files inside this folder only.'),
+      page.getByText('Write: listed members may change files in this folder.'),
     ).toBeVisible();
     await page.getByRole('radio', { name: 'Read', exact: true }).check();
-    await expect(page.getByText('Read: this worker inspects files and reports.')).toBeVisible();
+    await expect(page.getByText('Read: listed members inspect files and report.')).toBeVisible();
     await expect(page.getByText('Codex CLI').first()).toBeVisible();
     await expect(page.getByText('Available').first()).toBeVisible();
     const limits = page.locator('details', { hasText: 'Customize limits' });

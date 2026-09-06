@@ -200,3 +200,13 @@ After PR #46 merged at `560d4aa`, [A09](audits/a09-cross-section-reconciliation.
 - [x] T088 Complete static checks, evidence/register and open PR.
 
 Dependencies: T084 -> T085 -> T086 -> T087 -> T088. MIS-004 and remaining findings stay proposed.
+
+## Slice 18: MIS-004 only
+
+- [x] T089 Record accepted folder-level access design and authority boundary.
+- [x] T090 [US7] Add and run failing shared-folder/supervisor repair regression.
+- [x] T091 [US3] Render unique folder access groups and affected membership.
+- [x] T092 [US7] Verify exact saved/review modes, moves, restart and existing regressions.
+- [x] T093 Complete static checks, evidence/register and open PR.
+
+Dependencies: T089 -> T090 -> T091 -> T092 -> T093. SES-004 is the next proposed A09 slice; other matrix gaps remain open.

@@ -251,8 +251,8 @@ export function runtimeSummary(worker: WorkerFields): string {
 }
 export function accessReason(mode: 'read' | 'write'): string {
   return mode === 'read'
-    ? 'Read: this worker inspects files and reports.'
-    : 'Write: this worker changes files inside this folder only.';
+    ? 'Read: listed members inspect files and report.'
+    : 'Write: listed members may change files in this folder.';
 }
 
 /** Fields the main service will parse; strips nothing, adds the fixed policy arrays. */

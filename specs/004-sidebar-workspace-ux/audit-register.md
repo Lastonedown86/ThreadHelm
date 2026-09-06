@@ -238,3 +238,7 @@ PR #41 verified merged; ATT-004 is merged. [A08](audits/a08-settings-functionali
 | SET-005 | Medium   | Explain temporary recon proposal lifetime; decide durable recovery separately        | Proposed; recon capability referral for persistence |
 
 No product implementation is included. Owner review of the proposed flow precedes implementation. A09 reconciliation and prior section coverage gaps remain open; do not infer full audit coverage or release readiness from the bounded passes.
+
+### SET-001 disposition after slice 12
+
+Owner accepted the recommended next slice on PR #42. SET-001 now keeps exact approval disclosure visible during a single pending request and prevents misleading Cancel/Escape/repeated submission. [Slice 12 verification](verification.md#slice-12-set-001-pending-folder-approval) records rejection, fresh choice, exact saved identity and restart evidence. The original A08 captures/probe remain historical. SET-002 roster loading/error/retry is the next recommendation; SET-003 through SET-005 and A09 remain open.

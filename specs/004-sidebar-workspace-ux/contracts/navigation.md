@@ -64,3 +64,7 @@ At narrow widths and 200% text, exact recovery identifiers and paths remain read
 ## ATT-004 landmarks and recovery focus
 
 AppShell owns the single main landmark across all six destinations. Destination roots are named sections; the React mount is not a landmark. The current recovery button exposes aria-current and controls the identified detail. Native Tab, Enter and Space remain the keyboard model. Removal of a focused recovery record moves focus to the reconciled current button or empty heading, including dismissal from a persistent detail button. An inventory update must not steal focus from another control. Resolution failures do not remove the target.
+
+## SET-001 pending folder approval
+
+Folder approval is single-flight from the first activation. During the durable request, keep the exact candidate disclosure visible, announce Saving approval, disable Approve/Cancel and ignore Escape. Cancellation before submission writes nothing. Success projects the returned workspace and closes; failure closes with an actionable error and requires a fresh folder choice/token. Focus returns to Choose folder. No UI cancellation claims to undo an already submitted write.

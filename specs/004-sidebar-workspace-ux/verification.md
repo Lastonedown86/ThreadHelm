@@ -162,3 +162,15 @@ Final validation: fresh desktop build, repository typecheck and ESLint passed. N
 ## A08 Settings audit
 
 Audited merged PR #41 at ca2c620. See [A08](audits/a08-settings-functionality.md) for full action inventory, coverage gaps and SET-001 through SET-005 proposals. Fresh desktop build passed; three final audit scenarios passed (30.2s), producing 17 independently inspectable observation records and two visually inspected captures. Three existing launch/recon E2E tests passed (22.9s); five targeted Vitest files passed all 71 tests (39.79s). Approval cancellation during a pending write, false empty roster after read failure, stale readiness without recheck, Settings overflow and temporary recon proposal loss after restart are recorded as failures/limitations. Normal approval/revoke, reviewed launch, recon owner stop, profile import and accepted-profile persistence have independent evidence. No application changes or new implementation acceptance; full matrix, external provider execution, hosted CI and release remain unverified.
+
+## Slice 12: SET-001 pending folder approval
+
+Owner accepted SET-001 on open PR #42; baseline main ca2c620, audit 97a6184. Red-first test failed because no disabled Approving control existed. WorkspacePanel now has a synchronous ref guard and rendered pending state; exact candidate stays visible, repeated submission is blocked, and Cancel/Escape cannot close during approval. Existing main approval/token authority remains unchanged. Rejection uses the existing error mapping and fresh-choice recovery.
+
+New Electron regression holds rejected and successful responses, activates Approve twice in the same renderer task and verifies one request each time. Before submission Escape closes without writing and restores opener focus. During submission Cancel/Approve are disabled, status explains saving, Escape retains the exact disclosure, and independent workspaces.list stays empty while held. Rejection leaves no approval; a fresh choice then saves one exact folder and clears the error. Saved identity survives restart; no sessions launch. Initial typecheck found an optional test-hook property assigned undefined under exactOptionalPropertyTypes; deleting the property corrected the harness typing.
+
+Feature 004 prerequisites and checklist pass (16/16); Feature 002 selector bytes preserved; no hooks configured. Original A08 evidence remains pre-fix and its observation probe intentionally reproduces baseline behavior, so it is not rerun as a post-fix acceptance test. Full-suite, real-provider, screen-reader speech and hosted CI/release claims remain outside this slice. SET-002 through SET-005 remain proposed.
+
+Final validation: fresh desktop build, repository typecheck and ESLint passed. Four selected E2E tests passed (23.4s): pending approval, reviewed launch, recon reviewed imports and empty recon. T059-T063 complete the bounded slice and PR update.
+
+Artifact checks: eight changed text files formatted, 64 local links resolved, scoped Gitleaks and diff whitespace passed.

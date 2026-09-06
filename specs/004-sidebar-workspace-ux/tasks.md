@@ -136,3 +136,13 @@ Dependencies: T054 -> T055 -> T056 -> T057 -> T058. A08/A09 remain pending.
 ## A08 audit checkpoint
 
 After PR #41 merged at ca2c620, A08 Settings was audited using the shared template. [Findings and evidence](audits/a08-settings-functionality.md) propose SET-001 through SET-005. No implementation tasks are accepted yet; SET-001 is the recommended next bounded slice. A09 and explicit prior coverage gaps remain open.
+
+## Slice 12: SET-001 pending approval
+
+- [x] T059 Record accepted single-flight approval contract.
+- [x] T060 [US7] Add and run failing pending approval regression.
+- [x] T061 [US2] Guard approval/cancellation and render pending feedback in WorkspacePanel.tsx.
+- [x] T062 [US7] Verify failure/fresh choice, exact persistence and existing regressions.
+- [x] T063 Update findings/verification, finish static checks and update PR #42.
+
+Dependencies: T059 -> T060 -> T061 -> T062 -> T063. SET-002 through SET-005 remain proposed.

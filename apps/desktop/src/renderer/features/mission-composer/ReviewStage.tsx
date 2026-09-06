@@ -8,7 +8,8 @@ import { api, call, errorCode } from '../../api.js';
 import { useStore } from '../../store.js';
 import { reasonLabel } from '../mission-focus/reason-labels.js';
 import { MissionEnvelopeDisclosure } from './MissionEnvelopeDisclosure.js';
-import { limitsSummary, type Stage } from './composer-fields.js';
+import { existingRuntimeIssue } from './existing-runtime.js';
+import { limitsSummary, type Stage, type WorkerFields } from './composer-fields.js';
 
 type Preview = OperationResponse<'missionComposer.preview'>;
 type Profile = OperationResponse<'profiles.list'>['profiles'][number];
@@ -19,6 +20,7 @@ export function ReviewStage({
   version,
   isRevision,
   profiles,
+  workers,
   onStarted,
   onGoTo,
   onAnnounce,
@@ -27,6 +29,7 @@ export function ReviewStage({
   version(): number;
   isRevision: boolean;
   profiles: Profile[];
+  workers: WorkerFields[];
   onStarted(mission: MissionDetailView): void;
   onGoTo(stage: Stage): void;
   onAnnounce(message: string): void;
@@ -35,15 +38,42 @@ export function ReviewStage({
   const [preview, setPreview] = useState<Preview | null>(null);
   const [status, setStatus] = useState<ReviewState>('loading');
   const [error, setError] = useState<string | null>(null);
+  const [workerError, setWorkerError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const expiry = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const checkWorkers = async () => {
+    const sessions = await call(api.missions.eligibleSessions(undefined));
+    return (
+      workers
+        .map((w, i) => {
+          const provider = profiles.find((p) => p.profileId === w.profileId)?.requestedProvider;
+          const providerId =
+            provider === 'codex' || provider === 'codex-cli' ? 'codex-cli' : 'claude-code';
+          return existingRuntimeIssue(
+            w,
+            sessions.filter((s) => s.providerId === providerId),
+            i,
+          );
+        })
+        .find(Boolean) ?? null
+    );
+  };
   const load = async () => {
+    if (expiry.current) clearTimeout(expiry.current);
     setStatus('loading');
     setError(null);
+    setWorkerError(null);
     setConfirmed(false);
     try {
+      const issue = await checkWorkers();
+      if (issue) {
+        setWorkerError(issue);
+        setPreview(null);
+        setStatus('failed');
+        return;
+      }
       const view = await call(api.missionComposer.preview({ draftId, version: version() }));
       setPreview(view);
       const held = view.envelope.bindings.some((b) => b.launchDisposition === 'held');
@@ -85,6 +115,16 @@ export function ReviewStage({
     } catch (cause) {
       const code = errorCode(cause);
       setConfirmed(false);
+      if (code === 'MISSION_ENVELOPE_STALE') {
+        if (expiry.current) clearTimeout(expiry.current);
+        const issue = await checkWorkers().catch(() => null);
+        if (issue) {
+          setWorkerError(issue);
+          setPreview(null);
+          setStatus('failed');
+          return;
+        }
+      }
       if (code === 'MISSION_CONFIRMATION_EXPIRED') setStatus('expired');
       else if (code === 'MISSION_DRAFT_STALE' || code === 'MISSION_ENVELOPE_STALE')
         setStatus('changed');
@@ -170,7 +210,12 @@ export function ReviewStage({
       ) : null}
       {status === 'failed' ? (
         <div className="composer-state failed" role="alert">
-          <strong>Review could not be prepared.</strong> {error}
+          <strong>Review could not be prepared.</strong> {workerError ?? error}
+          {workerError ? (
+            <button type="button" className="small" onClick={() => onGoTo('crew')}>
+              Repair worker session
+            </button>
+          ) : null}
           <button type="button" className="small" onClick={() => void load()}>
             Try again
           </button>

@@ -190,3 +190,13 @@ Dependencies: T079 -> T080 -> T081 -> T082 -> T083. Durable recovery is deferred
 ## A09 reconciliation checkpoint
 
 After PR #46 merged at `560d4aa`, [A09](audits/a09-cross-section-reconciliation.md) reconciles A01-A08 and slices 1-16 with current observations and explicit gaps. T001-T083 remain complete. MIS-003 is the next proposed bounded slice; no new product implementation tasks are accepted by this audit checkpoint. Extend this ledger after owner acceptance.
+
+## Slice 17: MIS-003 only
+
+- [x] T084 Record accepted fixed-runtime and repair contract.
+- [x] T085 [US7] Add and run failing existing-session runtime regression.
+- [x] T086 [US3] Implement recorded settings, deliberate repair and exact-worker review recovery.
+- [x] T087 [US7] Verify saved values, reopen, ended-session denial and existing regressions.
+- [x] T088 Complete static checks, evidence/register and open PR.
+
+Dependencies: T084 -> T085 -> T086 -> T087 -> T088. MIS-004 and remaining findings stay proposed.

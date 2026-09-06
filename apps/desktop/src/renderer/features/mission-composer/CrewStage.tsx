@@ -1,4 +1,5 @@
 import type { ApprovedWorkspaceView, OperationResponse } from '@threadhelm/contracts';
+import { existingRuntimeIssue } from './existing-runtime.js';
 import { ListEditor } from './ListEditor.js';
 import type { StageProps } from './OutcomeStage.js';
 import {
@@ -81,6 +82,32 @@ export function CrewStage({
     const requested = profileOf(worker.profileId)?.requestedProvider;
     return requested === 'codex' || requested === 'codex-cli' ? 'codex-cli' : 'claude-code';
   };
+  const selectSession = (index: number, chosen: Eligible | undefined) => {
+    const nextWorkers = workers.map((w, i) =>
+      i === index
+        ? {
+            ...w,
+            sessionId: chosen?.sessionId ?? null,
+            autoStart: false,
+            ...(chosen
+              ? {
+                  workspaceId: chosen.workspaceId,
+                  runtimeSelection: chosen.runtimeSelection,
+                  permissionSelection: chosen.permissionSelection,
+                  executionBounds: chosen.executionBounds,
+                }
+              : {}),
+          }
+        : w,
+    );
+    setFields({
+      workers: nextWorkers,
+      workspaces: deriveWorkspaces(
+        { ...fields, workers: nextWorkers },
+        eligible.find((s) => s.sessionId === supervisor.sessionId)?.workspaceId ?? null,
+      ),
+    });
+  };
   const pathOf = (s: Eligible) =>
     workspaces.find((w) => w.id === s.workspaceId)?.displayPath ?? 'an approved folder';
 
@@ -149,11 +176,23 @@ export function CrewStage({
         </label>
       </fieldset>
 
-      {workers.map((worker, index) => {
+      {workers.map((savedWorker, index) => {
+        const recorded = eligible.find((s) => s.sessionId === savedWorker.sessionId);
+        const worker = recorded
+          ? {
+              ...savedWorker,
+              autoStart: false,
+              runtimeSelection: recorded.runtimeSelection,
+              permissionSelection: recorded.permissionSelection,
+              executionBounds: recorded.executionBounds,
+            }
+          : savedWorker;
+
         const n = index + 1;
         const sessions = eligible.filter(
           (s) => s.providerId === providerOf(worker) && s.sessionId !== supervisor.sessionId,
         );
+        const issue = existingRuntimeIssue(savedWorker, sessions, index);
         return (
           <fieldset key={index} className="composer-card" aria-label={`Worker ${n}`}>
             <legend>Worker {n}</legend>
@@ -199,41 +238,19 @@ export function CrewStage({
               Worker {n} session
               <select
                 value={worker.sessionId ?? ''}
-                onChange={(event) => {
-                  const chosen = sessions.find((s) => s.sessionId === event.target.value);
-                  const nextWorkers = workers.map((w, i) =>
-                    i === index
-                      ? {
-                          ...w,
-                          sessionId: event.target.value || null,
-                          ...(chosen
-                            ? {
-                                autoStart: false,
-                                workspaceId: chosen.workspaceId,
-                                // A live session's bound worker must match its recorded
-                                // launch exactly; these are read-only once a session is chosen.
-                                runtimeSelection: chosen.runtimeSelection,
-                                permissionSelection: chosen.permissionSelection,
-                                executionBounds: chosen.executionBounds,
-                              }
-                            : {}),
-                        }
-                      : w,
-                  );
-                  const supervisorWorkspaceId =
-                    eligible.find((s) => s.sessionId === supervisor.sessionId)?.workspaceId ?? null;
-                  // Recomputed, not appended, so a worker's session change drops
-                  // its old workspace instead of leaving a stale entry behind.
-                  setFields({
-                    workers: nextWorkers,
-                    workspaces: deriveWorkspaces(
-                      { ...fields, workers: nextWorkers },
-                      supervisorWorkspaceId,
-                    ),
-                  });
-                }}
+                data-field={`workers.${index}.sessionId`}
+                aria-invalid={Boolean(issue) || undefined}
+                onChange={(event) =>
+                  selectSession(
+                    index,
+                    sessions.find((s) => s.sessionId === event.target.value),
+                  )
+                }
               >
                 <option value="">Start a new session at launch</option>
+                {worker.sessionId && !sessions.some((s) => s.sessionId === worker.sessionId) ? (
+                  <option value={worker.sessionId}>Unavailable session · {worker.sessionId}</option>
+                ) : null}
                 {sessions.map((s) => (
                   <option key={s.sessionId} value={s.sessionId}>
                     {s.providerId} · {pathOf(s)}
@@ -241,6 +258,30 @@ export function CrewStage({
                 ))}
               </select>
             </label>
+            {worker.sessionId ? (
+              <div className="composer-notice">
+                <p>
+                  Existing session · {worker.sessionId}.{' '}
+                  {recorded
+                    ? 'Runtime settings are fixed by its recorded launch.'
+                    : 'Saved draft settings are shown below; this session is unavailable.'}
+                </p>
+                {issue ? <p role="alert">{issue}</p> : null}
+                {issue && recorded && sessions.includes(recorded) ? (
+                  <button type="button" onClick={() => selectSession(index, recorded)}>
+                    Use recorded settings for worker {n}
+                  </button>
+                ) : null}
+                <button type="button" onClick={() => selectSession(index, undefined)}>
+                  Switch worker {n} to a new session
+                </button>
+                {!recorded ? (
+                  <button type="button" onClick={onRetryLoad}>
+                    Refresh sessions
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             <div className="field">
               <label htmlFor={`worker-${index}-assignment`}>What worker {n} contributes</label>
               <span className="hint" id={`worker-${index}-assignment-hint`}>
@@ -267,81 +308,110 @@ export function CrewStage({
               onChange={(requiredReturnEvidence) => patchWorker(index, { requiredReturnEvidence })}
             />
             <details>
-              <summary>Customize runtime · {runtimeSummary(worker)}</summary>
-              <label className="field">
-                Worker {n} model
-                <input
-                  value={worker.runtimeSelection.model ?? ''}
-                  placeholder="Provider default"
-                  onChange={(event) =>
-                    patchWorker(index, {
-                      runtimeSelection: {
-                        ...worker.runtimeSelection,
-                        model: event.target.value || null,
-                      },
-                    })
-                  }
-                />
-              </label>
-              <label className="field">
-                Worker {n} effort
-                <select
-                  value={worker.runtimeSelection.effort ?? ''}
-                  onChange={(event) =>
-                    patchWorker(index, {
-                      runtimeSelection: {
-                        ...worker.runtimeSelection,
-                        effort: (event.target.value ||
-                          null) as WorkerFields['runtimeSelection']['effort'],
-                      },
-                    })
-                  }
-                >
-                  <option value="">Provider default effort</option>
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                </select>
-              </label>
-              <label className="field">
-                Worker {n} permission
-                <select
-                  value={worker.permissionSelection.policy ?? ''}
-                  onChange={(event) =>
-                    patchWorker(index, {
-                      permissionSelection: {
-                        ...worker.permissionSelection,
-                        policy: (event.target.value ||
-                          null) as WorkerFields['permissionSelection']['policy'],
-                      },
-                    })
-                  }
-                >
-                  <option value="">Manual permission (asks you)</option>
-                  <option value="bounded_allowlist">Allow-listed tools only</option>
-                </select>
-              </label>
-              {worker.permissionSelection.policy === 'bounded_allowlist' ? (
-                <ListEditor
-                  label={`Worker ${n} allowed tools`}
-                  items={worker.permissionSelection.boundedAllowlist}
-                  max={32}
-                  itemMax={64}
-                  onChange={(boundedAllowlist) =>
-                    patchWorker(index, {
-                      permissionSelection: { ...worker.permissionSelection, boundedAllowlist },
-                    })
-                  }
-                />
-              ) : null}
-              <label className="check">
-                <input
-                  type="checkbox"
-                  checked={worker.autoStart}
-                  disabled={worker.sessionId !== null}
-                  onChange={(event) => patchWorker(index, { autoStart: event.target.checked })}
-                />
-                Authorize automatic startup of worker {n} within this mission
-              </label>
+              <summary>
+                {worker.sessionId
+                  ? `${recorded ? 'Recorded runtime (fixed)' : 'Saved runtime (session unavailable)'} - ${worker.runtimeSelection.model ?? 'CLI default model'}`
+                  : `Customize runtime - ${runtimeSummary(worker)}`}
+              </summary>
+              <fieldset disabled={worker.sessionId !== null}>
+                <legend className="visually-hidden">Worker {n} runtime settings</legend>
+                {worker.sessionId ? (
+                  <p className="hint">
+                    {recorded ? 'Recorded limits:' : 'Saved limits:'}{' '}
+                    {worker.executionBounds.maxElapsedMs / 60000} minutes,{' '}
+                    {worker.executionBounds.maxTurns} turns,{' '}
+                    {worker.executionBounds.maxNoProgressMs / 60000} minutes without progress,{' '}
+                    {worker.executionBounds.maxOutputBytes / 1048576} MiB output,{' '}
+                    {worker.executionBounds.maxConcurrentProcesses} concurrent processes.
+                  </p>
+                ) : null}
+                <label className="field">
+                  Worker {n} model
+                  <input
+                    value={worker.runtimeSelection.model ?? ''}
+                    placeholder="Provider default"
+                    onChange={(event) =>
+                      patchWorker(index, {
+                        runtimeSelection: {
+                          ...worker.runtimeSelection,
+                          model: event.target.value || null,
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label className="field">
+                  Worker {n} effort
+                  <select
+                    value={worker.runtimeSelection.effort ?? ''}
+                    onChange={(event) =>
+                      patchWorker(index, {
+                        runtimeSelection: {
+                          ...worker.runtimeSelection,
+                          effort: (event.target.value ||
+                            null) as WorkerFields['runtimeSelection']['effort'],
+                        },
+                      })
+                    }
+                  >
+                    {worker.runtimeSelection.effort &&
+                    !['low', 'medium'].includes(worker.runtimeSelection.effort) ? (
+                      <option value={worker.runtimeSelection.effort}>
+                        {worker.runtimeSelection.effort}
+                      </option>
+                    ) : null}
+                    <option value="">Provider default effort</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                  </select>
+                </label>
+                <label className="field">
+                  Worker {n} permission
+                  <select
+                    value={worker.permissionSelection.policy ?? ''}
+                    onChange={(event) =>
+                      patchWorker(index, {
+                        permissionSelection: {
+                          ...worker.permissionSelection,
+                          policy: (event.target.value ||
+                            null) as WorkerFields['permissionSelection']['policy'],
+                        },
+                      })
+                    }
+                  >
+                    {worker.permissionSelection.policy &&
+                    worker.permissionSelection.policy !== 'bounded_allowlist' ? (
+                      <option value={worker.permissionSelection.policy}>
+                        {worker.permissionSelection.policy.replaceAll('_', ' ')}
+                      </option>
+                    ) : null}
+                    <option value="">Manual permission (asks you)</option>
+                    <option value="bounded_allowlist">Allow-listed tools only</option>
+                  </select>
+                </label>
+                {worker.permissionSelection.policy === 'bounded_allowlist' ? (
+                  <ListEditor
+                    label={`Worker ${n} allowed tools`}
+                    items={worker.permissionSelection.boundedAllowlist}
+                    max={32}
+                    itemMax={64}
+                    onChange={(boundedAllowlist) =>
+                      patchWorker(index, {
+                        permissionSelection: { ...worker.permissionSelection, boundedAllowlist },
+                      })
+                    }
+                  />
+                ) : null}
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={worker.autoStart}
+                    disabled={worker.sessionId !== null}
+                    onChange={(event) => patchWorker(index, { autoStart: event.target.checked })}
+                  />
+                  Authorize automatic startup of worker {n} within this mission
+                </label>
+              </fieldset>
             </details>
             <button
               type="button"

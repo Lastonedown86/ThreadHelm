@@ -84,3 +84,7 @@ Settings cards and their approval/recon disclosures fit available width at enlar
 ## SET-005 recon proposal lifetime
 
 Before recon confirmation and in the roster, disclose that unaccepted proposals are temporary: exiting/restarting clears them, and a new recon run replaces the current proposals. Point to the existing Review/import flow to keep roles as saved profiles in Agents. Loaded-empty copy states only that no recon run is loaded. Cancelled replacement does not discard the existing run. This contract adds no durable proposal recovery, export or automatic rerun/import.
+
+## MIS-003 existing-session runtime
+
+A selected live worker's recorded launch tuple is fixed. Changing runtime requires explicit new-session selection; it never starts a process by itself. An older draft mismatch offers deliberate adoption of the exact recorded tuple and saves through the existing version-bound draft API. Missing/incompatible session guidance names the worker and offers selection repair. Review uses fresh eligibility for diagnosis; main preview and confirmation still reject stale or mismatched authority.

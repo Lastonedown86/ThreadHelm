@@ -68,3 +68,7 @@ AppShell owns the single main landmark across all six destinations. Destination 
 ## SET-001 pending folder approval
 
 Folder approval is single-flight from the first activation. During the durable request, keep the exact candidate disclosure visible, announce Saving approval, disable Approve/Cancel and ignore Escape. Cancellation before submission writes nothing. Success projects the returned workspace and closes; failure closes with an actionable error and requires a fresh folder choice/token. Focus returns to Choose folder. No UI cancellation claims to undo an already submitted write.
+
+## SET-002 roster read recovery
+
+A roster reports empty only after a successful null read. Initial loading and failure are distinct; failed reads and exhausted collection checks expose Retry roster for the exact workspace. Retry preserves labeled last-loaded data until fresh readback, and obsolete requests are ignored after cleanup. Follow-up collection reads remain bounded at five with 300ms spacing; failures/exhaustion stop and require deliberate retry. Ended sessions are not described as running. Unknown read state disables new recon and proposal review; an unfinished run cannot start another recon from this control. Read recovery never launches, imports or mutates main-owned proposals.

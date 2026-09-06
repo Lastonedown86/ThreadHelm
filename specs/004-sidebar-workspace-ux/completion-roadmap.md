@@ -10,7 +10,7 @@ The roadmap supersedes historical next-step wording in the [register](audit-regi
 
 ## Ordered slices
 
-All rows are **Pending**. Execute in numeric order; each depends on the previous slice's merged/reconciled outcome. At the start of each slice, refresh remote main, reproduce the remaining issue, present the bounded interaction design and expand the existing plan/task ledger under the owner's accepted scope. Do not regenerate the feature or change Feature 002's selector.
+Slice 20 is implemented and locally verified, pending PR merge; slices 21-33 remain **Pending**. See [slice evidence](verification.md). Execute in numeric order; each depends on the previous slice's merged/reconciled outcome. At the start of each slice, refresh remote main, reproduce the remaining issue, present the bounded interaction design and expand the existing plan/task ledger under the owner's accepted scope. Do not regenerate the feature or change Feature 002's selector.
 
 | Slice | Scope and finding ownership                                               | Bounded outcome and exit evidence                                                                                                                                                                                                                                                                                                                                                                                     | Requirements                                           |
 | ----- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -53,4 +53,4 @@ Fresh-main revalidation can close an already-resolved finding with evidence and 
 
 Durable recon proposal recovery and unified Mission/Attention aggregation remain separate capability decisions. Real external-provider runs retain their existing owner-authorization boundaries; this roadmap grants no additional provider execution or release authority.
 
-**Next recommended item: slice 20, TPL-002 template deletion review recovery.** This roadmap authorizes planning the sequence; it does not mark any of slices 20-33 implemented or verified.
+**Next after slice 20 merges: slice 21, SES-002 ended-session inventory.** The original roadmap checkpoint authorized planning only; the slice 20 evidence now records its bounded implementation separately.

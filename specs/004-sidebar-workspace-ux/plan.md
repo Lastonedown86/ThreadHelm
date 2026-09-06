@@ -1,6 +1,6 @@
 # Implementation Plan: Edit preservation and navigation consistency
 
-Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-33 are pending. Historical checkpoints below retain their original scope.
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slice 20 is locally verified pending merge; slices 21-33 are pending. Historical checkpoints below retain their original scope.
 
 Branch: `codex/audit-sidebar-mission-functionality`. Date: 2026-09-05. [Specification](spec.md).
 
@@ -159,3 +159,7 @@ Red-first Electron recovery test injects a rejected token, verifies no records/p
 ## Completion roadmap checkpoint
 
 Owner requested a numbered roadmap after PR #50 merged at `42ff10b`. The roadmap maps 18 remaining finding IDs to 12 implementation/revalidation slices and two final verification slices. T001-T098 remain complete; future granular tasks will be added when each bounded slice starts. This documentation checkpoint performs no product implementation. Next: slice 20, TPL-002.
+
+## Slice 20: TPL-002 deletion review recovery
+
+Owner accepted the next roadmap slice after PR #51 merged at `44de3ef`. Failed deletion consumes/invalidate its renderer review and disables confirmation. Refresh deletion review reads the current revision of the same template, displays a fresh review and requires another explicit Confirm delete template. Keep template/Escape dismiss when idle; pending operations block dismissal and repeated submission. Error guidance names deletion and dependent drafts. Existing main token consumption, revision checks and dependency denial remain authoritative. No IPC/schema/dependency changes. Constitution PASS; requirements 16/16; selector preserved; no hooks. Red-first Electron proof covers real dependent-draft denial, refreshed retry, independent template/draft readback, cancellation, expiry and delayed/failed refresh as applicable.

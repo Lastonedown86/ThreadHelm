@@ -274,3 +274,14 @@ Final visual follow-up: expiry notice uses the standard error style. Fresh build
 ## Completion roadmap planning checkpoint
 
 Baseline remote main `42ff10bff1212940a8efc903898846778159db5d`; PR #50 verified merged. Documentation only: [completion roadmap](completion-roadmap.md) defines pending slices 20-33 and reconciles current navigation/status pointers. Mechanical validation confirmed 14 contiguous slice numbers, all 18 unresolved finding IDs assigned exactly once, and resolving relative links in changed planning documents. Product runtime tests were not rerun; this checkpoint supplies no new UI, logic or functional acceptance evidence.
+
+## Slice 20: TPL-002 deletion review recovery
+
+Baseline: main `44de3ef357c9b9b62ff5bef4a7aeeb5c00a6231e` (PR #51 merged), branch `codex/template-delete-review-recovery`. Windows local Electron tests with isolated user data and generic template fixtures; no external providers. Implementation is locally verified, pending PR merge.
+
+- Before: the new Electron test reproduced a real dependent-draft rejection while Confirm delete template remained enabled. Main consumes that token before its dependency guard; historical A05 records the misleading manifest-review retry.
+- After UI/UX: inspected [recovery screenshot](audits/evidence/slice-20-delete-recovery.png): exact template name, dependency guidance, Refresh deletion review, disabled confirmation and Keep template are visible. Cancellation clears stale error feedback; Sessions/Agents navigation remains usable.
+- Logic/functionality: two targeted Electron tests pass. They exercise real dependency denial twice with refreshed tokens, UI draft deletion and confirmation, cancel/Escape, explicit exact-template deletion, unchanged source template, independent readback and restart inventory. Refresh alone preserves the template. An injected CONFIRMATION_EXPIRED response and failed preview verify recovery; a held preview verifies single-flight requests and pending dismissal guards, followed by keyboard confirmation and one observed delete request. No live sessions are created.
+- Existing regressions: 11 wizard/roster-navigation Electron tests passed; 25 template persistence unit tests passed. Desktop build, typecheck and lint passed. Formatting/whitespace and secret checks are recorded at the PR checkpoint.
+- Test development corrections: the new test initially omitted draft deletion's confirmation and expected a deleted detail instead of the actual PROFILE_NOT_FOUND contract. Corrected expectations then passed; these were test assumptions, not additional product defects.
+- Limits: expiry was injected, not a new wall-clock expiry proof. Full-suite, whole-feature accessibility/performance, real-provider and release acceptance remain open. Existing main contracts/schema/dependency guards are unchanged. Recapture: build desktop, then run `pnpm exec playwright test tests/e2e/template-delete-recovery.spec.ts`.

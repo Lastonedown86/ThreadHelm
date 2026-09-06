@@ -1,6 +1,6 @@
 # Implementation Plan: Edit preservation and navigation consistency
 
-Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-21 are merged; slice 22 is locally verified pending merge; slices 23-33 are pending. Historical checkpoints below retain their original scope.
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-22 are merged; slice 23 is locally verified pending merge; slices 24-33 are pending. Historical checkpoints below retain their original scope.
 
 Branch: `codex/audit-sidebar-mission-functionality`. Date: 2026-09-05. [Specification](spec.md).
 
@@ -171,3 +171,9 @@ Owner requested the next slice; PR #52 already merged at `3b71d9f`. One shared i
 ## Slice 22: SES-003 and remaining SES-005
 
 Owner accepted next slice after PR #53 merged at `dc60e3a`. Tabs show provider, workspace leaf and short session ID with full path/ID accessible context. Roving tab stop, Left/Right wrapping and Home/End update exact selection and retain focus. Each tab controls an exact named terminal panel; mounted inactive terminals remain hidden. Terminal host/heading IDs include session ID in loaded and lazy states. Preserve single-main and ended-inventory fixes. No process, IPC, schema or dependency changes. Constitution PASS; requirements checklist 16/16; selector restored; no hooks. Add red-first Electron identity/keyboard/ID test and run terminal/scope/ended regressions with independent lifecycle readback. CI carry-forward: PR #53 installer/CodeQL passed but full E2E failed; repair the evidenced short-path assumption in the owned ended-inventory test and record other failures separately.
+
+## Slice 23: Mission draft identity and management
+
+Owner requested the next slice after PR #54 merged at 3e3accc. MIS-007/015 and NAV-004: derive a bounded saved objective title in the existing draft summary contract, show short IDs for duplicates, selected state, stage and save time. Add row discard through existing version-bound preview/confirm operations in a native modal; flush active edits first, block duplicate submission, retain failures and require fresh review. Cancel writes nothing. Deleting the active draft leaves its editor only after success. Cap guidance focuses the existing draft inventory. Bound mission/draft lists and the narrow rail so 50 missions plus 20 drafts cannot displace the workspace entirely. No migration, dependency, polling, process authority or external provider run. Constitution PASS; checklist 16/16; selector restored to Feature 002; no hooks.
+
+Verify red-first identity and cap recovery, exact deleted/saved IDs and restart, duplicates/long names, stale/failed/pending/cancelled requests, keyboard navigation and narrow/200% layout. Use main-owned fixture contracts for seeding and independent readback.

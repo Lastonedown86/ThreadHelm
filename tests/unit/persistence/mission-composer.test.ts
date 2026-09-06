@@ -44,12 +44,15 @@ describe('mission composer drafts', () => {
     expect(drafts.getDraft(draftId).fieldValues).toEqual({ objective: 'Fix it' });
   });
 
-  it('lists open drafts without authored text and caps them at twenty', () => {
+  it('lists bounded objective titles without other authored fields and caps drafts at twenty', () => {
     const drafts = repo();
     for (let n = 0; n < MAX_OPEN_MISSION_DRAFTS; n++)
       drafts.createDraft({
         sourceMissionId: null,
-        fieldValues: { objective: `secret ${n}` },
+        fieldValues: {
+          objective: `  Draft ${n}\n${'long '.repeat(60)}`,
+          completionEvidence: 'private evidence body',
+        },
         currentStage: 'outcome',
         createdAt: AT,
       });
@@ -63,7 +66,15 @@ describe('mission composer drafts', () => {
     ).toThrow(/MISSION_DRAFT_LIMIT/);
     const listed = drafts.listDrafts();
     expect(listed).toHaveLength(20);
-    expect(JSON.stringify(listed)).not.toContain('secret');
+    expect(
+      listed.every(
+        (item) =>
+          item.title.startsWith('Draft ') &&
+          item.title.length === 160 &&
+          !item.title.includes('\n'),
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(listed)).not.toContain('private evidence body');
   });
 
   it('marks conversion once and hides deleted drafts', () => {

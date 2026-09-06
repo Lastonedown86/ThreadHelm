@@ -8,6 +8,7 @@ import { ModalDialog } from './features/coordination/ModalDialog.js';
 import { MissionDetail } from './features/coordination/MissionDetail.js';
 import { LaunchDialog } from './features/launch/LaunchDialog.js';
 import { ComposerContext } from './features/mission-composer/ComposerContext.js';
+import { DiscardMissionDraft } from './features/mission-composer/DiscardMissionDraft.js';
 import type { Stage, WorkerFields } from './features/mission-composer/composer-fields.js';
 import { MissionComposerWorkspace } from './features/mission-composer/MissionComposerWorkspace.js';
 import { RepoIdeaEntry, type RepoIdeaFields } from './features/mission-composer/RepoIdeaEntry.js';
@@ -89,6 +90,9 @@ function Shell() {
   } | null>(null);
   const [detailMissionId, setDetailMissionId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<MissionComposerDraftSummaryView[]>([]);
+  const [discardDraftId, setDiscardDraftId] = useState<string | null>(null);
+  const [draftLoadError, setDraftLoadError] = useState(false);
+  const [draftRefresh, setDraftRefresh] = useState(0);
   const missionSelected = state.selectedDestination === 'missions';
   const composerFlush = useRef<(() => Promise<boolean>) | null>(null);
   const setComposerFlush = useCallback((flush: (() => Promise<boolean>) | null) => {
@@ -124,6 +128,13 @@ function Shell() {
         actions.setNotice(
           reasonLabel(errorCode(cause)) ?? 'The requested view could not be opened.',
         );
+        if (errorCode(cause) === 'MISSION_DRAFT_LIMIT') {
+          const inventory = document.querySelector<HTMLDetailsElement>('.mission-rail-drafts');
+          if (inventory) {
+            inventory.open = true;
+            inventory.querySelector('summary')?.focus();
+          }
+        }
         return false;
       } finally {
         navigationBusy.current = false;
@@ -172,12 +183,19 @@ function Shell() {
     }
     let cancelled = false;
     void call(api.missionComposer.listDrafts(undefined))
-      .then((page) => !cancelled && setDrafts(page.drafts))
-      .catch(() => !cancelled && setDrafts([]));
+      .then((page) => {
+        if (!cancelled) {
+          setDrafts(page.drafts);
+          setDraftLoadError(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setDraftLoadError(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, [state.missionSequence, state.composerSequence, state.storageDegraded]);
+  }, [state.missionSequence, state.composerSequence, state.storageDegraded, draftRefresh]);
 
   const openComposer = (sourceMissionId?: string, initialFields?: RepoIdeaFields) => {
     void navigate(async () => {
@@ -278,7 +296,11 @@ function Shell() {
               onSelect={selectMission}
               onCreate={newMission}
               drafts={drafts}
+              draftLoadError={draftLoadError}
+              onRetryDrafts={() => setDraftRefresh((value) => value + 1)}
               onResumeDraft={resumeDraft}
+              selectedDraftId={missionSelected ? composerDraftId : null}
+              onDiscardDraft={(id) => void navigate(() => setDiscardDraftId(id))}
             />
             <AppNavigation
               selected={state.selectedDestination}
@@ -427,6 +449,22 @@ function Shell() {
       ) : null}
       {state.closeBlocked ? (
         <CloseBlockedDialog sessions={state.closeBlocked} onDismiss={actions.dismissCloseBlocked} />
+      ) : null}
+      {discardDraftId ? (
+        <DiscardMissionDraft
+          draftId={discardDraftId}
+          onClose={() => setDiscardDraftId(null)}
+          onDiscarded={() => {
+            setDrafts((items) => items.filter((item) => item.draftId !== discardDraftId));
+            if (composerDraftId === discardDraftId) showMission();
+            setDiscardDraftId(null);
+            requestAnimationFrame(() =>
+              document
+                .querySelector<HTMLElement>('.mission-rail-drafts summary, .mission-create-button')
+                ?.focus(),
+            );
+          }}
+        />
       ) : null}
     </div>
   );

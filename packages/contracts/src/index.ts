@@ -2085,6 +2085,7 @@ export type RepoIdeaCandidate = z.infer<typeof RepoIdeaCandidate>;
 const MissionComposerIssueCode = z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/);
 export const MissionComposerDraftSummaryView = strictObject({
   draftId: Uuid,
+  title: z.string().max(160),
   version: z.number().int().positive(),
   state: MissionComposerDraftState,
   currentStage: MissionComposerStage,

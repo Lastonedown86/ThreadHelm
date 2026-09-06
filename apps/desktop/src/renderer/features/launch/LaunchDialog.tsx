@@ -4,7 +4,7 @@
  * confirmation every time. Nothing here is remembered between sessions.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   LaunchEffort,
   LaunchPreviewView,
@@ -13,7 +13,7 @@ import type {
   ProviderExecutionBounds,
   SessionView,
 } from '@threadhelm/contracts';
-import { api, call } from '../../api.js';
+import { api, call, errorCode, RendererError } from '../../api.js';
 import { Modal } from '../control/Modal.js';
 import type { LaunchRequest } from '../../store.js';
 import { LaunchDisclosureFacts } from './LaunchDisclosureFacts.js';
@@ -50,6 +50,11 @@ function modelLabel(providerId: keyof typeof MODEL_OPTIONS, model: string): stri
 }
 
 export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props) {
+  const launching = useRef(false);
+  const refreshing = useRef(false);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const [previewKey, setPreviewKey] = useState<string | null>(null);
+  const [recovery, setRecovery] = useState(false);
   const [preview, setPreview] = useState<LaunchPreviewView | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -85,17 +90,36 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
     .filter(Boolean);
   const permissionReady = permission !== 'bounded_allowlist' || boundedAllowlist.length > 0;
 
+  const reviewKey = JSON.stringify([
+    request.workspaceId,
+    request.providerId,
+    terminal.columns,
+    terminal.rows,
+    model,
+    selectedModel,
+    effort,
+    workType,
+    runtimeEscalationReason,
+    permission,
+    allowlist,
+    executionBounds,
+    refreshVersion,
+  ]);
+  const reviewCurrent = preview !== null && previewKey === reviewKey && !recovery;
+
   useEffect(() => {
     let cancelled = false;
     if (!modelReady || !permissionReady) {
       setPreview(null);
       setError(null);
       setChecking(false);
+      refreshing.current = false;
       return;
     }
 
     setChecking(true);
     setError(null);
+    setRecovery(false);
     const timer = window.setTimeout(
       () => {
         call(
@@ -118,16 +142,24 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
           }),
         )
           .then((view) => {
-            if (!cancelled) setPreview(view);
+            if (!cancelled) {
+              setPreview(view);
+              setPreviewKey(reviewKey);
+            }
           })
           .catch((err: unknown) => {
             if (!cancelled) {
               setPreview(null);
               setError(err);
+              setConfirmed(false);
+              setRecovery(true);
             }
           })
           .finally(() => {
-            if (!cancelled) setChecking(false);
+            if (!cancelled) {
+              setChecking(false);
+              refreshing.current = false;
+            }
           });
       },
       model === CUSTOM_MODEL ? 350 : 0,
@@ -151,10 +183,51 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
     allowlist,
     permissionReady,
     executionBounds,
+    refreshVersion,
   ]);
 
+  const expire = () => {
+    setConfirmed(false);
+    setRecovery(true);
+    setError(
+      new RendererError({ code: 'PREVIEW_EXPIRED', message: 'Launch review expired', details: {} }),
+    );
+  };
+  useEffect(() => {
+    if (!preview || !reviewCurrent || busy) return;
+    const timer = window.setTimeout(
+      expire,
+      Math.max(0, Date.parse(preview.expiresAt) - Date.now()),
+    );
+    return () => window.clearTimeout(timer);
+  }, [preview, reviewCurrent, busy]);
+
+  const refresh = () => {
+    if (launching.current || refreshing.current || checking) return;
+    refreshing.current = true;
+    setConfirmed(false);
+    setChecking(true);
+    setRefreshVersion((version) => version + 1);
+  };
+  const cancel = () => {
+    if (!launching.current) onCancel();
+  };
   const launch = async () => {
-    if (!preview) return;
+    if (
+      !preview ||
+      !reviewCurrent ||
+      checking ||
+      !confirmed ||
+      launching.current ||
+      preview.permissionResolution.disposition !== 'ready' ||
+      preview.runtimeResolution.disposition !== 'ready'
+    )
+      return;
+    if (Date.parse(preview.expiresAt) <= Date.now()) {
+      expire();
+      return;
+    }
+    launching.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -167,13 +240,17 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
       onLaunched(session);
     } catch (err) {
       setError(err);
+      setConfirmed(false);
+      setRecovery(true);
+    } finally {
+      launching.current = false;
       setBusy(false);
     }
   };
 
   return (
-    <Modal title="Review this launch" onCancel={onCancel} describedBy="launch-boundary">
-      <fieldset className="launch-settings">
+    <Modal title="Review this launch" onCancel={cancel} describedBy="launch-boundary">
+      <fieldset className="launch-settings" disabled={busy}>
         <legend>Provider runtime</legend>
         <label className="field">
           Work type
@@ -312,6 +389,7 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
               Escalation reason
               <textarea
                 value={runtimeEscalationReason}
+                disabled={busy}
                 rows={2}
                 minLength={20}
                 maxLength={500}
@@ -334,6 +412,7 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
             <input
               type="checkbox"
               checked={confirmed}
+              disabled={!reviewCurrent || checking || busy}
               onChange={(event) => setConfirmed(event.target.checked)}
             />
             I understand ThreadHelm cannot confine this agent to the folder.
@@ -342,17 +421,38 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
       ) : error || !modelReady || !permissionReady ? null : (
         <p>Checking the folder and agent…</p>
       )}
-      <LaunchError error={error} />
+      {errorCode(error) === 'PREVIEW_EXPIRED' ? (
+        <p className="notice error" role="alert">
+          This launch review expired. Refresh review, check the current facts, and confirm again.
+        </p>
+      ) : (
+        <LaunchError error={error} />
+      )}
+      {recovery ? (
+        <p className="hint">
+          Your settings are preserved. Refresh review before trying to launch again.
+        </p>
+      ) : null}
       <div className="actions">
-        <button type="button" onClick={onCancel} disabled={busy}>
+        <button type="button" onClick={cancel} disabled={busy}>
           Cancel
         </button>
+        {recovery ? (
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={checking || busy || !modelReady || !permissionReady}
+          >
+            Refresh review
+          </button>
+        ) : null}
         <button
           type="button"
           className="primary"
           onClick={() => void launch()}
           disabled={
             !preview ||
+            !reviewCurrent ||
             preview.permissionResolution.disposition !== 'ready' ||
             preview.runtimeResolution.disposition !== 'ready' ||
             !confirmed ||

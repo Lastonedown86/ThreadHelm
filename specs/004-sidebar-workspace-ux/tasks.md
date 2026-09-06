@@ -210,3 +210,13 @@ Dependencies: T084 -> T085 -> T086 -> T087 -> T088. MIS-004 and remaining findin
 - [x] T093 Complete static checks, evidence/register and open PR.
 
 Dependencies: T089 -> T090 -> T091 -> T092 -> T093. SES-004 is the next proposed A09 slice; other matrix gaps remain open.
+
+## Slice 19: SES-004 only
+
+- [x] T094 Record accepted launch review recovery and confirmation contract.
+- [x] T095 [US7] Add and run failing review recovery regression.
+- [x] T096 [US3] Implement invalidation, refresh and single-flight launch guards.
+- [x] T097 [US7] Verify exact outcomes, expiry, failed/late refresh and existing launch regressions.
+- [x] T098 Complete static checks, evidence/register and open PR.
+
+Dependencies: T094 -> T095 -> T096 -> T097 -> T098. TPL-002 is next proposed; other audit gaps remain open.

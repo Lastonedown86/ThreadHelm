@@ -92,3 +92,7 @@ A selected live worker's recorded launch tuple is fixed. Changing runtime requir
 ## MIS-004 folder-level access
 
 Worker folder choices assign membership. Read/Write is displayed once per folder and applies to all listed mission members, including the supervisor. A supervisor-only folder stays visible and directly editable after workers leave it. The chosen mode is preserved while any member remains; changes are saved through the existing version-bound draft API and reviewed before becoming mission authority. This describes mission rules, not OS confinement or a change to an existing process's working directory.
+
+## SES-004 expired/rejected launch review
+
+An expired or rejected review cannot be submitted again. Refresh review preserves model/custom model, effort, work type, reason, permission/allowlist and bounds, requests fresh authority, and clears boundary confirmation. Ordinary input changes still refresh automatically without an added confirmation step. Launch requires matching current inputs, an unexpired ready review and explicit acknowledgement. A pending launch cannot be duplicated or dismissed as though cancelled. Late preview responses after replacement/cancel are ignored.

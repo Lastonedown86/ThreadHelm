@@ -246,3 +246,7 @@ Owner accepted the recommended next slice on PR #42. SET-001 now keeps exact app
 ### SET-002 disposition after slice 13
 
 PR #42 merged at 29ef3a5. SET-002 now distinguishes loading/error/empty roster states, catches failed collection reads and provides bounded recovery through Retry roster. [Slice 13 verification](verification.md#slice-13-set-002-roster-read-recovery) records exact run/proposal/session preservation through failures, late response and read-budget exhaustion. SET-003 provider readiness recheck is the next recommendation; SET-004/005 and A09 remain open.
+
+### SET-003 disposition after slice 14
+
+PR #43 merged at a834317. SET-003 provides explicit provider-readiness recheck, pending/failure feedback, per-provider timestamps and protection from older readiness events. [Slice 14 verification](verification.md#slice-14-set-003-provider-readiness-recheck) records exact workspace preservation and no session launch. SET-004 Settings reflow is the next recommendation; SET-005 proposal lifetime and A09 remain open.

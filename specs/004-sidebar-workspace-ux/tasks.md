@@ -156,3 +156,13 @@ Dependencies: T059 -> T060 -> T061 -> T062 -> T063. SET-002 through SET-005 rema
 - [x] T068 Complete static checks, update verification/register and open PR.
 
 Dependencies: T064 -> T065 -> T066 -> T067 -> T068. SET-003/004/005 and A09 remain open.
+
+## Slice 14: SET-003 readiness recheck
+
+- [x] T069 Record accepted explicit recheck contract.
+- [x] T070 [US7] Add and run failing recheck and ordering regressions.
+- [x] T071 [US2] Implement checking/error feedback, timestamps and stale-evidence protection.
+- [x] T072 [US7] Verify workspace and process invariants plus existing regressions.
+- [x] T073 Complete static checks, evidence/register and open PR.
+
+Dependencies: T069 -> T070 -> T071 -> T072 -> T073. SET-004/005 and A09 remain open.

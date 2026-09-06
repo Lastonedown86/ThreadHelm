@@ -214,11 +214,14 @@ function reduce(state: State, action: Action): State {
     }
     case 'workspace':
       return { ...state, workspaces: upsertBy(state.workspaces, action.workspace, (w) => w.id) };
-    case 'readiness':
+    case 'readiness': {
+      const previous = state.readiness.find((r) => r.providerId === action.readiness.providerId);
+      if (previous && previous.probedAt > action.readiness.probedAt) return state;
       return {
         ...state,
         readiness: upsertBy(state.readiness, action.readiness, (r) => r.providerId),
       };
+    }
     case 'session':
       return upsertSession(state, action.session);
     case 'activity': {

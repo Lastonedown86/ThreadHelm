@@ -72,3 +72,7 @@ Folder approval is single-flight from the first activation. During the durable r
 ## SET-002 roster read recovery
 
 A roster reports empty only after a successful null read. Initial loading and failure are distinct; failed reads and exhausted collection checks expose Retry roster for the exact workspace. Retry preserves labeled last-loaded data until fresh readback, and obsolete requests are ignored after cleanup. Follow-up collection reads remain bounded at five with 300ms spacing; failures/exhaustion stop and require deliberate retry. Ended sessions are not described as running. Unknown read state disables new recon and proposal review; an unfinished run cannot start another recon from this control. Read recovery never launches, imports or mutates main-owned proposals.
+
+## SET-003 provider readiness recheck
+
+Check again invokes the existing readiness operation without changing workspace selection, installing, authenticating or launching. Single-flight checking and request-failure feedback identify previous results; panel launch controls stay disabled while checking or after request failure until a successful recheck. Each provider displays its own last-check timestamp and availability. Completion means the check finished, not that every provider is available. Local completion after unmount is ignored; older readiness events cannot replace a newer probedAt for that provider.

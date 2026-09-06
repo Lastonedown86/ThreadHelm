@@ -1,5 +1,7 @@
 # Implementation Plan: Edit preservation and navigation consistency
 
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-33 are pending. Historical checkpoints below retain their original scope.
+
 Branch: `codex/audit-sidebar-mission-functionality`. Date: 2026-09-05. [Specification](spec.md).
 
 ## Summary and accepted scope
@@ -153,3 +155,7 @@ Red-first Electron proof reproduces shared-mode propagation and the missing supe
 Owner accepted the next A09 slice after PR #49 merged at 6a28030. Expired or rejected launch reviews disable their old confirmation and offer Refresh review, preserving all form values. Fresh recovery review requires renewed boundary confirmation. Ordinary input changes retain the existing automatic-preview interaction and boundary acknowledgement; they do not introduce another gate. Current input identity, deadline and main disposition gate launch. Single-flight launch prevents duplicate activation; inputs and Escape/cancel stay blocked during submitted launch. Preview cancellation discards obsolete responses. Main token consumption and authority remain unchanged. No IPC/schema/dependency changes. Constitution PASS; requirements 16/16, selector preserved, no hooks.
 
 Red-first Electron recovery test injects a rejected token, verifies no records/processes, then refreshes and reconfirms exact settings before one launch. Additional scenarios cover real wall-clock expiry, failed/held refresh and late completion after cancel, plus existing launch/runtime checks. Record injection separately from real main expiry evidence and open PR.
+
+## Completion roadmap checkpoint
+
+Owner requested a numbered roadmap after PR #50 merged at `42ff10b`. The roadmap maps 18 remaining finding IDs to 12 implementation/revalidation slices and two final verification slices. T001-T098 remain complete; future granular tasks will be added when each bounded slice starts. This documentation checkpoint performs no product implementation. Next: slice 20, TPL-002.

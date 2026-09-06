@@ -1,5 +1,7 @@
 # A09: Cross-section reconciliation
 
+Historical snapshot at PR #46. For the current sequence after merged slices 17-19, see the [completion roadmap](../completion-roadmap.md). This report retains its original observations and evidence limitations.
+
 ## Baseline and scope
 
 - 2026-09-05, Codex, `codex/audit-cross-section-reconciliation`; main `560d4aa58de9134736e42f83163dff93b5a053d9` (PR #46 verified merged). Clean branch at start; product code unchanged.

@@ -1,5 +1,7 @@
 # Tasks: Slice 1 edit preservation and navigation
 
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-33 are pending. Historical checkpoints below retain their original scope.
+
 Scope: accepted MIS-001/002 only. Other Feature 004 work is not included in this completion ledger. Specification US2 owns behavior; US7 owns independent proof. Tests are required by FR-016–019 and the constitution.
 
 ## Phase 1: Setup
@@ -220,3 +222,7 @@ Dependencies: T089 -> T090 -> T091 -> T092 -> T093. SES-004 is the next proposed
 - [x] T098 Complete static checks, evidence/register and open PR.
 
 Dependencies: T094 -> T095 -> T096 -> T097 -> T098. TPL-002 is next proposed; other audit gaps remain open.
+
+## Completion roadmap checkpoint
+
+Owner requested a numbered roadmap after PR #50 merged at `42ff10b`. The roadmap maps 18 remaining finding IDs to 12 implementation/revalidation slices and two final verification slices. T001-T098 remain complete; future granular tasks will be added when each bounded slice starts. This documentation checkpoint performs no product implementation. Next: slice 20, TPL-002.

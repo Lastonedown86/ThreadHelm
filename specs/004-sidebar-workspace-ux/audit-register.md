@@ -53,7 +53,7 @@ Capture baseline: `pnpm desktop:build`, then `PARITY_SHOTS=1 pnpm exec playwrigh
 
 ## Next stages
 
-A01-A08 have recorded audits and slices 1-16 are merged. A09 now reconciles the remaining findings and verification gaps. Owner accepted MIS-003 (truthful existing-session runtime controls) as slice 17 after PR #47. MIS-004 access clarity is the next proposed slice; see A09 for its proposed interaction and verification. Extend existing plan/tasks when accepted; do not regenerate the feature or disturb Feature 002's selector.
+A01-A08 have recorded audits and slices 1-16 are merged. A09 now reconciles the remaining findings and verification gaps. Owner accepted MIS-003 (truthful existing-session runtime controls) as slice 17 after PR #47. Owner subsequently accepted MIS-004 access clarity as slice 18 after PR #48. SES-004 review recovery is next in the A09 proposed sequence. Extend existing plan/tasks when accepted; do not regenerate the feature or disturb Feature 002's selector.
 
 Historical per-slice paragraphs below describe their original checkpoint, including then-pending audits or local-only status. Use A09 for current dispositions and each original section matrix for unexercised cases. Feature 004 is not declared complete.
 
@@ -257,3 +257,7 @@ PR #45 merged at b3b0a1b. SET-005's bounded lifetime clarification now appears b
 ## Slice 17: MIS-003 existing-session runtime
 
 Owner accepted the A09 recommendation via "merged next slice" after PR #47 merged at 5641268. Existing worker runtime controls now show the main-reported recorded values and are disabled. Explicit new-session selection enables editing while leaving automatic startup off. Older saved mismatches require deliberate Use recorded settings, including exact workspace/runtime/permission/bounds; unavailable sessions retain their saved identity and identify the affected worker. Review refreshes eligibility and provides Repair worker session; main authority checks remain unchanged. See [slice 17 verification](verification.md#slice-17-mis-003-existing-session-runtime). Original A02/A09 evidence remains pre-fix. MIS-004 and other findings/matrix gaps stay proposed.
+
+## Slice 18: MIS-004 shared-folder access
+
+Owner accepted the next A09 slice after PR #48 merged at 2916702. Folder assignment and access controls are separate. One group names each bound folder and all affected members, including the supervisor; supervisor-only access remains editable when workers move away. Existing derivation preserves modes on retained folders and drops unused ones. Deliberate access changes preserve entry order and can repair an absent mode. Copy describes shared mission rules without implying OS confinement. Main holds unsupported Read bindings as before. See [slice 18 verification](verification.md#slice-18-mis-004-shared-folder-access). Original A02/A09 observations remain historical; remaining coverage gaps stay open. SES-004 is next proposed.

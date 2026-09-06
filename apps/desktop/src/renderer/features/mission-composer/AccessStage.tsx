@@ -63,10 +63,20 @@ export function AccessStage({
   };
   const setMode = (workspaceId: string, mode: 'read' | 'write') =>
     setFields({
-      workspaces: (fields.workspaces ?? []).map((w) =>
-        w.workspaceId === workspaceId ? { ...w, mode } : w,
-      ),
+      workspaces: modes.has(workspaceId)
+        ? (fields.workspaces ?? []).map((w) => (w.workspaceId === workspaceId ? { ...w, mode } : w))
+        : [...(fields.workspaces ?? []), { workspaceId, mode }],
     });
+  const folders = deriveWorkspaces(fields, supervisorWorkspaceId).map(({ workspaceId }) => ({
+    workspaceId,
+    workspace: approved.find((w) => w.id === workspaceId),
+    members: [
+      ...(workspaceId === supervisorWorkspaceId ? ['Supervisor'] : []),
+      ...workers.flatMap((w, index) =>
+        w.workspaceId === workspaceId ? [`Worker ${index + 1} (${w.role})`] : [],
+      ),
+    ],
+  }));
   const bounds: MissionBounds = fields.bounds ?? DEFAULT_BOUNDS;
 
   return (
@@ -85,8 +95,6 @@ export function AccessStage({
         ) : null}
         {workers.map((worker, index) => {
           const n = index + 1;
-          const hasMode = worker.workspaceId ? modes.has(worker.workspaceId) : false;
-          const mode = worker.workspaceId ? (modes.get(worker.workspaceId) ?? 'write') : null;
           if (approved.length === 0) return null;
           return (
             <div key={index} className="composer-access-row">
@@ -106,33 +114,55 @@ export function AccessStage({
                   ))}
                 </select>
               </label>
-              {worker.workspaceId && mode ? (
-                <fieldset className="composer-mode">
-                  <legend>Worker {n} access</legend>
-                  <label className="check">
-                    <input
-                      type="radio"
-                      name={`mode-${index}`}
-                      data-field={!hasMode ? 'workspaces' : undefined}
-                      aria-invalid={(invalid === 'workspaces' && !hasMode) || undefined}
-                      checked={mode === 'read'}
-                      onChange={() => setMode(worker.workspaceId!, 'read')}
-                    />
-                    Read
-                  </label>
-                  <label className="check">
-                    <input
-                      type="radio"
-                      name={`mode-${index}`}
-                      checked={mode === 'write'}
-                      onChange={() => setMode(worker.workspaceId!, 'write')}
-                    />
-                    Write
-                  </label>
-                  <p className="hint">{accessReason(mode)}</p>
-                </fieldset>
-              ) : null}
             </div>
+          );
+        })}
+        <p className="hint">
+          Access is shared by folder. Changing Read or Write applies to every member listed for that
+          folder. These are mission rules, not operating-system confinement.
+        </p>
+        {!supervisorWorkspaceId ? (
+          <p role="alert">
+            The supervisor folder cannot be resolved from a live session. Return to Crew to select
+            an eligible supervisor session.
+          </p>
+        ) : null}
+        {folders.map(({ workspaceId, workspace, members }) => {
+          const mode = modes.get(workspaceId);
+          return (
+            <fieldset
+              key={workspaceId}
+              className="composer-folder-access"
+              aria-label={`Folder access: ${workspace?.displayPath ?? workspaceId}`}
+            >
+              <legend>Folder access: {workspace?.displayPath ?? workspaceId}</legend>
+              <p>Applies to: {members.join(', ')}</p>
+              {!workspace ? (
+                <p role="alert">
+                  This folder is unavailable or no longer approved. Review its approval in Settings
+                  before continuing.
+                </p>
+              ) : null}
+              <div className="composer-mode">
+                {(['read', 'write'] as const).map((value) => (
+                  <label key={value} className="check">
+                    <input
+                      type="radio"
+                      name={`folder-mode-${workspaceId}`}
+                      disabled={!workspace}
+                      data-field={!mode && value === 'read' ? 'workspaces' : undefined}
+                      aria-invalid={(invalid === 'workspaces' && !mode) || undefined}
+                      checked={mode === value}
+                      onChange={() => setMode(workspaceId, value)}
+                    />
+                    {value === 'read' ? 'Read' : 'Write'}
+                  </label>
+                ))}
+              </div>
+              <p className="hint">
+                {mode ? accessReason(mode) : 'Choose Read or Write for this folder.'}
+              </p>
+            </fieldset>
           );
         })}
       </section>

@@ -198,3 +198,13 @@
 .composer-state.failed {
   border-left-color: var(--danger);
 }
+
+.composer-folder-access {
+  min-width: 0;
+  margin-top: 1rem;
+  overflow-wrap: anywhere;
+}
+.composer-folder-access legend {
+  max-width: 100%;
+  white-space: normal;
+}

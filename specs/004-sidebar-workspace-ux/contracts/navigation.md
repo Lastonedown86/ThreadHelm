@@ -88,3 +88,7 @@ Before recon confirmation and in the roster, disclose that unaccepted proposals 
 ## MIS-003 existing-session runtime
 
 A selected live worker's recorded launch tuple is fixed. Changing runtime requires explicit new-session selection; it never starts a process by itself. An older draft mismatch offers deliberate adoption of the exact recorded tuple and saves through the existing version-bound draft API. Missing/incompatible session guidance names the worker and offers selection repair. Review uses fresh eligibility for diagnosis; main preview and confirmation still reject stale or mismatched authority.
+
+## MIS-004 folder-level access
+
+Worker folder choices assign membership. Read/Write is displayed once per folder and applies to all listed mission members, including the supervisor. A supervisor-only folder stays visible and directly editable after workers leave it. The chosen mode is preserved while any member remains; changes are saved through the existing version-bound draft API and reviewed before becoming mission authority. This describes mission rules, not OS confinement or a change to an existing process's working directory.

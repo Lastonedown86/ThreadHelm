@@ -342,8 +342,12 @@ export function MissionComposerWorkspace({
             version={draft.version}
             isRevision={isRevision}
             profiles={profiles}
+            workers={workers}
             onStarted={onStarted}
-            onGoTo={(target) => void draft.goTo(target)}
+            onGoTo={(target) => {
+              setReload((n) => n + 1);
+              void draft.goTo(target);
+            }}
             onAnnounce={setAnnouncement}
           />
         ) : null}

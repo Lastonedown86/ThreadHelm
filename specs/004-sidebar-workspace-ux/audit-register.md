@@ -2,7 +2,7 @@
 
 Created 2026-09-05. Feature: [Sidebar and Workspace UX Consistency](spec.md).
 
-Latest reconciled main baseline: `560d4aa58de9134736e42f83163dff93b5a053d9` (merged PR #46). [A09 current dispositions and recommended sequence](audits/a09-cross-section-reconciliation.md) supersede historical next-step wording below. A01-A08 retain their own recorded baselines; A06 is `d8a5075`, not the later A08 baseline `ca2c620`. Merged slice evidence is in [verification](verification.md); current observations do not retroactively upgrade old evidence. Read the [initial merge reconciliation](audits/main-merge-reconciliation.md) before using PR #29 evidence.
+Latest reconciled main baseline: `560d4aa58de9134736e42f83163dff93b5a053d9` (merged PR #46). [A09 current dispositions and recommended sequence](audits/a09-cross-section-reconciliation.md) supersede historical next-step wording below. MIS-003 is subsequently accepted for slice 17; see its disposition at the end of this register. A01-A08 retain their own recorded baselines; A06 is `d8a5075`, not the later A08 baseline `ca2c620`. Merged slice evidence is in [verification](verification.md); current observations do not retroactively upgrade old evidence. Read the [initial merge reconciliation](audits/main-merge-reconciliation.md) before using PR #29 evidence.
 
 ## Coverage
 
@@ -53,7 +53,7 @@ Capture baseline: `pnpm desktop:build`, then `PARITY_SHOTS=1 pnpm exec playwrigh
 
 ## Next stages
 
-A01-A08 have recorded audits and slices 1-16 are merged. A09 now reconciles the remaining findings and verification gaps. The recommended next bounded slice is MIS-003 (truthful existing-session runtime controls), followed by MIS-004 access clarity; see A09 for proposed interactions and verification. These remain proposals pending owner acceptance. Extend existing plan/tasks when accepted; do not regenerate the feature or disturb Feature 002's selector.
+A01-A08 have recorded audits and slices 1-16 are merged. A09 now reconciles the remaining findings and verification gaps. Owner accepted MIS-003 (truthful existing-session runtime controls) as slice 17 after PR #47. MIS-004 access clarity is the next proposed slice; see A09 for its proposed interaction and verification. Extend existing plan/tasks when accepted; do not regenerate the feature or disturb Feature 002's selector.
 
 Historical per-slice paragraphs below describe their original checkpoint, including then-pending audits or local-only status. Use A09 for current dispositions and each original section matrix for unexercised cases. Feature 004 is not declared complete.
 
@@ -253,3 +253,7 @@ PR #44 merged at bbf80a9. SET-004 now constrains inner Settings tracks and wraps
 ### SET-005 disposition after slice 16
 
 PR #45 merged at b3b0a1b. SET-005's bounded lifetime clarification now appears before recon confirmation and in the roster, with honest loaded-empty wording and the existing Review/import keep path. [Slice 16 verification](verification.md#slice-16-set-005-temporary-recon-proposal-lifetime) records exact accepted-profile persistence and temporary-run loss at restart, with no automatic launch. Durable proposal recovery is deferred rather than marked implemented. All five confirmed A08 findings now have bounded implementation dispositions; this does not close the remaining A08 matrix gaps. A09 cross-section reconciliation is the next recommendation.
+
+## Slice 17: MIS-003 existing-session runtime
+
+Owner accepted the A09 recommendation via "merged next slice" after PR #47 merged at 5641268. Existing worker runtime controls now show the main-reported recorded values and are disabled. Explicit new-session selection enables editing while leaving automatic startup off. Older saved mismatches require deliberate Use recorded settings, including exact workspace/runtime/permission/bounds; unavailable sessions retain their saved identity and identify the affected worker. Review refreshes eligibility and provides Repair worker session; main authority checks remain unchanged. See [slice 17 verification](verification.md#slice-17-mis-003-existing-session-runtime). Original A02/A09 evidence remains pre-fix. MIS-004 and other findings/matrix gaps stay proposed.

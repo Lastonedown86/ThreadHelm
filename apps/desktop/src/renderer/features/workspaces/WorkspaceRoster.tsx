@@ -25,6 +25,9 @@ import { AgentProfileImportPreview } from '../coordination/AgentProfileDetail.js
 import { LaunchDisclosureFacts } from '../launch/LaunchDisclosureFacts.js';
 import { LaunchError } from '../launch/LaunchErrors.js';
 
+const PROPOSAL_LIFETIME =
+  'Unaccepted recon proposals are temporary and are cleared when ThreadHelm exits or restarts. Starting another recon run replaces the current proposals. Review and import roles you want to keep. Imported profiles are saved in Agents.';
+
 /** Every outcome gets its own sentence; there is no blanket failure text. */
 const OUTCOME_TEXT: Record<ReconOutcome, string> = {
   completed: 'Recon finished and every file it wrote was read.',
@@ -165,6 +168,7 @@ function ReconDisclosureDialog({
                 }
               />
               <p className="notice">{preview.autoHireStatement}</p>
+              <p className="hint">{PROPOSAL_LIFETIME}</p>
               <p className="hint">
                 ThreadHelm reads the roles when this session ends. Most agent tools stay at their
                 prompt once they have written them, so you stop the session yourself to finish the
@@ -308,6 +312,7 @@ export function WorkspaceRoster({
   return (
     <section className="panel roster" aria-labelledby={headingId}>
       <h2 id={headingId}>Roster</h2>
+      <p className="hint">{PROPOSAL_LIFETIME}</p>
       {readState === 'loading' ? <p role="status">Loading roster...</p> : null}
       {readState === 'error' ? (
         <div>
@@ -325,7 +330,7 @@ export function WorkspaceRoster({
         </button>
       ) : null}
       {!run && readState === 'ready' ? (
-        <p>No roster yet. Recon can read this workspace and propose one.</p>
+        <p>No recon run is loaded. Run recon to propose roles for this workspace.</p>
       ) : run ? (
         <>
           <p role="status">

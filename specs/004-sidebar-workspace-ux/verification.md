@@ -206,3 +206,15 @@ Fresh desktop build passed; initial focused layout regression passed (6.7s). Fea
 Final regression: six selected E2E tests passed (45.5s), covering layout, pending approval, recheck, reviewed launch, recon import and empty recon. Repository typecheck passed. Seven changed text files formatted; 63 local links resolved. T074-T078 complete the bounded slice and PR handoff.
 
 Repository ESLint, scoped Gitleaks and diff whitespace passed.
+
+## Slice 16: SET-005 temporary recon proposal lifetime
+
+PR #45 verified merged at b3b0a1b. Red-first Electron regression failed on absent honest loaded-empty wording. WorkspaceRoster now shares lifetime guidance between pre-launch disclosure and the roster: temporary proposals are cleared by exit/restart and replaced by another recon run; Review/import saves desired roles in Agents. Loaded-empty copy no longer implies recon never existed. Product change is copy only; no persistence, launch, confirmation, export or recovery behavior changes.
+
+New regression confirms lifetime guidance before checkbox/launch, starts one isolated local recon fixture, imports one named proposal and reads its saved profile identity. Three proposals remain on the same run. Opening then cancelling replacement preserves the exact remaining run. After real app restart, main getRun is null, the imported profile inventory is identical, session history is unchanged, no live sessions exist and the saved profile appears in Agents. Replacement lifetime is additionally traced to main runs.set; interrupted replacement and real provider behavior remain outside the runtime sample.
+
+Fresh desktop build passed. Feature 004 prerequisites/checklist pass (16/16), Feature 002 selector preserved, no hooks configured. Original A08 evidence remains historical. Durable proposal persistence/recovery is deferred as a separate capability decision; no claim of recovering unaccepted proposals. A09 and prior matrix gaps remain open.
+
+Repository typecheck and ESLint passed. Nine changed text files formatted; 64 local links resolved. Historical screenshots restored after layout regression. T079-T083 complete the bounded slice and PR handoff.
+
+Final regression: five selected E2E tests passed (55.2s): lifetime/restart, roster read recovery, Settings reflow, recon import and empty recon. Scoped Gitleaks and diff whitespace passed.

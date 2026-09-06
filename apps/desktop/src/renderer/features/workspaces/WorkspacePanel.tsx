@@ -3,7 +3,7 @@
  * effective identity, approve explicitly; revoke when no session is active.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { WorkspaceCandidateView } from '@threadhelm/contracts';
 import { api, call, errorCode } from '../../api.js';
 import { useStore } from '../../store.js';
@@ -16,6 +16,12 @@ export function WorkspacePanel() {
   const [candidate, setCandidate] = useState<WorkspaceCandidateView | null>(null);
   const [error, setError] = useState<unknown>(null);
 
+  const [approving, setApproving] = useState(false);
+  const approvalPending = useRef(false);
+  const cancelApproval = () => {
+    if (!approvalPending.current) setCandidate(null);
+  };
+
   const choose = async () => {
     setError(null);
     try {
@@ -26,7 +32,10 @@ export function WorkspacePanel() {
   };
 
   const approve = async () => {
-    if (!candidate) return;
+    if (!candidate || approvalPending.current) return;
+    approvalPending.current = true;
+    setApproving(true);
+    setError(null);
     try {
       const workspace = await call(
         api.workspaces.approve({ candidateToken: candidate.candidateToken }),
@@ -36,6 +45,9 @@ export function WorkspacePanel() {
     } catch (err) {
       setError(err);
       setCandidate(null);
+    } finally {
+      approvalPending.current = false;
+      setApproving(false);
     }
   };
 
@@ -81,7 +93,7 @@ export function WorkspacePanel() {
         ))}
       </ul>
       {candidate ? (
-        <Modal title="Approve this folder?" onCancel={() => setCandidate(null)}>
+        <Modal title="Approve this folder?" onCancel={cancelApproval}>
           <dl className="facts">
             <dt>Selected</dt>
             <dd className="mono">{candidate.selectedPath}</dd>
@@ -110,12 +122,22 @@ export function WorkspacePanel() {
             Approval lets you launch agents with this folder as their working directory. It does not
             confine an agent to it.
           </p>
+          {approving ? (
+            <p role="status">
+              Saving approval for the folder shown above. Please wait for the result.
+            </p>
+          ) : null}
           <div className="actions">
-            <button type="button" onClick={() => setCandidate(null)}>
+            <button type="button" onClick={cancelApproval} disabled={approving}>
               Cancel
             </button>
-            <button type="button" className="primary" onClick={() => void approve()}>
-              Approve folder
+            <button
+              type="button"
+              className="primary"
+              onClick={() => void approve()}
+              disabled={approving}
+            >
+              {approving ? 'Approving\u2026' : 'Approve folder'}
             </button>
           </div>
         </Modal>

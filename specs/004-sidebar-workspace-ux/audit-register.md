@@ -2,7 +2,7 @@
 
 Created 2026-09-05. Feature: [Sidebar and Workspace UX Consistency](spec.md).
 
-Current main baseline: `d8a50758ec4cfbcf8333509da078427a8f73ef8f` (merged PR #33). A06 uses this baseline; AGT-001/002 are merged in PR #33. A04/A05 retain their pre-fix `a8b9483` baseline (PR #32). A03 retains its pre-fix `83883d0` evidence; SES-001 is subsequently merged in PR #32. A01/A02 retain their pre-fix `efcd523` evidence, with MIS-001/002 subsequently implemented and merged in PR #31. Read the [merge reconciliation](audits/main-merge-reconciliation.md) before using older PR #29 evidence.
+Latest audited main baseline: `ca2c62015008fc29e71761a9a8e17b5dd5387f86` (merged PR #41). Earlier section evidence retains its recorded baseline. A06 uses this baseline; AGT-001/002 are merged in PR #33. A04/A05 retain their pre-fix `a8b9483` baseline (PR #32). A03 retains its pre-fix `83883d0` evidence; SES-001 is subsequently merged in PR #32. A01/A02 retain their pre-fix `efcd523` evidence, with MIS-001/002 subsequently implemented and merged in PR #31. Read the [merge reconciliation](audits/main-merge-reconciliation.md) before using older PR #29 evidence.
 
 ## Coverage
 
@@ -15,7 +15,7 @@ Current main baseline: `d8a50758ec4cfbcf8333509da078427a8f73ef8f` (merged PR #33
 | A05  | Starter/template flows inside Agents: preview, import, create-agent relationship | Audit pass recorded; two proposed findings; dependencies and restart observed; matrix gaps explicit                                      | [A05 report](audits/a05-starters-templates-functionality.md) |
 | A06  | Memory, search, reading, editing, revisions, associations                        | Audit recorded; MEM-001/003/004 merged; MEM-002 locally verified; independent saved-state/restart proof; matrix gaps explicit            | [A06 report](audits/a06-memory-functionality.md)             |
 | A07  | Attention, prioritization, resolution, return to item                            | Audit recorded; four proposed findings; UI/logic and independent recovery/mission readback; explicit gaps                                | [A07 report](audits/a07-attention-functionality.md)          |
-| A08  | Settings, folders, providers, configuration, prerequisite return                 | Pending                                                                                                                                  | Use audit template                                           |
+| A08  | Settings, folders, providers, configuration, prerequisite return                 | Audited at ca2c620; observed/source-only verdicts and remaining matrix gaps explicit                                                     | [A08 audit](audits/a08-settings-functionality.md)            |
 | A09  | Cross-section reconciliation                                                     | Pending A01–A08                                                                                                                          | Shared conventions and conflicts                             |
 
 The Mission baseline was generated in this task from current source, a successful desktop build, a passing isolated parity screenshot workflow (1 test, 49 seconds), and direct UI probes. The workflow passing establishes capture success, not UX acceptance. It is not a full accessibility, coverage, release, or provider-autonomy proof. The Windows version was not captured by those probes and must be recorded in subsequent acceptance evidence.
@@ -89,9 +89,9 @@ Owner scope clarification: every pass includes presentation, decision logic, and
 | A03  | Launch and terminal attachment, input/interrupt/stop target, actual lifecycle result, ended-session disclosure, recovery and restart behavior |
 | A04  | Profile creation/edit/revision, persistence, eligibility and binding effects, confirmation and cancellation                                   |
 | A05  | Template preview/import/duplicate, validation, draft creation, saved profile provenance and absence of unintended launch effects              |
-| A06  | Memory, search, reading, editing, revisions, associations                                                                                     | Audit recorded; MEM-001/003/004 merged; MEM-002 locally verified; independent saved-state/restart proof; matrix gaps explicit | [A06 report](audits/a06-memory-functionality.md) |
+| A06  | Memory, search, reading, editing, revisions, associations                                                                                     | Audit recorded; MEM-001/003/004 merged; MEM-002 locally verified; independent saved-state/restart proof; matrix gaps explicit | [A06 report](audits/a06-memory-functionality.md)  |
 | A07  | Queue inclusion/counting, underlying unresolved state, exact resolution target, actual resolution, retry and return navigation                |
-| A08  | Folder approval/revocation, provider availability, effective configuration, recon stop/collection behavior and prerequisite return            |
+| A08  | Settings, folders, providers, configuration, prerequisite return                                                                              | Audited at ca2c620; observed/source-only verdicts and remaining matrix gaps explicit                                          | [A08 audit](audits/a08-settings-functionality.md) |
 | A09  | Consistency between originating control, destination, authoritative result and restored state across sections                                 |
 
 The historical Mission audit remains partial; the new A01/A02 reports supply separate current evidence. Successful close now has exact saved-value and restart readback. Live-session mismatch, shared-access repair, save interruption, start/pause/resume/revise/cancel/delete and selected crash/unknown-effect safeguards were observed. These results do not retroactively upgrade the historical report or establish real-provider autonomy.
@@ -224,3 +224,21 @@ PR #39 merged at efb90d6. ATT-003 is locally verified for the sampled Attention 
 ### ATT-004 disposition after slice 11
 
 PR #40 merged at 63fd09b; ATT-003 is merged. ATT-004 now exposes current recovery selection, restores focus after focused-record removal without overriding newer focus, and makes AppShell the single main across six destinations. See [slice 11 verification](verification.md#slice-11-att-004-recovery-accessibility). This is bounded keyboard/DOM evidence, not a full assistive-technology audit. A08 Settings is the next unaudited destination; A09 and previously recorded coverage gaps remain open.
+
+## A08 Settings audit at ca2c620
+
+PR #41 verified merged; ATT-004 is merged. [A08](audits/a08-settings-functionality.md) now includes folder approval/revocation, provider readiness/launch, recon start/stop/results/review, application evidence and prerequisite return. [Observations](audits/evidence/ca2c620-settings.json) contain 17 records with independent saved-state/process reads. Three audit scenarios passed; three existing UI regressions and 71 focused contract/Windows tests passed. A08 is audited with explicit gaps, not accepted as defect-free.
+
+| Finding | Priority | Proposed improvement                                                                 | Disposition                                         |
+| ------- | -------- | ------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| SET-001 | Medium   | Make pending folder approval single-flight with truthful cancellation and completion | Proposed; recommended first slice                   |
+| SET-002 | Medium   | Separate failed/loading/empty roster states and provide exact-run retry              | Proposed                                            |
+| SET-003 | Medium   | Add provider readiness recheck with fresh status and clear naming                    | Proposed                                            |
+| SET-004 | Medium   | Correct Settings inner reflow at narrow widths and 200% text                         | Proposed; shared A09 concern                        |
+| SET-005 | Medium   | Explain temporary recon proposal lifetime; decide durable recovery separately        | Proposed; recon capability referral for persistence |
+
+No product implementation is included. Owner review of the proposed flow precedes implementation. A09 reconciliation and prior section coverage gaps remain open; do not infer full audit coverage or release readiness from the bounded passes.
+
+### SET-001 disposition after slice 12
+
+Owner accepted the recommended next slice on PR #42. SET-001 now keeps exact approval disclosure visible during a single pending request and prevents misleading Cancel/Escape/repeated submission. [Slice 12 verification](verification.md#slice-12-set-001-pending-folder-approval) records rejection, fresh choice, exact saved identity and restart evidence. The original A08 captures/probe remain historical. SET-002 roster loading/error/retry is the next recommendation; SET-003 through SET-005 and A09 remain open.

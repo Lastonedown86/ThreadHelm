@@ -282,6 +282,10 @@ test('mission course exposes selected, waiting, uncertain, completed and recover
 
     const list = app.page.getByRole('listbox', { name: 'Missions', exact: true });
     await expect(list.getByRole('option')).toHaveCount(5);
+    await expect(list.locator(`#mission-rail-${waiting.id}`)).toContainText('Needs your decision');
+    await expect(list.locator(`#mission-rail-${uncertain.id}`)).toContainText('Outcome uncertain');
+    await expect(list.locator(`#mission-rail-${paused.id}`)).toContainText('Paused');
+    await expect(list.locator(`#mission-rail-${completed.id}`)).toContainText('Completed');
 
     const select = async (mission: MissionDetailView) => {
       const option = list.getByRole('option', { name: new RegExp(mission.id.slice(0, 8), 'i') });

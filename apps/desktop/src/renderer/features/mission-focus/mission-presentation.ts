@@ -277,3 +277,13 @@ export function presentMission(
     verifiedResult: verifiedResult(detail),
   };
 }
+
+/** Inventory retains lifecycle even when attention requires a different next action. */
+export function missionInventoryStatus(
+  detail: MissionDetailView,
+  presentation = presentMission(detail),
+): string {
+  const lifecycle = lifecycleLabels[detail.state];
+  const attention = presentation.attentionLabel;
+  return attention && attention !== lifecycle ? `${lifecycle} · ${attention}` : lifecycle;
+}

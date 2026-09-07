@@ -191,3 +191,8 @@ Test baseline stale selection, controlled delayed generation/input changes, save
 ## Slice 26: Mission flow hierarchy
 
 Owner authorizes sequential continuation after PR creation, including dependent PRs while awaiting owner merges. Baseline main 8b9d549 (PR #57). MIS-005/009/010: share entry/composer frame and preparatory context; successful Close saves once and exits with feedback; failed close retains explicit unsaved choices. Put final Start/Apply beside Close/Back in the sticky action area with pending protection; successful confirmation lands on the exact Mission overview, with details available deliberately. No schema, provider, process or permission changes. Requirements 16/16; constitution PASS; no hooks; Feature 002 selector preserved. Verify red-first direct close, saved state, failed save recovery, ready/expired review and exact overview landing.
+
+
+## Slice 27: MIS-008 inventory states
+
+Baseline 57d7312 (slice 26 PR #58). Reuse existing main detail reads to derive inventory attention alongside lifecycle; key cached status by mission sequence and bound it to current inventory. Read failures remain explicit. No summary contract expansion or Mission/Attention aggregation.

@@ -5,6 +5,7 @@ import { useStore } from '../../store.js';
 import {
   liveSessionIds,
   missionTitle,
+  missionInventoryStatus,
   presentMission,
   type MissionPresentation,
 } from './mission-presentation.js';
@@ -13,6 +14,7 @@ export interface MissionWorkspaceState {
   missions: MissionSummaryView[];
   /** Rail titles by mission id. Summaries are content-free by contract, so the objective is read through detail. */
   titles: Record<string, string>;
+  statuses: Record<string, string>;
   detail: MissionDetailView | null;
   presentation: MissionPresentation | null;
   loading: boolean;
@@ -20,13 +22,15 @@ export interface MissionWorkspaceState {
 }
 
 function titleKey(mission: MissionSummaryView): string {
-  return `${mission.id}:${mission.version}:${mission.state}`;
+  return `${mission.id}:${mission.version}:${mission.state}:${mission.sequence}`;
 }
 
 export function useMissionWorkspace(selectedMissionId: string | null): MissionWorkspaceState {
   const { state, actions } = useStore();
   const [missions, setMissions] = useState<MissionSummaryView[]>([]);
-  const [titleCache, setTitleCache] = useState<Record<string, string>>({});
+  const [titleCache, setTitleCache] = useState<Record<string, { title: string; status: string }>>(
+    {},
+  );
   const [detail, setDetail] = useState<MissionDetailView | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
@@ -57,16 +61,31 @@ export function useMissionWorkspace(selectedMissionId: string | null): MissionWo
     if (missing.length === 0) return;
     let cancelled = false;
     void (async () => {
-      const next: Record<string, string> = {};
+      const next: Record<string, { title: string; status: string }> = {};
       for (const mission of missing) {
         try {
           const view = await call(api.missions.detail({ missionId: mission.id }));
-          next[titleKey(mission)] = missionTitle(view.envelope?.objective, mission.id);
+          const presentation = presentMission(view);
+          next[titleKey(mission)] = {
+            title: missionTitle(view.envelope?.objective, mission.id),
+            status: missionInventoryStatus(view, presentation),
+          };
         } catch {
-          next[titleKey(mission)] = missionTitle(null, mission.id);
+          next[titleKey(mission)] = {
+            title: missionTitle(null, mission.id),
+            status: `${mission.state.replaceAll('_', ' ')} · Details unavailable`,
+          };
         }
       }
-      if (!cancelled) setTitleCache((old) => ({ ...old, ...next }));
+      if (!cancelled)
+        setTitleCache((old) =>
+          Object.fromEntries(
+            missions.map((mission) => {
+              const key = titleKey(mission);
+              return [key, next[key] ?? old[key]!];
+            }),
+          ),
+        );
     })();
     return () => {
       cancelled = true;
@@ -101,9 +120,13 @@ export function useMissionWorkspace(selectedMissionId: string | null): MissionWo
   }, [selectedMissionId, state.missionSequence]);
 
   const titles: Record<string, string> = {};
+  const statuses: Record<string, string> = {};
   for (const mission of missions) {
     const cached = titleCache[titleKey(mission)];
-    if (cached) titles[mission.id] = cached;
+    if (cached) {
+      titles[mission.id] = cached.title;
+      statuses[mission.id] = cached.status;
+    }
   }
 
   // Shell re-renders on every terminal-output chunk; presentMission is O(workItems x
@@ -113,9 +136,15 @@ export function useMissionWorkspace(selectedMissionId: string | null): MissionWo
     [detail, state.sessionOrder, state.sessions],
   );
 
+  if (detail && detail.id === selectedMissionId && presentation) {
+    titles[detail.id] = presentation.title;
+    statuses[detail.id] = missionInventoryStatus(detail, presentation);
+  }
+
   return {
     missions,
     titles,
+    statuses,
     detail,
     presentation,
     loading,

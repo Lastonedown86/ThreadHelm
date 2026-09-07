@@ -293,3 +293,11 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T130 Reproduce two-action close and implement shared entry/review hierarchy.
 - [x] T131 Verify save/failure and exact start landing with authoritative state.
 - [x] T132 Complete checks/evidence and open PR, then continue slice 27.
+
+
+## Slice 27: Mission state distinctions
+
+- [x] T133 Verify predecessor and reproduce paused-only decision inventory.
+- [x] T134 Derive consistent state labels from main detail with sequence invalidation.
+- [x] T135 Verify exact selection, state actions, recovery and regression checks.
+- [x] T136 Record evidence and open dependent PR, then continue slice 28.

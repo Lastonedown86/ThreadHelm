@@ -294,3 +294,8 @@ PR #56 merged at `0d82f8e`. Owner accepted slice 25. Ideas now invalidate on rep
 ## Slice 26: MIS-005/009/010 Mission flow hierarchy
 
 PR #57 merged at `8b9d549`. Entry context and width match the composer; successful saved Close returns directly, failed Close preserves edits, and Review uses one action footer. Start selects the exact overview without opening history automatically. Locally verified pending PR merge; see [verification](verification.md). Owner authorizes sequential continuation after PR creation. Next: slice 27, MIS-008; seven planned slices follow this checkpoint.
+
+
+## Slice 27: MIS-008 inventory state distinctions
+
+Based on slice 26 PR #58. Mission rows and compact picker distinguish decision and uncertain outcomes while preserving lifecycle, using main-owned detail reads. Locally verified pending merge; see verification. Six planned slices follow this checkpoint.

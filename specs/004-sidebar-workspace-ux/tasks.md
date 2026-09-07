@@ -333,3 +333,11 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T150 Verify inner library/detail/editor and shared setup geometry.
 - [x] T151 Complete expanded measurements, independent save/identity checks and evidence.
 - [x] T152 Record revalidation disposition and open PR, continue coverage reconciliation.
+
+
+## Slice 32: coverage reconciliation
+
+- [x] T153 Inventory all original matrix cells and logic/action traces.
+- [x] T154 Associate later evidence and explicitly disposition remaining variants.
+- [x] T155 Exercise template paging/duplicate gaps and finish full regression checks.
+- [x] T156 Record results, limitations and dependent PR, continue acceptance.

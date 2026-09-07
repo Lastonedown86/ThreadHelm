@@ -216,3 +216,8 @@ Baseline 2a12603, dependent on PR #61. Preserve blocked Continue and offer reach
 ## Slice 31: AGT-003 reflow revalidation
 
 Baseline 4a8a19d, dependent on PR #62. Measure inner Agents containers with long saved profile/draft names at 960x800/200%, then widen to 680/960/1280 at 100/200%. Existing merged layout may already resolve the old observation; add no CSS without a reproduced defect. Include native draft editor, exact save readback and shared embedded Sessions setup.
+
+
+## Slice 32: functional coverage reconciliation
+
+Baseline 7136e8a, dependent on PR #63. Reconcile all 68 A01-A08 flows, 476 state cells and 120 inventoried action traces with later named scenario evidence. Retain every original note and mark unexercised variants pending, never passed by source or generic tests. Add template paging/duplicate negative/restart coverage; run full Electron/unit/contract/integration regression suites. No additional provider runs or authority expansion.

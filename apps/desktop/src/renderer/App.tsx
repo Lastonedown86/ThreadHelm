@@ -318,11 +318,21 @@ function Shell() {
         }
         workspace={
           state.selectedDestination !== 'missions' ? (
-            <LegacyDestination
-              mission={workspace.detail}
-              onSelectMission={(id) => void selectMission(id)}
-              onOpenMissions={() => selectDestination('missions')}
-            />
+            <>
+              {composerDraftId ? (
+                <p className="notice">
+                  <button type="button" onClick={() => selectDestination('missions')}>
+                    Return to mission draft
+                  </button>{' '}
+                  · Resume at the last saved step.
+                </p>
+              ) : null}
+              <LegacyDestination
+                mission={workspace.detail}
+                onSelectMission={(id) => void selectMission(id)}
+                onOpenMissions={() => selectDestination('missions')}
+              />
+            </>
           ) : pickingRepo ? (
             <RepoIdeaEntry
               workspaces={state.workspaces}
@@ -336,6 +346,7 @@ function Shell() {
               key={composerDraftId}
               draftId={composerDraftId}
               onClose={showMission}
+              onFix={selectDestination}
               onStarted={(mission) => {
                 showMission();
                 actions.selectMission(mission.id);

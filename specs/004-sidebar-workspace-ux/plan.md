@@ -196,3 +196,8 @@ Owner authorizes sequential continuation after PR creation, including dependent 
 ## Slice 27: MIS-008 inventory states
 
 Baseline 57d7312 (slice 26 PR #58). Reuse existing main detail reads to derive inventory attention alongside lifecycle; key cached status by mission sequence and bound it to current inventory. Read failures remain explicit. No summary contract expansion or Mission/Attention aggregation.
+
+
+## Slice 28: runtime and prerequisite consistency
+
+Baseline c7f632e, dependent on PR #59. Share the existing launch model options/picker within Mission-supported limits; retain CLI default and custom identifiers. Place startup authorization by the session choice, without changing its false default. Prerequisite navigation uses the shell save guard and preserves the exact draft/stage with explicit return. Session repair opens Settings for deliberate folder/provider selection instead of silently choosing Codex/first folder. Fixed existing runtimes remain immutable.

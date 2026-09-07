@@ -28,9 +28,11 @@ export function MissionComposerWorkspace({
   onStarted,
   onState,
   onFlushReady,
+  onFix,
 }: {
   draftId: string;
   onClose(): void;
+  onFix(destination: 'agents' | 'settings'): void;
   onStarted(mission: MissionDetailView): void;
   onState?(state: { stage: Stage; workers: WorkerFields[] }): void;
   /**
@@ -298,30 +300,14 @@ export function MissionComposerWorkspace({
             workspaces={state.workspaces}
             loading={loading}
             loadError={loadError !== null}
-            onCreateAgent={() =>
-              void draft.saveNow().then((s) => {
-                if (!s) return;
-                actions.selectDestination('agents');
-                onClose();
-              })
-            }
-            onLaunchSession={() => {
-              const workspace = state.workspaces.find((w) => !w.revokedAt);
-              void draft.saveNow().then((s) => {
-                if (!s) return;
-                if (workspace) {
-                  actions.openLaunch({ workspaceId: workspace.id, providerId: 'codex-cli' });
-                } else {
-                  actions.selectDestination('settings');
-                  onClose();
-                }
-              });
-            }}
+            onCreateAgent={() => onFix('agents')}
+            onLaunchSession={() => onFix('settings')}
             onRetryLoad={() => setReload((n) => n + 1)}
           />
         ) : null}
         {stage === 'access' ? (
           <AccessStage
+            onFixSettings={() => onFix('settings')}
             fields={draft.fields}
             setFields={draft.setFields}
             invalid={invalid}

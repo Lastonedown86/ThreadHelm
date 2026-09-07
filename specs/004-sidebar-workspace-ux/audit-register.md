@@ -299,3 +299,8 @@ PR #57 merged at `8b9d549`. Entry context and width match the composer; successf
 ## Slice 27: MIS-008 inventory state distinctions
 
 Based on slice 26 PR #58. Mission rows and compact picker distinguish decision and uncertain outcomes while preserving lifecycle, using main-owned detail reads. Locally verified pending merge; see verification. Six planned slices follow this checkpoint.
+
+
+## Slice 28: MIS-011 runtime/prerequisite consistency
+
+Dependent on PR #59. Shared provider model choices, visible explicit startup authorization and save-guarded prerequisite/return navigation implemented. Fixed runtime/access authority is preserved. Evidence is in verification; final validation must pass before opening this slice PR. Five planned slices follow: 29-33.

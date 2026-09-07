@@ -65,7 +65,15 @@ describe('mission composer drafts', () => {
     const saved = await world.ok<MissionComposerSaveReceipt>('missionComposer.updateDraft', {
       draftId: draft.draftId,
       expectedVersion: draft.version,
-      fieldValues: input,
+      fieldValues: {
+        ...input,
+        repoIdeaSource: {
+          workspaceId: draft.draftId,
+          workspacePath: 'C:\\source-context-only',
+          providerId: 'codex-cli',
+          ideaTitle: 'Source idea',
+        },
+      },
       currentStage: 'review',
     });
     const preview = await world.ok<Preview>('missionComposer.preview', {
@@ -73,6 +81,7 @@ describe('mission composer drafts', () => {
       version: saved.version,
     });
     expect(preview.draftVersion).toBe(saved.version);
+    expect(JSON.stringify(preview.envelope)).not.toContain('source-context-only');
     expect(preview.envelope.bindings.find((b) => b.role === 'worker')?.assignment).toBe(
       input.workers[0]!.assignment,
     );
@@ -86,6 +95,8 @@ describe('mission composer drafts', () => {
       draftId: draft.draftId,
     });
     expect(after).toMatchObject({ state: 'converted', convertedMissionId: mission.id });
+    expect(after.fieldValues.repoIdeaSource?.workspacePath).toBe('C:\\source-context-only');
+    expect(JSON.stringify(mission.envelope)).not.toContain('source-context-only');
     const replay = await world.call('missionComposer.confirm', {
       draftId: draft.draftId,
       version: saved.version,

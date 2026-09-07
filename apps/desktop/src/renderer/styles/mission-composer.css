@@ -208,3 +208,8 @@
   max-width: 100%;
   white-space: normal;
 }
+
+.repo-idea-source p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

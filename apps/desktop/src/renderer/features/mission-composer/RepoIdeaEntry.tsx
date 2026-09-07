@@ -4,6 +4,7 @@ import type {
   OperationResponse,
   ProviderId,
   ReadinessView,
+  MissionComposerFields,
 } from '@threadhelm/contracts';
 import { api, call } from '../../api.js';
 import { errorCode } from '../../errors.js';
@@ -14,12 +15,13 @@ type RepoIdea = OperationResponse<'missionComposer.proposeRepoIdeas'>['ideas'][n
 export interface RepoIdeaFields {
   objective: string;
   completionEvidence: string;
+  repoIdeaSource: NonNullable<MissionComposerFields['repoIdeaSource']>;
 }
 
 /**
  * The screen before step 1 of the guided composer (spec 2026-09-03 §2).
  * It is not a composer stage: it owns its own live region, never renumbers
- * the 4-step strip, and only ever hands two editable text fields to Outcome.
+ * the 4-step strip, and hands editable text and inert source context to Outcome.
  */
 export function RepoIdeaEntry({
   workspaces,
@@ -38,25 +40,60 @@ export function RepoIdeaEntry({
   const heading = useRef<HTMLHeadingElement>(null);
   const [workspaceId, setWorkspaceId] = useState('');
   const [providerId, setProviderId] = useState<ProviderId | ''>('');
-  const [ideas, setIdeas] = useState<RepoIdea[] | null>(null);
+  const [result, setResult] = useState<{
+    key: string;
+    ideas: RepoIdea[];
+    source: Omit<RepoIdeaFields['repoIdeaSource'], 'ideaTitle'>;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
   const approved = workspaces.filter((w) => !w.revokedAt);
   const availableProviders = readiness.filter((r) => r.availability === 'available');
 
+  const selectedWorkspace = approved.find((w) => w.id === workspaceId);
+  const chosen = providerId || availableProviders[0]?.providerId || 'codex-cli';
+  const inputKey = JSON.stringify([
+    selectedWorkspace?.id,
+    selectedWorkspace?.displayPath,
+    providerId,
+    chosen,
+  ]);
+  const currentKey = useRef(inputKey);
+  currentKey.current = inputKey;
+  const sequence = useRef(0);
+  const pending = useRef(false);
+  const activeKey = useRef<string | null>(null);
+  const mounted = useRef(true);
+  const ideas = result?.key === inputKey ? result.ideas : null;
+  const progress =
+    activeKey.current !== inputKey
+      ? 'Waiting for the previous generation to finish; its results will be ignored.'
+      : 'Generating ideas…';
+  useEffect(() => {
+    sequence.current++;
+    setResult(null);
+    setFailure(null);
+  }, [inputKey]);
   useEffect(() => {
     heading.current?.focus();
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      sequence.current++;
+    };
   }, []);
 
   const generate = async () => {
-    if (!workspaceId) return;
+    if (!selectedWorkspace || pending.current) return;
+    pending.current = true;
+    activeKey.current = inputKey;
+    const ticket = ++sequence.current;
     setBusy(true);
     setFailure(null);
-    setIdeas(null);
-    // "Provider default" means the first provider that is actually ready here,
-    // so a beginner with only one CLI installed never has to touch the picker.
-    const chosen = providerId || availableProviders[0]?.providerId;
+    setResult(null);
+    // Automatic uses the first ready provider, with the service's Codex fallback.
+
     try {
       const result = await call(
         api.missionComposer.proposeRepoIdeas({
@@ -64,11 +101,23 @@ export function RepoIdeaEntry({
           ...(chosen ? { providerId: chosen } : {}),
         }),
       );
-      setIdeas(result.ideas);
+      if (mounted.current && ticket === sequence.current && currentKey.current === inputKey) {
+        setResult({
+          key: inputKey,
+          ideas: result.ideas,
+          source: {
+            workspaceId: selectedWorkspace.id,
+            workspacePath: selectedWorkspace.displayPath,
+            providerId: chosen,
+          },
+        });
+      }
     } catch (cause) {
-      setFailure(reasonLabel(errorCode(cause)) ?? "Couldn't generate ideas right now.");
+      if (mounted.current && ticket === sequence.current && currentKey.current === inputKey)
+        setFailure(reasonLabel(errorCode(cause)) ?? "Couldn't generate ideas right now.");
     } finally {
-      setBusy(false);
+      pending.current = false;
+      if (mounted.current) setBusy(false);
     }
   };
 
@@ -101,14 +150,15 @@ export function RepoIdeaEntry({
   return (
     <section className="repo-idea-entry" aria-labelledby={headingId}>
       <p className="visually-hidden" role="status" aria-live="polite">
-        {busy ? 'Generating ideas…' : (failure ?? (ideas ? 'Ideas ready.' : ''))}
+        {busy ? progress : (failure ?? (ideas ? 'Ideas ready.' : ''))}
       </p>
       <h1 id={headingId} tabIndex={-1} ref={heading}>
         Pick a repo to get mission ideas, or write your own.
       </h1>
       <p className="hint">
         ThreadHelm sends only the folder&rsquo;s file names, README, manifest and recent commit
-        subjects to the provider. Nothing is confirmed until you review it on the Outcome step.
+        subjects to the provider. Ideas are suggestions; mission authority is confirmed at the final
+        Review step.
       </p>
       <label className="field">
         Repo
@@ -122,12 +172,12 @@ export function RepoIdeaEntry({
         </select>
       </label>
       <label className="field">
-        Provider and model
+        Generation provider
         <select
           value={providerId}
           onChange={(event) => setProviderId(event.target.value as ProviderId | '')}
         >
-          <option value="">Provider default model · provider default effort</option>
+          <option value="">Automatic · {availableProviders[0]?.displayName ?? 'Codex CLI'}</option>
           {availableProviders.map((provider) => (
             <option key={provider.providerId} value={provider.providerId}>
               {provider.displayName} · provider default model
@@ -135,25 +185,32 @@ export function RepoIdeaEntry({
           ))}
         </select>
       </label>
+      <p className="hint">Generation uses the selected provider’s default model and effort.</p>
       <div className="mission-action-row">
         {skip}
         <button
           type="button"
           className="primary"
-          disabled={!workspaceId || busy}
-          aria-describedby={!workspaceId ? `${headingId}-why` : undefined}
+          disabled={!selectedWorkspace || busy}
+          aria-describedby={!selectedWorkspace ? `${headingId}-why` : undefined}
           onClick={() => void generate()}
         >
           {ideas ? 'Try different ideas' : 'Generate ideas'}
         </button>
       </div>
-      {!workspaceId ? (
+      {!selectedWorkspace ? (
         <p className="hint" id={`${headingId}-why`}>
           Choose a repo to enable Generate ideas.
         </p>
       ) : null}
-      {busy ? <p>Generating ideas…</p> : null}
+      {busy ? <p>{progress}</p> : null}
       {failure ? <p className="notice">{failure}</p> : null}
+      {ideas ? (
+        <p className="draft-discard-identity">
+          Ideas for {result!.source.workspacePath} ·{' '}
+          {result!.source.providerId === 'codex-cli' ? 'Codex CLI' : 'Claude Code'}
+        </p>
+      ) : null}
       {ideas ? (
         <ul className="repo-idea-list" aria-label="Mission ideas">
           {ideas.map((idea, index) => (
@@ -166,6 +223,7 @@ export function RepoIdeaEntry({
                   onPick({
                     objective: idea.proposedObjective,
                     completionEvidence: idea.proposedCompletionEvidence,
+                    repoIdeaSource: { ...result!.source, ideaTitle: idea.title },
                   })
                 }
               >

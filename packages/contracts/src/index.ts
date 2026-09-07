@@ -2035,6 +2035,13 @@ export const MissionComposerDraftState = z.enum([
 export type MissionComposerDraftState = z.infer<typeof MissionComposerDraftState>;
 /** Every envelope key optional; element shapes match the envelope so a draft never lies. */
 export const MissionComposerFields = strictObject({
+  /** Inert suggestion provenance; never part of the mission authority envelope. */
+  repoIdeaSource: strictObject({
+    workspaceId: Uuid,
+    workspacePath: z.string().max(32768),
+    providerId: ProviderId,
+    ideaTitle: z.string().max(200),
+  }).optional(),
   objective: z.string().max(4000).optional(),
   completionEvidence: z.string().max(2000).optional(),
   exclusions: z.array(z.string().max(500)).max(8).optional(),

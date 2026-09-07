@@ -276,3 +276,13 @@ Dependencies: T114 -> T115 -> T116 -> T117 -> T118. Next: slice 24, saved templa
 - [x] T123 Complete checks, evidence/roadmap/register and open PR.
 
 Dependencies: T119 -> T120 -> T121 -> T122 -> T123. Next: slice 25, repository ideas and source context.
+
+## Slice 25: repository ideas and source context
+
+- [x] T124 Verify merged baseline and record input/source contract.
+- [x] T125 Reproduce stale repository ideas with Electron regression.
+- [x] T126 Bind results to inputs and persist inert source metadata.
+- [x] T127 Verify delayed results, source readback/restart and authority exclusion.
+- [x] T128 Complete checks, evidence/register/roadmap and PR.
+
+Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entry/close/review hierarchy.

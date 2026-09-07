@@ -106,3 +106,9 @@ Normal row discard flushes active edits before opening a native modal. The modal
 ## TPL-001 saved agent draft summary
 
 AgentWizardDraftSummaryView adds displayName (maximum 200 characters), derived from the saved fieldValues.name with trimmed/collapsed whitespace. Empty names return an empty string and render as Unnamed agent. List and detail receipts use the same persistence projection; no variable interpolation or full-manifest validation is required for an incomplete draft name. Other authored fields remain detail-only, and change events remain content-free. No schema migration or write authority changes. Resume always targets the full draft ID; short IDs remain secondary disambiguation alongside accessible full IDs. Step/state labels and updatedAt are presentation metadata, not completion or provider execution claims.
+
+## MIS-006 input identity and source context
+
+Repo-idea result identity includes the currently approved workspace ID/path and selected/resolved generation provider. Changes hide old results immediately and invalidate pending results/errors. A single pending request finishes without its output being applied to different inputs; the UI does not claim provider cancellation. Unmount ignores late completion. Automatic names the first ready provider (Codex fallback) and the picker selects only provider; model/effort remain provider defaults.
+
+MissionComposerFields adds optional repoIdeaSource containing bounded workspace ID/path, requested provider ID and idea title. Saved JSON requires no migration. The Outcome stage displays this persisted suggestion context after resume/restart. It is inert provenance, not an access grant or verified claim about current repository contents. Main explicitly excludes it before validating/building the mission authority envelope; all existing envelope checks and confirmation remain. Source metadata is absent from summary/change events and does not select workers or grant workspace access.

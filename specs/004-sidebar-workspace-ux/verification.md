@@ -376,13 +376,11 @@ UI/logic/functionality: the 27-test composer, hierarchy, repo-entry, accessibili
 
 Owner authorized continuous sequential slices. Next: slice 27, state distinctions, based on this branch if its PR remains open.
 
-
 ## Slice 27: MIS-008 mission inventory states
 
 Baseline 57d7312, PR #58 dependency; Windows x64. Red Electron fixture showed a decision-held mission only as paused. Rows and compact picker now retain lifecycle and add Needs your decision or Outcome uncertain from the same presentation logic as the workspace. Existing detail reads supply statuses, keyed by sequence; unavailable/loading details are explicit. No new API, process authority or aggregation.
 
 All six focused Mission Electron scenarios passed, covering exact-ID selection, decision/unknown/paused/completed state, evidence actions, terminal target, cross-section navigation and crash recovery. Main bridge fixtures produced real persisted states; no real external providers executed. Thirteen existing presentation unit tests passed; additional lifecycle/attention mapping regression added. Build, typecheck and lint passed. Recapture: build then `pnpm test:e2e tests/e2e/mission-focus-workspace.spec.ts`. Hosted CI and owner merge remain separate. Next: slice 28.
-
 
 ## Slice 28: MIS-011 runtime and prerequisite consistency
 
@@ -392,13 +390,11 @@ Prerequisite navigation now uses the existing shell save guard and retains the e
 
 Final slice 28 checks: all 15 Electron scenarios passed (3.2 minutes), including real token expiry, cancelled late preview, exact runtime repair and prerequisite return. Build, typecheck, lint, full formatting and secret scan passed. Historical capture outputs restored.
 
-
 ## Slice 29: MIS-013 selected Mission identity
 
 Baseline cbff13b, dependent on PR #60; Windows x64. A held renderer read reproduced the first mission's title and Pause action remaining visible after selecting the second mission. Selected detail/presentation now gate synchronously on ID, list and detail requests own independent loading/error state, obsolete responses are ignored, and loading/error show the exact requested ID. Retry refreshes the inventory and selected detail. Heading focus follows loading completion only while the user has not moved elsewhere.
 
 The controlled Electron test exercises held detail, switching back before release, late response exclusion, failed read, Memory round-trip, explicit Retry and exact main readback with unchanged fixture process identities. Initial broad run exposed focus loss; the fix passed all seven Mission focus/selection cases (40.4 seconds). The six navigation cases also passed, including failed saves, stale-save conflict, exact outgoing draft and restart. Build passed; static checks recorded below. No main contract or process changes. Recapture: build then mission-selection-loading, mission-focus-workspace and mission-navigation E2E files. Hosted CI and final acceptance remain separate.
-
 
 ## Slice 30: MIS-012/014 keyboard repair and discard modal
 
@@ -408,13 +404,11 @@ The failure-path discard prompt now uses shared native ModalDialog, with Escape/
 
 Final slice 30: both expanded keyboard/discard scenarios passed (11.3 seconds); no pending local failures. Hosted CI and owner acceptance remain separate.
 
-
 ## Slice 31: AGT-003 inner reflow revalidation
 
 Baseline 4a8a19d, dependent on PR #62; Windows x64. The historical 960x800/200% overflow no longer reproduces with current merged layout. Inner workspace, library and long-name profile detail pass width checks at 680/960/1280 pixels, each at 100% and 200% root text scale. Saved draft editor fits at 960/200%; keyboard open/save preserves exact description and ID through main readback. Shared Sessions setup also fits, with no provider/session execution. No CSS or product change was needed.
 
 All 12 Agents reflow/wizard/roster Electron cases passed (38.3 seconds), including invalid fields, cancellation, export denial/consent, actual draft restart, roster paging, delayed/failing detail and filter recovery. [Inspected current reflow capture](audits/evidence/slice-31-agents-reflow.png). Build from slice 30 used unchanged product sources; typecheck, lint and formatting passed. Recapture: agents-reflow, agent-profile-wizard and agent-roster-navigation E2E files. This closes the sampled AGT-003 geometry defect; every dialog/state at enlarged text is not inferred from this test and remains in the final coverage/acceptance ledger.
-
 
 ## Slice 32: functional coverage reconciliation
 
@@ -424,3 +418,21 @@ Full local Electron run: 121 passed, 1 skipped (opt-in parity capture), 12.1 min
 
 PR #61 ARM64 CI had 117 E2E passes, 1 skip and a failure in keyboard New mission setup before selection assertions. Its helper now waits for entry heading focus before Skip activation. Ten focused repetitions passed (58.5 seconds), and commit b361e82 was propagated through dependent PRs #62/#63. Fresh hosted checks remain pending; local passes do not replace them. PRs #58-60 were independently verified green. Historical captures from broad regression restored. Static and secret checks passed. Next is slice 33 acceptance evidence and owner-visible limits, not automatic feature/release completion.
 Slice 30 acceptance follow-up: actual Tab traversal in slice 33 reproduced fields obscured by the sticky footer at 100% and 200% text. Keyboard-visible focus now accounts for the current action-bar height when scrolling a field; pointer activation of disclosures retains its position. The new natural-Tab regression and all 11 keyboard/composer scenarios pass (47.6 seconds), including exact save, revision, expiry and failure paths. Build/typecheck/lint pass. This remains MIS-012/014 scope and does not add a roadmap slice.
+
+## Slice 33: acceptance evidence and bounded reflow repairs
+
+Baseline df04972; final PR depends on #64. Windows 11 Home 10.0.26200 x64, AMD Ryzen 7 5700U, 16 logical CPUs, 31.39 GiB usable RAM; Electron 44.0.0. [Acceptance report](acceptance-report.md) reconciles SC-001 through SC-011 and separates branch delivery from owner merge/feature/release acceptance.
+
+Actual Tab traversal, keyboard activation/typing/native select navigation and focused-control hit testing exercise Settings folder approval, bundled template-to-profile creation, Memory publication/search/detail, Mission creation/history, Sessions PTY echo and Attention crash/restart/dismissal at 960x800 and 100%/200% root text. Main readback verifies exact stored values, mission binding and selected recovery ID, with unchanged or appropriately stopped fixture processes. Native picker answers and provider execution are test fixtures, not real external provider evidence.
+
+Acceptance reproduced two remaining reflow defects: implicit Sessions grid minimum/long tab paths pushed controls past the viewport, and Memory search shrank beside its actions. Bounded shrinkable-grid/wrapping/search-width fixes pass the final journeys. Mission footer focus was fixed in owning PR #62 and propagated. No stream/permission/process authority changed.
+
+FR-015 budget was recorded in plan before measurement. With 50 cancelled missions, 20 long-name drafts and two idle fixture sessions, 18 warm destination samples per scale measured p95 287 ms at 100% and 231 ms at 200% (1000 ms budget). Five-second idle DOM sample: zero mutations and zero running animations. [Raw hardware/samples](audits/evidence/slice-33-responsiveness.json), measured 2026-09-07T04:30:49.054Z. These do not establish CPU, battery, cold-start, provider throughput or exhaustive absence of idle work.
+
+New ACCEPT-001 is explicitly pending: renderer-only reload with live sessions loses the one-transfer output port; repeated Electron observations produced SUBSCRIPTION_FAILED with live processes, consistent with main's already-delivered guard. Normal destination changes without reload and full coordinator restart/recovery are tested separately. No reconnection or automatic replay was added. The coverage ledger retains 267 sampled/pending-remainder cells, 192 pending-full cells and 17 N/A cells; its new primary-journey associations do not silently close those broader variants.
+
+CI follow-up: PR #61's registry-observation race was reproduced with a deterministic vanished-key/denied-read test and fixed without swallowing other errors. Both installer architectures and both CI architectures pass on 0352c15. The earlier x64 migration timeout passed locally unchanged; dependent fresh runs provide separate CI evidence. PR #62's keyboard follow-up and later PRs have their own head checks. All prior historical screenshots are preserved.
+
+Final local validation: all 21 distinct affected acceptance/accessibility/Memory/multi-session/tab/scope/ended-inventory scenarios passed across focused runs. The five new acceptance scenarios passed, including strengthened exact-record dismissal and a final healthy-stream density run without renderer reload. Typecheck, lint and full formatting pass; historical screenshots restored. Prior broad baseline remains 121 E2E passes/one opt-in skip, 495 unit passes, 307 contract passes and 102 integration passes/one explicit harness skip; those counts are not represented as a new full-suite run of the final branch.
+
+Delivery receipt: PR #65 is open against codex/audit-coverage-reconciliation. All eight planned PRs (#58–65) are open in sequence. Latest checked heads #58–61 are green; #62–65 hosted checks remain pending at this receipt. Owner merges and acceptance gates remain open.

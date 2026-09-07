@@ -143,7 +143,11 @@
         "S008",
         "S009",
         "S010"
-      ]
+      ],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A01-F03",
@@ -498,7 +502,11 @@
         "tests/e2e/repo-idea-generation.spec.ts"
       ],
       "remaining": "All provider/permission combinations, every custom-runtime conflict choice and every review/dialog state at 200% remain pending. Existing/new runtime, exact save conflicts and main rejection paths have bounded evidence.",
-      "scenarioIds": ["S024", "S025", "S026", "S027", "S028", "S029"]
+      "scenarioIds": ["S024", "S025", "S026", "S027", "S028", "S029"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A02-F02",
@@ -559,7 +567,11 @@
         "tests/e2e/mission-keyboard-repair.spec.ts"
       ],
       "remaining": "All provider/permission combinations, every custom-runtime conflict choice and every review/dialog state at 200% remain pending. Existing/new runtime, exact save conflicts and main rejection paths have bounded evidence.",
-      "scenarioIds": ["S030", "S031", "S032", "S033"]
+      "scenarioIds": ["S030", "S031", "S032", "S033"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A02-F03",
@@ -640,7 +652,11 @@
         "S041",
         "S042",
         "S043"
-      ]
+      ],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A02-F04",
@@ -761,7 +777,11 @@
         "tests/e2e/mission-keyboard-repair.spec.ts"
       ],
       "remaining": "All provider/permission combinations, every custom-runtime conflict choice and every review/dialog state at 200% remain pending. Existing/new runtime, exact save conflicts and main rejection paths have bounded evidence.",
-      "scenarioIds": ["S050", "S032", "S033"]
+      "scenarioIds": ["S050", "S032", "S033"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A02-F06",
@@ -852,7 +872,11 @@
         "S047",
         "S048",
         "S049"
-      ]
+      ],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A02-F07",
@@ -1064,7 +1088,11 @@
         "tests/e2e/mission-focus-workspace.spec.ts"
       ],
       "remaining": "All provider/permission combinations, every custom-runtime conflict choice and every review/dialog state at 200% remain pending. Existing/new runtime, exact save conflicts and main rejection paths have bounded evidence.",
-      "scenarioIds": ["S011", "S012", "S013", "S014", "S015", "S016", "S017"]
+      "scenarioIds": ["S011", "S012", "S013", "S014", "S015", "S016", "S017"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A02-F10",
@@ -1292,7 +1320,11 @@
       ],
       "currentEvidence": ["tests/e2e/session-scope.spec.ts"],
       "remaining": "Complete terminal input/stream fault matrix, native window-close gesture and all conversation asynchronous/retarget choices remain pending. No automatic replay is inferred safe.",
-      "scenarioIds": ["S051", "S052"]
+      "scenarioIds": ["S051", "S052"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A03-F02",
@@ -1467,7 +1499,11 @@
         "tests/e2e/session-tab-identity.spec.ts"
       ],
       "remaining": "Complete terminal input/stream fault matrix, native window-close gesture and all conversation asynchronous/retarget choices remain pending. No automatic replay is inferred safe.",
-      "scenarioIds": ["S058", "S059", "S018"]
+      "scenarioIds": ["S058", "S059", "S018"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A03-F05",
@@ -1527,7 +1563,11 @@
         "tests/e2e/session-tab-identity.spec.ts"
       ],
       "remaining": "Complete terminal input/stream fault matrix, native window-close gesture and all conversation asynchronous/retarget choices remain pending. No automatic replay is inferred safe.",
-      "scenarioIds": ["S021", "S060", "S018"]
+      "scenarioIds": ["S021", "S060", "S018"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A03-F06",
@@ -1692,7 +1732,11 @@
       ],
       "currentEvidence": ["tests/e2e/recovery.spec.ts", "tests/e2e/recovery-selection.spec.ts"],
       "remaining": "Complete terminal input/stream fault matrix, native window-close gesture and all conversation asynchronous/retarget choices remain pending. No automatic replay is inferred safe.",
-      "scenarioIds": ["S063", "S064"]
+      "scenarioIds": ["S063", "S064"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A03-F09",
@@ -1863,7 +1907,11 @@
       ],
       "currentEvidence": ["tests/e2e/agents-reflow.spec.ts"],
       "remaining": "Complete malformed-import and pending wizard-save/failure/repeated-action matrix remains pending. Exact roster selection/paging and normal authoring/restart are covered by named tests.",
-      "scenarioIds": ["S074"]
+      "scenarioIds": ["S074"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S112", "S113"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A04-F02",
@@ -2096,7 +2144,11 @@
       ],
       "currentEvidence": ["tests/e2e/agent-profile-wizard.spec.ts"],
       "remaining": "Complete malformed-import and pending wizard-save/failure/repeated-action matrix remains pending. Exact roster selection/paging and normal authoring/restart are covered by named tests.",
-      "scenarioIds": ["S084", "S085", "S086", "S087", "S088", "S089", "S090"]
+      "scenarioIds": ["S084", "S085", "S086", "S087", "S088", "S089", "S090"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S112", "S113"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A04-F06",
@@ -2154,7 +2206,11 @@
       ],
       "currentEvidence": ["tests/e2e/agent-profile-wizard.spec.ts"],
       "remaining": "Complete malformed-import and pending wizard-save/failure/repeated-action matrix remains pending. Exact roster selection/paging and normal authoring/restart are covered by named tests.",
-      "scenarioIds": ["S084", "S085", "S086", "S087", "S088", "S089", "S090"]
+      "scenarioIds": ["S084", "S085", "S086", "S087", "S088", "S089", "S090"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S112", "S113"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A04-F07",
@@ -2443,7 +2499,11 @@
       ],
       "currentEvidence": ["tests/e2e/agent-profile-wizard.spec.ts"],
       "remaining": "Conflicting template-revision and delayed wizard-save failure matrix remains pending. Paging failure, duplicate invalid-key/collision and restart receive new targeted coverage in slice 32.",
-      "scenarioIds": ["S084", "S085", "S086", "S087", "S088", "S089", "S090"]
+      "scenarioIds": ["S084", "S085", "S086", "S087", "S088", "S089", "S090"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S112", "S113"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A05-F04",
@@ -2849,7 +2909,11 @@
       ],
       "currentEvidence": ["tests/e2e/memory-search-scope.spec.ts"],
       "remaining": "Publish Back/cancel/interrupted-write, retract/delete failure recovery and every modal focus/scale combination remain pending. Supersession late review and rejected append have targeted evidence.",
-      "scenarioIds": ["S095"]
+      "scenarioIds": ["S095"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S112", "S113"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A06-F02",
@@ -2909,7 +2973,11 @@
         "tests/e2e/memory-search-scope.spec.ts"
       ],
       "remaining": "Publish Back/cancel/interrupted-write, retract/delete failure recovery and every modal focus/scale combination remain pending. Supersession late review and rejected append have targeted evidence.",
-      "scenarioIds": ["S096", "S095"]
+      "scenarioIds": ["S096", "S095"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S112", "S113"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A06-F03",
@@ -2964,7 +3032,11 @@
       ],
       "currentEvidence": ["tests/e2e/hive-memory.spec.ts"],
       "remaining": "Publish Back/cancel/interrupted-write, retract/delete failure recovery and every modal focus/scale combination remain pending. Supersession late review and rejected append have targeted evidence.",
-      "scenarioIds": ["S097", "S098", "S099", "S100"]
+      "scenarioIds": ["S097", "S098", "S099", "S100"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S112", "S113"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A06-F04",
@@ -3246,7 +3318,11 @@
       ],
       "currentEvidence": ["tests/e2e/attention-scope.spec.ts"],
       "remaining": "All coach classifications and replacement launch with every missing-provider/revoked-folder combination remain pending. Recovery dismissal and exact mission-return scopes have targeted evidence.",
-      "scenarioIds": ["S022", "S023"]
+      "scenarioIds": ["S022", "S023"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A07-F02",
@@ -3364,7 +3440,11 @@
         "tests/e2e/recovery-selection.spec.ts"
       ],
       "remaining": "All coach classifications and replacement launch with every missing-provider/revoked-folder combination remain pending. Recovery dismissal and exact mission-return scopes have targeted evidence.",
-      "scenarioIds": ["S019", "S020", "S064"]
+      "scenarioIds": ["S019", "S020", "S064"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S114", "S115"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A07-F04",
@@ -3704,7 +3784,11 @@
       ],
       "currentEvidence": ["tests/e2e/workspace-approval-pending.spec.ts"],
       "remaining": "Recon provider changes during pending disclosure, every expiry/cancellation boundary and interrupted collection permutations remain pending. Folder approval and roster/readiness read recovery have targeted evidence.",
-      "scenarioIds": ["S054"]
+      "scenarioIds": ["S054"],
+      "acceptanceEvidence": {
+        "scenarioIds": ["S112", "S113"],
+        "scope": "Only the named primary journey at both text scales. Original state-cell dispositions and broader pending variants remain unchanged."
+      }
     },
     {
       "id": "A08-F02",
@@ -6009,6 +6093,40 @@
     "S111": {
       "file": "tests/e2e/smoke.spec.ts",
       "scenario": "fixture session launches contained and stops cleanly"
+    },
+    "S112": {
+      "file": "tests/e2e/audit-acceptance.spec.ts",
+      "scenario": "keyboard Settings, bundled Agent and Memory publication at 100%"
+    },
+    "S113": {
+      "file": "tests/e2e/audit-acceptance.spec.ts",
+      "scenario": "keyboard Settings, bundled Agent and Memory publication at 200%"
+    },
+    "S114": {
+      "file": "tests/e2e/audit-acceptance.spec.ts",
+      "scenario": "keyboard Mission creation, Sessions and Attention recovery at 100%"
+    },
+    "S115": {
+      "file": "tests/e2e/audit-acceptance.spec.ts",
+      "scenario": "keyboard Mission creation, Sessions and Attention recovery at 200%"
+    },
+    "S116": {
+      "file": "tests/e2e/audit-acceptance.spec.ts",
+      "scenario": "dense inventory responsiveness and idle rendering budget"
     }
+  },
+  "acceptance": {
+    "record": "acceptance-report.md",
+    "baseline": "df04972 plus final acceptance reflow repairs",
+    "status": "Branch evidence delivered; owner merges and remaining coverage decisions required",
+    "newLimitations": [
+      {
+        "id": "ACCEPT-001",
+        "flow": "A03-F05",
+        "status": "pending-owner-scope-decision",
+        "observation": "Renderer-only reload loses transferred output ports; current main rejects a second subscription while the fixture process remains running. Not a normal destination switch or coordinator restart. No transport reconnection capability was added."
+      }
+    ],
+    "performanceEvidence": "audits/evidence/slice-33-responsiveness.json"
   }
 }

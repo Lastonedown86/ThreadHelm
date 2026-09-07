@@ -290,37 +290,34 @@ PR #55 merged at `38aee7b`. Owner accepted the next slice. Agent draft list/deta
 
 PR #56 merged at `0d82f8e`. Owner accepted slice 25. Ideas now invalidate on repository/provider change and approval revocation; late results cannot reappear under newer inputs. Chosen source context is saved and shown on Outcome after restart, separate from mission authority. Automatic/default provider copy reflects actual selection behavior. Locally verified pending merge; see [verification](verification.md). Next: slice 26, Mission entry/close/review hierarchy; eight roadmap slices remain after slice 25 merges. Broader A02 matrix gaps retain their own scope.
 
-
 ## Slice 26: MIS-005/009/010 Mission flow hierarchy
 
 PR #57 merged at `8b9d549`. Entry context and width match the composer; successful saved Close returns directly, failed Close preserves edits, and Review uses one action footer. Start selects the exact overview without opening history automatically. Locally verified pending PR merge; see [verification](verification.md). Owner authorizes sequential continuation after PR creation. Next: slice 27, MIS-008; seven planned slices follow this checkpoint.
-
 
 ## Slice 27: MIS-008 inventory state distinctions
 
 Based on slice 26 PR #58. Mission rows and compact picker distinguish decision and uncertain outcomes while preserving lifecycle, using main-owned detail reads. Locally verified pending merge; see verification. Six planned slices follow this checkpoint.
 
-
 ## Slice 28: MIS-011 runtime/prerequisite consistency
 
 Dependent on PR #59. Shared provider model choices, visible explicit startup authorization and save-guarded prerequisite/return navigation implemented. Fixed runtime/access authority is preserved. Evidence is in verification; final validation must pass before opening this slice PR. Five planned slices follow: 29-33.
-
 
 ## Slice 29: MIS-013 selected Mission identity
 
 Dependent on PR #60. Slow/failed selection shows the requested ID and hides old detail/actions; Retry and obsolete-response exclusion verified against exact saved missions. Loading focus regression corrected and verified. Locally verified pending merge; see verification. Four planned slices remain, 30-33.
 
-
 ## Slice 30: MIS-012 and remaining MIS-014
 
 Dependent on PR #61. Reachable field repair and native composer discard modal implemented with keyboard/focus and exact deletion evidence. Loading navigation focus was verified in slice 29; prior single-main fix retained. Locally verified pending merge. Three planned slices remain: Agents reflow, coverage reconciliation and acceptance.
-
 
 ## Slice 31: AGT-003 revalidated
 
 Dependent on PR #62. Historical Agents inner overflow no longer reproduces: 680/960/1280 at 100/200% fit long profile/draft inventory and detail, with the draft editor and shared Sessions setup also checked. No CSS change required. Exact save/identity and negative/restart regressions passed; see verification. Two planned slices remain: coverage reconciliation and cross-section acceptance.
 
-
 ## Slice 32: complete inventory reconciliation with explicit gaps
 
 See coverage-reconciliation.md and coverage-ledger.json for all 68 flows/476 cells/120 action traces. Bounded fixes through slice 31 are locally verified; all stronger or unexercised state variants remain explicit. Full local regression and new template paging/negative/restart checks passed; one integration harness gap and opt-in screenshot skip remain. CI helper follow-up propagated; fresh checks pending. Slice 33 remains, with owner merge/acceptance gates intact.
+
+## Slice 33: final planned delivery, acceptance gated
+
+The primary keyboard/100%/200% journeys, dense-inventory measurement, bounded final reflow repairs and SC-001–011 reconciliation are recorded in [acceptance-report.md](acceptance-report.md). All planned slices have delivery evidence; owner merges and unresolved coverage/ACCEPT-001 dispositions remain required. There is no automatic feature/release acceptance and no silently added slice 34. See the report for the ordered PR stack and concrete remaining decisions.

@@ -1,0 +1,206 @@
+{
+  "recordedAt": "2026-09-07T04:30:49.054Z",
+  "hardware": {
+    "cpu": "AMD Ryzen 7 5700U with Radeon Graphics         ",
+    "logicalCpus": 16,
+    "ramGiB": 31.385726928710938,
+    "os": "10.0.26200",
+    "arch": "x64"
+  },
+  "fixture": {
+    "missions": 50,
+    "drafts": 20,
+    "idleSessions": 2
+  },
+  "budget": {
+    "p95Ms": 1000,
+    "idleMutations": 0,
+    "runningAnimations": 0
+  },
+  "samples": [
+    {
+      "scale": "100%",
+      "destination": "Settings",
+      "milliseconds": 86
+    },
+    {
+      "scale": "100%",
+      "destination": "Sessions",
+      "milliseconds": 287
+    },
+    {
+      "scale": "100%",
+      "destination": "Agents",
+      "milliseconds": 92
+    },
+    {
+      "scale": "100%",
+      "destination": "Memory",
+      "milliseconds": 71
+    },
+    {
+      "scale": "100%",
+      "destination": "Attention",
+      "milliseconds": 64
+    },
+    {
+      "scale": "100%",
+      "destination": "Missions",
+      "milliseconds": 62
+    },
+    {
+      "scale": "100%",
+      "destination": "Settings",
+      "milliseconds": 78
+    },
+    {
+      "scale": "100%",
+      "destination": "Sessions",
+      "milliseconds": 116
+    },
+    {
+      "scale": "100%",
+      "destination": "Agents",
+      "milliseconds": 76
+    },
+    {
+      "scale": "100%",
+      "destination": "Memory",
+      "milliseconds": 62
+    },
+    {
+      "scale": "100%",
+      "destination": "Attention",
+      "milliseconds": 55
+    },
+    {
+      "scale": "100%",
+      "destination": "Missions",
+      "milliseconds": 58
+    },
+    {
+      "scale": "100%",
+      "destination": "Settings",
+      "milliseconds": 64
+    },
+    {
+      "scale": "100%",
+      "destination": "Sessions",
+      "milliseconds": 94
+    },
+    {
+      "scale": "100%",
+      "destination": "Agents",
+      "milliseconds": 71
+    },
+    {
+      "scale": "100%",
+      "destination": "Memory",
+      "milliseconds": 57
+    },
+    {
+      "scale": "100%",
+      "destination": "Attention",
+      "milliseconds": 55
+    },
+    {
+      "scale": "100%",
+      "destination": "Missions",
+      "milliseconds": 54
+    },
+    {
+      "scale": "200%",
+      "destination": "Settings",
+      "milliseconds": 141
+    },
+    {
+      "scale": "200%",
+      "destination": "Sessions",
+      "milliseconds": 231
+    },
+    {
+      "scale": "200%",
+      "destination": "Agents",
+      "milliseconds": 95
+    },
+    {
+      "scale": "200%",
+      "destination": "Memory",
+      "milliseconds": 61
+    },
+    {
+      "scale": "200%",
+      "destination": "Attention",
+      "milliseconds": 60
+    },
+    {
+      "scale": "200%",
+      "destination": "Missions",
+      "milliseconds": 58
+    },
+    {
+      "scale": "200%",
+      "destination": "Settings",
+      "milliseconds": 74
+    },
+    {
+      "scale": "200%",
+      "destination": "Sessions",
+      "milliseconds": 116
+    },
+    {
+      "scale": "200%",
+      "destination": "Agents",
+      "milliseconds": 76
+    },
+    {
+      "scale": "200%",
+      "destination": "Memory",
+      "milliseconds": 55
+    },
+    {
+      "scale": "200%",
+      "destination": "Attention",
+      "milliseconds": 54
+    },
+    {
+      "scale": "200%",
+      "destination": "Missions",
+      "milliseconds": 55
+    },
+    {
+      "scale": "200%",
+      "destination": "Settings",
+      "milliseconds": 65
+    },
+    {
+      "scale": "200%",
+      "destination": "Sessions",
+      "milliseconds": 93
+    },
+    {
+      "scale": "200%",
+      "destination": "Agents",
+      "milliseconds": 72
+    },
+    {
+      "scale": "200%",
+      "destination": "Memory",
+      "milliseconds": 66
+    },
+    {
+      "scale": "200%",
+      "destination": "Attention",
+      "milliseconds": 56
+    },
+    {
+      "scale": "200%",
+      "destination": "Missions",
+      "milliseconds": 65
+    }
+  ],
+  "idle": {
+    "mutations": 0,
+    "animations": 0
+  }
+}

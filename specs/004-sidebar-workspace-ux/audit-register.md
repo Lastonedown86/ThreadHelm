@@ -319,3 +319,8 @@ Dependent on PR #61. Reachable field repair and native composer discard modal im
 ## Slice 31: AGT-003 revalidated
 
 Dependent on PR #62. Historical Agents inner overflow no longer reproduces: 680/960/1280 at 100/200% fit long profile/draft inventory and detail, with the draft editor and shared Sessions setup also checked. No CSS change required. Exact save/identity and negative/restart regressions passed; see verification. Two planned slices remain: coverage reconciliation and cross-section acceptance.
+
+
+## Slice 32: complete inventory reconciliation with explicit gaps
+
+See coverage-reconciliation.md and coverage-ledger.json for all 68 flows/476 cells/120 action traces. Bounded fixes through slice 31 are locally verified; all stronger or unexercised state variants remain explicit. Full local regression and new template paging/negative/restart checks passed; one integration harness gap and opt-in screenshot skip remain. CI helper follow-up propagated; fresh checks pending. Slice 33 remains, with owner merge/acceptance gates intact.

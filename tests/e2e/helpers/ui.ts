@@ -91,8 +91,13 @@ export async function newMissionViaUi(page: Page, keyboard = false): Promise<voi
   const skip = page.getByRole('button', { name: /^Skip/ });
   if (keyboard) {
     await create.focus();
+    await expect(create).toBeFocused();
     await page.keyboard.press('Enter');
+    // Entry owns initial heading focus. Wait for that transition before moving
+    // focus to Skip; a late mount effect must not consume the next Enter.
+    await expect(page.locator('.repo-idea-entry h1')).toBeFocused();
     await skip.focus();
+    await expect(skip).toBeFocused();
     await page.keyboard.press('Enter');
   } else {
     await create.click();

@@ -19,6 +19,8 @@ export interface MissionWorkspaceState {
   presentation: MissionPresentation | null;
   loading: boolean;
   error: unknown;
+  selectedMissionId: string | null;
+  retry(): void;
 }
 
 function titleKey(mission: MissionSummaryView): string {
@@ -31,30 +33,39 @@ export function useMissionWorkspace(selectedMissionId: string | null): MissionWo
   const [titleCache, setTitleCache] = useState<Record<string, { title: string; status: string }>>(
     {},
   );
-  const [detail, setDetail] = useState<MissionDetailView | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState<unknown>(null);
+  const [refresh, setRefresh] = useState(0);
+  const [selection, setSelection] = useState<{
+    id: string | null;
+    detail: MissionDetailView | null;
+    loading: boolean;
+    error: unknown;
+  }>({ id: null, detail: null, loading: false, error: null });
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    setListLoading(true);
     void call(api.missions.list({ limit: 100 }))
       .then((list) => {
         if (cancelled) return;
         setMissions(list);
-        setError(null);
-        if (!selectedMissionId && list[0]) actions.selectMission(list[0].id);
+        setListError(null);
       })
       .catch((cause) => {
-        if (!cancelled) setError(cause);
+        if (!cancelled) setListError(cause);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setListLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [actions, selectedMissionId, state.missionSequence]);
+  }, [state.missionSequence, refresh]);
+
+  useEffect(() => {
+    if (!selectedMissionId && missions[0]) actions.selectMission(missions[0].id);
+  }, [actions, selectedMissionId, missions]);
 
   useEffect(() => {
     const missing = missions.filter((mission) => !(titleKey(mission) in titleCache));
@@ -94,30 +105,32 @@ export function useMissionWorkspace(selectedMissionId: string | null): MissionWo
 
   useEffect(() => {
     let cancelled = false;
-    if (!selectedMissionId) {
-      setDetail(null);
-      return () => {
-        cancelled = true;
-      };
-    }
-    setLoading(true);
-    void call(api.missions.detail({ missionId: selectedMissionId }))
-      .then((value) => {
-        if (!cancelled) {
-          setDetail(value);
-          setError(null);
-        }
-      })
-      .catch((cause) => {
-        if (!cancelled) setError(cause);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    setSelection({
+      id: selectedMissionId,
+      detail: null,
+      loading: !!selectedMissionId,
+      error: null,
+    });
+    if (selectedMissionId)
+      void call(api.missions.detail({ missionId: selectedMissionId }))
+        .then((value) => {
+          if (!cancelled)
+            setSelection({ id: selectedMissionId, detail: value, loading: false, error: null });
+        })
+        .catch((error) => {
+          if (!cancelled)
+            setSelection({ id: selectedMissionId, detail: null, loading: false, error });
+        });
     return () => {
       cancelled = true;
     };
-  }, [selectedMissionId, state.missionSequence]);
+  }, [selectedMissionId, state.missionSequence, refresh]);
+
+  // Gate synchronously on identity, before the selection effect gets a chance to run.
+  const current = selection.id === selectedMissionId;
+  const detail = current && !selection.error ? selection.detail : null;
+  const loading = listLoading || (!!selectedMissionId && (!current || selection.loading));
+  const error = listError ?? (current ? selection.error : null);
 
   const titles: Record<string, string> = {};
   const statuses: Record<string, string> = {};
@@ -149,5 +162,7 @@ export function useMissionWorkspace(selectedMissionId: string | null): MissionWo
     presentation,
     loading,
     error,
+    selectedMissionId,
+    retry: () => setRefresh((value) => value + 1),
   };
 }

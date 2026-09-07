@@ -304,3 +304,8 @@ Based on slice 26 PR #58. Mission rows and compact picker distinguish decision a
 ## Slice 28: MIS-011 runtime/prerequisite consistency
 
 Dependent on PR #59. Shared provider model choices, visible explicit startup authorization and save-guarded prerequisite/return navigation implemented. Fixed runtime/access authority is preserved. Evidence is in verification; final validation must pass before opening this slice PR. Five planned slices follow: 29-33.
+
+
+## Slice 29: MIS-013 selected Mission identity
+
+Dependent on PR #60. Slow/failed selection shows the requested ID and hides old detail/actions; Retry and obsolete-response exclusion verified against exact saved missions. Loading focus regression corrected and verified. Locally verified pending merge; see verification. Four planned slices remain, 30-33.

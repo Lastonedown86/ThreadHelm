@@ -19,6 +19,17 @@ export function MissionWorkspace({
   onOpenTerminal(sessionId: string): void;
 }) {
   const [announcement, setAnnouncement] = useState('');
+  const focusAfterLoad = useRef(false);
+  useEffect(() => {
+    if (workspace.loading || !focusAfterLoad.current) return;
+    focusAfterLoad.current = false;
+    // Complete a requested heading focus only if the user has not moved elsewhere.
+    if (
+      document.activeElement === document.body ||
+      document.activeElement?.id === 'mission-loading-heading'
+    )
+      document.querySelector<HTMLElement>('#mission-workspace h1')?.focus();
+  }, [workspace.loading, workspace.detail?.id, workspace.error]);
   const detailId = workspace.detail?.id ?? null;
   const attentionLabel = workspace.presentation?.attentionLabel ?? null;
   const lifecycle = workspace.presentation?.lifecycleLabel ?? null;
@@ -39,15 +50,34 @@ export function MissionWorkspace({
 
   if (workspace.loading && !workspace.detail)
     return (
-      <p className="mission-workspace-state" role="status">
-        Loading missions…
-      </p>
+      <div className="mission-workspace-state" role="status">
+        <h1
+          id="mission-loading-heading"
+          tabIndex={-1}
+          onFocus={() => {
+            focusAfterLoad.current = true;
+          }}
+        >
+          {workspace.selectedMissionId ? 'Loading selected mission…' : 'Loading missions…'}
+        </h1>
+        {workspace.selectedMissionId ? <p>Mission · {workspace.selectedMissionId}</p> : null}
+      </div>
     );
   if (workspace.error)
     return (
       <div className="mission-workspace-state">
         <h1 tabIndex={-1}>Missions unavailable</h1>
+        {workspace.selectedMissionId ? <p>Mission · {workspace.selectedMissionId}</p> : null}
         <LaunchError error={workspace.error} />
+        <button
+          type="button"
+          onClick={() => {
+            focusAfterLoad.current = true;
+            workspace.retry();
+          }}
+        >
+          Retry missions
+        </button>
       </div>
     );
   if (!workspace.detail || !workspace.presentation)

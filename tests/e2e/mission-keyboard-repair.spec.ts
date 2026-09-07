@@ -15,6 +15,16 @@ test('keyboard repair reaches missing fields and hidden limits at 200 percent te
       document.documentElement.style.fontSize = '200%';
     });
     await newMissionViaUi(page);
+    // Natural Tab from the stage heading used to place the field under the sticky footer.
+    await page.keyboard.press('Tab');
+    const finish = page.getByLabel('Finish line', { exact: true });
+    await expect(finish).toBeFocused();
+    expect(
+      await finish.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) === el;
+      }),
+    ).toBe(true);
     const fix = page.getByRole('button', { name: 'Fix missing field', exact: true });
     await expect(fix).toBeEnabled();
     await fix.focus();

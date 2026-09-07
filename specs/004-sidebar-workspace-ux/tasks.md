@@ -341,4 +341,4 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T157 Define the final keyboard/scale journeys and pre-measurement Windows performance budget.
 - [x] T158 Exercise primary journeys with actual Tab traversal and independent state/process readback; repair reproduced focus/reflow within existing requirements.
 - [x] T159 Measure dense inventory, contrast/reduced-motion samples and affected regressions; retain explicit limitations.
-- [ ] T160 Publish acceptance report, update ledger/roadmap, complete final checks and open the final dependent PR. Owner feature acceptance remains a separate pending gate.
+- [x] T160 Publish acceptance report, update ledger/roadmap, complete final checks and open the final dependent PR. Owner feature acceptance remains a separate pending gate.

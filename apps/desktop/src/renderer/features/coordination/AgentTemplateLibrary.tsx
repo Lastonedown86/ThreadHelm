@@ -6,6 +6,16 @@ import { AgentAuthoringError } from './AgentAuthoringError.js';
 import { LazyAgentProfileWizard } from './LazyAgentProfileWizard.js';
 import { templateLabel } from './template-label.js';
 import { ModalDialog } from './ModalDialog.js';
+import { relativeTime } from '../mission-composer/composer-fields.js';
+
+const DRAFT_STEP: Record<Draft['currentStep'], string> = {
+  start: 'Start',
+  identity: 'Identity',
+  role: 'Role and goal',
+  capabilities: 'Capabilities',
+  runtime: 'Runtime requests',
+  review: 'Review',
+};
 
 type Template = OperationResponse<'agentTemplates.list'>['templates'][number];
 type Draft = OperationResponse<'agentWizard.listDrafts'>['drafts'][number];
@@ -95,13 +105,30 @@ export function AgentTemplateLibrary() {
           <h3>Saved drafts</h3>
           <ul className="list" aria-label="Saved agent drafts">
             {drafts.map((draft) => (
-              <li key={draft.draftId}>
+              <li key={draft.draftId} id={`agent-draft-${draft.draftId}`}>
+                <strong className="agent-draft-name" title={draft.displayName || 'Unnamed agent'}>
+                  {draft.displayName || 'Unnamed agent'}
+                </strong>
                 <span className="hint">
-                  {draft.currentStep} · {draft.state}
+                  {DRAFT_STEP[draft.currentStep]} ·{' '}
+                  {draft.state === 'invalid'
+                    ? 'Needs attention'
+                    : draft.state === 'ready_for_review'
+                      ? 'Ready for review'
+                      : 'Saved draft'}{' '}
+                  · Updated{' '}
+                  <time
+                    dateTime={draft.updatedAt}
+                    title={new Date(draft.updatedAt).toLocaleString()}
+                  >
+                    {relativeTime(draft.updatedAt)}
+                  </time>{' '}
+                  · {draft.draftId.slice(0, 8)}
                 </span>{' '}
                 <button
                   type="button"
                   className="small"
+                  aria-label={`Resume draft ${draft.draftId.slice(0, 8)} · ${draft.displayName || 'Unnamed agent'} · ${draft.draftId}`}
                   disabled={busy || state.storageDegraded}
                   onClick={() => setDialog({ kind: 'wizard', draftId: draft.draftId })}
                 >

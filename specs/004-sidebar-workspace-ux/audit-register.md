@@ -281,3 +281,7 @@ PR #53 merged at `dc60e3a`. Owner accepted slice 22: provider/workspace/short-ID
 ## Slice 23 checkpoint: Mission draft inventory and management
 
 PR #54 merged at `3e3accc` with Windows x64/arm64 CI, installer acceptance and CodeQL green. Owner requested slice 23 (MIS-007/015, NAV-004). Saved objective summaries, exact selected/resume identity, normal version-bound discard/review recovery and bounded mission/draft inventory are implemented and locally verified pending merge. The 20-draft limit remains. Independent readback verifies exact neighbors, deletion, capacity recovery and restart; a 50-mission/20-draft fixture verifies narrow enlarged-text navigation. See [verification](verification.md). Other Mission findings retain their original status. Next after merge: slice 24, TPL-001; 10 roadmap slices remain after this merge.
+
+## Slice 24: TPL-001 saved agent draft identity
+
+PR #55 merged at `38aee7b`. Owner accepted the next slice. Agent draft list/detail summaries now expose a derived saved display name, with Unnamed agent fallback, human step/state labels, last-updated metadata and secondary IDs. Main reads supply the name; the renderer does not fetch every draft detail. Exact-ID resume, version guards, cap and separate Mission draft storage remain unchanged. Locally verified pending PR merge; see [verification](verification.md). Next: slice 25, MIS-006. Nine planned slices remain after slice 24 merges; A05's broader action matrix still has its recorded gaps.

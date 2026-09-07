@@ -50,6 +50,7 @@ interface TemplateRow {
 }
 export interface TemplateDraftDetail {
   draftId: string;
+  displayName: string;
   sourceTemplateRevisionId: string | null;
   sourceProfileRevisionId: string | null;
   state: 'editing' | 'invalid' | 'ready_for_review' | 'completed' | 'deleted';
@@ -327,6 +328,7 @@ export class AgentTemplateRepository {
         const draft = this.getDraft(row.id);
         return {
           draftId: draft.draftId,
+          displayName: draft.displayName,
           version: draft.version,
           state: draft.state,
           currentStep: draft.currentStep,
@@ -723,14 +725,16 @@ export class AgentTemplateRepository {
       | undefined;
     if (!row || row.state === 'deleted')
       throw new ThreadHelmError('PROFILE_NOT_FOUND', 'The draft was not found.');
+    const fieldValues = JSON.parse(row.field_values) as Partial<AgentManifestV1>;
     return {
       draftId: row.id,
+      displayName: (fieldValues.name ?? '').trim().replace(/\s+/g, ' ').slice(0, 200),
       sourceTemplateRevisionId: row.source_template_revision_id,
       sourceProfileRevisionId: row.source_profile_revision_id,
       state: row.state,
       version: row.version,
       currentStep: row.current_step,
-      fieldValues: JSON.parse(row.field_values) as Partial<AgentManifestV1>,
+      fieldValues,
       variableValues: JSON.parse(row.variable_values) as Record<string, string>,
       validationIssues: JSON.parse(row.validation_issues) as string[],
       createdAt: row.created_at,

@@ -341,3 +341,7 @@
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
+.agent-draft-name {
+  display: block;
+  overflow-wrap: anywhere;
+}

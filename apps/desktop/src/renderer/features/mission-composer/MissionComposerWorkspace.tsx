@@ -1,3 +1,4 @@
+import { ModalDialog } from '../coordination/ModalDialog.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MissionDetailView, OperationResponse } from '@threadhelm/contracts';
 import { api, call, errorCode } from '../../api.js';
@@ -63,6 +64,8 @@ export function MissionComposerWorkspace({
   const [everReviewed, setEverReviewed] = useState(false);
   const [actionHost, setActionHost] = useState<HTMLDivElement | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
+  const [discardBusy, setDiscardBusy] = useState(false);
+  const discardingNow = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,7 +130,20 @@ export function MissionComposerWorkspace({
     setInvalid(path);
     if (!path) return;
     requestAnimationFrame(() => {
-      body.current?.querySelector<HTMLElement>(`[data-field="${path}"]`)?.focus();
+      const target =
+        body.current?.querySelector<HTMLElement>(`[data-field="${path}"]`) ??
+        body.current?.querySelector<HTMLElement>('.composer-notice button');
+      for (let parent = target?.parentElement; parent; parent = parent.parentElement)
+        if (parent instanceof HTMLDetailsElement) parent.open = true;
+      if (target) {
+        const description = new Set(
+          (target.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean),
+        );
+        description.add('composer-readiness');
+        target.setAttribute('aria-describedby', [...description].join(' '));
+        target.focus();
+        target.scrollIntoView({ block: 'center' });
+      }
     });
   };
   const advance = async () => {
@@ -160,7 +176,9 @@ export function MissionComposerWorkspace({
     }
   };
   const confirmDiscard = async () => {
-    if (!discarding) return;
+    if (!discarding || discardingNow.current) return;
+    discardingNow.current = true;
+    setDiscardBusy(true);
     try {
       await call(
         api.missionComposer.confirmDiscard({
@@ -173,6 +191,9 @@ export function MissionComposerWorkspace({
     } catch (cause) {
       setDiscarding(null);
       actions.setNotice(reasonLabel(errorCode(cause)) ?? 'The draft was not discarded.');
+    } finally {
+      discardingNow.current = false;
+      setDiscardBusy(false);
     }
   };
 
@@ -349,8 +370,20 @@ export function MissionComposerWorkspace({
           />
         ) : null}
       </div>
-      <p className={`composer-readiness${readiness.ready ? ' ready' : ''}`}>{readiness.message}</p>
+      <p id="composer-readiness" className={`composer-readiness${readiness.ready ? ' ready' : ''}`}>
+        {readiness.message}
+      </p>
       <div className="mission-action-row composer-actions" ref={setActionHost}>
+        {!readiness.ready && stage !== 'review' ? (
+          <button
+            type="button"
+            disabled={draft.saving}
+            onClick={() => focusInvalid(readiness.firstInvalid)}
+            aria-describedby="composer-readiness"
+          >
+            Fix missing field
+          </button>
+        ) : null}
         {/* Close is never gated on a successful save: a draft that can't be
             saved right now (storage degraded, prior save failure) must still
             have an escape hatch — see close()'s honest "not saved" receipt. */}
@@ -374,21 +407,31 @@ export function MissionComposerWorkspace({
         ) : null}
       </div>
       {discarding ? (
-        <div className="composer-discard" role="dialog" aria-labelledby="composer-discard-heading">
+        <ModalDialog
+          label="Discard this draft?"
+          onDismiss={() => {
+            if (!discardingNow.current) setDiscarding(null);
+          }}
+        >
           <h2 id="composer-discard-heading">Discard this draft?</h2>
           <p>
             The draft at {STAGE_LABEL[discarding.stage]} will be deleted. Nothing else changes; no
             mission exists yet.
           </p>
           <div className="mission-action-row">
-            <button type="button" onClick={() => setDiscarding(null)}>
+            <button type="button" disabled={discardBusy} onClick={() => setDiscarding(null)}>
               Keep draft
             </button>
-            <button type="button" className="danger" onClick={() => void confirmDiscard()}>
+            <button
+              type="button"
+              className="danger"
+              disabled={discardBusy}
+              onClick={() => void confirmDiscard()}
+            >
               Discard draft
             </button>
           </div>
-        </div>
+        </ModalDialog>
       ) : null}
     </section>
   );

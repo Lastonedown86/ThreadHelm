@@ -317,3 +317,11 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T142 Bind rendered details to selected ID and expose explicit loading/error/retry.
 - [x] T143 Verify delayed, failed and out-of-order reads plus cross-section return.
 - [x] T144 Complete checks/evidence and dependent PR, continue slice 30.
+
+
+## Slice 30: Mission keyboard validation and focus
+
+- [x] T145 Reproduce unreachable repair action and inspect shared modal pattern.
+- [x] T146 Add explicit field repair and native discard focus/dismissal.
+- [x] T147 Verify keyboard/200-percent repair and discard saved-state effects.
+- [x] T148 Complete checks/evidence and PR, continue Agents reflow.

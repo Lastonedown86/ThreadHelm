@@ -309,3 +309,8 @@ Dependent on PR #59. Shared provider model choices, visible explicit startup aut
 ## Slice 29: MIS-013 selected Mission identity
 
 Dependent on PR #60. Slow/failed selection shows the requested ID and hides old detail/actions; Retry and obsolete-response exclusion verified against exact saved missions. Loading focus regression corrected and verified. Locally verified pending merge; see verification. Four planned slices remain, 30-33.
+
+
+## Slice 30: MIS-012 and remaining MIS-014
+
+Dependent on PR #61. Reachable field repair and native composer discard modal implemented with keyboard/focus and exact deletion evidence. Loading navigation focus was verified in slice 29; prior single-main fix retained. Locally verified pending merge. Three planned slices remain: Agents reflow, coverage reconciliation and acceptance.

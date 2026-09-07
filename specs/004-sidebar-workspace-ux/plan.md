@@ -206,3 +206,8 @@ Baseline c7f632e, dependent on PR #59. Share the existing launch model options/p
 ## Slice 29: identity-safe Mission selection
 
 Baseline cbff13b, dependent on PR #60. Gate detail/presentation synchronously by requested mission ID; independently own inventory and selected-detail errors/loading. Clear the prior detail on refresh, ignore obsolete responses, show requested ID during loading/failure and offer Retry. Preserve main authority and navigation save guards.
+
+
+## Slice 30: keyboard repair and modal consistency
+
+Baseline 2a12603, dependent on PR #61. Preserve blocked Continue and offer reachable Fix missing field, focusing/announcing the exact missing control, opening enclosing disclosures and using prerequisite buttons when inputs do not exist yet. Replace the composer failure-path discard role dialog with shared native modal, Escape/focus restoration and single-flight disabled confirmation. Slice 29 already repaired loading-heading focus.

@@ -6,6 +6,7 @@ import { missionTitle } from './mission-presentation.js';
 export interface MissionRailProps {
   missions: MissionSummaryView[];
   titles: Record<string, string>;
+  statuses: Record<string, string>;
   selectedMissionId: string | null;
   onSelect(missionId: string): void | Promise<boolean>;
   onCreate(): void;
@@ -26,6 +27,7 @@ function focusMissionHeading() {
 export function MissionRail({
   missions,
   titles,
+  statuses,
   selectedMissionId,
   onSelect,
   onCreate,
@@ -109,7 +111,7 @@ export function MissionRail({
         {missions.map((mission) => (
           <option key={mission.id} value={mission.id}>
             {titles[mission.id] ?? missionTitle(null, mission.id)} ·{' '}
-            {mission.state.replaceAll('_', ' ')}
+            {statuses[mission.id] ?? `${mission.state.replaceAll('_', ' ')} · Loading details…`}
           </option>
         ))}
       </select>
@@ -141,7 +143,9 @@ export function MissionRail({
                   {mission.workItemCount > 0
                     ? `${mission.completedWorkItemCount}/${mission.workItemCount} · `
                     : ''}
-                  {mission.state.replaceAll('_', ' ')} · {mission.id.slice(0, 8)}
+                  {statuses[mission.id] ??
+                    `${mission.state.replaceAll('_', ' ')} · Loading details…`}{' '}
+                  · {mission.id.slice(0, 8)}
                 </small>
               </span>
             </li>

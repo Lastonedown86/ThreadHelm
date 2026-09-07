@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   liveSessionIds,
   missionTitle,
+  missionInventoryStatus,
   presentMission,
   type CourseNodeState,
 } from '../../../apps/desktop/src/renderer/features/mission-focus/mission-presentation.js';
@@ -307,4 +308,17 @@ describe('mission presentation', () => {
       expect(result.course[0]!.action, `lifecycleState ${lifecycleState}`).toBeNull();
     }
   });
+});
+
+it('inventory preserves lifecycle alongside action status and avoids duplicate recovery labels', () => {
+  expect(missionInventoryStatus(mission({ state: 'paused' }))).toBe('Paused');
+  expect(missionInventoryStatus(mission({ state: 'completed' }))).toBe('Completed');
+  expect(missionInventoryStatus(mission({ state: 'recovery_required' }))).toBe('Recovery required');
+  const detail = mission({ state: 'cancelled' });
+  expect(
+    missionInventoryStatus(detail, {
+      ...presentMission(detail),
+      attentionLabel: 'Outcome uncertain',
+    }),
+  ).toBe('Cancelled · Outcome uncertain');
 });

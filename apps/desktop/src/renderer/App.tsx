@@ -292,6 +292,7 @@ function Shell() {
             <MissionRail
               missions={workspace.missions}
               titles={workspace.titles}
+              statuses={workspace.statuses}
               selectedMissionId={
                 missionSelected && missionView.kind === 'mission' ? state.selectedMissionId : null
               }

@@ -375,3 +375,10 @@ Baseline: PR #57 merge `8b9d549`, branch `codex/mission-flow-hierarchy`, Windows
 UI/logic/functionality: the 27-test composer, hierarchy, repo-entry, accessibility and supervisor suite passed. Expanded regressions verify latest draft objective through main readback, failed-close unsaved edits, one created mission with exact objective and visible overview, and Start in the shared footer. Existing expired/changed review and stale-revision scenarios passed. No real external provider runs; mission execution uses fixture sessions. All 307 contract tests, desktop build, typecheck, lint and repository formatting passed. Recapture: build then run `pnpm test:e2e tests/e2e/mission-flow-hierarchy.spec.ts tests/e2e/mission-composer.spec.ts`. Full coverage and enlarged-text acceptance remain slices 32/33; hosted CI and owner merge remain separate.
 
 Owner authorized continuous sequential slices. Next: slice 27, state distinctions, based on this branch if its PR remains open.
+
+
+## Slice 27: MIS-008 mission inventory states
+
+Baseline 57d7312, PR #58 dependency; Windows x64. Red Electron fixture showed a decision-held mission only as paused. Rows and compact picker now retain lifecycle and add Needs your decision or Outcome uncertain from the same presentation logic as the workspace. Existing detail reads supply statuses, keyed by sequence; unavailable/loading details are explicit. No new API, process authority or aggregation.
+
+All six focused Mission Electron scenarios passed, covering exact-ID selection, decision/unknown/paused/completed state, evidence actions, terminal target, cross-section navigation and crash recovery. Main bridge fixtures produced real persisted states; no real external providers executed. Thirteen existing presentation unit tests passed; additional lifecycle/attention mapping regression added. Build, typecheck and lint passed. Recapture: build then `pnpm test:e2e tests/e2e/mission-focus-workspace.spec.ts`. Hosted CI and owner merge remain separate. Next: slice 28.

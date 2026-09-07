@@ -286,3 +286,10 @@ Dependencies: T119 -> T120 -> T121 -> T122 -> T123. Next: slice 25, repository i
 - [x] T128 Complete checks, evidence/register/roadmap and PR.
 
 Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entry/close/review hierarchy.
+
+## Slice 26: Mission flow hierarchy
+
+- [x] T129 Verify baseline and record sequential delivery/interaction contract.
+- [x] T130 Reproduce two-action close and implement shared entry/review hierarchy.
+- [x] T131 Verify save/failure and exact start landing with authoritative state.
+- [x] T132 Complete checks/evidence and open PR, then continue slice 27.

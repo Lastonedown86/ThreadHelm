@@ -1,16 +1,19 @@
 .composer,
+.composer-entry,
 .composer-receipt {
   padding: clamp(1rem, 3vw, 2.25rem);
   max-width: 56rem;
   min-width: 0;
 }
 .composer h1,
+.composer-entry h1,
 .composer-receipt h1 {
   font-family: var(--mission-font-heading);
   font-size: clamp(1.4rem, 2.4vw, 2rem);
   margin: 0.25rem 0 0.75rem;
 }
 .composer h1:focus,
+.composer-entry h1:focus,
 .composer-receipt h1:focus {
   outline: var(--mission-focus-ring);
   outline-offset: 4px;

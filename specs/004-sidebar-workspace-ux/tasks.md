@@ -309,3 +309,11 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T138 Share model picker, expose startup and preserve prerequisite return.
 - [x] T139 Verify exact saved runtime, fixed sessions, return and no process start.
 - [x] T140 Complete regression checks and dependent PR, continue slice 29.
+
+
+## Slice 29: Mission selection loading/failure
+
+- [x] T141 Verify predecessor and reproduce old Mission content under a new selection.
+- [x] T142 Bind rendered details to selected ID and expose explicit loading/error/retry.
+- [x] T143 Verify delayed, failed and out-of-order reads plus cross-section return.
+- [x] T144 Complete checks/evidence and dependent PR, continue slice 30.

@@ -201,3 +201,8 @@ Baseline 57d7312 (slice 26 PR #58). Reuse existing main detail reads to derive i
 ## Slice 28: runtime and prerequisite consistency
 
 Baseline c7f632e, dependent on PR #59. Share the existing launch model options/picker within Mission-supported limits; retain CLI default and custom identifiers. Place startup authorization by the session choice, without changing its false default. Prerequisite navigation uses the shell save guard and preserves the exact draft/stage with explicit return. Session repair opens Settings for deliberate folder/provider selection instead of silently choosing Codex/first folder. Fixed existing runtimes remain immutable.
+
+
+## Slice 29: identity-safe Mission selection
+
+Baseline cbff13b, dependent on PR #60. Gate detail/presentation synchronously by requested mission ID; independently own inventory and selected-detail errors/loading. Clear the prior detail on refresh, ignore obsolete responses, show requested ID during loading/failure and offer Retry. Preserve main authority and navigation save guards.

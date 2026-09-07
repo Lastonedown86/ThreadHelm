@@ -27,6 +27,7 @@ import { createReconService, type ReconService } from './coordination/recon.js';
 import { deliverHandoff } from './coordination/delivery.js';
 import { createSupervisorService } from './coordination/supervisor.js';
 import { createMissionComposerService } from './coordination/mission-composer.js';
+import { createMissionRecipeService } from './coordination/mission-recipes.js';
 import { createRepoIdeasService } from './coordination/repo-ideas.js';
 import { requestClose, stopAllAndClose } from './lifecycle/close.js';
 import { listReadiness } from './providers/readiness.js';
@@ -52,6 +53,7 @@ export function createHandlers(ctx: Context): Handlers {
   ctx.coordinationBridge?.setSupervisorAuthority(supervisor);
   const missionComposer = ctx.missionComposer ?? createMissionComposerService(ctx, supervisor);
   ctx.missionComposer = missionComposer;
+  const missionRecipes = createMissionRecipeService(ctx);
   const repoIdeas = ctx.repoIdeas ?? createRepoIdeasService(ctx);
   ctx.repoIdeas = repoIdeas;
   const agentWizard = ctx.storage && !ctx.health.degraded ? startAgentWizard(ctx, profiles) : null;
@@ -63,6 +65,24 @@ export function createHandlers(ctx: Context): Handlers {
   };
   const recon = startRecon(ctx);
   return {
+    'missionRecipes.previewSource': (request) => missionRecipes.previewSource(request),
+    'missionRecipes.openEditor': (request) => missionRecipes.openEditor(request),
+    'missionRecipes.getEditor': (request) => missionRecipes.getEditor(request),
+    'missionRecipes.listEditors': (request) => missionRecipes.listEditors(request),
+    'missionRecipes.saveEditor': (request) => missionRecipes.saveEditor(request),
+    'missionRecipes.detachSource': (request) => missionRecipes.detachSource(request),
+    'missionRecipes.discardEditor': (request) => missionRecipes.discardEditor(request),
+    'missionRecipes.previewSave': (request) => missionRecipes.previewSave(request),
+    'missionRecipes.save': (request) => missionRecipes.save(request),
+    'missionRecipes.edit': (request) => missionRecipes.edit(request),
+    'missionRecipes.duplicate': (request) => missionRecipes.duplicate(request),
+    'missionRecipes.setEnabled': (request) => missionRecipes.setEnabled(request),
+    'missionRecipes.previewDelete': (request) => missionRecipes.previewDelete(request),
+    'missionRecipes.delete': (request) => missionRecipes.delete(request),
+    'missionRecipes.list': (request) => missionRecipes.list(request),
+    'missionRecipes.get': (request) => missionRecipes.get(request),
+    'missionRecipes.preview': (request) => missionRecipes.preview(request),
+    'missionRecipes.createDraft': (request) => missionRecipes.createDraft(request),
     'missions.eligibleSessions': () => supervisor.eligibleSessions(),
     'missions.preview': (request) => supervisor.preview(request),
     'missions.confirm': (request) => supervisor.confirm(request),

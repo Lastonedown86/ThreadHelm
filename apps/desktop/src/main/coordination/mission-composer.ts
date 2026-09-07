@@ -43,8 +43,10 @@ export interface MissionComposerService {
 
 /** Turns a partial draft into an exact envelope or names every missing path. */
 function authorityFields(fields: MissionComposerFields) {
-  const authority = { ...fields };
-  delete authority.repoIdeaSource;
+  const authority: Record<string, unknown> = {};
+  for (const key of Object.keys(MissionEnvelopeInput.shape)) {
+    if (Object.hasOwn(fields, key)) authority[key] = fields[key as keyof MissionComposerFields];
+  }
   return authority;
 }
 
@@ -127,6 +129,9 @@ export function createMissionComposerService(
           draftId: request.draftId,
           expectedVersion: request.expectedVersion,
           fieldValues: request.fieldValues,
+          ...(request.suggestedRoles === undefined
+            ? {}
+            : { suggestedRoles: request.suggestedRoles }),
           currentStage: request.currentStage,
           issueCodes: [],
           state: complete && request.currentStage === 'review' ? 'ready_for_review' : 'editing',

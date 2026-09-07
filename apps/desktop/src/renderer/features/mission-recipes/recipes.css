@@ -1,0 +1,37 @@
+.recipe-layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(0, 2fr);
+  gap: 1.5rem;
+}
+.recipe-layout > *,
+.recipe-workspace {
+  min-width: 0;
+}
+.recipe-list {
+  list-style: none;
+  padding: 0;
+}
+.recipe-list li {
+  margin-bottom: 1rem;
+  overflow-wrap: anywhere;
+}
+.recipe-workspace textarea {
+  width: 100%;
+  min-height: 4rem;
+  box-sizing: border-box;
+}
+.recipe-workspace select {
+  max-width: 100%;
+}
+.recipe-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.recipe-workspace .field {
+  margin-block: 0.8rem;
+}
+@media (max-width: 1100px) {
+  .recipe-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

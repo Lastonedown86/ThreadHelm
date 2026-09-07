@@ -1,0 +1,81 @@
+{
+  "recordedAt": "2026-09-07",
+  "evidenceSource": "Captured Playwright console output from the completed Windows run; transcribed without remeasurement.",
+  "command": "pnpm exec playwright test tests/e2e/mission-recipe-accessibility.spec.ts tests/e2e/mission-recipe-performance.spec.ts",
+  "result": "2 accessibility tests passed; performance test failed retained renderer working-set budget",
+  "machine": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "cpu": "AMD Ryzen 7 5700U with Radeon Graphics",
+    "ramBytes": 33700167680,
+    "powerScheme": "381b4222-f694-41f0-9685-ff5bb260df2e (Balanced)",
+    "viewport": { "width": 960, "height": 800 },
+    "performanceTextScalePercent": 100
+  },
+  "mainBuildSha256": "78d42949ead79252ef51ceb2644696016a3d4678a7c19eea68dc65a297a6f3a1",
+  "fixture": {
+    "recipeCount": 500,
+    "bundled": 3,
+    "personal": 497,
+    "includes": ["duplicate names", "disabled personal recipes"],
+    "unsupportedVersionRows": false,
+    "previewExpandedUnits": 64000,
+    "previewOutcomeUnits": 4000,
+    "previewChecklistUnitsIncludingNewline": 2000,
+    "previewSuggestedRoleUnits": 58000,
+    "previewVariableCount": 20,
+    "storage": "Isolated temporary app userData; seeded through normal recipe router authoring operations"
+  },
+  "openingsMs": [88.6851999999999, 48.08980000000156, 48.57760000000053, 51.27220000000307, 48.135400000002846, 49.337500000001455, 37.40620000000126, 34.85580000000118, 45.037899999999354, 42.61939999999959, 38.06289999999717, 46.214899999999034, 45.90549999999712, 45.88259999999718, 46.55080000000089, 47.30370000000039, 45.64039999999659, 46.945700000000215, 45.74359999999797, 55.459499999997206],
+  "coldFirstOpeningMs": 88.6851999999999,
+  "previewsMs": [62.399499999999534, 59.055599999999686, 58.66349999999875, 51.6807000000008, 55.9545999999973, 56.684400000001915, 56.242700000002515, 67.2439000000013, 52.980799999997544, 58.20060000000012, 55.03059999999823, 54.26650000000154, 59.16909999999916, 97.30359999999928, 88.00170000000071, 61.99629999999888, 53.49590000000171, 56.176799999997456, 52.9304000000011, 58.47869999999966],
+  "incompatiblePreviewMs": 56.054400000000896,
+  "rendererLongTasksMs": [],
+  "pagination": { "reachableRows": 500, "uniqueRows": 500, "maxMounted": 50 },
+  "memory": {
+    "baseline": {
+      "workingSetKiB": 96596,
+      "heap": { "usedSize": 4093060, "totalSize": 5505024, "embedderHeapUsedSize": 557840, "backingStorageSize": 1329836 }
+    },
+    "firstOpen": {
+      "workingSetKiB": 102912,
+      "heap": { "usedSize": 5911740, "totalSize": 7659520, "embedderHeapUsedSize": 3175064, "backingStorageSize": 1332031 }
+    },
+    "retainedAfter20CyclesAndControlledGc": {
+      "workingSetKiB": 124576,
+      "heap": { "usedSize": 5706416, "totalSize": 6873088, "embedderHeapUsedSize": 1515768, "backingStorageSize": 1330927 }
+    },
+    "firstOpenWorkingSetDeltaKiB": 6316,
+    "retainedWorkingSetDeltaKiB": 27980,
+    "retainedUsedHeapDeltaBytes": 1613356
+  },
+  "idle": { "seconds": 60, "recipeDomMutations": 0, "runningRecipeAnimations": 0, "ipcPollingInstrumented": false },
+  "budgets": {
+    "list": { "limitMs": 1000, "requiredPassingSamples": 19, "totalSamples": 20, "passingSamples": 20, "status": "passed" },
+    "preview": { "limitMs": 2000, "requiredPassingSamples": 19, "totalSamples": 20, "passingSamples": 20, "status": "passed" },
+    "mountedSummaryRows": { "limit": 50, "actual": 50, "status": "passed" },
+    "previewRendererTask": { "limitMs": 100, "observedLongTasks": 0, "status": "passed within PerformanceObserver coverage" },
+    "firstOpenWorkingSet": { "limitKiB": 65536, "actualDeltaKiB": 6316, "status": "passed" },
+    "retainedWorkingSet": { "originalLimitKiB": 10240, "actualDeltaKiB": 27980, "status": "failed", "targetRelaxed": false },
+    "idleDomAndAnimation": { "limitEvents": 0, "actualEvents": 0, "status": "observed within limit; assertion was after the failed memory assertion" },
+    "idlePolling": { "status": "unverified" }
+  },
+  "accessibility": {
+    "postFix100Percent": { "status": "passed", "durationSeconds": 4.8 },
+    "postFix200Percent": { "status": "passed", "durationSeconds": 4.6 },
+    "screenshotCaptureRecheck200Percent": { "status": "passed", "durationSeconds": 4.4 },
+    "screenshot": "test-results/recipe-accessibility-capture/mission-recipe-accessibili-3cf76-dal-focus-at-200-text-scale/keyboard-200.png",
+    "automatedCoverage": ["Actual Tab traversal", "Enter and Space activation", "starter fill and preview", "independent draft creation", "personal recipe save and edit", "preview heading focus", "modal focus trap", "Escape cancellation and return focus", "visible input focus", "reduced-motion media preference", "960x800 and 640x800 viewports", "100% and 200% CSS text scaling"],
+    "priorFailure": "Initial 200% run failed preview heading focus; root replaced pre-commit animation-frame focus with post-commit effects before the passing run.",
+    "rootScreenshotInspection": "Focus and actions reachable; navigation rail horizontal scrolling is inherited."
+  },
+  "limitations": [
+    "Retained renderer working set exceeds the original 10 MiB target. Working-set growth alone does not establish a JavaScript leak; used heap increased by approximately 1.54 MiB.",
+    "Unsupported-version recipe rows are not represented in this router-only performance fixture.",
+    "Idle instrumentation covers recipe DOM mutations and animations, not IPC polling. Polling needs separate source audit or router instrumentation.",
+    "Manual contrast verification, actual Windows OS text scaling, source-selection keyboard coverage and the five-person usability study remain separate acceptance work.",
+    "The test's final no-live-sessions assertion followed the failed memory assertion and was not reached. Passing accessibility runs did verify an empty live-session list; these fixture operations do not authorize provider runs.",
+    "PerformanceObserver reports long tasks of at least 50 ms; the recorded array was empty during the measured preview interval.",
+    "The persisted report is reconstructed from captured raw console evidence, not a new performance run."
+  ]
+}

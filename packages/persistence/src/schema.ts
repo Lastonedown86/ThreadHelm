@@ -4,6 +4,7 @@
  */
 
 import { V3_SUPERVISOR } from './supervisor-schema.js';
+import { RECIPE_TABLES, V6_MISSION_RECIPES } from './mission-recipe-schema.js';
 import {
   AccessMode,
   ActivityState,
@@ -34,7 +35,7 @@ import {
   WorkOutcome,
 } from '@threadhelm/contracts';
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 const inList = (values: readonly string[]): string =>
   `IN (${values.map((v) => `'${v}'`).join(', ')})`;
@@ -587,6 +588,7 @@ export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 3, sql: `${V3}\n${V3_AGENT_PROFILES}` },
   { version: 4, sql: V4_RECON_PROVENANCE },
   { version: 5, sql: V5_MISSION_COMPOSER },
+  { version: 6, sql: V6_MISSION_RECIPES },
 ];
 
 /** Additive slices intentionally delivered under the still-unreleased v3 schema. */
@@ -597,4 +599,5 @@ export const CURRENT_SCHEMA_EXTENSIONS: readonly { table: string; sql: string }[
   { table: 'agent_profile_export_intents', sql: V3_AGENT_EXPORT_INTENTS },
   { table: 'supervisor_missions', sql: V3_SUPERVISOR },
   { table: 'mission_composer_drafts', sql: V5_MISSION_COMPOSER },
+  ...RECIPE_TABLES,
 ];

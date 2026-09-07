@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   MissionComposerFields,
+  MissionDraftRecipeContext,
   ThreadHelmError,
   type MissionComposerDraftState,
   type MissionComposerStage,
@@ -25,6 +26,7 @@ export interface MissionComposerDraftSummary {
 export interface MissionComposerDraftDetail extends MissionComposerDraftSummary {
   fieldValues: MissionComposerFields;
   convertedMissionId: string | null;
+  recipeContext?: MissionDraftRecipeContext;
 }
 interface Row {
   id: string;
@@ -131,10 +133,16 @@ export class MissionComposerRepository {
 
   getDraft(draftId: string): MissionComposerDraftDetail {
     const row = this.row(draftId);
+    const context = this.db
+      .prepare('SELECT content FROM mission_draft_recipe_context WHERE draft_id=?')
+      .get(draftId) as { content: string } | undefined;
     return {
       ...this.summary(row),
       fieldValues: MissionComposerFields.parse(JSON.parse(row.field_values)),
       convertedMissionId: row.converted_mission_id,
+      ...(context
+        ? { recipeContext: MissionDraftRecipeContext.parse(JSON.parse(context.content)) }
+        : {}),
     };
   }
 
@@ -146,9 +154,36 @@ export class MissionComposerRepository {
     issueCodes: string[];
     state: 'editing' | 'ready_for_review';
     updatedAt: string;
+    suggestedRoles?: string[];
   }): { version: number } {
     return this.db.transaction(() => {
       const row = this.mutable(input.draftId, input.expectedVersion);
+      const savedContext = this.getDraft(input.draftId).recipeContext;
+      const roleText = input.suggestedRoles ?? savedContext?.suggestedRoles;
+      if (
+        roleText &&
+        (input.fieldValues.objective ?? '').length +
+          (input.fieldValues.completionEvidence ?? '').length +
+          roleText.join('').length >
+          64000
+      )
+        throw new ThreadHelmError('INVALID_REQUEST', 'EXPANDED_LIMIT');
+      if (input.suggestedRoles !== undefined) {
+        const context = savedContext;
+        if (!context) throw new ThreadHelmError('INVALID_REQUEST');
+        const next = MissionDraftRecipeContext.parse({
+          ...context,
+          suggestedRoles: input.suggestedRoles,
+        });
+        const aggregate =
+          (input.fieldValues.objective ?? '').length +
+          (input.fieldValues.completionEvidence ?? '').length +
+          next.suggestedRoles.join('').length;
+        if (aggregate > 64000) throw new ThreadHelmError('INVALID_REQUEST', 'EXPANDED_LIMIT');
+        this.db
+          .prepare('UPDATE mission_draft_recipe_context SET content=? WHERE draft_id=?')
+          .run(JSON.stringify(next), input.draftId);
+      }
       if (!STAGES.includes(input.currentStage)) throw new ThreadHelmError('INVALID_REQUEST');
       this.db
         .prepare(
@@ -185,6 +220,9 @@ export class MissionComposerRepository {
   deleteDraft(input: { draftId: string; expectedVersion: number; deletedAt: string }): void {
     this.db.transaction(() => {
       this.mutable(input.draftId, input.expectedVersion);
+      this.db
+        .prepare('DELETE FROM mission_draft_recipe_context WHERE draft_id=?')
+        .run(input.draftId);
       this.db
         .prepare(
           "UPDATE mission_composer_drafts SET state = 'deleted', field_values = '{}', issue_codes = '[]', deleted_at = ?, updated_at = ?, version = version + 1 WHERE id = ?",

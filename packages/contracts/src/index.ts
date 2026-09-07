@@ -11,6 +11,8 @@ import { Bytes, Uuid } from './primitives.js';
 export { Bytes, Uuid } from './primitives.js';
 import { MAX_COLUMNS, MAX_ROWS, MAX_INPUT_BYTES } from './limits.js';
 export * from './limits.js';
+export * from './mission-recipes.js';
+import { missionRecipeOperations, MissionDraftRecipeContext } from './mission-recipes.js';
 export { OutputFrame, OutputAck, OutputTruncated, StreamFrame } from './stream.js';
 
 import type { EventName, OperationName } from './protocol.js';
@@ -2107,6 +2109,7 @@ export const MissionComposerDraftDetailView = strictObject({
   ...MissionComposerDraftSummaryView.shape,
   fieldValues: MissionComposerFields,
   convertedMissionId: Uuid.nullable(),
+  recipeContext: MissionDraftRecipeContext.optional(),
 });
 export type MissionComposerDraftDetailView = z.infer<typeof MissionComposerDraftDetailView>;
 export const MissionComposerSaveReceipt = strictObject({
@@ -2369,6 +2372,7 @@ const MissionConfirmInput = strictObject({
 const none = z.undefined();
 
 export const operations = {
+  ...missionRecipeOperations,
   'missions.eligibleSessions': {
     request: none,
     response: z.array(MissionEligibleSessionView).max(500),
@@ -2445,6 +2449,7 @@ export const operations = {
       expectedVersion: z.number().int().positive(),
       fieldValues: MissionComposerFields,
       currentStage: MissionComposerStage,
+      suggestedRoles: z.array(z.string().max(64000).refine(isSafeAuthoredText)).max(12).optional(),
     }),
     response: MissionComposerSaveReceipt,
   },
@@ -2896,6 +2901,13 @@ export type OperationResponse<N extends OperationName> = z.output<
 export const events = {
   'mission.changed': MissionChangedEvent,
   'missionComposer.changed': MissionComposerChangedEvent,
+  'missionRecipes.changed': z.strictObject({
+    type: z.literal('missionRecipes.changed'),
+    recipeId: Uuid,
+    version: z.number().int().positive(),
+    kind: z.enum(['save', 'setEnabled', 'delete']),
+    occurredAt: Timestamp,
+  }),
   'workspace.changed': ApprovedWorkspaceView,
   'provider.readinessChanged': ReadinessView,
   'session.changed': z.object({

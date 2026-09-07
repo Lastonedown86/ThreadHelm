@@ -21,6 +21,37 @@ import {
 import { createProfileService } from '../../apps/desktop/src/main/coordination/profiles.js';
 
 describe('agent wizard contracts', () => {
+  it('projects saved names consistently without exposing unrelated fields or event content', async () => {
+    const world = createWorld();
+    const draft = await world.ok<AgentWizardDraftDetailView>('agentWizard.createDraft', {
+      source: { kind: 'blank' },
+    });
+    expect(draft.displayName).toBe('');
+    const saved = await world.ok<AgentWizardDraftDetailView>('agentWizard.updateStep', {
+      draftId: draft.draftId,
+      version: draft.version,
+      step: 'identity',
+      fields: {
+        name: '  Named\n  agent  ',
+        description: 'Private authored description',
+        author: 'Owner',
+      },
+    });
+    expect(saved.displayName).toBe('Named agent');
+    const listed = await world.ok<{ drafts: { draftId: string; displayName: string }[] }>(
+      'agentWizard.listDrafts',
+    );
+    expect(listed.drafts[0]).toMatchObject({ draftId: draft.draftId, displayName: 'Named agent' });
+    expect(JSON.stringify(listed)).not.toContain('Private authored description');
+    expect(JSON.stringify(eventsNamed(world, 'agentWizard.changed'))).not.toContain('Named');
+    const long = await world.ok<AgentWizardDraftDetailView>('agentWizard.updateStep', {
+      draftId: draft.draftId,
+      version: saved.version,
+      step: 'identity',
+      fields: { name: 'N'.repeat(200) },
+    });
+    expect(long.displayName).toHaveLength(200);
+  });
   it('upgrades an old bundled database and completes its pinned draft without changing historical content', () => {
     const world = createWorld({ noStorage: true });
     const storage = openStorage(':memory:');

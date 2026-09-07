@@ -170,6 +170,7 @@ function manifestOf(
 function summaryOfDraft(draft: TemplateDraftDetail) {
   return AgentWizardDraftSummaryView.parse({
     draftId: draft.draftId,
+    displayName: draft.displayName,
     version: draft.version,
     state: draft.state,
     currentStep: draft.currentStep,

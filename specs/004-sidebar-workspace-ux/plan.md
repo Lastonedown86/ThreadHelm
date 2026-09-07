@@ -1,6 +1,6 @@
 # Implementation Plan: Edit preservation and navigation consistency
 
-Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-22 are merged; slice 23 is locally verified pending merge; slices 24-33 are pending. Historical checkpoints below retain their original scope.
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-23 are merged; slice 24 is locally verified pending merge; slices 25-33 are pending. Historical checkpoints below retain their original scope.
 
 Branch: `codex/audit-sidebar-mission-functionality`. Date: 2026-09-05. [Specification](spec.md).
 
@@ -177,3 +177,7 @@ Owner accepted next slice after PR #53 merged at `dc60e3a`. Tabs show provider, 
 Owner requested the next slice after PR #54 merged at 3e3accc. MIS-007/015 and NAV-004: derive a bounded saved objective title in the existing draft summary contract, show short IDs for duplicates, selected state, stage and save time. Add row discard through existing version-bound preview/confirm operations in a native modal; flush active edits first, block duplicate submission, retain failures and require fresh review. Cancel writes nothing. Deleting the active draft leaves its editor only after success. Cap guidance focuses the existing draft inventory. Bound mission/draft lists and the narrow rail so 50 missions plus 20 drafts cannot displace the workspace entirely. No migration, dependency, polling, process authority or external provider run. Constitution PASS; checklist 16/16; selector restored to Feature 002; no hooks.
 
 Verify red-first identity and cap recovery, exact deleted/saved IDs and restart, duplicates/long names, stale/failed/pending/cancelled requests, keyboard navigation and narrow/200% layout. Use main-owned fixture contracts for seeding and independent readback.
+
+## Slice 24: saved agent draft identity (TPL-001)
+
+Owner requested the next slice after PR #55 merged at 38aee7b. Add an explicit bounded displayName to AgentWizardDraftSummaryView, derived from the saved name and shared by list/detail receipts. Renderer uses the saved name or Unnamed agent, human step labels, last-updated time and secondary short/full identity. Preserve all draft types, exact-ID resume, version guards, open-draft cap and content-free events. No bulk detail fetch, migration, dependency, polling or provider run. Constitution PASS; requirements 16/16; selector remains Feature 002; no hooks. Verify duplicates, blank/incomplete and long names, exact resumed fields, save/rename, cancellation and restart through real UI/main readback.

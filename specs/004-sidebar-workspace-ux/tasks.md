@@ -266,3 +266,13 @@ Dependencies: T109 -> T110 -> T111 -> T112 -> T113. Next: slice 23, Mission draf
 - [x] T118 Complete checks, evidence/register/roadmap and open PR.
 
 Dependencies: T114 -> T115 -> T116 -> T117 -> T118. Next: slice 24, saved template/agent draft identity.
+
+## Slice 24: saved agent draft identity
+
+- [x] T119 Verify merged baseline and record bounded summary contract.
+- [x] T120 Reproduce unnamed inventory with exact-resume regression.
+- [x] T121 Add main-owned summary name and readable renderer identity.
+- [x] T122 Verify duplicates, incomplete names, cancellation, save and restart.
+- [x] T123 Complete checks, evidence/roadmap/register and open PR.
+
+Dependencies: T119 -> T120 -> T121 -> T122 -> T123. Next: slice 25, repository ideas and source context.

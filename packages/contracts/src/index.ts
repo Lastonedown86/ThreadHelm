@@ -1683,6 +1683,7 @@ const WizardFieldErrors = z
 
 export const AgentWizardDraftSummaryView = strictObject({
   draftId: Uuid,
+  displayName: z.string().max(200),
   version: z.number().int().positive(),
   state: AgentWizardDraftState,
   currentStep: AgentWizardStep,

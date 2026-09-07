@@ -288,3 +288,56 @@
     display: flex;
   }
 }
+
+.mission-rail-list {
+  max-height: 25vh;
+  overflow-y: auto;
+}
+.mission-rail-drafts > .list {
+  max-height: 24vh;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+.mission-rail-drafts li {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.mission-rail-drafts button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.mission-rail-drafts button:first-child {
+  display: block;
+  width: 100%;
+}
+.mission-rail-drafts small {
+  display: block;
+}
+.mission-rail-drafts button[aria-current] {
+  border-color: var(--mission-steel);
+  background: var(--mission-paper);
+}
+.draft-discard-identity {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+@media (max-width: 700px) {
+  .mission-shell-regions {
+    grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  }
+  .mission-shell-rail {
+    max-height: 45vh;
+    overflow: auto;
+  }
+  .mission-rail-drafts > .list {
+    max-height: 18vh;
+  }
+}
+.mission-rail-drafts strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}

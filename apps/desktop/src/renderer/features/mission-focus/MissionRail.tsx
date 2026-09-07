@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef, type KeyboardEvent } from 'react';
 import type { MissionComposerDraftSummaryView, MissionSummaryView } from '@threadhelm/contracts';
 import { relativeTime, STAGE_LABEL } from '../mission-composer/composer-fields.js';
 import { missionTitle } from './mission-presentation.js';
@@ -10,7 +10,11 @@ export interface MissionRailProps {
   onSelect(missionId: string): void | Promise<boolean>;
   onCreate(): void;
   drafts: MissionComposerDraftSummaryView[];
+  draftLoadError: boolean;
+  onRetryDrafts(): void;
   onResumeDraft(draftId: string): void;
+  selectedDraftId: string | null;
+  onDiscardDraft(draftId: string): void;
 }
 
 function focusMissionHeading() {
@@ -26,10 +30,21 @@ export function MissionRail({
   onSelect,
   onCreate,
   drafts,
+  draftLoadError,
+  onRetryDrafts,
   onResumeDraft,
+  selectedDraftId,
+  onDiscardDraft,
 }: MissionRailProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const ids = missions.map((mission) => mission.id);
+  useEffect(() => {
+    if (document.activeElement === listRef.current) {
+      listRef.current
+        ?.querySelector('[aria-selected="true"]')
+        ?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [selectedMissionId]);
 
   const activate = (missionId: string) => {
     void Promise.resolve(onSelect(missionId)).then((accepted) => {
@@ -133,18 +148,47 @@ export function MissionRail({
           );
         })}
       </ul>
+      {draftLoadError ? (
+        <div role="alert">
+          <p>Drafts could not be refreshed. Any rows shown are from the last successful read.</p>
+          <button type="button" onClick={onRetryDrafts}>
+            Retry drafts
+          </button>
+        </div>
+      ) : null}
       {drafts.length ? (
         <details className="mission-rail-drafts" open>
           <summary>Drafts ({drafts.length})</summary>
+          {drafts.length >= 20 ? (
+            <p role="status">
+              All 20 draft slots are in use. Resume a draft to finish it, or discard one below
+              before creating another.
+            </p>
+          ) : null}
           <ul className="list">
             {drafts.map((draft) => (
-              <li key={draft.draftId}>
+              <li key={draft.draftId} id={`mission-draft-${draft.draftId}`}>
                 <button
                   type="button"
                   className="small"
+                  title={draft.title || 'Untitled mission draft'}
+                  aria-current={selectedDraftId === draft.draftId ? 'true' : undefined}
+                  aria-label={`Resume draft · ${STAGE_LABEL[draft.currentStage]} · ${draft.title || 'Untitled mission draft'} · ${draft.draftId}`}
                   onClick={() => onResumeDraft(draft.draftId)}
                 >
-                  Resume draft · {STAGE_LABEL[draft.currentStage]} · {relativeTime(draft.updatedAt)}
+                  <strong>{draft.title || 'Untitled mission draft'}</strong>
+                  <small>
+                    {STAGE_LABEL[draft.currentStage]} · {relativeTime(draft.updatedAt)} ·{' '}
+                    {draft.draftId.slice(0, 8)}
+                  </small>
+                </button>
+                <button
+                  type="button"
+                  className="small"
+                  aria-label={`Discard draft · ${draft.title || 'Untitled mission draft'} · ${draft.draftId}`}
+                  onClick={() => onDiscardDraft(draft.draftId)}
+                >
+                  Discard…
                 </button>
               </li>
             ))}

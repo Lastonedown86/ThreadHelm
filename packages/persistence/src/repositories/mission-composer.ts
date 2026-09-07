@@ -13,6 +13,7 @@ const STAGES: readonly MissionComposerStage[] = ['outcome', 'crew', 'access', 'r
 
 export interface MissionComposerDraftSummary {
   draftId: string;
+  title: string;
   version: number;
   state: MissionComposerDraftState;
   currentStage: MissionComposerStage;
@@ -56,6 +57,10 @@ export class MissionComposerRepository {
   private summary(row: Row): MissionComposerDraftSummary {
     return {
       draftId: row.id,
+      title: (MissionComposerFields.parse(JSON.parse(row.field_values)).objective ?? '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .slice(0, 160),
       version: row.version,
       state: row.state,
       currentStage: row.current_stage,

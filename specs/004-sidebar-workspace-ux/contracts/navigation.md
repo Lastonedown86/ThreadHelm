@@ -96,3 +96,9 @@ Worker folder choices assign membership. Read/Write is displayed once per folder
 ## SES-004 expired/rejected launch review
 
 An expired or rejected review cannot be submitted again. Refresh review preserves model/custom model, effort, work type, reason, permission/allowlist and bounds, requests fresh authority, and clears boundary confirmation. Ordinary input changes still refresh automatically without an added confirmation step. Launch requires matching current inputs, an unexpired ready review and explicit acknowledgement. A pending launch cannot be duplicated or dismissed as though cancelled. Late preview responses after replacement/cancel are ignored.
+
+## Slice 23 summary and discard contract
+
+Mission draft summaries now explicitly carry a derived `title`: the first 160 characters of the trimmed, whitespace-normalized saved objective. Empty objectives return an empty title for the renderer's Untitled mission draft fallback. Full objective and other authored fields remain in detail; change events stay content-free. This is an intentional summary response addition, not a migration or new write authority. The existing draft ID/version/stage and 20-open-draft cap remain authoritative.
+
+Normal row discard flushes active edits before opening a native modal. The modal reads current detail and gets a version-bound discard token. Cancellation before submission has no effects; pending confirm disables dismissal and duplicate submission. Rejected confirmation clears its token and requires Review again. Only successful confirmation removes the exact row and closes the matching editor. Late preview results are ignored after cancellation. Failed inventory refresh retains prior rows with explicit Retry drafts.

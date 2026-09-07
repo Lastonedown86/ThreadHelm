@@ -256,3 +256,13 @@ Dependencies: T104 -> T105 -> T106 -> T107 -> T108. Next: slice 22, SES-003 and 
 - [x] T113 Complete static checks, audit/roadmap/evidence and PR.
 
 Dependencies: T109 -> T110 -> T111 -> T112 -> T113. Next: slice 23, Mission draft inventory/management.
+
+## Slice 23: Mission draft inventory and management
+
+- [x] T114 Verify merged baseline and record bounded draft interaction/authority contract.
+- [x] T115 Reproduce missing identity and normal discard using Electron regression.
+- [x] T116 Implement saved summaries, exact discard recovery and bounded rail.
+- [x] T117 Verify capacity, saved/deleted IDs, restart, failure and dense layout.
+- [x] T118 Complete checks, evidence/register/roadmap and open PR.
+
+Dependencies: T114 -> T115 -> T116 -> T117 -> T118. Next: slice 24, saved template/agent draft identity.

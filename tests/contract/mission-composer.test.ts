@@ -14,14 +14,17 @@ describe('mission composer drafts', () => {
   let fixture: Awaited<ReturnType<typeof supervisorWorld>> | undefined;
   afterEach(() => fixture?.cleanup());
 
-  it('creates, saves with expected versions and lists without authored text', async () => {
+  it('creates, saves with expected versions and lists only the bounded objective title', async () => {
     const world = createWorld();
     const draft = await world.ok<MissionComposerDraftDetailView>('missionComposer.createDraft');
     expect(draft).toMatchObject({ version: 1, state: 'editing', currentStage: 'outcome' });
     const saved = await world.ok<MissionComposerSaveReceipt>('missionComposer.updateDraft', {
       draftId: draft.draftId,
       expectedVersion: 1,
-      fieldValues: { objective: 'secret objective' },
+      fieldValues: {
+        objective: 'secret objective',
+        completionEvidence: 'private completion evidence',
+      },
       currentStage: 'crew',
     });
     expect(saved.version).toBe(2);
@@ -35,7 +38,8 @@ describe('mission composer drafts', () => {
     if (!stale.ok) expect(stale.error.code).toBe('MISSION_DRAFT_STALE');
     const listed = await world.ok<{ drafts: unknown[] }>('missionComposer.listDrafts');
     expect(listed.drafts).toHaveLength(1);
-    expect(JSON.stringify(listed)).not.toContain('secret');
+    expect(listed.drafts[0]).toMatchObject({ draftId: draft.draftId, title: 'secret objective' });
+    expect(JSON.stringify(listed)).not.toContain('private completion evidence');
     expect(
       JSON.stringify(world.events.filter((e) => e.name === 'missionComposer.changed')),
     ).not.toContain('secret');

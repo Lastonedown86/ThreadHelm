@@ -277,3 +277,7 @@ PR #52 was already merged at `3b71d9f` when owner requested merge and next slice
 ## Slice 22 disposition: SES-003 and remaining SES-005
 
 PR #53 merged at `dc60e3a`. Owner accepted slice 22: provider/workspace/short-ID tabs, exact full accessible identity, roving keyboard navigation and associated terminal panels; loaded/lazy terminal IDs are session-specific. Locally verified pending merge; the earlier single-main fix is preserved. No main/process/schema changes. See [verification](verification.md) for runtime evidence and prior hosted CI limitations. Next after merge: slice 23, Mission draft inventory/management.
+
+## Slice 23 checkpoint: Mission draft inventory and management
+
+PR #54 merged at `3e3accc` with Windows x64/arm64 CI, installer acceptance and CodeQL green. Owner requested slice 23 (MIS-007/015, NAV-004). Saved objective summaries, exact selected/resume identity, normal version-bound discard/review recovery and bounded mission/draft inventory are implemented and locally verified pending merge. The 20-draft limit remains. Independent readback verifies exact neighbors, deletion, capacity recovery and restart; a 50-mission/20-draft fixture verifies narrow enlarged-text navigation. See [verification](verification.md). Other Mission findings retain their original status. Next after merge: slice 24, TPL-001; 10 roadmap slices remain after this merge.

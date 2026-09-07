@@ -211,3 +211,8 @@ Baseline cbff13b, dependent on PR #60. Gate detail/presentation synchronously by
 ## Slice 30: keyboard repair and modal consistency
 
 Baseline 2a12603, dependent on PR #61. Preserve blocked Continue and offer reachable Fix missing field, focusing/announcing the exact missing control, opening enclosing disclosures and using prerequisite buttons when inputs do not exist yet. Replace the composer failure-path discard role dialog with shared native modal, Escape/focus restoration and single-flight disabled confirmation. Slice 29 already repaired loading-heading focus.
+
+
+## Slice 31: AGT-003 reflow revalidation
+
+Baseline 4a8a19d, dependent on PR #62. Measure inner Agents containers with long saved profile/draft names at 960x800/200%, then widen to 680/960/1280 at 100/200%. Existing merged layout may already resolve the old observation; add no CSS without a reproduced defect. Include native draft editor, exact save readback and shared embedded Sessions setup.

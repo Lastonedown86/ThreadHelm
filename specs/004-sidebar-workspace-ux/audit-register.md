@@ -314,3 +314,8 @@ Dependent on PR #60. Slow/failed selection shows the requested ID and hides old 
 ## Slice 30: MIS-012 and remaining MIS-014
 
 Dependent on PR #61. Reachable field repair and native composer discard modal implemented with keyboard/focus and exact deletion evidence. Loading navigation focus was verified in slice 29; prior single-main fix retained. Locally verified pending merge. Three planned slices remain: Agents reflow, coverage reconciliation and acceptance.
+
+
+## Slice 31: AGT-003 revalidated
+
+Dependent on PR #62. Historical Agents inner overflow no longer reproduces: 680/960/1280 at 100/200% fit long profile/draft inventory and detail, with the draft editor and shared Sessions setup also checked. No CSS change required. Exact save/identity and negative/restart regressions passed; see verification. Two planned slices remain: coverage reconciliation and cross-section acceptance.

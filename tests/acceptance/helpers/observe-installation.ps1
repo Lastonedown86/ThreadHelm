@@ -5,7 +5,13 @@ $registrations = @()
 foreach ($registryRoot in @('HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall', 'HKCU:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall')) {
     if (Test-Path -LiteralPath $registryRoot) {
         foreach ($key in Get-ChildItem -LiteralPath $registryRoot) {
-            $value = Get-ItemProperty -LiteralPath $key.PSPath
+            try {
+                $value = Get-ItemProperty -LiteralPath $key.PSPath
+            } catch [System.Management.Automation.ItemNotFoundException] {
+                # The uninstaller can remove a key between enumeration and read.
+                # It is absent in this observation; other read failures remain fatal.
+                continue
+            }
             if ($key.PSChildName -eq $AppGuid.ToString() -or $key.PSChildName -eq 'ThreadHelm' -or $value.DisplayName -eq 'ThreadHelm') {
                 $registrations += @{ key = $key.Name; version = $value.DisplayVersion; uninstall = $value.UninstallString }
             }

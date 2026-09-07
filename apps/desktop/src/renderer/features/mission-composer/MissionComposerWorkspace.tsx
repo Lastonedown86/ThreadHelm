@@ -307,7 +307,30 @@ export function MissionComposerWorkspace({
         {STAGE_HEADING[stage]}
       </h1>
       {loadError ? <p className="notice">{reasonLabel(errorCode(loadError))}</p> : null}
-      <div ref={body}>
+      <div
+        ref={body}
+        onFocusCapture={(event) => {
+          // Native Tab scrolling does not account for the sticky action bar.
+          // Keep the focused field in the usable area above its current height,
+          // including when enlarged text wraps the actions into several rows.
+          const target = event.target;
+          const scroller = event.currentTarget.closest<HTMLElement>('.mission-shell-workspace');
+          if (
+            !(target instanceof HTMLElement) ||
+            !target.matches(':focus-visible') ||
+            !scroller ||
+            !actionHost
+          )
+            return;
+          const frame = scroller.getBoundingClientRect();
+          const rect = target.getBoundingClientRect();
+          const top = frame.top + 8;
+          const bottom = Math.min(frame.bottom, actionHost.getBoundingClientRect().top) - 8;
+          if (bottom > top && (rect.top < top || rect.bottom > bottom)) {
+            scroller.scrollTop += rect.top - top - Math.max(0, (bottom - top - rect.height) / 2);
+          }
+        }}
+      >
         {stage === 'outcome' ? (
           <OutcomeStage fields={draft.fields} setFields={draft.setFields} invalid={invalid} />
         ) : null}

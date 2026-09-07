@@ -42,8 +42,14 @@ export interface MissionComposerService {
 }
 
 /** Turns a partial draft into an exact envelope or names every missing path. */
+function authorityFields(fields: MissionComposerFields) {
+  const authority = { ...fields };
+  delete authority.repoIdeaSource;
+  return authority;
+}
+
 function envelopeOf(fields: MissionComposerFields): MissionEnvelopeInput {
-  const parsed = MissionEnvelopeInput.safeParse(fields);
+  const parsed = MissionEnvelopeInput.safeParse(authorityFields(fields));
   if (parsed.success) return parsed.data;
   const paths = [...new Set(parsed.error.issues.map((issue) => issue.path.join('.')))];
   throw new ThreadHelmError('INVALID_REQUEST', 'The draft is not complete.', {
@@ -114,7 +120,7 @@ export function createMissionComposerService(
       return detail(draftId);
     },
     updateDraft(request) {
-      const complete = MissionEnvelopeInput.safeParse(request.fieldValues).success;
+      const complete = MissionEnvelopeInput.safeParse(authorityFields(request.fieldValues)).success;
       let version: number;
       try {
         version = repo().missionComposer.updateDraft({

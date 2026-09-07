@@ -1,6 +1,6 @@
 # Implementation Plan: Edit preservation and navigation consistency
 
-Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-23 are merged; slice 24 is locally verified pending merge; slices 25-33 are pending. Historical checkpoints below retain their original scope.
+Current sequence: [completion roadmap](completion-roadmap.md), based on merged PR #50. Slices 1-19 are merged; slices 20-24 are merged; slice 25 is locally verified pending merge; slices 26-33 are pending. Historical checkpoints below retain their original scope.
 
 Branch: `codex/audit-sidebar-mission-functionality`. Date: 2026-09-05. [Specification](spec.md).
 
@@ -181,3 +181,9 @@ Verify red-first identity and cap recovery, exact deleted/saved IDs and restart,
 ## Slice 24: saved agent draft identity (TPL-001)
 
 Owner requested the next slice after PR #55 merged at 38aee7b. Add an explicit bounded displayName to AgentWizardDraftSummaryView, derived from the saved name and shared by list/detail receipts. Renderer uses the saved name or Unnamed agent, human step labels, last-updated time and secondary short/full identity. Preserve all draft types, exact-ID resume, version guards, open-draft cap and content-free events. No bulk detail fetch, migration, dependency, polling or provider run. Constitution PASS; requirements 16/16; selector remains Feature 002; no hooks. Verify duplicates, blank/incomplete and long names, exact resumed fields, save/rename, cancellation and restart through real UI/main readback.
+
+## Slice 25: repository ideas and source context (MIS-006)
+
+Owner requested next slice after PR #56 merged at 0d82f8e. Bind ideas to exact workspace/provider inputs; invalidate on changes/revocation and ignore late results/unmount. Keep one generation request in flight; changing selection does not claim to cancel a provider process. Label automatic provider and provider-default model/effort accurately. Picking saves bounded repoIdeaSource context (workspace ID/path, provider ID and idea title) alongside editable objective/proof. Show that context in Outcome on resume/restart; it grants no folder access and is omitted from the mission authority envelope. No migration, dependency, polling, provider execution or permission changes. Constitution PASS; requirements 16/16; Feature 002 selector preserved; no hooks.
+
+Test baseline stale selection, controlled delayed generation/input changes, saved source readback/restart, revoked folder and unchanged mission preview/confirmation authority. External provider execution is replaced with isolated test hooks.

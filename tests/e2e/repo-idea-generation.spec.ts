@@ -75,7 +75,7 @@ test('generating ideas and picking one pre-fills Outcome', async () => {
       .getByRole('combobox', { name: 'Repo', exact: true })
       .selectOption({ label: displayPath });
     await expect(
-      page.getByRole('combobox', { name: 'Provider and model', exact: true }),
+      page.getByRole('combobox', { name: 'Generation provider', exact: true }),
     ).toHaveValue('');
     await expect(generate).toBeEnabled();
     await generate.click();

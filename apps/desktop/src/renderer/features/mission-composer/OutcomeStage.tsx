@@ -15,6 +15,19 @@ export function OutcomeStage({ fields, setFields, invalid }: StageProps) {
   const evidenceHintId = useId();
   return (
     <div className="composer-stage-body">
+      {fields.repoIdeaSource ? (
+        <aside aria-label="Idea source" className="composer-notice repo-idea-source">
+          <strong>Idea source: {fields.repoIdeaSource.ideaTitle}</strong>
+          <p className="draft-discard-identity">{fields.repoIdeaSource.workspacePath}</p>
+          <p>
+            {fields.repoIdeaSource.providerId === 'codex-cli' ? 'Codex CLI' : 'Claude Code'} ·
+            provider default model and effort.
+          </p>
+          <p>
+            Saved source context only. Choose mission members and review folder access separately.
+          </p>
+        </aside>
+      ) : null}
       <div className="field">
         <label htmlFor={objectiveId}>Finish line</label>
         <span className="hint" id={objectiveHintId}>

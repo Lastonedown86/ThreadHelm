@@ -285,3 +285,7 @@ PR #54 merged at `3e3accc` with Windows x64/arm64 CI, installer acceptance and C
 ## Slice 24: TPL-001 saved agent draft identity
 
 PR #55 merged at `38aee7b`. Owner accepted the next slice. Agent draft list/detail summaries now expose a derived saved display name, with Unnamed agent fallback, human step/state labels, last-updated metadata and secondary IDs. Main reads supply the name; the renderer does not fetch every draft detail. Exact-ID resume, version guards, cap and separate Mission draft storage remain unchanged. Locally verified pending PR merge; see [verification](verification.md). Next: slice 25, MIS-006. Nine planned slices remain after slice 24 merges; A05's broader action matrix still has its recorded gaps.
+
+## Slice 25: MIS-006 repository idea context
+
+PR #56 merged at `0d82f8e`. Owner accepted slice 25. Ideas now invalidate on repository/provider change and approval revocation; late results cannot reappear under newer inputs. Chosen source context is saved and shown on Outcome after restart, separate from mission authority. Automatic/default provider copy reflects actual selection behavior. Locally verified pending merge; see [verification](verification.md). Next: slice 26, Mission entry/close/review hierarchy; eight roadmap slices remain after slice 25 merges. Broader A02 matrix gaps retain their own scope.

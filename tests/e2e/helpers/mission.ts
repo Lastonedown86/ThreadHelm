@@ -170,6 +170,8 @@ export async function composeMissionViaUi(app: LaunchedApp, dirs: string[]) {
   await expect(page.locator('.composer-state.ready')).toBeVisible();
   await page.getByRole('checkbox', { name: 'I reviewed this exact mission authority' }).check();
   await page.getByRole('button', { name: 'Start mission', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Mission detail', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'View full history…', exact: true }).click();
   const detail = page.getByRole('dialog', { name: 'Mission detail', exact: true });
   await expect(detail).toBeVisible();
   return { detail, supervisorId };

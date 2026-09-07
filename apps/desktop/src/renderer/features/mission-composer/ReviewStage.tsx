@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type {
   MissionDetailView,
   MissionPreviewView,
@@ -24,6 +25,8 @@ export function ReviewStage({
   onStarted,
   onGoTo,
   onAnnounce,
+  actionHost,
+  onBusyChange,
 }: {
   draftId: string;
   version(): number;
@@ -33,6 +36,8 @@ export function ReviewStage({
   onStarted(mission: MissionDetailView): void;
   onGoTo(stage: Stage): void;
   onAnnounce(message: string): void;
+  actionHost: HTMLDivElement | null;
+  onBusyChange(busy: boolean): void;
 }) {
   const { state, actions } = useStore();
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -42,6 +47,10 @@ export function ReviewStage({
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const expiry = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    onBusyChange(busy);
+    return () => onBusyChange(false);
+  }, [busy, onBusyChange]);
 
   const checkWorkers = async () => {
     // Review can mount before the parent roster loads. Resolve both inputs here
@@ -284,16 +293,19 @@ export function ReviewStage({
             />
             I reviewed this exact mission authority
           </label>
-          <div className="mission-action-row">
-            <button
-              type="button"
-              className="primary"
-              disabled={status !== 'ready' || !confirmed || busy || state.storageDegraded}
-              onClick={() => void start()}
-            >
-              {isRevision ? 'Apply revision' : 'Start mission'}
-            </button>
-          </div>
+          {actionHost
+            ? createPortal(
+                <button
+                  type="button"
+                  className="primary"
+                  disabled={status !== 'ready' || !confirmed || busy || state.storageDegraded}
+                  onClick={() => void start()}
+                >
+                  {isRevision ? 'Apply revision' : 'Start mission'}
+                </button>,
+                actionHost,
+              )
+            : null}
         </>
       ) : null}
     </div>

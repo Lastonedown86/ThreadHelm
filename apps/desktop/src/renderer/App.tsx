@@ -240,7 +240,9 @@ function Shell() {
   };
 
   const contextContent =
-    missionSelected && composerDraftId && composerState ? (
+    missionSelected && pickingRepo ? (
+      <ComposerContext stage="outcome" workers={[]} entry />
+    ) : missionSelected && composerDraftId && composerState ? (
       <ComposerContext stage={composerState.stage} workers={composerState.workers} />
     ) : missionSelected && missionView.kind !== 'mission' ? (
       <MissionContextFrame heading={pickingRepo ? 'New mission' : 'Mission draft'}>
@@ -336,7 +338,7 @@ function Shell() {
               onStarted={(mission) => {
                 showMission();
                 actions.selectMission(mission.id);
-                setDetailMissionId(mission.id);
+                setDetailMissionId(null);
               }}
               onState={setComposerState}
               onFlushReady={setComposerFlush}

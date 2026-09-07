@@ -24,7 +24,6 @@ test('mission creation is keyboard accessible and explains an empty roster', asy
       app.page.getByRole('button', { name: 'Continue to access and limits', exact: true }),
     ).toBeDisabled();
     await app.page.getByRole('button', { name: 'Close', exact: true }).click();
-    await app.page.getByRole('button', { name: 'Close composer', exact: true }).click();
     await expect(app.page.getByRole('button', { name: 'New mission…', exact: true })).toBeVisible();
   } finally {
     await teardown(app);

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { OperationResponse } from '@threadhelm/contracts';
 import { launchApp } from './helpers/app.js';
 import { missionProfile, missionSession } from './helpers/mission.js';
 import { launchWithFixtures, newMissionViaUi, teardown, tempWorkspace } from './helpers/ui.js';
@@ -34,9 +35,6 @@ test('new mission opens the guided composer in the workspace and autosaves the o
     await expect(next).toBeEnabled();
     await expect(page.getByRole('status').filter({ hasText: 'Draft saved' })).toBeVisible();
     await page.getByRole('button', { name: 'Close', exact: true }).click();
-    await expect(page.getByText('Your mission draft is saved locally.')).toBeVisible();
-    await expect(page.getByText('Still off: access, permissions, launch')).toBeVisible();
-    await page.getByRole('button', { name: 'Close composer', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Start a mission' })).toBeVisible();
     await page.getByRole('button', { name: /^Resume draft · Outcome/ }).click();
     await expect(page.getByLabel('Finish line', { exact: true })).toHaveValue(
@@ -242,9 +240,21 @@ test('review shows a launch brief, requires confirmation, and starts the mission
     await expect(brief).toContainText('Stops after 30 minutes');
     await expect(page.getByRole('heading', { name: 'Review mission authority' })).toBeVisible();
     const start = page.getByRole('button', { name: 'Start mission', exact: true });
+    await expect(
+      page.locator('.composer-actions').getByRole('button', { name: 'Start mission', exact: true }),
+    ).toBeDisabled();
     await expect(start).toBeDisabled();
     await page.getByRole('checkbox', { name: 'I reviewed this exact mission authority' }).check();
     await start.click();
+    const missions = await app.call<OperationResponse<'missions.list'>>('missions.list');
+    expect(missions).toHaveLength(1);
+    const created = await app.call<OperationResponse<'missions.detail'>>('missions.detail', {
+      missionId: missions[0]!.id,
+    });
+    expect(created.envelope!.objective).toBe('Fix the flaky terminal test.');
+    await expect(page.locator('#mission-workspace h1')).toHaveText(created.envelope!.objective);
+    await expect(page.getByRole('dialog', { name: 'Mission detail', exact: true })).toHaveCount(0);
+    await page.getByRole('button', { name: 'View full history…', exact: true }).click();
     const detail = page.getByRole('dialog', { name: 'Mission detail', exact: true });
     await expect(detail).toBeVisible();
     await expect(detail).toContainText('Assignment: Reproduce and fix the test.');
@@ -298,6 +308,8 @@ test('revision reuses the composer and applies through the revision path', async
     await fillAccess(app, dir);
     await page.getByRole('checkbox', { name: 'I reviewed this exact mission authority' }).check();
     await page.getByRole('button', { name: 'Start mission', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Mission detail', exact: true })).toHaveCount(0);
+    await page.getByRole('button', { name: 'View full history…', exact: true }).click();
     const detail = page.getByRole('dialog', { name: 'Mission detail', exact: true });
     await detail.getByRole('button', { name: 'Pause mission', exact: true }).click();
     await expect(detail.getByRole('status')).toContainText('paused');
@@ -309,9 +321,7 @@ test('revision reuses the composer and applies through the revision path', async
     await page.getByRole('button', { name: 'Review', exact: true }).click();
     await page.getByRole('checkbox', { name: 'I reviewed this exact mission authority' }).check();
     await page.getByRole('button', { name: 'Apply revision', exact: true }).click();
-    await expect(page.getByRole('dialog', { name: 'Mission detail', exact: true })).toContainText(
-      'Revised finish line.',
-    );
+    await expect(page.locator('#mission-workspace h1')).toHaveText('Revised finish line.');
   } finally {
     await teardown(app, dir);
   }
@@ -329,7 +339,6 @@ test('drafts appear in the rail and the context rail explains the draft', async 
     await expect(context.getByText('No crew chosen')).toBeVisible();
     await expect(context.getByText('Break-glass bypass')).toBeVisible();
     await page.getByRole('button', { name: 'Close', exact: true }).click();
-    await page.getByRole('button', { name: 'Close composer', exact: true }).click();
     const rail = page.getByRole('navigation', { name: 'Mission workspace' });
     await expect(rail.getByText('Drafts (1)')).toBeVisible();
     await rail.getByRole('button', { name: /^Resume draft · Outcome/ }).click();

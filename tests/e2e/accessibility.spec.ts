@@ -281,7 +281,6 @@ test('mission form has named visible-focus controls, stable idle content and 200
     expect(overflow).toBe(false);
     await expect(page.getByLabel('Finish line', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Close', exact: true }).click();
-    await page.getByRole('button', { name: 'Close composer', exact: true }).click();
   } finally {
     await teardown(app);
   }
@@ -315,7 +314,6 @@ test('composer never scrolls sideways and its sticky actions never cover the foc
       });
       expect(covered, `sticky actions do not cover focus at ${width}`).toBe(false);
       await page.getByRole('button', { name: 'Close', exact: true }).click();
-      await page.getByRole('button', { name: 'Close composer', exact: true }).click();
     }
   } finally {
     await teardown(app, dir);

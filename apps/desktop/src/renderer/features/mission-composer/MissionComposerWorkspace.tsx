@@ -59,6 +59,8 @@ export function MissionComposerWorkspace({
   const [invalid, setInvalid] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const [everReviewed, setEverReviewed] = useState(false);
+  const [actionHost, setActionHost] = useState<HTMLDivElement | null>(null);
+  const [reviewBusy, setReviewBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,8 +142,10 @@ export function MissionComposerWorkspace({
     // Close must never be a trap: if the draft cannot be saved right now
     // (storage degraded, or a prior save failure), closing still proceeds —
     // it is just honest that the latest edits were not saved.
-    if (saved) setClosing({ savedAt: saved.savedAt, stage: saved.currentStage, unsaved: false });
-    else setClosing({ savedAt: null, stage, unsaved: true });
+    if (saved) {
+      actions.setNotice('Mission draft saved. Resume it from Drafts.');
+      onClose();
+    } else setClosing({ savedAt: null, stage, unsaved: true });
   };
   const startDiscard = async () => {
     try {
@@ -257,7 +261,12 @@ export function MissionComposerWorkspace({
               data-done={i < index || undefined}
             >
               {canJump ? (
-                <button type="button" className="small" onClick={() => void draft.goTo(item)}>
+                <button
+                  type="button"
+                  className="small"
+                  disabled={reviewBusy}
+                  onClick={() => void draft.goTo(item)}
+                >
                   {STAGE_LABEL[item]}
                 </button>
               ) : (
@@ -349,19 +358,21 @@ export function MissionComposerWorkspace({
               void draft.goTo(target);
             }}
             onAnnounce={setAnnouncement}
+            actionHost={actionHost}
+            onBusyChange={setReviewBusy}
           />
         ) : null}
       </div>
       <p className={`composer-readiness${readiness.ready ? ' ready' : ''}`}>{readiness.message}</p>
-      <div className="mission-action-row composer-actions">
+      <div className="mission-action-row composer-actions" ref={setActionHost}>
         {/* Close is never gated on a successful save: a draft that can't be
             saved right now (storage degraded, prior save failure) must still
             have an escape hatch — see close()'s honest "not saved" receipt. */}
-        <button type="button" onClick={() => void close()} disabled={draft.saving}>
+        <button type="button" onClick={() => void close()} disabled={draft.saving || reviewBusy}>
           Close
         </button>
         {index > 0 ? (
-          <button type="button" onClick={() => void back()} disabled={draft.saving}>
+          <button type="button" onClick={() => void back()} disabled={draft.saving || reviewBusy}>
             Back
           </button>
         ) : null}

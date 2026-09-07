@@ -8,14 +8,26 @@ const REMAINING: Record<Stage, string> = {
   review: 'Start the mission when the review is ready.',
 };
 
-export function ComposerContext({ stage, workers }: { stage: Stage; workers: WorkerFields[] }) {
+export function ComposerContext({
+  stage,
+  workers,
+  entry = false,
+}: {
+  stage: Stage;
+  workers: WorkerFields[];
+  entry?: boolean;
+}) {
   const roles = workers.map((w) => w.role);
   return (
-    <MissionContextFrame heading="Mission draft">
+    <MissionContextFrame heading={entry ? 'New mission' : 'Mission draft'}>
       <section>
         <p className="context-label">Stage</p>
-        <p>{STAGE_LABEL[stage]}</p>
-        <p className="hint">{REMAINING[stage]}</p>
+        <p>{entry ? 'Choose a starting point' : STAGE_LABEL[stage]}</p>
+        <p className="hint">
+          {entry
+            ? 'Choose a repository for ideas, or write your own. Outcome, crew, access and review follow.'
+            : REMAINING[stage]}
+        </p>
       </section>
       <section>
         <p className="context-label">Crew</p>

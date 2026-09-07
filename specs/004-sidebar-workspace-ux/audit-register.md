@@ -289,3 +289,8 @@ PR #55 merged at `38aee7b`. Owner accepted the next slice. Agent draft list/deta
 ## Slice 25: MIS-006 repository idea context
 
 PR #56 merged at `0d82f8e`. Owner accepted slice 25. Ideas now invalidate on repository/provider change and approval revocation; late results cannot reappear under newer inputs. Chosen source context is saved and shown on Outcome after restart, separate from mission authority. Automatic/default provider copy reflects actual selection behavior. Locally verified pending merge; see [verification](verification.md). Next: slice 26, Mission entry/close/review hierarchy; eight roadmap slices remain after slice 25 merges. Broader A02 matrix gaps retain their own scope.
+
+
+## Slice 26: MIS-005/009/010 Mission flow hierarchy
+
+PR #57 merged at `8b9d549`. Entry context and width match the composer; successful saved Close returns directly, failed Close preserves edits, and Review uses one action footer. Start selects the exact overview without opening history automatically. Locally verified pending PR merge; see [verification](verification.md). Owner authorizes sequential continuation after PR creation. Next: slice 27, MIS-008; seven planned slices follow this checkpoint.

@@ -325,3 +325,11 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T146 Add explicit field repair and native discard focus/dismissal.
 - [x] T147 Verify keyboard/200-percent repair and discard saved-state effects.
 - [x] T148 Complete checks/evidence and PR, continue Agents reflow.
+
+
+## Slice 31: Agents reflow
+
+- [x] T149 Re-measure historical 960x800/200-percent defect against current branch.
+- [x] T150 Verify inner library/detail/editor and shared setup geometry.
+- [x] T151 Complete expanded measurements, independent save/identity checks and evidence.
+- [x] T152 Record revalidation disposition and open PR, continue coverage reconciliation.

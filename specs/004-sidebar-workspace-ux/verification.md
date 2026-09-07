@@ -408,4 +408,10 @@ The failure-path discard prompt now uses shared native ModalDialog, with Escape/
 
 Final slice 30: both expanded keyboard/discard scenarios passed (11.3 seconds); no pending local failures. Hosted CI and owner acceptance remain separate.
 
+
+## Slice 31: AGT-003 inner reflow revalidation
+
+Baseline 4a8a19d, dependent on PR #62; Windows x64. The historical 960x800/200% overflow no longer reproduces with current merged layout. Inner workspace, library and long-name profile detail pass width checks at 680/960/1280 pixels, each at 100% and 200% root text scale. Saved draft editor fits at 960/200%; keyboard open/save preserves exact description and ID through main readback. Shared Sessions setup also fits, with no provider/session execution. No CSS or product change was needed.
+
+All 12 Agents reflow/wizard/roster Electron cases passed (38.3 seconds), including invalid fields, cancellation, export denial/consent, actual draft restart, roster paging, delayed/failing detail and filter recovery. [Inspected current reflow capture](audits/evidence/slice-31-agents-reflow.png). Build from slice 30 used unchanged product sources; typecheck, lint and formatting passed. Recapture: agents-reflow, agent-profile-wizard and agent-roster-navigation E2E files. This closes the sampled AGT-003 geometry defect; every dialog/state at enlarged text is not inferred from this test and remains in the final coverage/acceptance ledger.
 Slice 30 acceptance follow-up: actual Tab traversal in slice 33 reproduced fields obscured by the sticky footer at 100% and 200% text. Keyboard-visible focus now accounts for the current action-bar height when scrolling a field; pointer activation of disclosures retains its position. The new natural-Tab regression and all 11 keyboard/composer scenarios pass (47.6 seconds), including exact save, revision, expiry and failure paths. Build/typecheck/lint pass. This remains MIS-012/014 scope and does not add a roadmap slice.

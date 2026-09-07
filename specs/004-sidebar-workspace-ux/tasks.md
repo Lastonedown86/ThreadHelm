@@ -301,3 +301,11 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T134 Derive consistent state labels from main detail with sequence invalidation.
 - [x] T135 Verify exact selection, state actions, recovery and regression checks.
 - [x] T136 Record evidence and open dependent PR, then continue slice 28.
+
+
+## Slice 28: Mission runtime and prerequisite consistency
+
+- [x] T137 Verify predecessor and reproduce hidden startup choice.
+- [x] T138 Share model picker, expose startup and preserve prerequisite return.
+- [x] T139 Verify exact saved runtime, fixed sessions, return and no process start.
+- [x] T140 Complete regression checks and dependent PR, continue slice 29.

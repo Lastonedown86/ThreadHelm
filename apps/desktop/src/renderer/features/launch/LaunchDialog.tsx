@@ -1,3 +1,4 @@
+import { CUSTOM_MODEL, MODEL_OPTIONS, ModelPicker } from './ModelPicker.js';
 /**
  * Per-session launch disclosure (T047). Shows the effective path, agent,
  * version, executable, and the boundary warning; requires a fresh explicit
@@ -25,25 +26,6 @@ interface Props {
   onLaunched: (session: SessionView) => void;
   onCancel: () => void;
 }
-
-const CUSTOM_MODEL = '__custom__';
-
-const MODEL_OPTIONS = {
-  'codex-cli': [
-    { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
-    { value: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
-    { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
-    { value: 'gpt-5.5', label: 'GPT-5.5' },
-    { value: 'gpt-5.4', label: 'GPT-5.4' },
-    { value: 'gpt-5.4-mini', label: 'GPT-5.4 Mini' },
-    { value: 'gpt-5.3-codex-spark', label: 'GPT-5.3 Codex Spark' },
-  ],
-  'claude-code': [
-    { value: 'fable', label: 'Claude Fable 5' },
-    { value: 'opus', label: 'Claude Opus' },
-    { value: 'sonnet', label: 'Claude Sonnet' },
-  ],
-} as const;
 
 function modelLabel(providerId: keyof typeof MODEL_OPTIONS, model: string): string {
   return MODEL_OPTIONS[providerId].find((option) => option.value === model)?.label ?? model;
@@ -263,35 +245,16 @@ export function LaunchDialog({ request, terminal, onLaunched, onCancel }: Props)
             <option value="failure_analysis">Test failure analysis</option>
           </select>
         </label>
-        <label className="field">
-          Model
-          <select
-            value={model}
-            onChange={(event) => {
-              setModel(event.target.value);
-              if (event.target.value !== CUSTOM_MODEL) setCustomModel('');
-            }}
-          >
-            <option value="">CLI default</option>
-            {MODEL_OPTIONS[request.providerId].map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-            <option value={CUSTOM_MODEL}>Custom model…</option>
-          </select>
-        </label>
-        {model === CUSTOM_MODEL ? (
-          <label className="field">
-            Custom model identifier
-            <input
-              value={customModel}
-              autoComplete="off"
-              spellCheck={false}
-              onChange={(event) => setCustomModel(event.target.value)}
-            />
-          </label>
-        ) : null}
+        <ModelPicker
+          providerId={request.providerId}
+          choice={model}
+          customModel={customModel}
+          onChoice={(value) => {
+            setModel(value);
+            if (value !== CUSTOM_MODEL) setCustomModel('');
+          }}
+          onCustom={setCustomModel}
+        />
         <label className="field">
           Effort
           <select

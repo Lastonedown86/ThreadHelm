@@ -62,7 +62,10 @@ test('existing runtime is fixed and an older mismatch is explicitly repaired wit
       .click();
     await page.getByRole('group', { name: 'Worker 1', exact: true }).locator('summary').click();
     await expect(model).toBeEnabled();
-    await model.fill('another-model');
+    await model.selectOption('__custom__');
+    await page
+      .getByLabel('Worker 1 custom model identifier', { exact: true })
+      .fill('another-model');
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
     const newSessionDraft = (await read()).fieldValues.workers?.[0];
     expect(newSessionDraft?.sessionId).toBeNull();

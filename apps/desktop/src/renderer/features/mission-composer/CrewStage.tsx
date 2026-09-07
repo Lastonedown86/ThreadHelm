@@ -1,3 +1,4 @@
+import { WorkerModelPicker } from './WorkerModelPicker.js';
 import type { ApprovedWorkspaceView, OperationResponse } from '@threadhelm/contracts';
 import { existingRuntimeIssue } from './existing-runtime.js';
 import { ListEditor } from './ListEditor.js';
@@ -61,10 +62,11 @@ export function CrewStage({
     return (
       <div className="composer-notice">
         <p>
-          No live session can supervise yet. Launch a session with a verified launch snapshot first.
+          No live session can supervise yet. Choose an approved folder and provider in Settings,
+          then review a session launch first.
         </p>
         <button type="button" className="primary" onClick={onLaunchSession}>
-          Launch a session
+          Choose session launch in Settings…
         </button>
       </div>
     );
@@ -247,7 +249,7 @@ export function CrewStage({
                   )
                 }
               >
-                <option value="">Start a new session at launch</option>
+                <option value="">New session · startup authorization below</option>
                 {worker.sessionId && !sessions.some((s) => s.sessionId === worker.sessionId) ? (
                   <option value={worker.sessionId}>Unavailable session · {worker.sessionId}</option>
                 ) : null}
@@ -257,6 +259,15 @@ export function CrewStage({
                   </option>
                 ))}
               </select>
+            </label>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={worker.autoStart}
+                disabled={worker.sessionId !== null}
+                onChange={(event) => patchWorker(index, { autoStart: event.target.checked })}
+              />
+              Authorize automatic startup of worker {n} within this mission
             </label>
             {worker.sessionId ? (
               <div className="composer-notice">
@@ -325,21 +336,15 @@ export function CrewStage({
                     {worker.executionBounds.maxConcurrentProcesses} concurrent processes.
                   </p>
                 ) : null}
-                <label className="field">
-                  Worker {n} model
-                  <input
-                    value={worker.runtimeSelection.model ?? ''}
-                    placeholder="Provider default"
-                    onChange={(event) =>
-                      patchWorker(index, {
-                        runtimeSelection: {
-                          ...worker.runtimeSelection,
-                          model: event.target.value || null,
-                        },
-                      })
-                    }
-                  />
-                </label>
+                <WorkerModelPicker
+                  key={`${worker.profileId}:${worker.sessionId}`}
+                  providerId={providerOf(worker)}
+                  index={n}
+                  model={worker.runtimeSelection.model}
+                  onChange={(model) =>
+                    patchWorker(index, { runtimeSelection: { ...worker.runtimeSelection, model } })
+                  }
+                />
                 <label className="field">
                   Worker {n} effort
                   <select
@@ -360,7 +365,7 @@ export function CrewStage({
                         {worker.runtimeSelection.effort}
                       </option>
                     ) : null}
-                    <option value="">Provider default effort</option>
+                    <option value="">CLI default effort</option>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                   </select>
@@ -402,15 +407,6 @@ export function CrewStage({
                     }
                   />
                 ) : null}
-                <label className="check">
-                  <input
-                    type="checkbox"
-                    checked={worker.autoStart}
-                    disabled={worker.sessionId !== null}
-                    onChange={(event) => patchWorker(index, { autoStart: event.target.checked })}
-                  />
-                  Authorize automatic startup of worker {n} within this mission
-                </label>
               </fieldset>
             </details>
             <button

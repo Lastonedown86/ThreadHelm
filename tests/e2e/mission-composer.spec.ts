@@ -68,8 +68,7 @@ test('crew stage explains prerequisites and routes to the fix', async () => {
     await expect(
       page.getByRole('heading', { name: 'Choose or create the right worker' }),
     ).toBeVisible();
-    await page.getByRole('button', { name: 'Missions', exact: true }).click();
-    await page.getByRole('button', { name: /^Resume draft · Crew/ }).click();
+    await page.getByRole('button', { name: 'Return to mission draft', exact: true }).click();
     await expect(notice.getByText('No reviewed profile yet.')).toBeVisible();
   } finally {
     await teardown(app);

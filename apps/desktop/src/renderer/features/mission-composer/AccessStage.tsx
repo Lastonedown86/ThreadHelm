@@ -40,11 +40,13 @@ export function AccessStage({
   readiness,
   providersInUse,
   eligible,
+  onFixSettings,
 }: StageProps & {
   workspaces: ApprovedWorkspaceView[];
   readiness: ReadinessView[];
   providersInUse: ReadinessView['providerId'][];
   eligible: Eligible[];
+  onFixSettings(): void;
 }) {
   const workers = fields.workers ?? [];
   const modes = new Map((fields.workspaces ?? []).map((w) => [w.workspaceId, w.mode] as const));
@@ -185,6 +187,9 @@ export function AccessStage({
         <p className="hint">
           Nothing here installs or signs in to a provider. Fix readiness in Settings.
         </p>
+        <button type="button" onClick={onFixSettings}>
+          Fix prerequisites in Settings…
+        </button>
       </section>
 
       <details className="composer-card">

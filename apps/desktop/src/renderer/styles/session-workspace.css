@@ -1,5 +1,6 @@
 .session-workspace {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.85rem;
   padding: 1.25rem;
   min-height: 100%;
@@ -14,7 +15,11 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  white-space: nowrap;
+  flex: 0 0 auto;
+  max-width: 100%;
+  flex-wrap: wrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .session-tabs button.selected {
   border-color: var(--mission-steel);
@@ -36,6 +41,8 @@
 }
 .mission-terminal-dock > header h2 {
   font-family: var(--mission-font-heading);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .mission-terminal-dock .terminal-pane {
   min-height: 18rem;

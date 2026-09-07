@@ -294,14 +294,12 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T131 Verify save/failure and exact start landing with authoritative state.
 - [x] T132 Complete checks/evidence and open PR, then continue slice 27.
 
-
 ## Slice 27: Mission state distinctions
 
 - [x] T133 Verify predecessor and reproduce paused-only decision inventory.
 - [x] T134 Derive consistent state labels from main detail with sequence invalidation.
 - [x] T135 Verify exact selection, state actions, recovery and regression checks.
 - [x] T136 Record evidence and open dependent PR, then continue slice 28.
-
 
 ## Slice 28: Mission runtime and prerequisite consistency
 
@@ -310,14 +308,12 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T139 Verify exact saved runtime, fixed sessions, return and no process start.
 - [x] T140 Complete regression checks and dependent PR, continue slice 29.
 
-
 ## Slice 29: Mission selection loading/failure
 
 - [x] T141 Verify predecessor and reproduce old Mission content under a new selection.
 - [x] T142 Bind rendered details to selected ID and expose explicit loading/error/retry.
 - [x] T143 Verify delayed, failed and out-of-order reads plus cross-section return.
 - [x] T144 Complete checks/evidence and dependent PR, continue slice 30.
-
 
 ## Slice 30: Mission keyboard validation and focus
 
@@ -326,7 +322,6 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T147 Verify keyboard/200-percent repair and discard saved-state effects.
 - [x] T148 Complete checks/evidence and PR, continue Agents reflow.
 
-
 ## Slice 31: Agents reflow
 
 - [x] T149 Re-measure historical 960x800/200-percent defect against current branch.
@@ -334,10 +329,16 @@ Dependencies: T124 -> T125 -> T126 -> T127 -> T128. Next: slice 26, Mission entr
 - [x] T151 Complete expanded measurements, independent save/identity checks and evidence.
 - [x] T152 Record revalidation disposition and open PR, continue coverage reconciliation.
 
-
 ## Slice 32: coverage reconciliation
 
 - [x] T153 Inventory all original matrix cells and logic/action traces.
 - [x] T154 Associate later evidence and explicitly disposition remaining variants.
 - [x] T155 Exercise template paging/duplicate gaps and finish full regression checks.
 - [x] T156 Record results, limitations and dependent PR, continue acceptance.
+
+## Slice 33: cross-section acceptance delivery
+
+- [x] T157 Define the final keyboard/scale journeys and pre-measurement Windows performance budget.
+- [x] T158 Exercise primary journeys with actual Tab traversal and independent state/process readback; repair reproduced focus/reflow within existing requirements.
+- [x] T159 Measure dense inventory, contrast/reduced-motion samples and affected regressions; retain explicit limitations.
+- [ ] T160 Publish acceptance report, update ledger/roadmap, complete final checks and open the final dependent PR. Owner feature acceptance remains a separate pending gate.

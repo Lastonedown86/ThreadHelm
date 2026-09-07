@@ -192,32 +192,32 @@ Test baseline stale selection, controlled delayed generation/input changes, save
 
 Owner authorizes sequential continuation after PR creation, including dependent PRs while awaiting owner merges. Baseline main 8b9d549 (PR #57). MIS-005/009/010: share entry/composer frame and preparatory context; successful Close saves once and exits with feedback; failed close retains explicit unsaved choices. Put final Start/Apply beside Close/Back in the sticky action area with pending protection; successful confirmation lands on the exact Mission overview, with details available deliberately. No schema, provider, process or permission changes. Requirements 16/16; constitution PASS; no hooks; Feature 002 selector preserved. Verify red-first direct close, saved state, failed save recovery, ready/expired review and exact overview landing.
 
-
 ## Slice 27: MIS-008 inventory states
 
 Baseline 57d7312 (slice 26 PR #58). Reuse existing main detail reads to derive inventory attention alongside lifecycle; key cached status by mission sequence and bound it to current inventory. Read failures remain explicit. No summary contract expansion or Mission/Attention aggregation.
-
 
 ## Slice 28: runtime and prerequisite consistency
 
 Baseline c7f632e, dependent on PR #59. Share the existing launch model options/picker within Mission-supported limits; retain CLI default and custom identifiers. Place startup authorization by the session choice, without changing its false default. Prerequisite navigation uses the shell save guard and preserves the exact draft/stage with explicit return. Session repair opens Settings for deliberate folder/provider selection instead of silently choosing Codex/first folder. Fixed existing runtimes remain immutable.
 
-
 ## Slice 29: identity-safe Mission selection
 
 Baseline cbff13b, dependent on PR #60. Gate detail/presentation synchronously by requested mission ID; independently own inventory and selected-detail errors/loading. Clear the prior detail on refresh, ignore obsolete responses, show requested ID during loading/failure and offer Retry. Preserve main authority and navigation save guards.
-
 
 ## Slice 30: keyboard repair and modal consistency
 
 Baseline 2a12603, dependent on PR #61. Preserve blocked Continue and offer reachable Fix missing field, focusing/announcing the exact missing control, opening enclosing disclosures and using prerequisite buttons when inputs do not exist yet. Replace the composer failure-path discard role dialog with shared native modal, Escape/focus restoration and single-flight disabled confirmation. Slice 29 already repaired loading-heading focus.
 
-
 ## Slice 31: AGT-003 reflow revalidation
 
 Baseline 4a8a19d, dependent on PR #62. Measure inner Agents containers with long saved profile/draft names at 960x800/200%, then widen to 680/960/1280 at 100/200%. Existing merged layout may already resolve the old observation; add no CSS without a reproduced defect. Include native draft editor, exact save readback and shared embedded Sessions setup.
 
-
 ## Slice 32: functional coverage reconciliation
 
 Baseline 7136e8a, dependent on PR #63. Reconcile all 68 A01-A08 flows, 476 state cells and 120 inventoried action traces with later named scenario evidence. Retain every original note and mark unexercised variants pending, never passed by source or generic tests. Add template paging/duplicate negative/restart coverage; run full Electron/unit/contract/integration regression suites. No additional provider runs or authority expansion.
+
+## Slice 33: cross-section acceptance evidence
+
+Baseline f1676fb, dependent on slice 32. Test all six destination primary journeys, a bundled-template-to-profile journey and Mission creation at 100%/200% root text on Windows 11 x64. Use Tab traversal, native keyboard selection/activation, focused-control visibility and exact main-owned state/process readback. Fixture adapters isolate provider execution; native picker answers are injected. Collect screenshots for visual review. Any failing or unexercised criterion remains an acceptance gate, not an inferred pass.
+
+Before measurement, define the bounded FR-015 budget: with 50 cancelled missions, 20 long-named drafts and two idle fixture sessions at 960x800, each destination change must settle its primary heading and two animation frames within 1000 ms at the 95th percentile of 18 samples per text scale (six destinations, three rounds). After a settled Missions view, observe DOM mutations and running animations for five seconds; the target is zero decorative animation and zero idle DOM mutation. Record hardware and raw samples. This measures warm fixture navigation, not startup, provider throughput, battery life or a universal hardware guarantee; prior performance deferrals stay separate. Reconcile SC-001 through SC-011 and all pending coverage exceptions. Owner merge and acceptance remain required even after every planned delivery PR is open.

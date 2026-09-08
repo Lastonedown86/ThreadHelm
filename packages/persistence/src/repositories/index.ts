@@ -12,6 +12,7 @@ import { AgentTemplateRepository } from './agent-templates.js';
 import { AgentProfileExportRepository } from './agent-profile-exports.js';
 import { SupervisorRepository } from './supervisor.js';
 import { MissionComposerRepository } from './mission-composer.js';
+import { MissionRecipeRepository } from './mission-recipes.js';
 
 export interface Repositories {
   workspaces: ApprovedWorkspaceRepository;
@@ -27,6 +28,7 @@ export interface Repositories {
   agentProfileExports: AgentProfileExportRepository;
   supervisor: SupervisorRepository;
   missionComposer: MissionComposerRepository;
+  missionRecipes: MissionRecipeRepository;
   /** Runs `fn` atomically; nested calls become savepoints. */
   transaction<T>(fn: () => T): T;
 }
@@ -46,6 +48,7 @@ export function createRepositories(db: Db): Repositories {
     agentProfileExports: new AgentProfileExportRepository(db),
     supervisor: new SupervisorRepository(db),
     missionComposer: new MissionComposerRepository(db),
+    missionRecipes: new MissionRecipeRepository(db),
     transaction: <T>(fn: () => T): T => db.transaction(fn)(),
   };
 }
@@ -61,3 +64,4 @@ export * from './agent-templates.js';
 export * from './agent-profile-exports.js';
 export * from './supervisor.js';
 export * from './mission-composer.js';
+export * from './mission-recipes.js';

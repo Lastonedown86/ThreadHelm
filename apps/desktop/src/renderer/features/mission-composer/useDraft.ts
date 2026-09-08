@@ -18,6 +18,7 @@ export interface DraftFailure {
 export function useDraft(draftId: string) {
   const [draft, setDraft] = useState<MissionComposerDraftDetailView | null>(null);
   const [fields, setFieldsState] = useState<MissionComposerFields>({});
+  const [suggestedRoles, setSuggestedRoles] = useState<string[]>([]);
   const [stage, setStage] = useState<Stage>('outcome');
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<DraftFailure | null>(null);
@@ -26,7 +27,7 @@ export function useDraft(draftId: string) {
   const dirty = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedReceipt = useRef<MissionComposerSaveReceipt | null>(null);
-  const latest = useRef<{ fields: MissionComposerFields; stage: Stage }>({
+  const latest = useRef<{ fields: MissionComposerFields; stage: Stage; roles?: string[] }>({
     fields: {},
     stage: 'outcome',
   });
@@ -46,7 +47,12 @@ export function useDraft(draftId: string) {
           savedAt: loaded.updatedAt,
           currentStage: loaded.currentStage,
         };
-        latest.current = { fields: loaded.fieldValues, stage: loaded.currentStage };
+        setSuggestedRoles(loaded.recipeContext?.suggestedRoles ?? []);
+        latest.current = {
+          fields: loaded.fieldValues,
+          stage: loaded.currentStage,
+          ...(loaded.recipeContext ? { roles: loaded.recipeContext.suggestedRoles } : {}),
+        };
       })
       .catch((cause) => {
         if (!cancelled) setFailure({ code: errorCode(cause) });
@@ -67,6 +73,7 @@ export function useDraft(draftId: string) {
           expectedVersion: version.current,
           fieldValues: fieldsForSave(snapshot.fields),
           currentStage: snapshot.stage,
+          ...(snapshot.roles ? { suggestedRoles: snapshot.roles } : {}),
         }),
       );
       version.current = saved.version;
@@ -146,7 +153,13 @@ export function useDraft(draftId: string) {
     };
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
-    latest.current = { fields: elsewhere.fieldValues, stage: elsewhere.currentStage };
+    setDraft(elsewhere);
+    setSuggestedRoles(elsewhere.recipeContext?.suggestedRoles ?? []);
+    latest.current = {
+      fields: elsewhere.fieldValues,
+      stage: elsewhere.currentStage,
+      ...(elsewhere.recipeContext ? { roles: elsewhere.recipeContext.suggestedRoles } : {}),
+    };
     dirty.current = false;
     setFailure(null);
   }, [failure, draftId]);
@@ -161,6 +174,13 @@ export function useDraft(draftId: string) {
   }, [failure, saveNow]);
 
   return {
+    suggestedRoles,
+    setRoles: (roles: string[]) => {
+      latest.current = { ...latest.current, roles };
+      setSuggestedRoles(roles);
+      dirty.current = true;
+      schedule();
+    },
     draft,
     fields,
     setFields,

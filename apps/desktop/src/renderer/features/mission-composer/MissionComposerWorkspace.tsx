@@ -1,3 +1,4 @@
+import { RecipeContext } from './RecipeContext.js';
 import { ModalDialog } from '../coordination/ModalDialog.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MissionDetailView, OperationResponse } from '@threadhelm/contracts';
@@ -332,7 +333,16 @@ export function MissionComposerWorkspace({
         }}
       >
         {stage === 'outcome' ? (
-          <OutcomeStage fields={draft.fields} setFields={draft.setFields} invalid={invalid} />
+          <>
+            <OutcomeStage fields={draft.fields} setFields={draft.setFields} invalid={invalid} />
+            {draft.draft.recipeContext ? (
+              <RecipeContext
+                context={draft.draft.recipeContext}
+                roles={draft.suggestedRoles}
+                onChange={draft.setRoles}
+              />
+            ) : null}
+          </>
         ) : null}
         {stage === 'crew' ? (
           <CrewStage

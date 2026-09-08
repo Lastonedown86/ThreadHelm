@@ -1,3 +1,4 @@
+@import './features/mission-recipes/recipes.css';
 @import './styles/tokens.css';
 @import './styles/shell.css';
 @import './styles/mission-focus.css';

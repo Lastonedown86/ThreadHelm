@@ -7,3 +7,5 @@ export * from './agent-profile.js';
 export * from './agent-template.js';
 export * from './supervisor.js';
 export * from './workspace-recon.js';
+export * from './mission-recipe.js';
+export * from './mission-recipe-starters.js';

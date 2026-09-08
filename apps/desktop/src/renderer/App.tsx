@@ -11,6 +11,8 @@ import { ComposerContext } from './features/mission-composer/ComposerContext.js'
 import { DiscardMissionDraft } from './features/mission-composer/DiscardMissionDraft.js';
 import type { Stage, WorkerFields } from './features/mission-composer/composer-fields.js';
 import { MissionComposerWorkspace } from './features/mission-composer/MissionComposerWorkspace.js';
+import { LazyMissionRecipeLibrary } from './features/mission-recipes/LazyMissionRecipeLibrary.js';
+import type { RecipeSource } from './features/mission-recipes/RecipeSourceSelection.js';
 import { RepoIdeaEntry, type RepoIdeaFields } from './features/mission-composer/RepoIdeaEntry.js';
 import { ContextToggle } from './features/mission-focus/ContextToggle.js';
 import { MissionContext } from './features/mission-focus/MissionContext.js';
@@ -80,7 +82,10 @@ function Shell() {
   const { state, actions } = useStore();
   const workspace = useMissionWorkspace(state.selectedMissionId);
   const [missionView, setMissionView] = useState<
-    { kind: 'mission' } | { kind: 'entry' } | { kind: 'draft'; draftId: string }
+    | { kind: 'mission' }
+    | { kind: 'recipes'; source?: RecipeSource }
+    | { kind: 'entry' }
+    | { kind: 'draft'; draftId: string }
   >({ kind: 'mission' });
   const composerDraftId = missionView.kind === 'draft' ? missionView.draftId : null;
   const pickingRepo = missionView.kind === 'entry';
@@ -175,6 +180,22 @@ function Shell() {
       setComposerState(null);
       actions.selectDestination('missions');
     });
+  const saveAsRecipe = () =>
+    void navigate(async () => {
+      const source: RecipeSource | null = composerDraftId
+        ? await call(api.missionComposer.getDraft({ draftId: composerDraftId })).then((d) => ({
+            kind: 'draft' as const,
+            id: d.draftId,
+            version: d.version,
+          }))
+        : workspace.detail
+          ? { kind: 'mission', id: workspace.detail.id, version: workspace.detail.version }
+          : null;
+      if (source) {
+        setMissionView({ kind: 'recipes', source });
+        setComposerState(null);
+      }
+    });
 
   useEffect(() => {
     if (state.storageDegraded) {
@@ -240,7 +261,14 @@ function Shell() {
   };
 
   const contextContent =
-    missionSelected && pickingRepo ? (
+    missionSelected && missionView.kind === 'recipes' ? (
+      <MissionContextFrame heading="Mission recipes">
+        <p>
+          Reusable text for independent mission drafts. Review content here, then choose crew and
+          access in the mission composer.
+        </p>
+      </MissionContextFrame>
+    ) : missionSelected && pickingRepo ? (
       <ComposerContext stage="outcome" workers={[]} entry />
     ) : missionSelected && composerDraftId && composerState ? (
       <ComposerContext stage={composerState.stage} workers={composerState.workers} />
@@ -305,6 +333,17 @@ function Shell() {
               selectedDraftId={missionSelected ? composerDraftId : null}
               onDiscardDraft={(id) => void navigate(() => setDiscardDraftId(id))}
             />
+            <button
+              type="button"
+              onClick={() =>
+                void navigate(() => {
+                  setMissionView({ kind: 'recipes' });
+                  actions.selectDestination('missions');
+                })
+              }
+            >
+              Start from recipe
+            </button>
             <AppNavigation
               selected={state.selectedDestination}
               onSelect={selectDestination}
@@ -333,6 +372,13 @@ function Shell() {
                 onOpenMissions={() => selectDestination('missions')}
               />
             </>
+          ) : missionView.kind === 'recipes' ? (
+            <LazyMissionRecipeLibrary
+              onClose={() => void navigate(showMission)}
+              onCreated={resumeDraft}
+              onFlushReady={setComposerFlush}
+              {...(missionView.source ? { source: missionView.source } : {})}
+            />
           ) : pickingRepo ? (
             <RepoIdeaEntry
               workspaces={state.workspaces}
@@ -342,32 +388,44 @@ function Shell() {
               onGoToSettings={() => selectDestination('settings')}
             />
           ) : composerDraftId ? (
-            <MissionComposerWorkspace
-              key={composerDraftId}
-              draftId={composerDraftId}
-              onClose={showMission}
-              onFix={selectDestination}
-              onStarted={(mission) => {
-                showMission();
-                actions.selectMission(mission.id);
-                setDetailMissionId(null);
-              }}
-              onState={setComposerState}
-              onFlushReady={setComposerFlush}
-            />
+            <>
+              <button type="button" onClick={saveAsRecipe}>
+                Save as recipe
+              </button>
+              <MissionComposerWorkspace
+                key={composerDraftId}
+                draftId={composerDraftId}
+                onClose={showMission}
+                onFix={selectDestination}
+                onStarted={(mission) => {
+                  showMission();
+                  actions.selectMission(mission.id);
+                  setDetailMissionId(null);
+                }}
+                onState={setComposerState}
+                onFlushReady={setComposerFlush}
+              />
+            </>
           ) : missionSelected ? (
-            <MissionWorkspace
-              workspace={workspace}
-              onOpenDetail={() => {
-                if (state.selectedMissionId) setDetailMissionId(state.selectedMissionId);
-              }}
-              onAction={runMissionAction}
-              onOpenTerminal={(sessionId) => {
-                actions.select(sessionId);
-                actions.selectDestination('sessions');
-                actions.setSessionScope('mission');
-              }}
-            />
+            <>
+              {workspace.detail ? (
+                <button type="button" onClick={saveAsRecipe}>
+                  Save as recipe
+                </button>
+              ) : null}
+              <MissionWorkspace
+                workspace={workspace}
+                onOpenDetail={() => {
+                  if (state.selectedMissionId) setDetailMissionId(state.selectedMissionId);
+                }}
+                onAction={runMissionAction}
+                onOpenTerminal={(sessionId) => {
+                  actions.select(sessionId);
+                  actions.selectDestination('sessions');
+                  actions.setSessionScope('mission');
+                }}
+              />
+            </>
           ) : (
             <LegacyDestination
               mission={workspace.detail}
@@ -427,8 +485,15 @@ function Shell() {
         />
       ) : null}
       {saveBlocked ? (
-        <ModalDialog label="Unsaved mission changes" onDismiss={keepEditing}>
-          <h2>Your latest mission edits could not be saved.</h2>
+        <ModalDialog
+          label={missionView.kind === 'recipes' ? 'Unsaved changes' : 'Unsaved mission changes'}
+          onDismiss={keepEditing}
+        >
+          <h2>
+            {missionView.kind === 'recipes'
+              ? 'Your latest edits could not be saved.'
+              : 'Your latest mission edits could not be saved.'}
+          </h2>
           <p>
             Keep editing or retry saving before continuing. Leaving without saving keeps only the
             last saved version of this draft.

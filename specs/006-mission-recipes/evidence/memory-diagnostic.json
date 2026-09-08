@@ -1,0 +1,152 @@
+{
+  "machine": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "cpu": "AMD Ryzen 7 5700U with Radeon Graphics         ",
+    "ramBytes": 33700167680
+  },
+  "viewport": {
+    "width": 960,
+    "height": 800
+  },
+  "textScale": "100%",
+  "powerMode": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+  "mainBuildSha256": "78d42949ead79252ef51ceb2644696016a3d4678a7c19eea68dc65a297a6f3a1",
+  "rendererBuildSha256": "9541fee5303741dd1089fa854681f80b8c77bd7f41ea792d7abf44f18498ab2e",
+  "traceMode": "off",
+  "fixture": "500 total, 3 bundled and 497 personal; duplicate names and disabled rows. Unsupported-version library fixture remains separate.",
+  "openingsMs": [
+    110.74799999999959,
+    51.92820000000029,
+    39.90770000000157,
+    50.483900000001086,
+    47.008599999999205,
+    33.14959999999883,
+    46.202699999998,
+    41.64900000000125,
+    40.759399999999005,
+    44.33929999999964,
+    45.70690000000104,
+    47.001899999999296,
+    46.812699999998586,
+    42.45679999999993,
+    36.70389999999679,
+    43.87700000000041,
+    45.10080000000016,
+    47.534999999999854,
+    40.701499999999214,
+    51.21649999999863
+  ],
+  "coldFirstOpeningMs": 110.74799999999959,
+  "memory": {
+    "baseline": {
+      "workingSetKiB": 90132,
+      "heap": {
+        "usedSize": 2331068,
+        "totalSize": 3145728,
+        "embedderHeapUsedSize": 556912,
+        "backingStorageSize": 1063217
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 102,
+        "jsEventListeners": 152
+      }
+    },
+    "firstOpenMemory": {
+      "workingSetKiB": 97104,
+      "heap": {
+        "usedSize": 4300348,
+        "totalSize": 5824512,
+        "embedderHeapUsedSize": 3167272,
+        "backingStorageSize": 1094979
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 915,
+        "jsEventListeners": 246
+      }
+    },
+    "retained": {
+      "workingSetKiB": 118060,
+      "heap": {
+        "usedSize": 4081632,
+        "totalSize": 4513792,
+        "embedderHeapUsedSize": 1234888,
+        "backingStorageSize": 1093842
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 103,
+        "jsEventListeners": 165
+      }
+    }
+  },
+  "additionalDiagnosticCycles": [
+    {
+      "cycles": 40,
+      "workingSetKiB": 126076,
+      "heap": {
+        "usedSize": 4166464,
+        "totalSize": 4775936,
+        "embedderHeapUsedSize": 1599504,
+        "backingStorageSize": 1093842
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 103,
+        "jsEventListeners": 165
+      }
+    },
+    {
+      "cycles": 60,
+      "workingSetKiB": 129308,
+      "heap": {
+        "usedSize": 4247252,
+        "totalSize": 5038080,
+        "embedderHeapUsedSize": 1604816,
+        "backingStorageSize": 1093842
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 103,
+        "jsEventListeners": 165
+      }
+    }
+  ],
+  "pagination": {
+    "reachableRows": 500,
+    "uniqueRows": 500,
+    "maxMounted": 50
+  },
+  "previewsMs": [
+    64.83519999999771,
+    60.45679999999993,
+    53.08150000000023,
+    61.80819999999949,
+    59.974300000001676,
+    62.96970000000147,
+    62.56910000000062,
+    70.90279999999984,
+    60.467399999997724,
+    62.300099999996746,
+    58.04829999999856,
+    60.22639999999956,
+    68.91859999999724,
+    66.31080000000293,
+    57.91599999999744,
+    56.73270000000048,
+    59.98279999999795,
+    58.549300000002404,
+    68.71069999999963,
+    57.781700000003184
+  ],
+  "rendererLongTasksMs": [],
+  "incompatiblePreviewMs": 69.54639999999927,
+  "idle": {
+    "seconds": 60,
+    "mutations": 0,
+    "runningAnimations": 0,
+    "polling": "IPC polling is not instrumented by this test; requires source audit or router instrumentation."
+  }
+}

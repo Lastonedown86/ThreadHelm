@@ -1,0 +1,258 @@
+{
+  "machine": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "cpu": "AMD Ryzen 7 5700U with Radeon Graphics         ",
+    "ramBytes": 33700167680
+  },
+  "viewport": {
+    "width": 960,
+    "height": 800
+  },
+  "textScale": "100%",
+  "powerMode": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+  "mainBuildSha256": "78d42949ead79252ef51ceb2644696016a3d4678a7c19eea68dc65a297a6f3a1",
+  "rendererBuildSha256": "9541fee5303741dd1089fa854681f80b8c77bd7f41ea792d7abf44f18498ab2e",
+  "traceMode": "off",
+  "fixture": "500 total, 3 bundled and 497 personal; duplicate names and disabled rows. Unsupported-version library fixture remains separate.",
+  "openingsMs": [
+    110.33479999999872,
+    44.67809999999736,
+    46.00369999999748,
+    40.61579999999958,
+    38.699099999998,
+    32.86539999999877,
+    36.39400000000023,
+    48.568999999999505,
+    42.159099999997125,
+    42.38669999999911,
+    54.12850000000253,
+    50.10870000000068,
+    37.38639999999941,
+    43.51249999999709,
+    39.727600000001985,
+    43.48649999999907,
+    37.07080000000133,
+    34.581600000001345,
+    46.62540000000081,
+    40.26209999999992
+  ],
+  "coldFirstOpeningMs": 110.33479999999872,
+  "memory": {
+    "baseline": {
+      "workingSetKiB": 94080,
+      "heap": {
+        "usedSize": 2331068,
+        "totalSize": 2621440,
+        "embedderHeapUsedSize": 556736,
+        "backingStorageSize": 1063217
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 102,
+        "jsEventListeners": 152
+      },
+      "processMemory": {
+        "workingSetSize": 94148,
+        "peakWorkingSetSize": 95624,
+        "privateBytes": 37156
+      }
+    },
+    "firstOpenMemory": {
+      "workingSetKiB": 101184,
+      "heap": {
+        "usedSize": 4299328,
+        "totalSize": 5562368,
+        "embedderHeapUsedSize": 3193376,
+        "backingStorageSize": 1095013
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 915,
+        "jsEventListeners": 246
+      },
+      "processMemory": {
+        "workingSetSize": 101188,
+        "peakWorkingSetSize": 101188,
+        "privateBytes": 42752
+      }
+    },
+    "retained": {
+      "workingSetKiB": 122808,
+      "heap": {
+        "usedSize": 4081728,
+        "totalSize": 4513792,
+        "embedderHeapUsedSize": 1223336,
+        "backingStorageSize": 1093842
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 103,
+        "jsEventListeners": 165
+      },
+      "processMemory": {
+        "workingSetSize": 122808,
+        "peakWorkingSetSize": 158660,
+        "privateBytes": 60188
+      }
+    }
+  },
+  "settledDiagnosticMemory": [
+    {
+      "delayMs": 0,
+      "workingSetKiB": 122740,
+      "heap": {
+        "usedSize": 4102772,
+        "totalSize": 4513792,
+        "embedderHeapUsedSize": 685136,
+        "backingStorageSize": 1093842
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 103,
+        "jsEventListeners": 165
+      },
+      "processMemory": {
+        "workingSetSize": 122740,
+        "peakWorkingSetSize": 158660,
+        "privateBytes": 60096
+      }
+    },
+    {
+      "delayMs": 1000,
+      "workingSetKiB": 122760,
+      "heap": {
+        "usedSize": 4102772,
+        "totalSize": 4513792,
+        "embedderHeapUsedSize": 685136,
+        "backingStorageSize": 1093842
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 103,
+        "jsEventListeners": 165
+      },
+      "processMemory": {
+        "workingSetSize": 122760,
+        "peakWorkingSetSize": 158660,
+        "privateBytes": 60108
+      }
+    },
+    {
+      "delayMs": 4000,
+      "workingSetKiB": 122656,
+      "heap": {
+        "usedSize": 4102772,
+        "totalSize": 4513792,
+        "embedderHeapUsedSize": 685136,
+        "backingStorageSize": 1093842
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 103,
+        "jsEventListeners": 165
+      },
+      "processMemory": {
+        "workingSetSize": 122656,
+        "peakWorkingSetSize": 158660,
+        "privateBytes": 60104
+      }
+    }
+  ],
+  "additionalDiagnosticCycles": [
+    {
+      "cycles": 40,
+      "workingSetKiB": 130328,
+      "heap": {
+        "usedSize": 4187756,
+        "totalSize": 5038080,
+        "embedderHeapUsedSize": 1598600,
+        "backingStorageSize": 1093842
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 103,
+        "jsEventListeners": 165
+      },
+      "processMemory": {
+        "workingSetSize": 130328,
+        "peakWorkingSetSize": 160740,
+        "privateBytes": 68416
+      }
+    },
+    {
+      "cycles": 60,
+      "workingSetKiB": 133448,
+      "heap": {
+        "usedSize": 4267556,
+        "totalSize": 4775936,
+        "embedderHeapUsedSize": 1614880,
+        "backingStorageSize": 1093842
+      },
+      "dom": {
+        "documents": 1,
+        "nodes": 103,
+        "jsEventListeners": 165
+      },
+      "processMemory": {
+        "workingSetSize": 133448,
+        "peakWorkingSetSize": 162808,
+        "privateBytes": 70728
+      }
+    }
+  ],
+  "afterDiagnosticPressure": {
+    "workingSetKiB": 133520,
+    "heap": {
+      "usedSize": 4267556,
+      "totalSize": 4775936,
+      "embedderHeapUsedSize": 1131992,
+      "backingStorageSize": 1093842
+    },
+    "dom": {
+      "documents": 1,
+      "nodes": 103,
+      "jsEventListeners": 165
+    },
+    "processMemory": {
+      "workingSetSize": 133520,
+      "peakWorkingSetSize": 162808,
+      "privateBytes": 70732
+    }
+  },
+  "pagination": {
+    "reachableRows": 500,
+    "uniqueRows": 500,
+    "maxMounted": 50
+  },
+  "previewsMs": [
+    59.56450000000041,
+    60.43699999999808,
+    61.345500000003085,
+    67.53330000000278,
+    63.4246000000021,
+    55.67829999999958,
+    60.3266999999978,
+    58.6304999999993,
+    67.52030000000013,
+    52.29460000000108,
+    58.42960000000312,
+    51.24989999999889,
+    52.60590000000229,
+    52.97179999999935,
+    57.36490000000049,
+    67.41330000000016,
+    61.340000000000146,
+    70.52549999999974,
+    58.90600000000268,
+    51.185700000001816
+  ],
+  "rendererLongTasksMs": [],
+  "incompatiblePreviewMs": 47.29479999999967,
+  "idle": {
+    "seconds": 60,
+    "mutations": 0,
+    "runningAnimations": 0,
+    "polling": "IPC polling is not instrumented by this test; requires source audit or router instrumentation."
+  }
+}

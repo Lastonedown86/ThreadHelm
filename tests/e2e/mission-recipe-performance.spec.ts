@@ -98,6 +98,10 @@ test('Windows recipe list, maximum-compatible preview, memory and settled idle b
       }),
       heap: await cdp.send('Runtime.getHeapUsage'),
       dom: await cdp.send('Memory.getDOMCounters'),
+      processMemory: await app.app.evaluate(({ app: electronApp, BrowserWindow }) => {
+        const pid = BrowserWindow.getAllWindows()[0]!.webContents.getOSProcessId();
+        return electronApp.getAppMetrics().find((m) => m.pid === pid)?.memory ?? null;
+      }),
     });
     await cdp.send('HeapProfiler.collectGarbage');
     const baseline = await memory();
@@ -120,6 +124,21 @@ test('Windows recipe list, maximum-compatible preview, memory and settled idle b
     report.coldFirstOpeningMs = openings[0];
     report.memory = { baseline, firstOpenMemory, retained };
     if (process.env.THREADHELM_RECIPE_MEMORY_DIAGNOSTIC === '1') {
+      // Diagnostic snapshots never replace the original retained-memory budget sample.
+      await expect(page.getByRole('list', { name: 'Recipes', exact: true })).toHaveCount(0);
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          ),
+      );
+      const settled = [];
+      for (const delayMs of [0, 1000, 4000]) {
+        if (delayMs) await page.waitForTimeout(delayMs);
+        await cdp.send('HeapProfiler.collectGarbage');
+        settled.push({ delayMs, ...(await memory()) });
+      }
+      report.settledDiagnosticMemory = settled;
       const rounds = [];
       for (let round = 0; round < 2; round++) {
         for (let i = 0; i < 20; i++) {
@@ -134,6 +153,9 @@ test('Windows recipe list, maximum-compatible preview, memory and settled idle b
         rounds.push({ cycles: 40 + round * 20, ...(await memory()) });
       }
       report.additionalDiagnosticCycles = rounds;
+      await cdp.send('Memory.simulatePressureNotification', { level: 'critical' });
+      await cdp.send('HeapProfiler.collectGarbage');
+      report.afterDiagnosticPressure = await memory();
     }
     await page.getByRole('button', { name: 'Start from recipe', exact: true }).click();
     const seen: string[] = [];

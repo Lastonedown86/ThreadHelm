@@ -6,7 +6,7 @@ import type {
 } from '@threadhelm/contracts';
 import { api, call } from '../../api.js';
 import { RecipePreview, recipeError } from './RecipePreview.js';
-import { RecipeEditor } from './RecipeEditor.js';
+import { LazyRecipeEditor } from './LazyRecipeEditor.js';
 import { RecipeDeleteDialog } from './RecipeDeleteDialog.js';
 import { RecipeSourceSelection, type RecipeSource } from './RecipeSourceSelection.js';
 
@@ -114,7 +114,7 @@ export function MissionRecipeLibrary({
       </div>
       {notice ? <p role="status">{notice}</p> : null}
       {editor ? (
-        <RecipeEditor
+        <LazyRecipeEditor
           key={editor.editorId}
           initial={editor}
           onOpen={setEditor}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MissionRecipeDetail, MissionRecipePreview } from '@threadhelm/contracts';
-import { reconcileRecipeValues } from '@threadhelm/domain';
+import { reconcileRecipeValues } from '@threadhelm/domain/mission-recipe-values';
 import { api, call, RendererError } from '../../api.js';
 
 export function recipeError(cause: unknown): string {

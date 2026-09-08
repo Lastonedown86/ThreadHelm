@@ -6,6 +6,10 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    "./mission-recipe-values": {
+      "types": "./dist/mission-recipe-values.d.ts",
+      "default": "./dist/mission-recipe-values.js"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"

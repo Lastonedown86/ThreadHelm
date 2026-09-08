@@ -9,6 +9,10 @@ it('keeps xterm and authoring validation outside the no-session renderer import 
     logLevel: 'silent',
     resolve: {
       alias: {
+        '@threadhelm/domain/mission-recipe-values': resolve(
+          root,
+          'packages/domain/src/mission-recipe-values.ts',
+        ),
         '@threadhelm/contracts/protocol': resolve(root, 'packages/contracts/src/protocol.ts'),
         '@threadhelm/contracts/limits': resolve(root, 'packages/contracts/src/limits.ts'),
         '@threadhelm/contracts/stream': resolve(root, 'packages/contracts/src/stream.ts'),
@@ -30,10 +34,12 @@ it('keeps xterm and authoring validation outside the no-session renderer import 
   const entry = chunks.find((chunk) => chunk.isEntry);
   if (!entry) throw new Error('Missing renderer entry');
   const initial = new Set<string>();
-  const visit = (fileName: string) => {
-    if (initial.has(fileName)) return;
-    initial.add(fileName);
-    chunks.find((chunk) => chunk.fileName === fileName)?.imports.forEach(visit);
+  const visit = (fileName: string, reached = initial) => {
+    if (reached.has(fileName)) return;
+    reached.add(fileName);
+    chunks
+      .find((chunk) => chunk.fileName === fileName)
+      ?.imports.forEach((name) => visit(name, reached));
   };
   visit(entry.fileName);
   const eagerModules = chunks
@@ -41,7 +47,7 @@ it('keeps xterm and authoring validation outside the no-session renderer import 
     .flatMap((chunk) => Object.keys(chunk.modules));
   expect(
     eagerModules.filter((id) =>
-      /[/\\]@xterm[/\\].*\.[cm]?js$|[/\\]AgentProfileWizard\.tsx$|[/\\]contracts[/\\]src[/\\]index\.ts$|[/\\]zod[/\\]/.test(
+      /[/\\]@xterm[/\\].*\.[cm]?js$|[/\\](?:AgentProfileWizard|MissionRecipeLibrary|RecipeEditor)\.tsx$|[/\\]contracts[/\\]src[/\\]index\.ts$|[/\\]zod[/\\]/.test(
         id,
       ),
     ),
@@ -52,4 +58,19 @@ it('keeps xterm and authoring validation outside the no-session renderer import 
     .flatMap((chunk) => Object.keys(chunk.modules));
   expect(deferredModules.some((id) => /[/\\]@xterm[/\\]/.test(id))).toBe(true);
   expect(deferredModules.some((id) => /[/\\]AgentProfileWizard\.tsx$/.test(id))).toBe(true);
+  expect(deferredModules.some((id) => /[/\\]MissionRecipeLibrary\.tsx$/.test(id))).toBe(true);
+  const library = chunks.find((chunk) =>
+    Object.keys(chunk.modules).some((id) => /[/\\]MissionRecipeLibrary\.tsx$/.test(id)),
+  );
+  expect(library).toBeDefined();
+  const browsing = new Set<string>();
+  visit(library!.fileName, browsing);
+  const browsingModules = chunks
+    .filter((chunk) => browsing.has(chunk.fileName))
+    .flatMap((chunk) => Object.keys(chunk.modules));
+  expect(
+    browsingModules.filter((id) =>
+      /[/\\]RecipeEditor\.tsx$|[/\\]contracts[/\\]src[/\\]index\.ts$|[/\\]zod[/\\]/.test(id),
+    ),
+  ).toEqual([]);
 }, 30_000);

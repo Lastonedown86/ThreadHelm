@@ -11,7 +11,7 @@ import { ComposerContext } from './features/mission-composer/ComposerContext.js'
 import { DiscardMissionDraft } from './features/mission-composer/DiscardMissionDraft.js';
 import type { Stage, WorkerFields } from './features/mission-composer/composer-fields.js';
 import { MissionComposerWorkspace } from './features/mission-composer/MissionComposerWorkspace.js';
-import { MissionRecipeLibrary } from './features/mission-recipes/MissionRecipeLibrary.js';
+import { LazyMissionRecipeLibrary } from './features/mission-recipes/LazyMissionRecipeLibrary.js';
 import type { RecipeSource } from './features/mission-recipes/RecipeSourceSelection.js';
 import { RepoIdeaEntry, type RepoIdeaFields } from './features/mission-composer/RepoIdeaEntry.js';
 import { ContextToggle } from './features/mission-focus/ContextToggle.js';
@@ -373,7 +373,7 @@ function Shell() {
               />
             </>
           ) : missionView.kind === 'recipes' ? (
-            <MissionRecipeLibrary
+            <LazyMissionRecipeLibrary
               onClose={() => void navigate(showMission)}
               onCreated={resumeDraft}
               onFlushReady={setComposerFlush}

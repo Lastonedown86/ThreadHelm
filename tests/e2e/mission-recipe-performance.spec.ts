@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createHash, randomUUID } from 'node:crypto';
-import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, mkdirSync, writeFileSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { cpus, platform, release, totalmem } from 'node:os';
 import type {
@@ -15,6 +16,11 @@ test('Windows recipe list, maximum-compatible preview, memory and settled idle b
   test.setTimeout(300_000);
   const app = await launchApp();
   const page = app.page;
+  const rendererAssets = join(dirname(mainEntry), '../renderer/assets');
+  const rendererDigest = createHash('sha256');
+  for (const asset of readdirSync(rendererAssets).sort()) {
+    rendererDigest.update(asset).update(readFileSync(join(rendererAssets, asset)));
+  }
   const report: Record<string, unknown> = {
     machine: {
       platform: platform(),
@@ -26,6 +32,8 @@ test('Windows recipe list, maximum-compatible preview, memory and settled idle b
     textScale: '100%',
     powerMode: execFileSync('powercfg.exe', ['/getactivescheme'], { encoding: 'utf8' }).trim(),
     mainBuildSha256: createHash('sha256').update(readFileSync(mainEntry)).digest('hex'),
+    rendererBuildSha256: rendererDigest.digest('hex'),
+    traceMode: test.info().project.use.trace,
     fixture:
       '500 total, 3 bundled and 497 personal; duplicate names and disabled rows. Unsupported-version library fixture remains separate.',
   };
@@ -89,6 +97,7 @@ test('Windows recipe list, maximum-compatible preview, memory and settled idle b
         );
       }),
       heap: await cdp.send('Runtime.getHeapUsage'),
+      dom: await cdp.send('Memory.getDOMCounters'),
     });
     await cdp.send('HeapProfiler.collectGarbage');
     const baseline = await memory();
@@ -110,6 +119,22 @@ test('Windows recipe list, maximum-compatible preview, memory and settled idle b
     report.openingsMs = openings;
     report.coldFirstOpeningMs = openings[0];
     report.memory = { baseline, firstOpenMemory, retained };
+    if (process.env.THREADHELM_RECIPE_MEMORY_DIAGNOSTIC === '1') {
+      const rounds = [];
+      for (let round = 0; round < 2; round++) {
+        for (let i = 0; i < 20; i++) {
+          await page.getByRole('button', { name: 'Start from recipe', exact: true }).click();
+          await expect(
+            page.getByRole('list', { name: 'Recipes', exact: true }).getByRole('listitem'),
+          ).toHaveCount(50);
+          await page.getByRole('button', { name: 'Close recipes', exact: true }).click();
+          await expect(page.getByRole('list', { name: 'Recipes', exact: true })).toHaveCount(0);
+        }
+        await cdp.send('HeapProfiler.collectGarbage');
+        rounds.push({ cycles: 40 + round * 20, ...(await memory()) });
+      }
+      report.additionalDiagnosticCycles = rounds;
+    }
     await page.getByRole('button', { name: 'Start from recipe', exact: true }).click();
     const seen: string[] = [];
     let maxMounted = 0;

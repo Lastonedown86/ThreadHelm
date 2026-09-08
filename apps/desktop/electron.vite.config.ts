@@ -15,6 +15,10 @@ const root = resolve(__dirname, '../..');
 // Workspace packages are bundled from TypeScript source (same aliases as
 // vitest.config.ts) so a build never depends on a prior `tsc --build`.
 const workspaceAliases = {
+  '@threadhelm/domain/mission-recipe-values': resolve(
+    root,
+    'packages/domain/src/mission-recipe-values.ts',
+  ),
   '@threadhelm/test-fixtures/desktop': resolve(root, 'packages/test-fixtures/src/desktop.ts'),
   '@threadhelm/contracts/protocol': resolve(root, 'packages/contracts/src/protocol.ts'),
   '@threadhelm/contracts/limits': resolve(root, 'packages/contracts/src/limits.ts'),

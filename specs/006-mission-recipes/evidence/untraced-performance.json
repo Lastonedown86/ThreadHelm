@@ -1,0 +1,105 @@
+{
+  "machine": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "cpu": "AMD Ryzen 7 5700U with Radeon Graphics         ",
+    "ramBytes": 33700167680
+  },
+  "viewport": {
+    "width": 960,
+    "height": 800
+  },
+  "textScale": "100%",
+  "powerMode": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+  "mainBuildSha256": "78d42949ead79252ef51ceb2644696016a3d4678a7c19eea68dc65a297a6f3a1",
+  "rendererBuildSha256": "9541fee5303741dd1089fa854681f80b8c77bd7f41ea792d7abf44f18498ab2e",
+  "traceMode": "off",
+  "fixture": "500 total, 3 bundled and 497 personal; duplicate names and disabled rows. Unsupported-version library fixture remains separate.",
+  "openingsMs": [
+    101.44759999999951,
+    51.37459999999919,
+    41.20899999999892,
+    58.390699999999924,
+    50.81469999999899,
+    57.03399999999965,
+    39.55190000000039,
+    46.70130000000063,
+    43.991799999999785,
+    45.042199999999866,
+    47.64939999999842,
+    43.61909999999989,
+    47.342499999998836,
+    47.22230000000127,
+    52.175499999997555,
+    48.810199999999895,
+    43.943200000001525,
+    44.26599999999962,
+    47.78020000000106,
+    33.07560000000012
+  ],
+  "coldFirstOpeningMs": 101.44759999999951,
+  "memory": {
+    "baseline": {
+      "workingSetKiB": 93576,
+      "heap": {
+        "usedSize": 2331016,
+        "totalSize": 2621440,
+        "embedderHeapUsedSize": 556736,
+        "backingStorageSize": 1063217
+      }
+    },
+    "firstOpenMemory": {
+      "workingSetKiB": 100728,
+      "heap": {
+        "usedSize": 4299112,
+        "totalSize": 5562368,
+        "embedderHeapUsedSize": 3166720,
+        "backingStorageSize": 1094979
+      }
+    },
+    "retained": {
+      "workingSetKiB": 122812,
+      "heap": {
+        "usedSize": 4081512,
+        "totalSize": 5038080,
+        "embedderHeapUsedSize": 1258152,
+        "backingStorageSize": 1093842
+      }
+    }
+  },
+  "pagination": {
+    "reachableRows": 500,
+    "uniqueRows": 500,
+    "maxMounted": 50
+  },
+  "previewsMs": [
+    65.13660000000164,
+    54.168399999998655,
+    64.18370000000141,
+    56.54160000000047,
+    57.23319999999876,
+    56.430200000002515,
+    51.35020000000077,
+    67.68769999999859,
+    58.30459999999948,
+    57.32770000000164,
+    55.677599999999074,
+    58.64310000000114,
+    58.19770000000062,
+    62.30189999999857,
+    54.15680000000066,
+    59.236400000001595,
+    58.455000000001746,
+    65.73509999999806,
+    53.507000000001426,
+    77.94940000000133
+  ],
+  "rendererLongTasksMs": [],
+  "incompatiblePreviewMs": 62.13119999999981,
+  "idle": {
+    "seconds": 60,
+    "mutations": 0,
+    "runningAnimations": 0,
+    "polling": "IPC polling is not instrumented by this test; requires source audit or router instrumentation."
+  }
+}

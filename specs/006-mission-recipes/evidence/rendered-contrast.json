@@ -1,0 +1,1801 @@
+{
+  "samples": [
+    {
+      "state": "unselected-source",
+      "element": "H1",
+      "label": "Mission recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 30.336,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 3,
+      "unsupported": false
+    },
+    {
+      "state": "unselected-source",
+      "element": "BUTTON",
+      "label": "Close recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "unselected-source",
+      "element": "H2",
+      "label": "Choose content to save",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 17,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "unselected-source",
+      "element": "P",
+      "label": "Nothing is selected automatically. Review project-specific text before making a personal r",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "unselected-source",
+      "element": "LABEL",
+      "label": "Outcome",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "unselected-source",
+      "element": "INPUT",
+      "label": "on",
+      "foreground": "rgb(0, 0, 0)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 20.058541504240335,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "unselected-source",
+      "element": "LABEL",
+      "label": "Acceptance checklist",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "unselected-source",
+      "element": "INPUT",
+      "label": "on",
+      "foreground": "rgb(0, 0, 0)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 20.058541504240335,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "unselected-source",
+      "element": "LABEL",
+      "label": "Inert role suggestions",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "unselected-source",
+      "element": "INPUT",
+      "label": "on",
+      "foreground": "rgb(0, 0, 0)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 20.058541504240335,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "unselected-source",
+      "element": "BUTTON",
+      "label": "Cancel selection",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "H1",
+      "label": "Mission recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 30.336,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 3,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "BUTTON",
+      "label": "Close recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "H2",
+      "label": "Choose content to save",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 17,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "P",
+      "label": "Nothing is selected automatically. Review project-specific text before making a personal r",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "LABEL",
+      "label": "Outcome",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "INPUT",
+      "label": "on",
+      "foreground": "rgb(0, 0, 0)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 20.058541504240335,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "LABEL",
+      "label": "Acceptance checklist",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "INPUT",
+      "label": "on",
+      "foreground": "rgb(0, 0, 0)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 20.058541504240335,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "LABEL",
+      "label": "Inert role suggestions",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "INPUT",
+      "label": "on",
+      "foreground": "rgb(0, 0, 0)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 20.058541504240335,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "BUTTON",
+      "label": "Preview selected content",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "P",
+      "label": "Local storage is unavailable. Your current input remains here.",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "source-preview-failure",
+      "element": "BUTTON",
+      "label": "Cancel selection",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "H1",
+      "label": "Mission recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 30.336,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 3,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Close recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "H2",
+      "label": "Personal recipe editor",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 17,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "P",
+      "label": "Only reviewed text is saved. Existing drafts retain their original content and provenance.",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "P",
+      "label": "Save failed",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "LEGEND",
+      "label": "Recipe content",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "LABEL",
+      "label": "Recipe name24/120 characters",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "INPUT",
+      "label": "Keyboard recovery recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "SPAN",
+      "label": "24/120 characters",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "LABEL",
+      "label": "Description0/1,000 characters",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "SPAN",
+      "label": "0/1,000 characters",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "LABEL",
+      "label": "Outcome scaffoldReviewed keyboard source24/8,000 characters; each resulting draft must als",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "TEXTAREA",
+      "label": "Reviewed keyboard source",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "SPAN",
+      "label": "24/8,000 characters; each resulting draft must also fit the composer.",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "LEGEND",
+      "label": "Checklist item",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Add checklist item",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "LEGEND",
+      "label": "Role suggestion",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Add role suggestion",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "LEGEND",
+      "label": "Literal variables",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "P",
+      "label": "Use {{key}} in content. Values are literal text, never commands. Escape an opening token w",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Add variable",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "P",
+      "label": "Local storage is unavailable. Your current input remains here.",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Preview saved recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Retry local save",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Reload saved editor and replace my edits",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Copy my edits to a new editor",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Back to recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Discard editor",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "editor-save-failure",
+      "element": "BUTTON",
+      "label": "Keep as separate personal copy",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "H1",
+      "label": "Mission recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 30.336,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 3,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "BUTTON",
+      "label": "Close recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "H2",
+      "label": "Personal recipe editor",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 17,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "P",
+      "label": "Only reviewed text is saved. Existing drafts retain their original content and provenance.",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "P",
+      "label": "Saved locally",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "LEGEND",
+      "label": "Recipe content",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "LABEL",
+      "label": "Recipe name24/120 characters",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "INPUT",
+      "label": "Keyboard recovery recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "SPAN",
+      "label": "24/120 characters",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "LABEL",
+      "label": "Description0/1,000 characters",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "SPAN",
+      "label": "0/1,000 characters",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "LABEL",
+      "label": "Outcome scaffoldReviewed keyboard source24/8,000 characters; each resulting draft must als",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "TEXTAREA",
+      "label": "Reviewed keyboard source",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "SPAN",
+      "label": "24/8,000 characters; each resulting draft must also fit the composer.",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "LEGEND",
+      "label": "Checklist item",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "BUTTON",
+      "label": "Add checklist item",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "LEGEND",
+      "label": "Role suggestion",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "BUTTON",
+      "label": "Add role suggestion",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "LEGEND",
+      "label": "Literal variables",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "P",
+      "label": "Use {{key}} in content. Values are literal text, never commands. Escape an opening token w",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "BUTTON",
+      "label": "Add variable",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "BUTTON",
+      "label": "Preview saved recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "BUTTON",
+      "label": "Retry local save",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "BUTTON",
+      "label": "Back to recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "BUTTON",
+      "label": "Discard editor",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "BUTTON",
+      "label": "Keep as separate personal copy",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "H3",
+      "label": "Saved recipe preview",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 15,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "H4",
+      "label": "Keyboard recovery recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "700",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "P",
+      "label": "Reviewed keyboard source",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "reviewed-save",
+      "element": "BUTTON",
+      "label": "Save personal recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "H1",
+      "label": "Mission recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 30.336,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 3,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Close recipes",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "P",
+      "label": "Saved recipe 314453cd-f558-472e-b10a-65157fe6922e · version 1 · 2026-09-08T01:39:20.488Z",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "New personal recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "LABEL",
+      "label": "Recipe originAll recipesBundledPersonal",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "SELECT",
+      "label": "All recipesBundledPersonal",
+      "foreground": "rgb(0, 0, 0)",
+      "background": [
+        255,
+        255,
+        255
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 21,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Investigate a bug",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "P",
+      "label": "Establish a reproducible explanation and proposed correction",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "SMALL",
+      "label": "bundled · revision 1 · 00000001 · enabled",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 13.3333,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Review a PR",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "P",
+      "label": "Assess a supplied change reference and report findings",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "SMALL",
+      "label": "bundled · revision 1 · 00000002 · enabled",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 13.3333,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Prepare a release",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "P",
+      "label": "Assess readiness and describe remaining release work",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "SMALL",
+      "label": "bundled · revision 1 · 00000003 · enabled",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 13.3333,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Keyboard recovery recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "SMALL",
+      "label": "personal · revision 1 · 7fe6922e · enabled",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 13.3333,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Refresh list",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "H2",
+      "label": "Keyboard recovery recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 17,
+      "fontWeight": "600",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "P",
+      "label": "personal · revision 1 · 7fe6922e",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "SPAN",
+      "label": "7fe6922e",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "P",
+      "label": "Literal text only. Creating a draft does not start a mission or grant access.",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "400",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "P",
+      "label": "Some symbols count as two characters. The composer accepts 4,000 characters and UTF-8 byte",
+      "foreground": "rgb(91, 100, 106)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 14,
+      "fontWeight": "400",
+      "ratio": 5.770881421814267,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Preview draft",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Refresh recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Duplicate",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Edit recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Disable recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    },
+    {
+      "state": "saved-recipe",
+      "element": "BUTTON",
+      "label": "Delete personal recipe",
+      "foreground": "rgb(24, 36, 44)",
+      "background": [
+        248,
+        250,
+        251
+      ],
+      "fontSize": 16,
+      "fontWeight": "550",
+      "ratio": 15.109348191417116,
+      "required": 4.5,
+      "unsupported": false
+    }
+  ],
+  "limitations": [
+    "Computed solid-color text contrast only; opacity, filter and background-image cases excluded.",
+    "Focus/non-text contrast, hover states, forced colors and true Windows OS scaling require separate checks.",
+    "CSS text scaling is not Windows OS accessibility scaling."
+  ]
+}
